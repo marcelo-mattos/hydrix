@@ -4,52 +4,55 @@
 
 Hydrix is a **micro-ORM** designed for developers who require **full control over SQL execution**, **predictable behavior**, and **efficient entity materialization**, without introducing hidden abstractions or proprietary query languages.
 
-The framework intentionally sits between **raw ADO.NET** and heavyweight ORMs such as Entity Framework, offering a Dapper-like experience enhanced with **hierarchical entity materialization**, **metadata caching**, and **native support for nested entities**.
+The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and heavyweight ORMs such as Entity Framework, offering a Dapper-like experience enhanced with **hierarchical entity materialization**, **metadata caching**, and **native support for nested entities**.
 
 ![NuGet](https://img.shields.io/nuget/v/Hydrix)
 
 ---
 
-## Why Hydrix?
+## 🧭Why Hydrix?
 
-- You want full control over your SQL
-- You work with complex or performance-critical queries
-- You prefer explicit behavior over hidden abstractions
-- You need a lightweight alternative to full ORMs
+* You want full control over your SQL
+* You work with complex or performance-critical queries
+* You prefer explicit behavior over hidden abstractions
+* You need a lightweight alternative to full ORMs
 
-## What Hydrix is not
+> Hydrix is designed for developers who want **full control** over their SQL while keeping object hydration explicit, safe, and predictable.
 
-Hydrix is not:
-- a LINQ provider
-- an automatic SQL generator
-- an entity tracking or state management framework
+---
 
-Hydrix is designed for developers who want full control over their SQL
-while keeping object hydration explicit, safe, and predictable.
+## ⚠️What Hydrix is not?
 
-## Supported frameworks
+* A LINQ provider
+* An automatic SQL generator
+* An entity tracking or state management framework
 
-- .NET Core 3.1
-- .NET 6
-- .NET 8
-- .NET 10
+---
+
+## ⚙️Supported frameworks
+
+* .NET Core 3.1
+* .NET 6
+* .NET 8
+* .NET 10
+
+---
 
 ## ✨ Key Features
 
-- Explicit SQL execution (Text and Stored Procedures)
-- Automatic materialization of entities (`ISqlEntity`)
-- Support for nested entities (flat JOINs → object graphs)
-- Thread-safe metadata caching with optimized reflection
-- Native support for SQL `IN` clauses with safe parameter expansion
-- SQL command logging similar to Entity Framework
-- Fully provider-agnostic (ADO.NET based)
-- Compatible with **.NET Core 3.1 and later**
-- Zero external dependencies
-- Distributed under the Apache-2.0 License
+* Explicit SQL execution (Text and Stored Procedures)
+* Automatic materialization of entities (`ISqlEntity`)
+* Support for nested entities (flat JOINs → object graphs)
+* Thread-safe metadata caching with optimized reflection
+* Native support for SQL `IN` clauses with safe parameter expansion
+* SQL command logging similar to Entity Framework
+* Fully provider-agnostic ([ADO.NET](http://ADO.NET) based)
+* Compatible with **.NET Core 3.1 and later**
+* Zero external dependencies
+* Distributed under the Apache-2.0 License
 
-> ⚠️ Note  
-> SQL builders in Hydrix are stateful by design and should not be reused
-> across multiple queries.
+> ⚠️ Note
+> SQL builders in Hydrix are stateful by design and should not be reused across multiple queries.
 
 ---
 
@@ -58,6 +61,7 @@ while keeping object hydration explicit, safe, and predictable.
 ```bash
 dotnet add package Hydrix
 ```
+
 
 ---
 
@@ -76,6 +80,7 @@ hydrix.ExecuteNonQuery(
 );
 ```
 
+
 ---
 
 ### Querying Entities
@@ -86,6 +91,7 @@ var orders = hydrix.Query<Order>(
     new { min = 100 }
 );
 ```
+
 
 ---
 
@@ -109,6 +115,7 @@ WHERE id IN (@ids_0, @ids_1, @ids_2)
 
 Each value is bound as an individual parameter, ensuring safety and compatibility across providers.
 
+
 ---
 
 ## 🧱 Defining Entities
@@ -127,6 +134,7 @@ public class Order : ISqlEntity
 }
 ```
 
+
 ---
 
 ### Nested Entities (Flat JOINs)
@@ -144,6 +152,7 @@ public class Order : ISqlEntity
 ```
 
 The materializer automatically constructs the object graph when the related data is present, preventing the creation of empty nested objects when LEFT JOINs return null values.
+
 
 ---
 
@@ -167,6 +176,7 @@ catch
 }
 ```
 
+
 ---
 
 ## 📝 SQL Command Logging
@@ -183,34 +193,37 @@ Parameters:
 --------------------------------------------------
 ```
 
+
 ---
 
 ## 🎯 Design Philosophy
 
 Hydrix is built around the following principles:
 
-- SQL should remain explicit and visible
-- Developers must retain full control over execution
-- No hidden behaviors or implicit query generation
-- Performance, predictability, and transparency over convenience
-- ADO.NET as a solid and proven foundation
+* SQL should remain explicit and visible
+* Developers must retain full control over execution
+* No hidden behaviors or implicit query generation
+* Performance, predictability, and transparency over convenience
+* [ADO.NET](http://ADO.NET) as a solid and proven foundation
+
 
 ---
 
 ## 🧩 Provider Compatibility
 
-- Microsoft SQL Server
-- PostgreSQL
-- MySQL
-- Oracle
-- Any ADO.NET-compatible data provider
+* Microsoft SQL Server
+* PostgreSQL
+* MySQL
+* Oracle
+* Any ADO.NET-compatible data provider
+
 
 ---
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0.
-See the LICENSE and NOTICE files for details.
+This project is licensed under the Apache License 2.0. See the LICENSE and NOTICE files for details.
+
 
 ---
 
