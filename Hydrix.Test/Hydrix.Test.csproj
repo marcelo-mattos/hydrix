@@ -1,0 +1,47 @@
+<Project>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <ApplicationIcon>Hydrix.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>    
+	<MSBuildProjectExtensionsPath>..\obj\Hydrix.Test\</MSBuildProjectExtensionsPath>
+	<OutputPath>..\dbg\Hydrix.Test\</OutputPath>
+	<BaseIntermediateOutputPath>..\obj\Hydrix.Test\</BaseIntermediateOutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\dbg\Hydrix.Test\Hydrix.Test.xml</DocumentationFile>
+    <NoWarn>NETSDK1138;NU1701</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+	<MSBuildProjectExtensionsPath>..\obj\Hydrix.Test\</MSBuildProjectExtensionsPath>
+	<OutputPath>..\bin\Hydrix.Test\</OutputPath>
+    <BaseIntermediateOutputPath>..\obj\Hydrix.Test\</BaseIntermediateOutputPath>
+	<IntermediateOutputPath>..\obj\Hydrix.Test\</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\bin\Hydrix.Test\Hydrix.Test.xml</DocumentationFile>
+    <NoWarn>NETSDK1138;NU1701</NoWarn>
+  </PropertyGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+  <ItemGroup>
+    <PackageReference Include="Faker" Version="1.2.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+  </ItemGroup>  
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Hydrix\Hydrix.csproj" />
+  </ItemGroup>
+
+</Project>
