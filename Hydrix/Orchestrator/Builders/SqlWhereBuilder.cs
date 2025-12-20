@@ -33,6 +33,16 @@ namespace Hydrix.Orchestrator.Builders
             => new SqlWhereBuilder();
 
         /// <summary>
+        /// Clears all SQL conditions from the builder.
+        /// </summary>
+        /// <returns>A new <see cref="SqlWhereBuilder"/> instance.</returns>
+        public SqlWhereBuilder Clear()
+        {
+            _tokens.Clear();
+            return this;
+        }
+
+        /// <summary>
         /// Builds the complete SQL WHERE clause.
         /// If no conditions were added, an empty string is returned.
         /// </summary>

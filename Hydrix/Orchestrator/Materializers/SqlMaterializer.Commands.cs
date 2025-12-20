@@ -110,6 +110,9 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="sql">
         /// The SQL statement or stored procedure name to be executed by the command.
         /// </param>
+        /// <param name="transaction">
+        /// Represents the transaction to be used for the command.
+        /// </param>
         /// <param name="parameterBinder">
         /// An optional delegate responsible for binding parameters to the command. When
         /// <c>null</c>, the command is created without parameters.
@@ -124,7 +127,8 @@ namespace Hydrix.Orchestrator.Materializers
         private IDbCommand CreateCommandCore(
             CommandType commandType,
             string sql,
-            Action<IDbCommand> parameterBinder)
+            Action<IDbCommand> parameterBinder,
+            IDbTransaction transaction)
         {
             if (IsDisposed)
                 throw new ObjectDisposedException(nameof(Contract.ISqlMaterializer));
@@ -141,11 +145,8 @@ namespace Hydrix.Orchestrator.Materializers
             command.CommandText = sql;
             command.CommandTimeout = Timeout;
 
-            lock (_lockTransaction)
-            {
-                if (IsTransactionActive)
-                    command.Transaction = DbTransaction;
-            }
+            if (transaction != null)
+                command.Transaction = transaction;
 
             parameterBinder?.Invoke(command);
 
@@ -154,6 +155,34 @@ namespace Hydrix.Orchestrator.Materializers
 
             return command;
         }
+
+        /// <summary>
+        /// Creates and returns a Command object associated with the connection.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
+        /// </param>
+        /// <param name="transaction">
+        /// Represents the transaction to be used for the command.
+        /// </param>
+        /// <returns>A Command object associated with the connection.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        IDbCommand Contract.ISqlMaterializer.CreateCommand(
+            string sql,
+            object parameters,
+            IDbTransaction transaction)
+            => CreateCommandCore(
+                CommandType.Text,
+                sql,
+                command => BindParametersFromObject(command, parameters),
+                transaction
+            );
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -172,11 +201,55 @@ namespace Hydrix.Orchestrator.Materializers
         IDbCommand Contract.ISqlMaterializer.CreateCommand(
             string sql,
             object parameters)
-            => CreateCommandCore(
-                CommandType.Text,
+        {
+            IDbTransaction transaction = null;
+
+            if (this.IsTransactionActive)
+                transaction = this.DbTransaction;
+
+            return (this as Contract.ISqlMaterializer).CreateCommand(
                 sql,
-                command => BindParametersFromObject(command, parameters)
-            );
+                parameters,
+                transaction);
+        }
+
+        /// <summary>
+        /// Creates and returns a Command object associated with the connection.
+        /// </summary>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">
+        /// Represents the transaction to be used for the command.
+        /// </param>
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
+        /// </param>
+        /// <returns>A Command object associated with the connection.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        IDbCommand Contract.ISqlMaterializer.CreateCommand(
+            CommandType commandType,
+            string sql,
+            IEnumerable<IDataParameter> parameters,
+            IDbTransaction transaction)
+            => CreateCommandCore(
+                commandType,
+                sql,
+                command =>
+                {
+                    if (parameters == null)
+                        return;
+
+                    foreach (var parameter in parameters)
+                        command.Parameters.Add(parameter);
+                },
+                transaction);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -200,17 +273,16 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters)
         {
-            return CreateCommandCore(
+            IDbTransaction transaction = null;
+
+            if (this.IsTransactionActive)
+                transaction = this.DbTransaction;
+
+            return (this as Contract.ISqlMaterializer).CreateCommand(
                 commandType,
                 sql,
-                command =>
-                {
-                    if (parameters == null)
-                        return;
-
-                    foreach (var parameter in parameters)
-                        command.Parameters.Add(parameter);
-                });
+                parameters,
+                transaction);
         }
 
         /// <summary>
@@ -235,6 +307,43 @@ namespace Hydrix.Orchestrator.Materializers
         /// </exception>
         IDbCommand Contract.ISqlMaterializer.CreateCommand<TDataParameterDriver>(
             ISqlProcedure<TDataParameterDriver> sqlProcedure)
+        {
+            IDbTransaction transaction = null;
+
+            if (this.IsTransactionActive)
+                transaction = this.DbTransaction;
+
+            return (this as Contract.ISqlMaterializer).CreateCommand(
+                sqlProcedure,
+                transaction);
+        }
+
+        /// <summary>
+        /// Creates and returns a Command object associated with the connection.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to
+        /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
+        /// access data sources.
+        /// </typeparam>
+        /// <param name="sqlProcedure">
+        /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
+        /// </param>
+        /// <param name="transaction">
+        /// Represents the transaction to be used for the command.
+        /// </param>
+        /// <returns>A Command object associated with the connection.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        IDbCommand Contract.ISqlMaterializer.CreateCommand<TDataParameterDriver>(
+            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IDbTransaction transaction)
         {
             if (this.IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
@@ -262,11 +371,8 @@ namespace Hydrix.Orchestrator.Materializers
             command.CommandText = sqlProcedureAttribute.CommandText;
             command.CommandTimeout = this.Timeout;
 
-            lock (this._lockTransaction)
-            {
-                if (this.IsTransactionActive)
-                    command.Transaction = this.DbTransaction;
-            }
+            if (transaction != null)
+                command.Transaction = transaction;
 
             var properties = procedureType
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
@@ -287,7 +393,7 @@ namespace Hydrix.Orchestrator.Materializers
                         Value = property.GetValue(sqlProcedure) ?? DBNull.Value
                     };
 
-                    if (Enum.IsDefined(typeof(DbType), (int)parameterAttribute.DbType))
+                    if (Enum.IsDefined(typeof(DbType), Convert.ToInt32(parameterAttribute.DbType)))
                     {
                         dataParameter.DbType = parameterAttribute.DbType;
                     }

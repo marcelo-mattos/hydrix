@@ -1,4 +1,6 @@
-﻿namespace Hydrix.Orchestrator.Builders
+﻿using System.Linq;
+
+namespace Hydrix.Orchestrator.Builders
 {
     /// <summary>
     /// Provides a fluent SQL builder responsible for composing the WHERE clause
@@ -59,6 +61,20 @@
         }
 
         /// <summary>
+        /// Conditionally adds an AND condition to the WHERE clause.
+        /// The condition is added only if the predicate evaluates to true.
+        /// </summary>
+        /// <param name="predicates">Determines whether the condition should be added.</param>
+        /// <param name="condition">The SQL condition to add.</param>
+        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
+        public SqlWhereBuilder AndIf(
+            bool[] predicates,
+            string condition)
+            => AndIf(
+                predicates?.All(p => p) ?? false,
+                condition);
+
+        /// <summary>
         /// Conditionally adds an AND NOT condition to the WHERE clause.
         /// The condition is added only if the predicate evaluates to true.
         /// </summary>
@@ -75,5 +91,19 @@
 
             return this;
         }
+
+        /// <summary>
+        /// Conditionally adds an AND NOT condition to the WHERE clause.
+        /// The condition is added only if the predicate evaluates to true.
+        /// </summary>
+        /// <param name="predicates">Determines whether the condition should be added.</param>
+        /// <param name="condition">The SQL condition to add.</param>
+        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
+        public SqlWhereBuilder AndNotIf(
+            bool[] predicates,
+            string condition)
+            => AndNotIf(
+                predicates?.All(p => p) ?? false,
+                condition);
     }
 }

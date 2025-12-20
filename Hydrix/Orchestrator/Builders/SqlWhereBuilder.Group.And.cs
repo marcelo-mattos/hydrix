@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Hydrix.Orchestrator.Builders
 {
@@ -58,6 +59,22 @@ namespace Hydrix.Orchestrator.Builders
         }
 
         /// <summary>
+        /// Conditionally adds a grouped set of conditions combined using AND.
+        /// The group is enclosed in parentheses.
+        /// </summary>
+        /// <param name="predicates">Determines whether the condition should be added.</param>
+        /// <param name="groupBuilder">
+        /// An action that receives a new <see cref="SqlWhereBuilder"/> to define grouped conditions.
+        /// </param>
+        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
+        public SqlWhereBuilder AndGroupIf(
+            bool[] predicates,
+            Action<SqlWhereBuilder> groupBuilder)
+            => AndGroupIf(
+                predicates?.All(p => p) ?? false,
+                groupBuilder);
+
+        /// <summary>
         /// Conditionally adds a grouped set of conditions combined using AND NOT.
         /// The group is enclosed in parentheses.
         /// </summary>
@@ -75,5 +92,21 @@ namespace Hydrix.Orchestrator.Builders
 
             return this;
         }
+
+        /// <summary>
+        /// Conditionally adds a grouped set of conditions combined using AND NOT.
+        /// The group is enclosed in parentheses.
+        /// </summary>
+        /// <param name="predicates">Determines whether the condition should be added.</param>
+        /// <param name="groupBuilder">
+        /// An action that receives a new <see cref="SqlWhereBuilder"/> to define grouped conditions.
+        /// </param>
+        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
+        public SqlWhereBuilder AndNotGroupIf(
+            bool[] predicates,
+            Action<SqlWhereBuilder> groupBuilder)
+            => AndNotGroupIf(
+                predicates?.All(p => p) ?? false,
+                groupBuilder);
     }
 }

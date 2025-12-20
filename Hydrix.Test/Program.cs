@@ -62,12 +62,33 @@ namespace Hydrix.Test
             DateTime? endDate = new DateTime(1999, 12, 31);
             int[] levels = new int[] { 3, 5, 7 };
 
-            var where = SqlWhereBuilder
-                .Create()
+            var builder = SqlWhereBuilder.Create();
+            var where = builder
                 .AndIf(isActive.HasValue, "c.IsActive = @IsActive")
                 .AndIf(startDate.HasValue, "c.BirthDate >= @StartDate")
                 .AndIf(endDate.HasValue, "c.BirthDate <= @EndDate")
                 .AndIf(levels != null && levels.Length > 0, "c.Level IN (@Levels)")
+                .Build();
+
+            where = builder
+                .Clear()
+                    .Where("1 = 1")
+                    .AndOrNotGroupIf(
+                        new[]
+                        {
+                            isActive.HasValue,
+                            startDate.HasValue,
+                            endDate.HasValue,
+                            levels != null,
+                            levels.Length > 0
+                        },
+                        new[]
+                        {
+                            "c.IsActive = @IsActive",
+                            "c.BirthDate >= @StartDate",
+                            "c.BirthDate <= @EndDate",
+                            "c.Level IN (@Levels)"
+                        })
                 .Build();
 
             var sql = $@"

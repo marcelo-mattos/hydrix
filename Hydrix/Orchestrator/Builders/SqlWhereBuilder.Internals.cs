@@ -57,6 +57,87 @@ namespace Hydrix.Orchestrator.Builders
         }
 
         /// <summary>
+        /// Adds an internal grouped AND/OR expression prefixed with AND/OR.
+        /// This method is responsible for composing expressions in the format:
+        ///
+        /// AND/OR (condition1 OR/AND condition2 OR/AND conditionN)
+        /// or, when the NOT modifier is enabled:
+        /// AND/OR (NOT condition1 OR/AND condition2 OR/AND conditionN)
+        ///
+        /// Only non-empty conditions are considered. If no valid conditions are provided,
+        /// the builder remains unchanged.
+        ///
+        /// This method is intended for internal use only and serves as the core
+        /// implementation for public methods that expose grouped OR behavior.
+        /// </summary>
+        /// <param name="isNot">
+        /// Indicates whether the grouped expression should be negated using NOT.
+        /// </param>
+        /// <param name="isAndOr">
+        /// Indicates whether the grouped expression should use AND/OR or OR/AND logic.
+        /// </param>
+        /// <param name="conditions">
+        /// A collection of SQL expressions to be combined using the AND/OR operator.
+        /// </param>
+        /// <returns>
+        /// The current <see cref="SqlWhereBuilder"/> instance.
+        /// </returns>
+        private SqlWhereBuilder AddGroup(
+            bool isNot,
+            bool isAndOr,
+            params string[] conditions)
+        {
+            var valid = conditions?
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .ToList();
+
+            if (valid == null || valid.Count == 0)
+                return this;
+
+            var group = string.Join($"{ (isAndOr ? " OR " : " AND ") }", valid);
+            var clause = $"{(isNot ? "NOT " : string.Empty)}({group})";
+
+            if (isAndOr)
+                And(clause);
+            else
+                Or(clause);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds an internal grouped AND expression prefixed with OR.
+        /// This method is responsible for composing expressions in the format:
+        ///
+        /// OR (condition1 AND condition2 AND conditionN)
+        /// or, when the NOT modifier is enabled:
+        /// OR (NOT condition1 AND condition2 AND conditionN)
+        ///
+        /// Only non-empty conditions are considered. If no valid conditions are provided,
+        /// the builder remains unchanged.
+        ///
+        /// This method is intended for internal use only and serves as the core
+        /// implementation for public methods that expose grouped OR behavior.
+        /// </summary>
+        /// <param name="isNot">
+        /// Indicates whether the grouped expression should be negated using NOT.
+        /// </param>
+        /// <param name="conditions">
+        /// A collection of SQL expressions to be combined using the AND operator.
+        /// </param>
+        /// <returns>
+        /// The current <see cref="SqlWhereBuilder"/> instance.
+        /// </returns>
+        private SqlWhereBuilder AddAndOrGroup(
+            bool isNot,
+            params string[] conditions)
+            => AddGroup(
+                isNot,
+                true,
+                conditions);
+
+        /// <summary>
         /// Adds an internal grouped OR expression prefixed with AND.
         /// This method is responsible for composing expressions in the format:
         ///
@@ -79,23 +160,13 @@ namespace Hydrix.Orchestrator.Builders
         /// <returns>
         /// The current <see cref="SqlWhereBuilder"/> instance.
         /// </returns>
-        private SqlWhereBuilder AddAndOrGroup(
+        private SqlWhereBuilder AddOrAndGroup(
             bool isNot,
             params string[] conditions)
-        {
-            var valid = conditions?
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Select(c => c.Trim())
-                .ToList();
-
-            if (valid == null || valid.Count == 0)
-                return this;
-
-            var group = string.Join(" OR ", valid);
-            And($"{(isNot ? "NOT " : string.Empty)}({group})");
-
-            return this;
-        }
+            => AddGroup(
+                isNot,
+                false,
+                conditions);
 
         /// <summary>
         /// Adds an internal grouped SQL expression composed by a nested
