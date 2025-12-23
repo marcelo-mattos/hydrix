@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Hydrix.Schemas;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
-using Hydrix.Schemas;
 
 namespace Hydrix.Orchestrator.Materializers
 {
@@ -28,9 +28,37 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             object parameters)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(sql, parameters))
-                return command.ExecuteScalar();
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sql,
+                    parameters);
+
+            return command.ExecuteScalar();
+        }
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public object ExecuteScalar(
+            string sql,
+            object parameters,
+            IDbTransaction transaction)
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sql,
+                    parameters,
+                    transaction);
+
+            return command.ExecuteScalar();
         }
 
         /// <summary>
@@ -51,6 +79,24 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
         /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public object ExecuteScalar(
+            string sql,
+            IDbTransaction transaction)
+            => this.ExecuteScalar(
+                sql,
+                (object)null,
+                transaction);
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
@@ -64,9 +110,41 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(commandType, sql, parameters))
-                return command.ExecuteScalar();
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    commandType,
+                    sql,
+                    parameters);
+
+            return command.ExecuteScalar();
+        }
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public object ExecuteScalar(
+            CommandType commandType,
+            string sql,
+            IEnumerable<IDataParameter> parameters,
+            IDbTransaction transaction)
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    commandType,
+                    sql,
+                    parameters,
+                    transaction);
+
+            return command.ExecuteScalar();
         }
 
         /// <summary>
@@ -90,6 +168,27 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
         /// </summary>
+        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public object ExecuteScalar(
+            CommandType commandType,
+            string sql,
+            IDbTransaction transaction)
+            => this.ExecuteScalar(
+                commandType,
+                sql,
+                (IEnumerable<IDataParameter>)null,
+                transaction);
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
@@ -104,15 +203,55 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             CancellationToken cancellationToken = default)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(sql, parameters))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteScalarAsync(cancellationToken)
-                        .ConfigureAwait(false);
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sql,
+                    parameters);
 
-                return await Task.Run(command.ExecuteScalar, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteScalarAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteScalar,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        public async Task<object> ExecuteScalarAsync(
+            string sql,
+            object parameters,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sql,
+                    parameters);
+
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteScalarAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteScalar,
+                cancellationToken);
         }
 
         /// <summary>
@@ -138,6 +277,29 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
         /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        public async Task<object> ExecuteScalarAsync(
+            string sql,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
+            => await this.ExecuteScalarAsync(
+                sql,
+                (object)null,
+                transaction,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
@@ -154,15 +316,60 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             CancellationToken cancellationToken = default)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(commandType, sql, parameters))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteScalarAsync(cancellationToken)
-                        .ConfigureAwait(false);
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    commandType,
+                    sql,
+                    parameters);
 
-                return await Task.Run(command.ExecuteScalar, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteScalarAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteScalar,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        public async Task<object> ExecuteScalarAsync(
+            CommandType commandType,
+            string sql,
+            IEnumerable<IDataParameter> parameters,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    commandType,
+                    sql,
+                    parameters,
+                    transaction);
+
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteScalarAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteScalar,
+                cancellationToken);
         }
 
         /// <summary>
@@ -191,6 +398,32 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
         /// </summary>
+        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        public async Task<object> ExecuteScalarAsync(
+            CommandType commandType,
+            string sql,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
+            => await this.ExecuteScalarAsync(
+                commandType,
+                sql,
+                (IEnumerable<IDataParameter>)null,
+                transaction,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
         /// <typeparam name="TDataParameterDriver">
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
@@ -206,8 +439,39 @@ namespace Hydrix.Orchestrator.Materializers
             ISqlProcedure<TDataParameterDriver> sqlProcedure)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using (var command = (this as Contract.ISqlMaterializer).CreateCommand(sqlProcedure))
-                return command.ExecuteScalar();
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sqlProcedure);
+
+            return command.ExecuteScalar();
+        }
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
+        /// and is implemented by .NET Framework data providers that access data sources.
+        /// </typeparam>
+        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public object ExecuteScalar<TDataParameterDriver>(
+            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IDbTransaction transaction)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sqlProcedure,
+                    transaction);
+
+            return command.ExecuteScalar();
         }
 
         /// <summary>
@@ -231,15 +495,58 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(sqlProcedure))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteScalarAsync(cancellationToken)
-                        .ConfigureAwait(false);
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sqlProcedure);
 
-                return await Task.Run(command.ExecuteScalar, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteScalarAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteScalar,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
+        /// and is implemented by .NET Framework data providers that access data sources.
+        /// </typeparam>
+        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="transaction">The database transaction to use.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        public async Task<object> ExecuteScalarAsync<TDataParameterDriver>(
+            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sqlProcedure,
+                    transaction);
+
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteScalarAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteScalar,
+                cancellationToken);
         }
     }
 }

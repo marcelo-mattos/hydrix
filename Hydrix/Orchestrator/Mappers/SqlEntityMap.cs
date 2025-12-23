@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Adapters;
+using Hydrix.Schemas;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
-using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Adapters;
-using Hydrix.Schemas;
 
 namespace Hydrix.Orchestrator.Mappers
 {
@@ -167,10 +167,9 @@ namespace Hydrix.Orchestrator.Mappers
             ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache)
         {
             string prefix = path.Count > 0
-                ? string.Join(".", path) + "."
+                ? $"{string.Join(".", path)}."
                 : string.Empty;
 
-            // 🔹 Campos simples
             foreach (var field in metadata.Fields)
             {
                 string columnName = prefix +
@@ -185,7 +184,7 @@ namespace Hydrix.Orchestrator.Mappers
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    continue; // coluna não existe no resultset
+                    continue;
                 }
 
                 if (record.IsDBNull(ordinal))
@@ -198,7 +197,6 @@ namespace Hydrix.Orchestrator.Mappers
                 field.Property.SetValue(entity, ConvertValue(value, field.TargetType));
             }
 
-            // 🔹 Entidades aninhadas
             foreach (var nested in metadata.Entities)
             {
                 string primaryKeyColumn = string.IsNullOrWhiteSpace(nested.Attribute.PrimaryKey)

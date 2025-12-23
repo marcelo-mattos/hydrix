@@ -18,6 +18,53 @@ namespace Hydrix.Orchestrator.Materializers
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public int ExecuteNonQuery(
+            string sql,
+            object parameters)
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sql,
+                    parameters);
+
+            return command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public int ExecuteNonQuery(
+            string sql,
+            object parameters,
+            IDbTransaction transaction)
+        {
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sql,
+                    parameters,
+                    transaction);
+
+            return command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -50,51 +97,6 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
         /// </summary>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
-        /// <returns>The number of rows affected.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        public int ExecuteNonQuery(
-            string sql,
-            object parameters)
-        {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters))
-                return command.ExecuteNonQuery();
-        }
-
-        /// <summary>
-        /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
-        /// </summary>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
-        /// <param name="transaction">The transaction to use for the command.</param>
-        /// <returns>The number of rows affected.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        public int ExecuteNonQuery(
-            string sql,
-            object parameters,
-            IDbTransaction transaction)
-        {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    transaction))
-                return command.ExecuteNonQuery();
-        }
-
-        /// <summary>
-        /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
-        /// </summary>
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
@@ -108,12 +110,13 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     commandType,
                     sql,
-                    parameters))
-                return command.ExecuteNonQuery();
+                    parameters);
+
+            return command.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -121,8 +124,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// </summary>
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="transaction">The transaction to use for the command.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -134,13 +137,14 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     commandType,
                     sql,
                     parameters,
-                    transaction))
-                return command.ExecuteNonQuery();
+                    transaction);
+
+            return command.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -199,17 +203,20 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             CancellationToken cancellationToken = default)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     sql,
-                    parameters))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                    parameters);
 
-                return await Task.Run(command.ExecuteNonQuery, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteNonQueryAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteNonQuery,
+                cancellationToken);
         }
 
         /// <summary>
@@ -231,18 +238,21 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     sql,
                     parameters,
-                    transaction))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                    transaction);
 
-                return await Task.Run(command.ExecuteNonQuery, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteNonQueryAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteNonQuery,
+                cancellationToken);
         }
 
         /// <summary>
@@ -307,18 +317,21 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             CancellationToken cancellationToken = default)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     commandType,
                     sql,
-                    parameters))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                    parameters);
 
-                return await Task.Run(command.ExecuteNonQuery, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteNonQueryAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteNonQuery,
+                cancellationToken);
         }
 
         /// <summary>
@@ -342,19 +355,22 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     commandType,
                     sql,
                     parameters,
-                    transaction))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                    transaction);
 
-                return await Task.Run(command.ExecuteNonQuery, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteNonQueryAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteNonQuery,
+                cancellationToken);
         }
 
         /// <summary>
@@ -424,8 +440,11 @@ namespace Hydrix.Orchestrator.Materializers
             ISqlProcedure<TDataParameterDriver> sqlProcedure)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using (var command = (this as Contract.ISqlMaterializer).CreateCommand(sqlProcedure))
-                return command.ExecuteNonQuery();
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sqlProcedure);
+
+            return command.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -448,11 +467,12 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     sqlProcedure,
-                    transaction))
-                return command.ExecuteNonQuery();
+                    transaction);
+
+            return command.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -476,15 +496,19 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using (var command = (this as Contract.ISqlMaterializer)
-                .CreateCommand(sqlProcedure))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+            using var command = (this as Contract.ISqlMaterializer)
+                .CreateCommand(
+                    sqlProcedure);
 
-                return await Task.Run(command.ExecuteNonQuery, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteNonQueryAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteNonQuery,
+                cancellationToken);
         }
 
         /// <summary>
@@ -510,17 +534,20 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using (var command = (this as Contract.ISqlMaterializer)
+            using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     sqlProcedure,
-                    transaction))
-            {
-                if (command is DbCommand dbCommand)
-                    return await dbCommand.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                    transaction);
 
-                return await Task.Run(command.ExecuteNonQuery, cancellationToken);
-            }
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteNonQueryAsync(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                command.ExecuteNonQuery,
+                cancellationToken);
         }
     }
 }
