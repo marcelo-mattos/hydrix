@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace Hydrix.Orchestrator.Builders
+﻿namespace Hydrix.Orchestrator.Builders
 {
     /// <summary>
     /// Provides a fluent SQL builder responsible for composing the WHERE clause
