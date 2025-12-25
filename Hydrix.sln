@@ -1,11 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.1.11304.174 d18.0
+VisualStudioVersion = 18.1.11304.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix", "Hydrix\Hydrix.csproj", "{8A944495-06FC-40E4-A790-759F0E4BE58C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.Test", "Hydrix.Test\Hydrix.Test.csproj", "{879E8EB5-FA9D-4B52-BB79-09AF8E670807}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{33CFA06F-E3E5-4B3E-8E08-D125E67E4F8D}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		LICENSE = LICENSE
+		NOTICE = NOTICE
+		README.md = README.md
+		ROADMAP.md = ROADMAP.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,10 +35,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{8A944495-06FC-40E4-A790-759F0E4BE58C} = {2E8C9E45-0C78-4D61-A4DE-777CF5292457}
-		{879E8EB5-FA9D-4B52-BB79-09AF8E670807} = {20DF4978-A86E-4991-B4D5-828B24D33EB0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {60B79B60-7A7A-431E-8479-B5BC8CB1C551}

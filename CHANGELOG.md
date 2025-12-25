@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.0] - 2025-12-24
+
+This release represents a significant evolution of Hydrix, focusing on
+performance, explicit SQL control, and internal architecture improvements,
+while preserving a stable and predictable public API.
+
+### ✨ Added
+
+- **Minimal SQL-first ORM Core**  
+  Introduced the foundational ORM core for .NET, providing explicit control
+  over SQL execution, predictable behavior, and transparent entity materialization.
+
+- **Metadata caching for entity materialization**  
+  Implemented centralized metadata caching to eliminate repeated reflection
+  during entity hydration. Reflection is now executed once per entity type,
+  with compiled delegates used in hot paths for optimal performance.
+
+- **Nested entity materialization support**  
+  Enhanced support for mapping nested entities from flattened SQL projections,
+  including conditional instantiation based on primary key presence and
+  recursive object graph construction.
+
+- **ExecuteNonQuery overloads**  
+  Added new `ExecuteNonQuery(string, object)` overloads with support for external
+  `DbTransaction` usage, improving transaction control and integration scenarios.
+
+### 🚀 Improved
+
+- **SqlWhereBuilder**  
+  Expanded the `SqlWhereBuilder` API with more expressive and flexible options
+  for constructing complex WHERE clauses while maintaining explicit SQL semantics.
+
+- **Entity mapping performance**  
+  Refactored internal mapping logic to remove reflection from runtime execution
+  paths, replacing it with cached metadata and compiled setters and factories.
+
+### 📝 Documentation
+
+- **README.md**  
+  Updated to reflect the current feature set and clarify Hydrix’s design goals,
+  usage patterns, and philosophy.
+
+- **ROADMAP.md**  
+  Added a roadmap outlining planned features and architectural directions
+  for future releases.
+
+### 🛠️ Maintenance
+
+- **FUNDING.yml**  
+  Added funding configuration to enable sponsorship and long-term project support.
+
+---
+
 ## [1.0.0] - 2025-12-17
 
 🎉 **Initial public release**
@@ -44,7 +97,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- (Planned) Metadata caching to reduce reflection overhead.
 - (Planned) Diagnostic helpers for SQL inspection and debugging.
 
 ### Changed
