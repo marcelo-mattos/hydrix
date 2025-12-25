@@ -95,7 +95,7 @@ namespace Hydrix.Orchestrator.Builders
             if (valid == null || valid.Count == 0)
                 return this;
 
-            var group = string.Join($"{ (isAndOr ? " OR " : " AND ") }", valid);
+            var group = string.Join($"{(isAndOr ? " OR " : " AND ")}", valid);
             var clause = $"{(isNot ? "NOT " : string.Empty)}({group})";
 
             if (isAndOr)

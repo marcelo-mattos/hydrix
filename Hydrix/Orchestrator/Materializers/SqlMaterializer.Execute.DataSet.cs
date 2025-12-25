@@ -55,10 +55,10 @@ namespace Hydrix.Orchestrator.Materializers
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">
-        /// <param name="transaction">The transaction to use for the command.</param>
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
+        /// <param name="transaction">The transaction to use for the command.</param>
         /// <returns>An System.Data.DataSet object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
