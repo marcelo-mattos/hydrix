@@ -73,21 +73,28 @@ namespace Hydrix.Test
             where = builder
                 .Clear()
                     .Where("1 = 1")
-                    .AndOrNotGroupIf(
+                    .AndOrGroupIf(
                         new[]
                         {
                             isActive.HasValue,
-                            startDate.HasValue,
-                            endDate.HasValue,
                             levels != null,
                             levels.Length > 0
                         },
                         new[]
                         {
                             "c.IsActive = @IsActive",
-                            "c.BirthDate >= @StartDate",
-                            "c.BirthDate <= @EndDate",
                             "c.Level IN (@Levels)"
+                        })
+                    .OrAndGroupIf(
+                        new[]
+                        {
+                            startDate.HasValue,
+                            endDate.HasValue,
+                        },
+                        new[]
+                        {
+                            "c.BirthDate >= @StartDate",
+                            "c.BirthDate <= @EndDate"
                         })
                 .Build();
 

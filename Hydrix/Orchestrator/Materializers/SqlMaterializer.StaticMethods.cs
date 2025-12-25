@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Mapping;
+using Hydrix.Orchestrator.Metadata;
+using Hydrix.Schemas;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Mappers;
-using Hydrix.Schemas;
 
 namespace Hydrix.Orchestrator.Materializers
 {
@@ -37,7 +38,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="dataReader"/> is <c>null</c>.
         /// </exception>
-        public static IList<TEntity> ConvertDataReaderToEntities<TEntity>(IDataReader dataReader)
+        public static IList<TEntity> ConvertDataReaderToEntities<TEntity>(
+            IDataReader dataReader)
             where TEntity : ISqlEntity, new()
         {
             if (dataReader == null)

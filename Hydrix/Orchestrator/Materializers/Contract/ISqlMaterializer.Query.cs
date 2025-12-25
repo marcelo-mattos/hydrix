@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Hydrix.Schemas;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using Hydrix.Schemas;
 
 namespace Hydrix.Orchestrator.Materializers.Contract
 {
@@ -55,6 +55,41 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
         /// </typeparam>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
+        /// </param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        IList<TEntity> Query<TEntity>(
+            string sql,
+            object parameters,
+            IDbTransaction transaction)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -72,6 +107,36 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </exception>
         IList<TEntity> Query<TEntity>(
             string sql)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        IList<TEntity> Query<TEntity>(
+            string sql,
+            IDbTransaction transaction)
             where TEntity : ISqlEntity, new();
 
         /// <summary>
@@ -123,6 +188,45 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
         /// </param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
+        /// </param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        IList<TEntity> Query<TEntity>(
+            CommandType commandType,
+            string sql,
+            IEnumerable<IDataParameter> parameters,
+            IDbTransaction transaction)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -141,6 +245,40 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IList<TEntity> Query<TEntity>(
             CommandType commandType,
             string sql)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        IList<TEntity> Query<TEntity>(
+            CommandType commandType,
+            string sql,
+            IDbTransaction transaction)
             where TEntity : ISqlEntity, new();
 
         /// <summary>
@@ -188,6 +326,11 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
         /// </typeparam>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
+        /// </param>
+        /// <param name="transaction">The transaction to use for the command.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -207,6 +350,72 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<IList<TEntity>> QueryAsync<TEntity>(
             string sql,
+            object parameters,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        Task<IList<TEntity>> QueryAsync<TEntity>(
+            string sql,
+            CancellationToken cancellationToken = default)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        Task<IList<TEntity>> QueryAsync<TEntity>(
+            string sql,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TEntity : ISqlEntity, new();
 
@@ -262,6 +471,11 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
         /// </param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
+        /// </param>
+        /// <param name="transaction">The transaction to use for the command.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -282,6 +496,80 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         Task<IList<TEntity>> QueryAsync<TEntity>(
             CommandType commandType,
             string sql,
+            IEnumerable<IDataParameter> parameters,
+            IDbTransaction transaction,
+            CancellationToken cancellationToken = default)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        Task<IList<TEntity>> QueryAsync<TEntity>(
+            CommandType commandType,
+            string sql,
+            CancellationToken cancellationToken = default)
+            where TEntity : ISqlEntity, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        Task<IList<TEntity>> QueryAsync<TEntity>(
+            CommandType commandType,
+            string sql,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TEntity : ISqlEntity, new();
 
@@ -334,6 +622,41 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <param name="sqlProcedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        IList<TEntity> Query<TEntity, TDataParameterDriver>(
+            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IDbTransaction transaction)
+            where TEntity : ISqlEntity, new()
+            where TDataParameterDriver : IDataParameter, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to
+        /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
+        /// access data sources.
+        /// </typeparam>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="sqlProcedure">
+        /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
+        /// </param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -353,6 +676,47 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
             ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            CancellationToken cancellationToken = default)
+            where TEntity : ISqlEntity, new()
+            where TDataParameterDriver : IDataParameter, new();
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the
+        /// System.Data.IDbCommand.Connection and builds an System.Data.DataSet. Then parse its
+        /// result into a ISqlEntity array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to
+        /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
+        /// access data sources.
+        /// </typeparam>
+        /// <typeparam name="TEntity">
+        /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
+        /// </typeparam>
+        /// <param name="sqlProcedure">
+        /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
+        /// </param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>An ISqlEntity array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="MissingMemberException">
+        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
+        Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
+            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TEntity : ISqlEntity, new()
             where TDataParameterDriver : IDataParameter, new();

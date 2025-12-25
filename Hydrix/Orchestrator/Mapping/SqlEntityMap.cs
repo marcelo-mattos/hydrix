@@ -1,5 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Adapters;
+using Hydrix.Orchestrator.Metadata;
 using Hydrix.Schemas;
 using System;
 using System.Collections.Concurrent;
@@ -7,7 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 
-namespace Hydrix.Orchestrator.Mappers
+namespace Hydrix.Orchestrator.Mapping
 {
     /// <summary>
     /// Represents the mapping definition of a nested SQL entity within a parent entity.
@@ -70,6 +71,16 @@ namespace Hydrix.Orchestrator.Mappers
         public SqlEntityAttribute Attribute { get; private set; }
 
         /// <summary>
+        /// Compiled factory delegate for nested entity instantiation.
+        /// </summary>
+        public Func<object> Factory { get; }
+
+        /// <summary>
+        /// Compiled setter delegate for assigning the nested entity.
+        /// </summary>
+        public Action<object, object> Setter { get; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SqlEntityMap"/> class.
         /// </summary>
         /// <param name="property">
@@ -91,6 +102,8 @@ namespace Hydrix.Orchestrator.Mappers
         {
             this.Property = property;
             this.Attribute = attribute;
+            this.Factory = SqlMetadataFactory.CreateFactory(property.PropertyType);
+            this.Setter = SqlMetadataFactory.CreateSetter(property);
         }
 
         /// <summary>
@@ -172,10 +185,9 @@ namespace Hydrix.Orchestrator.Mappers
 
             foreach (var field in metadata.Fields)
             {
-                string columnName = prefix +
-                    (string.IsNullOrWhiteSpace(field.Attribute.FieldName)
-                        ? field.Property.Name
-                        : field.Attribute.FieldName);
+                string columnName = string.IsNullOrWhiteSpace(field.Attribute.FieldName)
+                        ? $"{prefix}{field.Property.Name}"
+                        : $"{prefix}{field.Attribute.FieldName}";
 
                 int ordinal;
                 try
@@ -189,12 +201,12 @@ namespace Hydrix.Orchestrator.Mappers
 
                 if (record.IsDBNull(ordinal))
                 {
-                    field.Property.SetValue(entity, null);
+                    field.Setter(entity, null);
                     continue;
                 }
 
                 var value = record.GetValue(ordinal);
-                field.Property.SetValue(entity, ConvertValue(value, field.TargetType));
+                field.Setter(entity, ConvertValue(value, field.TargetType));
             }
 
             foreach (var nested in metadata.Entities)
@@ -219,8 +231,8 @@ namespace Hydrix.Orchestrator.Mappers
                         continue;
                 }
 
-                var nestedEntity = (ISqlEntity)Activator.CreateInstance(nested.Property.PropertyType);
-                nested.Property.SetValue(entity, nestedEntity);
+                var nestedEntity = (ISqlEntity)nested.Factory();
+                nested.Setter(entity, nestedEntity);
 
                 var nestedMetadata = entityMetadataCache.GetOrAdd(
                     nested.Property.PropertyType,

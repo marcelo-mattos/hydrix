@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Mapping;
+using Hydrix.Schemas;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hydrix.Attributes.Schemas;
-using Hydrix.Schemas;
 
-namespace Hydrix.Orchestrator.Mappers
+namespace Hydrix.Orchestrator.Metadata
 {
     /// <summary>
     /// Represents the cached metadata of a SQL-mapped entity type.
@@ -185,7 +186,7 @@ namespace Hydrix.Orchestrator.Mappers
                         .First()))
                 .ToList();
 
-            return new SqlEntityMetadata(
+            return SqlMetadataFactory.CreateEntity(
                 fields,
                 entities);
         }

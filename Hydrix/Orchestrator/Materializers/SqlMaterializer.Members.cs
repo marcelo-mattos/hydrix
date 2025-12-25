@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Hydrix.Orchestrator.Metadata;
+using System;
 using System.Collections.Concurrent;
 using System.Data;
-using Hydrix.Orchestrator.Mappers;
 
 namespace Hydrix.Orchestrator.Materializers
 {
