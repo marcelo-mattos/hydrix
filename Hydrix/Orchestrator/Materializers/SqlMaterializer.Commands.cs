@@ -393,7 +393,7 @@ namespace Hydrix.Orchestrator.Materializers
                         Value = property.GetValue(sqlProcedure) ?? DBNull.Value
                     };
 
-                    if (Enum.IsDefined(typeof(DbType), Convert.ToInt32(parameterAttribute.DbType)))
+                    if (Enum.IsDefined(typeof(DbType), (int)parameterAttribute.DbType))
                     {
                         dataParameter.DbType = parameterAttribute.DbType;
                     }
