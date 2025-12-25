@@ -241,7 +241,8 @@ namespace Hydrix.Orchestrator.Materializers
             using var command = (this as Contract.ISqlMaterializer)
                 .CreateCommand(
                     sql,
-                    parameters);
+                    parameters,
+                    transaction);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand

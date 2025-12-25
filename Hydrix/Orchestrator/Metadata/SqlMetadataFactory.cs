@@ -26,7 +26,7 @@ namespace Hydrix.Orchestrator.Metadata
                     attribute);
 
         /// <summary>
-        /// Creates metadata for of scalar SQL entity.
+        /// Creates metadata for a scalar SQL entity.
         /// </summary>
         public static SqlEntityMetadata CreateEntity(
             IReadOnlyList<SqlFieldMap> fields,

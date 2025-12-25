@@ -19,7 +19,19 @@
 
   <PropertyGroup>
     <PackageReleaseNotes>
-      - (1.1.0) Support for external transactions in SQL commands.
+      - (1.1.0) Features and Enhancements
+
+      - Minimal ORM Core:
+      Introduced a minimal ORM for .NET, empowering developers with full control over SQL execution. The design prioritizes performance, predictability, and transparent object hydration.
+
+      - SqlWhereBuilder Improvements:
+      Enhanced the `SqlWhereBuilder` with new options for flexible and expressive WHERE clause construction, enabling more advanced query scenarios.
+
+      - ExecuteNonQuery Overloads:
+      Added new `ExecuteNonQuery(string, object)` method overloads to support external `DbTransaction` parameterization, improving transaction management and integration with existing workflows.
+
+      - Nested Entity Mapping:
+      Refactored `SqlEntityMap` to provide more robust and efficient mapping of nested SQL entities, including improved primary key detection, entity instantiation, and value conversion logic.
     </PackageReleaseNotes>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
