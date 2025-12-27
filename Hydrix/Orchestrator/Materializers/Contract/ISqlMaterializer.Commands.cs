@@ -29,7 +29,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IDbCommand CreateCommand(
             string sql,
             object parameters,
-            IDbTransaction transaction = null);
+            IDbTransaction transaction);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
