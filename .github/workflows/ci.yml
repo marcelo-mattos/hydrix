@@ -9,35 +9,57 @@ jobs:
   build:
     name: dotnet-build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET Core 3.1
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '3.1.x'
 
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      - run: dotnet restore
+      - run: dotnet build --no-restore --configuration Release
 
   test:
     name: dotnet-test
     runs-on: ubuntu-latest
     needs: build
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET Core 3.1
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '3.1.x'
 
-      - name: Test
-        run: dotnet test --no-build --configuration Release
+      - run: dotnet test --no-build --configuration Release
+
+  sonar:
+    name: sonar-quality-gate
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '3.1.x'
+
+      - name: Install SonarScanner
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Sonar Begin
+        run: |
+          dotnet sonarscanner begin \
+            /k:"marcelo-mattos_hydrix" \
+            /o:"marcelo-mattos" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io"
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Sonar End
+        run: dotnet sonarscanner end \
+          /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
