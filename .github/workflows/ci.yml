@@ -57,15 +57,18 @@ jobs:
       - name: Sonar Begin
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
         run: |
           dotnet sonarscanner begin \
             /k:"marcelo-mattos_hydrix" \
             /o:"marcelo-mattos" \
             /d:sonar.login="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.pullrequest.key="${{ github.event.pull_request.number }}" \
-            /d:sonar.pullrequest.branch="${{ github.head_ref }}" \
-            /d:sonar.pullrequest.base="${{ github.base_ref }}"
+            /d:sonar.pullrequest.key="$PR_NUMBER" \
+            /d:sonar.pullrequest.branch="$PR_BRANCH" \
+            /d:sonar.pullrequest.base="$PR_BASE"
 
       - name: Build
         run: dotnet build --configuration Release
