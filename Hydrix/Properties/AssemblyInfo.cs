@@ -1,3 +1,3 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Hydrix.UnitTest")]
+[assembly: InternalsVisibleTo("Hydrix.UnitTests")]

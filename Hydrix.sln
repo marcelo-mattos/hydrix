@@ -5,7 +5,7 @@ VisualStudioVersion = 18.1.11304.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix", "Hydrix\Hydrix.csproj", "{8A944495-06FC-40E4-A790-759F0E4BE58C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.Test", "Hydrix.Test\Hydrix.Test.csproj", "{879E8EB5-FA9D-4B52-BB79-09AF8E670807}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.Tests", "Hydrix.Tests\Hydrix.Tests.csproj", "{879E8EB5-FA9D-4B52-BB79-09AF8E670807}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{33CFA06F-E3E5-4B3E-8E08-D125E67E4F8D}"
 	ProjectSection(SolutionItems) = preProject
@@ -18,7 +18,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ROADMAP.md = ROADMAP.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hydrix.UnitTest", "Hydrix.UnitTest\Hydrix.UnitTest.csproj", "{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hydrix.UnitTests", "Hydrix.UnitTests\Hydrix.UnitTests.csproj", "{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5FAA0D47-F8B6-474F-8D7E-C77E2303B3AD}"
+	ProjectSection(SolutionItems) = preProject
+		.github\FUNDING.yml = .github\FUNDING.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{1DF43F7A-639A-4D5D-9F42-7CE2421F7B0F}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\codeql.yml = .github\workflows\codeql.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +52,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5FAA0D47-F8B6-474F-8D7E-C77E2303B3AD} = {33CFA06F-E3E5-4B3E-8E08-D125E67E4F8D}
+		{1DF43F7A-639A-4D5D-9F42-7CE2421F7B0F} = {5FAA0D47-F8B6-474F-8D7E-C77E2303B3AD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {60B79B60-7A7A-431E-8479-B5BC8CB1C551}
