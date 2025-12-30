@@ -1,0 +1,55 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <SonarQubeExclude>true</SonarQubeExclude>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="3.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <MSBuildProjectExtensionsPath>..\obj\Hydrix.UnitTest\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\dbg\Hydrix.UnitTest\</OutputPath>
+    <BaseIntermediateOutputPath>..\obj\Hydrix.UnitTest\</BaseIntermediateOutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\dbg\Hydrix.Test\Hydrix.UnitTest.xml</DocumentationFile>
+    <NoWarn>NETSDK1138;NU1701</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <MSBuildProjectExtensionsPath>..\obj\Hydrix.UnitTest\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\bin\Hydrix.UnitTest\</OutputPath>
+    <BaseIntermediateOutputPath>..\obj\Hydrix.UnitTest\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>..\obj\Hydrix.UnitTest\</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\bin\Hydrix.Test\Hydrix.UnitTest.xml</DocumentationFile>
+    <NoWarn>NETSDK1138;NU1701</NoWarn>
+  </PropertyGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+  <ItemGroup>
+    <ProjectReference Include="..\Hydrix\Hydrix.csproj" />
+  </ItemGroup>
+
+</Project>

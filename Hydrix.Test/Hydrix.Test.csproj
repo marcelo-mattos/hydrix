@@ -4,15 +4,16 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <ApplicationIcon>Hydrix.ico</ApplicationIcon>
+    <SonarQubeExclude>true</SonarQubeExclude>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>    
-	<MSBuildProjectExtensionsPath>..\obj\Hydrix.Test\</MSBuildProjectExtensionsPath>
-	<OutputPath>..\dbg\Hydrix.Test\</OutputPath>
-	<BaseIntermediateOutputPath>..\obj\Hydrix.Test\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>..\obj\Hydrix.Test\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\dbg\Hydrix.Test\</OutputPath>
+    <BaseIntermediateOutputPath>..\obj\Hydrix.Test\</BaseIntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -22,10 +23,10 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-	<MSBuildProjectExtensionsPath>..\obj\Hydrix.Test\</MSBuildProjectExtensionsPath>
-	<OutputPath>..\bin\Hydrix.Test\</OutputPath>
+    <MSBuildProjectExtensionsPath>..\obj\Hydrix.Test\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\bin\Hydrix.Test\</OutputPath>
     <BaseIntermediateOutputPath>..\obj\Hydrix.Test\</BaseIntermediateOutputPath>
-	<IntermediateOutputPath>..\obj\Hydrix.Test\</IntermediateOutputPath>
+    <IntermediateOutputPath>..\obj\Hydrix.Test\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>

@@ -7,7 +7,7 @@ namespace Hydrix.Attributes.Schemas.Base
     /// columns; and is implemented by .NET Framework data providers that access data sources.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
-    public class SqlAttribute :
+    public abstract class SqlAttribute :
         Attribute, Contract.Base.ISqlAttribute
     { }
 }
