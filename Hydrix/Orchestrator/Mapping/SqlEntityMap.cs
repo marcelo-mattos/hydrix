@@ -183,6 +183,38 @@ namespace Hydrix.Orchestrator.Mapping
                 ? $"{string.Join(".", path)}."
                 : string.Empty;
 
+            SetEntityFields(
+                entity,
+                record,
+                metadata,
+                prefix);
+
+            SetEntityNestedEntities(
+                entity, 
+                record, 
+                metadata, 
+                path, 
+                entityMetadataCache, 
+                prefix);
+        }
+
+        /// <summary>
+        /// Populates the properties of the specified entity with values from the given data record, using the provided
+        /// metadata and optional column name prefix.
+        /// </summary>
+        /// <remarks>Only fields defined in the metadata and present in the data record are set. Fields
+        /// corresponding to missing columns or database null values are skipped or set to null, respectively.</remarks>
+        /// <param name="entity">The entity instance whose properties are to be set with values from the data record.</param>
+        /// <param name="record">The data record containing the values to assign to the entity's properties.</param>
+        /// <param name="metadata">The metadata describing the mapping between the entity's properties and the data record columns.</param>
+        /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record. Can be an empty
+        /// string if no prefix is required.</param>
+        private static void SetEntityFields(
+            ISqlEntity entity, 
+            IDataRecord record, 
+            SqlEntityMetadata metadata, 
+            String prefix)
+        {
             foreach (var field in metadata.Fields)
             {
                 string columnName = string.IsNullOrWhiteSpace(field.Attribute.FieldName)
@@ -208,7 +240,31 @@ namespace Hydrix.Orchestrator.Mapping
                 var value = record.GetValue(ordinal);
                 field.Setter(entity, ConvertValue(value, field.TargetType));
             }
+        }
 
+        /// <summary>
+        /// Populates the nested entity properties of the specified entity by extracting values from the provided data
+        /// record, using the given metadata and property path.
+        /// </summary>
+        /// <remarks>This method is intended for internal use when materializing entities from a data
+        /// record, and recursively sets all nested entities defined in the metadata. If a nested entity's primary key
+        /// column is missing or null in the data record, that nested entity is not set.</remarks>
+        /// <param name="entity">The entity whose nested entity properties are to be set. Must not be null.</param>
+        /// <param name="record">The data record containing the values to populate the nested entities. Must not be null.</param>
+        /// <param name="metadata">The metadata describing the structure and nested entities of the entity. Must not be null.</param>
+        /// <param name="path">The current property path used to track the nesting hierarchy. Must not be null.</param>
+        /// <param name="entityMetadataCache">A cache of entity metadata, keyed by entity type, used to avoid redundant metadata construction. Must not be
+        /// null.</param>
+        /// <param name="prefix">The prefix to apply to column names when accessing nested entity values in the data record. Can be an empty
+        /// string.</param>
+        private static void SetEntityNestedEntities(
+            ISqlEntity entity, 
+            IDataRecord record, 
+            SqlEntityMetadata metadata, 
+            IReadOnlyList<String> path, 
+            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache, 
+            String prefix)
+        {
             foreach (var nested in metadata.Entities)
             {
                 string primaryKeyColumn = string.IsNullOrWhiteSpace(nested.Attribute.PrimaryKey)

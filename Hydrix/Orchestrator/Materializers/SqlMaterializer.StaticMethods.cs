@@ -42,8 +42,14 @@ namespace Hydrix.Orchestrator.Materializers
             IDataReader dataReader)
             where TEntity : ISqlEntity, new()
         {
-            if (dataReader == null)
-                throw new ArgumentNullException(nameof(dataReader));
+            #if NET8_0_OR_GREATER
+                ArgumentNullException.ThrowIfNull(
+                    dataReader, 
+                    nameof(dataReader));
+            #else
+                if (dataReader == null)
+                    throw new ArgumentNullException(nameof(dataReader));
+            #endif
 
             var entities = new List<TEntity>();
 

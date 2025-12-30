@@ -130,8 +130,14 @@ namespace Hydrix.Orchestrator.Materializers
             Action<IDbCommand> parameterBinder,
             IDbTransaction transaction)
         {
-            if (IsDisposed)
-                throw new ObjectDisposedException(nameof(Contract.ISqlMaterializer));
+            #if NET8_0_OR_GREATER
+                ObjectDisposedException.ThrowIf(
+                    IsDisposed, 
+                    nameof(Contract.ISqlMaterializer));
+            #else
+                if (IsDisposed)
+                    throw new ObjectDisposedException(nameof(Contract.ISqlMaterializer));
+            #endif
 
             if (DbConnection.State != ConnectionState.Open)
                 throw new InvalidOperationException("Database connection is not open.");
@@ -345,14 +351,24 @@ namespace Hydrix.Orchestrator.Materializers
             ISqlProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
         {
-            if (this.IsDisposed)
-                throw new ObjectDisposedException("The connection has been disposed.");
+            #if NET8_0_OR_GREATER
+                ObjectDisposedException.ThrowIf(
+                    IsDisposed, 
+                    "The connection has been disposed.");
+
+                ArgumentNullException.ThrowIfNull(
+                    sqlProcedure, 
+                    nameof(sqlProcedure));
+            #else
+                if (this.IsDisposed)
+                    throw new ObjectDisposedException("The connection has been disposed.");
+
+                if (sqlProcedure == null)
+                    throw new ArgumentNullException(nameof(sqlProcedure));
+            #endif
 
             if (DbConnection.State != ConnectionState.Open)
                 throw new InvalidOperationException("Database connection is not open.");
-
-            if (sqlProcedure == null)
-                throw new ArgumentNullException(nameof(sqlProcedure));
 
             var procedureType = sqlProcedure.GetType();
 

@@ -107,6 +107,46 @@ namespace Hydrix.Orchestrator.Builders
         }
 
         /// <summary>
+        /// Adds an internal grouped SQL expression composed by a nested
+        /// <see cref="SqlWhereBuilder"/> instance.
+        ///
+        /// The resulting SQL is enclosed in parentheses and may optionally be:
+        /// - negated using the NOT operator;
+        /// - combined using either AND or OR in relation to the current builder state.
+        ///
+        /// This method is the core implementation behind public group-related
+        /// fluent methods and ensures correct logical grouping and operator placement.
+        /// </summary>
+        /// <param name="groupBuilder">
+        /// An action that receives a new <see cref="SqlWhereBuilder"/> instance
+        /// used to define the grouped SQL expression.
+        /// </param>
+        /// <param name="isNot">
+        /// Indicates whether the grouped expression should be negated using NOT.
+        /// </param>
+        /// <param name="isOr">
+        /// Indicates whether the grouped expression should be combined using OR.
+        /// — When false, the AND operator is used.
+        /// </param>
+        /// <returns>
+        /// The current <see cref="SqlWhereBuilder"/> instance.
+        /// </returns>
+        private SqlWhereBuilder AddGroup(
+            Action<SqlWhereBuilder> groupBuilder,
+            bool isNot = false,
+            bool isOr = false)
+        {
+            var group = new SqlWhereBuilder();
+            groupBuilder(group);
+
+            var sql = group.BuildInternal();
+            if (!string.IsNullOrEmpty(sql))
+                Add($"{(isNot ? "NOT " : string.Empty)}({sql})", isOr);
+
+            return this;
+        }
+
+        /// <summary>
         /// Adds an internal grouped AND expression prefixed with OR.
         /// This method is responsible for composing expressions in the format:
         ///
@@ -167,45 +207,5 @@ namespace Hydrix.Orchestrator.Builders
                 isNot,
                 false,
                 conditions);
-
-        /// <summary>
-        /// Adds an internal grouped SQL expression composed by a nested
-        /// <see cref="SqlWhereBuilder"/> instance.
-        ///
-        /// The resulting SQL is enclosed in parentheses and may optionally be:
-        /// - negated using the NOT operator;
-        /// - combined using either AND or OR in relation to the current builder state.
-        ///
-        /// This method is the core implementation behind public group-related
-        /// fluent methods and ensures correct logical grouping and operator placement.
-        /// </summary>
-        /// <param name="groupBuilder">
-        /// An action that receives a new <see cref="SqlWhereBuilder"/> instance
-        /// used to define the grouped SQL expression.
-        /// </param>
-        /// <param name="isNot">
-        /// Indicates whether the grouped expression should be negated using NOT.
-        /// </param>
-        /// <param name="isOr">
-        /// Indicates whether the grouped expression should be combined using OR.
-        /// — When false, the AND operator is used.
-        /// </param>
-        /// <returns>
-        /// The current <see cref="SqlWhereBuilder"/> instance.
-        /// </returns>
-        private SqlWhereBuilder AddGroup(
-            Action<SqlWhereBuilder> groupBuilder,
-            bool isNot = false,
-            bool isOr = false)
-        {
-            var group = new SqlWhereBuilder();
-            groupBuilder(group);
-
-            var sql = group.BuildInternal();
-            if (!string.IsNullOrEmpty(sql))
-                Add($"{(isNot ? "NOT " : string.Empty)}({sql})", isOr);
-
-            return this;
-        }
     }
 }
