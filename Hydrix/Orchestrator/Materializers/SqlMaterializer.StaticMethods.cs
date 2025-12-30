@@ -44,8 +44,7 @@ namespace Hydrix.Orchestrator.Materializers
         {
             #if NET8_0_OR_GREATER
                 ArgumentNullException.ThrowIfNull(
-                    dataReader, 
-                    nameof(dataReader));
+                    dataReader);
             #else
                 if (dataReader == null)
                     throw new ArgumentNullException(nameof(dataReader));

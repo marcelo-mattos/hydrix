@@ -70,6 +70,14 @@ namespace Hydrix.Orchestrator.Mapping
         /// </summary>
         public Action<object, object> Setter { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the SqlFieldMap class using the specified property, SQL field attribute, and
+        /// target type.
+        /// </summary>
+        /// <param name="property">The property to be mapped to a SQL field. Cannot be null.</param>
+        /// <param name="attribute">The SQL field attribute that provides mapping metadata for the property. Cannot be null.</param>
+        /// <param name="targetType">The target type that the property value will be converted to when mapping to or from the SQL field. Cannot
+        /// be null.</param>
         public SqlFieldMap(
             PropertyInfo property,
             SqlFieldAttribute attribute,
