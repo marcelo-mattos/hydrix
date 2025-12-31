@@ -15,10 +15,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            '3.1.x'
-            '6.0.x'
-            '8.0.x'
-            '10.0.x'
+            10.0.x
+            8.0.x
+            6.0.x
+            3.1.x
 
       - run: dotnet restore
       - run: |
@@ -36,10 +36,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            '3.1.x'
-            '6.0.x'
-            '8.0.x'
-            '10.0.x'
+            10.0.x
+            8.0.x
+            6.0.x
+            3.1.x
 
       - run: |
           dotnet test \
@@ -65,6 +65,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
+            10.0.x
             8.0.x
             6.0.x
             3.1.x
