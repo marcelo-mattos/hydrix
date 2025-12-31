@@ -17,7 +17,10 @@ jobs:
           dotnet-version: '3.1.x'
 
       - run: dotnet restore
-      - run: dotnet build --no-restore --configuration Release
+      - run: |
+          dotnet build \
+            --no-restore \
+            --configuration Release
 
   test:
     name: dotnet-test
@@ -30,7 +33,10 @@ jobs:
         with:
           dotnet-version: '3.1.x'
 
-      - run: dotnet test --no-build --configuration Release
+      - run: |
+          dotnet test \
+            --no-build \
+            --configuration Release
 
   sonar:
     name: sonar-quality-gate
@@ -66,12 +72,19 @@ jobs:
             /o:"marcelo-mattos" \
             /d:sonar.login="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.cobertura.reportsPaths="**/TestResults/**/coverage.cobertura.xml" \
             /d:sonar.pullrequest.key="$PR_NUMBER" \
             /d:sonar.pullrequest.branch="$PR_BRANCH" \
             /d:sonar.pullrequest.base="$PR_BASE"
 
       - name: Build
         run: dotnet build --configuration Release
+
+      - name: Test with coverage
+        run: |
+          dotnet test \
+            --configuration Release \
+            --collect:"XPlat Code Coverage"
 
       - name: Sonar End
         env:
