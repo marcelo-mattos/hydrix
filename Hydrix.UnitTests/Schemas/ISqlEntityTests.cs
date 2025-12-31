@@ -15,8 +15,8 @@ namespace Hydrix.UnitTests.Schemas
         /// </summary>
         /// <remarks>This class is intended for scenarios where a non-functional or mock ISqlEntity is
         /// required, such as testing or stubbing. It should not be used in production code.</remarks>
-        private class DummySqlEntity : 
-            ISqlEntity 
+        private class DummySqlEntity :
+            ISqlEntity
         { }
 
         /// <summary>

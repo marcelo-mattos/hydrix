@@ -1,6 +1,4 @@
-﻿using Hydrix.Orchestrator.Builders;
-using System;
-using Xunit;
+﻿using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Builders
 {
@@ -10,18 +8,6 @@ namespace Hydrix.UnitTests.Orchestrator.Builders
     /// </summary>
     public partial class SqlWhereBuilderTests
     {
-        /// <summary>
-        /// Builds a SQL WHERE clause by applying the specified configuration action to a SqlWhereBuilder instance.
-        /// </summary>
-        /// <param name="builderAction">An action that configures the SqlWhereBuilder to define the conditions for the WHERE clause. Cannot be null.</param>
-        /// <returns>A string containing the generated SQL WHERE clause based on the configured conditions.</returns>
-        private static string BuildWhere(Action<SqlWhereBuilder> builderAction)
-        {
-            var builder = SqlWhereBuilder.Create();
-            builderAction(builder);
-            return builder.Build();
-        }
-
         /// <summary>
         /// Verifies that using a single condition within an AND group generates the correct grouped SQL WHERE clause.
         /// </summary>

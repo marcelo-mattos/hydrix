@@ -41,7 +41,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas
             Assert.Equal("Users", attr.Name);
             Assert.Equal("UserId", attr.PrimaryKey);
         }
-        
+
         /// <summary>
         /// Verifies that the SqlEntityAttribute type is decorated with the correct AttributeUsage settings.
         /// </summary>

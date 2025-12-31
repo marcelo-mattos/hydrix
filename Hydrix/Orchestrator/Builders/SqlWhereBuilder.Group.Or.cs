@@ -27,6 +27,7 @@ namespace Hydrix.Orchestrator.Builders
             Action<SqlWhereBuilder> groupBuilder)
             => AddGroup(
                 groupBuilder,
+                isNot: false,
                 isOr: true);
 
         /// <summary>

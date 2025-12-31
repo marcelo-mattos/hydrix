@@ -141,7 +141,9 @@ namespace Hydrix.Orchestrator.Builders
 
             var sql = group.BuildInternal();
             if (!string.IsNullOrEmpty(sql))
-                Add($"{(isNot ? "NOT " : string.Empty)}({sql})", isOr);
+                Add($"({sql})",
+                    isNot,
+                    isOr);
 
             return this;
         }

@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Hydrix.Attributes.Parameters.Contract;
+using System;
 using System.Data;
 using Xunit;
-using Hydrix.Attributes.Parameters.Contract;
 
 namespace Hydrix.UnitTests.Attributes.Parameters.Contract
 {
@@ -18,7 +18,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters.Contract
         /// Represents metadata for a SQL parameter, including its name, database type, and direction, for use in
         /// testing scenarios.
         /// </summary>
-        private class TestSqlParameterAttribute : 
+        private class TestSqlParameterAttribute :
             ISqlParameterAttribute
         {
             /// <summary>
@@ -50,8 +50,8 @@ namespace Hydrix.UnitTests.Attributes.Parameters.Contract
             /// <exception cref="ArgumentOutOfRangeException">Thrown if dbType is not a defined value of the DbType enumeration.</exception>
             /// <exception cref="ArgumentException">Thrown if direction is not a defined value of the ParameterDirection enumeration.</exception>
             public TestSqlParameterAttribute(
-                string parameterName, 
-                DbType dbType, 
+                string parameterName,
+                DbType dbType,
                 ParameterDirection direction)
             {
                 ParameterName = parameterName;
@@ -59,7 +59,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters.Contract
                 if (!Enum.IsDefined(typeof(DbType), dbType))
                     throw new ArgumentOutOfRangeException(nameof(dbType));
                 DbType = dbType;
-                
+
                 if (!Enum.IsDefined(typeof(ParameterDirection), direction))
                     throw new ArgumentException(nameof(direction));
                 Direction = direction;

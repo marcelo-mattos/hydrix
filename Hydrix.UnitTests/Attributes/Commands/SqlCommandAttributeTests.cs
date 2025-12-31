@@ -10,7 +10,7 @@ namespace Hydrix.UnitTests.Attributes.Commands
     /// <remarks>Use this attribute to associate a specific SQL command with a test method or class. This is
     /// typically used in scenarios where tests require execution of predefined SQL statements, such as integration
     /// tests against a database. Inherits behavior from SqlCommandAttribute.</remarks>
-    sealed class TestSqlCommandAttribute  : 
+    internal sealed class TestSqlCommandAttribute :
         SqlCommandAttribute
     {
         /// <summary>
@@ -20,10 +20,10 @@ namespace Hydrix.UnitTests.Attributes.Commands
         /// <param name="commandType">The type of SQL command to execute, such as Text, StoredProcedure, or TableDirect.</param>
         /// <param name="commandText">The text of the SQL command to execute. Cannot be null.</param>
         public TestSqlCommandAttribute(
-            CommandType commandType, 
-            string commandText) : 
+            CommandType commandType,
+            string commandText) :
             base(
-                commandType, 
+                commandType,
                 commandText)
         { }
     }
@@ -53,7 +53,7 @@ namespace Hydrix.UnitTests.Attributes.Commands
             Assert.Equal(expectedType, attr.CommandType);
             Assert.Equal(expectedText, attr.CommandText);
         }
-        
+
         /// <summary>
         /// Verifies that the constructor of TestSqlCommandAttribute allows an empty command text without throwing an
         /// exception.

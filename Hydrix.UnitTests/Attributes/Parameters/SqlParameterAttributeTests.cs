@@ -39,7 +39,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters
             Assert.Equal(DbType.DateTime, attr.DbType);
             Assert.Equal(ParameterDirection.Output, attr.Direction);
         }
-        
+
         /// <summary>
         /// Verifies that the SqlParameterAttribute constructor allows an empty parameter name without throwing an
         /// exception.

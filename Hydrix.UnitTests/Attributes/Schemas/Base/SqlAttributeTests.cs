@@ -11,14 +11,15 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Base
     /// <remarks>Apply this attribute to test methods or classes to indicate that they require a SQL database
     /// context. This can be used by test frameworks or infrastructure to set up and tear down database resources as
     /// needed.</remarks>
-    sealed class TestSqlAttribute : 
-        SqlAttribute { }
+    internal sealed class TestSqlAttribute :
+        SqlAttribute
+    { }
 
     /// <summary>
     /// Represents a test class that is associated with the TestSql attribute for use in SQL-related testing scenarios.
     /// </summary>
     [TestSql]
-    class TestClassWithAttribute
+    internal class TestClassWithAttribute
     {
         /// <summary>
         /// Gets or sets the test value used for SQL-related operations.
@@ -31,8 +32,8 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Base
     /// Represents a class that derives from TestClassWithAttribute, providing additional functionality or
     /// specialization.
     /// </summary>
-    class Derived : 
-        TestClassWithAttribute 
+    internal class Derived :
+        TestClassWithAttribute
     { }
 
     /// <summary>

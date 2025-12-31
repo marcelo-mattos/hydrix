@@ -22,6 +22,7 @@ namespace Hydrix.Orchestrator.Builders
         public SqlWhereBuilder Or(
             string condition)
             => Add(condition,
+                isNot: false,
                 isOr: true);
 
         /// <summary>
@@ -48,6 +49,7 @@ namespace Hydrix.Orchestrator.Builders
         {
             if (predicate)
                 Add(condition,
+                    isNot: false,
                     isOr: true);
 
             return this;

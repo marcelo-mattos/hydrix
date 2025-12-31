@@ -9,7 +9,7 @@ namespace Hydrix.UnitTests.Attributes.Commands.Contract
     /// Specifies a SQL command and its type for use in test scenarios. Intended for use as an attribute to associate a
     /// SQL command with a test method or class.
     /// </summary>
-    internal class TestSqlCommandAttribute : 
+    internal class TestSqlCommandAttribute :
         SqlCommandAttribute
     {
         /// <summary>
@@ -19,10 +19,10 @@ namespace Hydrix.UnitTests.Attributes.Commands.Contract
         /// <param name="commandType">The type of SQL command to execute, such as Text, StoredProcedure, or TableDirect.</param>
         /// <param name="commandText">The SQL command text or stored procedure name to be executed. Cannot be null.</param>
         public TestSqlCommandAttribute(
-            CommandType commandType, 
+            CommandType commandType,
             string commandText) :
             base(
-                commandType, 
+                commandType,
                 commandText)
         { }
     }
@@ -61,7 +61,7 @@ namespace Hydrix.UnitTests.Attributes.Commands.Contract
             var attribute = new TestSqlCommandAttribute(CommandType.Text, expected);
             Assert.Equal(expected, attribute.CommandText);
         }
-        
+
         /// <summary>
         /// Verifies that the TestSqlCommandAttribute class implements the ISqlCommandAttribute interface.
         /// </summary>

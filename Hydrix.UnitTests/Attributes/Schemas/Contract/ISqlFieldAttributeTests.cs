@@ -41,7 +41,8 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         /// <summary>
         /// Represents a placeholder implementation of the ISqlFieldAttribute interface for internal use.
         /// </summary>
-        private class DummySqlFieldAttribute : ISqlFieldAttribute { }
+        private class DummySqlFieldAttribute : ISqlFieldAttribute
+        { }
 
         /// <summary>
         /// Verifies that the ISqlFieldAttribute interface can be implemented by a custom class.

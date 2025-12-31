@@ -190,11 +190,11 @@ namespace Hydrix.Orchestrator.Mapping
                 prefix);
 
             SetEntityNestedEntities(
-                entity, 
-                record, 
-                metadata, 
-                path, 
-                entityMetadataCache, 
+                entity,
+                record,
+                metadata,
+                path,
+                entityMetadataCache,
                 prefix);
         }
 
@@ -210,9 +210,9 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record. Can be an empty
         /// string if no prefix is required.</param>
         private static void SetEntityFields(
-            ISqlEntity entity, 
-            IDataRecord record, 
-            SqlEntityMetadata metadata, 
+            ISqlEntity entity,
+            IDataRecord record,
+            SqlEntityMetadata metadata,
             String prefix)
         {
             foreach (var field in metadata.Fields)
@@ -258,11 +258,11 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="prefix">The prefix to apply to column names when accessing nested entity values in the data record. Can be an empty
         /// string.</param>
         private static void SetEntityNestedEntities(
-            ISqlEntity entity, 
-            IDataRecord record, 
-            SqlEntityMetadata metadata, 
-            IReadOnlyList<String> path, 
-            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache, 
+            ISqlEntity entity,
+            IDataRecord record,
+            SqlEntityMetadata metadata,
+            IReadOnlyList<String> path,
+            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache,
             String prefix)
         {
             foreach (var nested in metadata.Entities)

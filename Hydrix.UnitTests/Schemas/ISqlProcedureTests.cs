@@ -65,7 +65,7 @@ namespace Hydrix.UnitTests.Schemas
     /// <remarks>This class is intended for testing or demonstration purposes and does not provide actual
     /// database functionality. It implements the ISqlProcedure interface using the DummyParameter type
     /// parameter.</remarks>
-    public class DummySqlProcedure : 
+    public class DummySqlProcedure :
         ISqlProcedure<DummyParameter>
     { }
 
@@ -77,7 +77,6 @@ namespace Hydrix.UnitTests.Schemas
     /// xUnit testing framework.</remarks>
     public class ISqlProcedureTestsImpl
     {
-
         /// <summary>
         /// Verifies that a DummySqlProcedure instance implements the ISqlProcedure interface with DummyParameter as the
         /// parameter type.
