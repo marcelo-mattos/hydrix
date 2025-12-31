@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="3.1.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="ReportGenerator" Version="5.5.1" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
       <PrivateAssets>all</PrivateAssets>
@@ -25,33 +26,39 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <MSBuildProjectExtensionsPath>..\obj\Hydrix.UnitTests\</MSBuildProjectExtensionsPath>
-    <OutputPath>..\dbg\Hydrix.UnitTests\</OutputPath>
-    <BaseIntermediateOutputPath>..\obj\Hydrix.UnitTests\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix.UnitTests\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\dbg\Hydrix.UnitTests\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix.UnitTests\</BaseIntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\dbg\Hydrix.UnitTests\Hydrix.UnitTests.xml</DocumentationFile>
+    <DocumentationFile>..\..\dbg\Hydrix.UnitTests\Hydrix.UnitTests.xml</DocumentationFile>
     <NoWarn>NETSDK1138;NU1701</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <MSBuildProjectExtensionsPath>..\obj\Hydrix.UnitTests\</MSBuildProjectExtensionsPath>
-    <OutputPath>..\bin\Hydrix.UnitTests\</OutputPath>
-    <BaseIntermediateOutputPath>..\obj\Hydrix.UnitTests\</BaseIntermediateOutputPath>
-    <IntermediateOutputPath>..\obj\Hydrix.UnitTests\</IntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix.UnitTests\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\bin\Hydrix.UnitTests\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix.UnitTests\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>..\..\obj\Hydrix.UnitTests\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\bin\Hydrix.UnitTests\Hydrix.UnitTests.xml</DocumentationFile>
+    <DocumentationFile>..\..\bin\Hydrix.UnitTests\Hydrix.UnitTests.xml</DocumentationFile>
     <NoWarn>NETSDK1138;NU1701</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Hydrix\Hydrix.csproj" />
+  </ItemGroup>
 
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>
-    <ProjectReference Include="..\Hydrix\Hydrix.csproj" />
+    <Compile Remove="TestResults\**" />
+    <EmbeddedResource Remove="TestResults\**" />
+    <None Remove="TestResults\**" />
   </ItemGroup>
 
 </Project>

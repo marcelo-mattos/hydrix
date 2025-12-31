@@ -82,7 +82,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// and a list of parameters.
         /// </summary>
         /// <remarks>This unit test ensures that the ExecuteDataSet method correctly processes SQL command
-        /// text and parameters, and returns a non-null DataSet as expected. It uses a mock implementation to simulate
+        /// text and parameters and returns a non-null DataSet as expected. It uses a mock implementation to simulate
         /// the method's behavior.</remarks>
         [Fact]
         public void ExecuteDataSet_WithCommandTypeSqlAndParameters_ReturnsDataSet()
@@ -161,8 +161,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// non-null DataSet.
         /// </summary>
         /// <remarks>This is a unit test that ensures the ExecuteDataSetAsync method correctly handles SQL
-        /// parameters and transactions, and returns a valid DataSet instance. The test uses mocked dependencies to
-        /// isolate the behavior under test.</remarks>
+        /// parameters and transactions and returns a valid DataSet instance. The test uses mocked dependencies to
+        /// isolate the behavior under the test.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
         public async Task ExecuteDataSetAsync_WithSqlParametersAndTransaction_ReturnsDataSet()

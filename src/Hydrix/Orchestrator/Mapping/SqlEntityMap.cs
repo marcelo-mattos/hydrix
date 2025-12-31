@@ -261,13 +261,13 @@ namespace Hydrix.Orchestrator.Mapping
             ISqlEntity entity,
             IDataRecord record,
             SqlEntityMetadata metadata,
-            IReadOnlyList<String> path,
+            IReadOnlyList<string> path,
             ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache,
-            String prefix)
+            string prefix)
         {
             foreach (var nested in metadata.Entities)
             {
-                string primaryKeyColumn = string.IsNullOrWhiteSpace(nested.Attribute.PrimaryKey)
+                var primaryKeyColumn = string.IsNullOrWhiteSpace(nested.Attribute.PrimaryKey)
                     ? null
                     : $"{prefix}{nested.Property.Name}.{nested.Attribute.PrimaryKey}";
 

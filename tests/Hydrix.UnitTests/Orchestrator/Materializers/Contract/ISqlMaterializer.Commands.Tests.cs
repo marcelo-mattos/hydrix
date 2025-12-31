@@ -33,7 +33,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         }
 
         /// <summary>
-        /// Verifies that the CreateCommand method is called with the specified SQL statement and parameters, and
+        /// Verifies that the CreateCommand method is called with the specified SQL statement and parameters and
         /// returns a non-null command instance.
         /// </summary>
         /// <remarks>This test ensures that the ISqlMaterializer.CreateCommand method correctly handles
@@ -83,7 +83,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
 
         /// <summary>
         /// Verifies that the generic CreateCommand method of ISqlMaterializer is called with a valid ISqlProcedure
-        /// implementation using a concrete data parameter type, and returns a non-null IDbCommand instance.
+        /// implementation using a concrete data parameter type and returns a non-null IDbCommand instance.
         /// </summary>
         /// <remarks>
         /// This test uses SqlParameter as the concrete type for TDataParameterDriver to satisfy the generic constraint.

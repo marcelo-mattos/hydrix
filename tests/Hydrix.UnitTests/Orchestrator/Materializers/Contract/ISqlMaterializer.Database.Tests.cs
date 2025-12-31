@@ -17,7 +17,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
     public partial class ISqlMaterializerTests
     {
         /// <summary>
-        /// Mock instance of ISqlMaterializer for testing purposes.
+        /// Mock the instance of ISqlMaterializer for testing purposes.
         /// </summary>
         private readonly Mock<ISqlMaterializer> _materializerMock;
 
@@ -250,7 +250,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// <summary>
         /// Verifies that calling CommitTransaction when no transaction is active throws an InvalidOperationException.
         /// </summary>
-        /// <remarks>This test ensures that the ISqlMaterializer implementation enforces correct
+        /// <remarks>This test ensures that the ISqlMaterializer implementation enforces the correct
         /// transaction state by throwing an exception if CommitTransaction is called without an active
         /// transaction.</remarks>
         [Fact]

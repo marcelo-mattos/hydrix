@@ -53,26 +53,26 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
     <Optimize>false</Optimize>    
-    <MSBuildProjectExtensionsPath>..\obj\Hydrix\</MSBuildProjectExtensionsPath>
-    <OutputPath>..\dbg\Hydrix\</OutputPath>
-    <BaseIntermediateOutputPath>..\obj\Hydrix\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\dbg\Hydrix\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix\</BaseIntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\dbg\Hydrix\Hydrix.xml</DocumentationFile>
+    <DocumentationFile>..\..\dbg\Hydrix\Hydrix.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
     <Optimize>true</Optimize>
- 	  <MSBuildProjectExtensionsPath>..\obj\Hydrix\</MSBuildProjectExtensionsPath>
-    <OutputPath>..\bin\Hydrix\</OutputPath>
-    <BaseIntermediateOutputPath>..\obj\Hydrix\</BaseIntermediateOutputPath>
-    <IntermediateOutputPath>..\obj\Hydrix\</IntermediateOutputPath>
+ 	  <MSBuildProjectExtensionsPath>..\..\obj\Hydrix\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\bin\Hydrix\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>..\..\obj\Hydrix\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\bin\Hydrix\Hydrix.xml</DocumentationFile>
+    <DocumentationFile>..\..\bin\Hydrix\Hydrix.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0|AnyCPU'">
     <NoWarn>NETSDK1138</NoWarn>
@@ -99,9 +99,9 @@
     <NoWarn>NETSDK1138</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
-    <None Include="..\NOTICE" Pack="true" PackagePath="\" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\..\NOTICE" Pack="true" PackagePath="\" />
     <None Include="..\Hydrix.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
