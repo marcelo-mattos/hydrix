@@ -14,7 +14,11 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '3.1.x'
+          dotnet-version: |
+            '3.1.x'
+            '6.0.x'
+            '8.0.x'
+            '10.0.x'
 
       - run: dotnet restore
       - run: |
@@ -31,7 +35,11 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '3.1.x'
+          dotnet-version: |
+            '3.1.x'
+            '6.0.x'
+            '8.0.x'
+            '10.0.x'
 
       - run: |
           dotnet test \
@@ -53,9 +61,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v4
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '3.1.x'
+          dotnet-version: |
+            8.0.x
+            6.0.x
+            3.1.x
 
       - name: Install SonarScanner
         run: dotnet tool install --global dotnet-sonarscanner
@@ -83,6 +95,7 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test \
+            --no-build \
             --configuration Release \
             --collect:"XPlat Code Coverage"
 

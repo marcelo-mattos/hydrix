@@ -171,9 +171,12 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var row = new DataTable().NewRow();
             var cache = new ConcurrentDictionary<Type, SqlEntityMetadata>();
 
-            // Act & Assert
+            // Act
             // Should not throw (no-op, as DataRowDataRecordAdapter is not mocked)
             SqlEntityMap.SetEntity(entity, row, metadata, new List<string>(), cache);
+
+            // Assert
+            Assert.NotNull(entity);
         }
 
         /// <summary>

@@ -127,8 +127,7 @@ namespace Hydrix.Orchestrator.Materializers
                 {
                     Property = p,
                     Attribute = (SqlFieldAttribute)p
-                        .GetCustomAttributes(typeof(SqlFieldAttribute), false)
-                        .First()
+                        .GetCustomAttributes(typeof(SqlFieldAttribute), false)[0]
                 })
                 .ToList();
 
@@ -210,8 +209,7 @@ namespace Hydrix.Orchestrator.Materializers
                 .GetProperties()
                 .Where(property => property
                     .GetCustomAttributes(typeof(SqlFieldAttribute), false)
-                    .Where(attribute => attribute.GetType() == typeof(SqlFieldAttribute))
-                    .Any())
+                    .Any(attribute => attribute is SqlFieldAttribute))
                 .ToArray();
 
             return properties.Length > 0;

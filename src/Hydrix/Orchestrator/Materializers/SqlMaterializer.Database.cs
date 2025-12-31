@@ -52,7 +52,7 @@ namespace Hydrix.Orchestrator.Materializers
 
             lock (this._lockTransaction)
             {
-                if (!(null == this.DbTransaction))
+                if (null != this.DbTransaction)
                     throw new InvalidOperationException("There is another active transaction.");
 
                 lock (this._lockConnection)
