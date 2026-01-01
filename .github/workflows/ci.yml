@@ -28,15 +28,14 @@ jobs:
 
   test:
     name: dotnet-test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: build
+
+    container:
+      image: mcr.microsoft.com/dotnet/core/sdk:3.1
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '3.1.x'
 
       - name: Test netcoreapp3.1 with coverage
         run: |
