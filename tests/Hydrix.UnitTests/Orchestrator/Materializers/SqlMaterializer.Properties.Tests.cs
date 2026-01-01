@@ -1,9 +1,9 @@
 ﻿using Hydrix.Orchestrator.Materializers;
+using Moq;
 using System;
 using System.Data;
 using System.Reflection;
 using Xunit;
-using Moq;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers
 {

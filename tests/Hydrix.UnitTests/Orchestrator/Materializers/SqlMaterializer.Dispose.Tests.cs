@@ -157,6 +157,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// </summary>
             public override void RollbackTransaction()
             {
+                base.RollbackTransaction();
                 RollbackCalled = true;
             }
 
@@ -168,6 +169,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// derived class to provide custom close behavior.</remarks>
             public override void CloseConnection()
             {
+                base.CloseConnection();
                 CloseCalled = true;
             }
 
@@ -182,6 +184,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
                 => typeof(SqlMaterializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, null);
 
             /// <summary>
+            /// Sets the database connection to be used by this instance.
+            /// </summary>
+            /// <remarks>This method is intended for advanced scenarios where direct control over the
+            /// underlying database connection is required. Changing the connection may affect the state of ongoing
+            /// operations.</remarks>
+            /// <param name="conn">The database connection to associate with this instance. Cannot be null.</param>
+            public void SetDbConnection(IDbConnection conn)
+                => typeof(SqlMaterializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, conn);
+
+            /// <summary>
+            /// Associates the specified database transaction with the current materializer instance.
+            /// </summary>
+            /// <remarks>Use this method to ensure that database operations performed by this
+            /// materializer participate in the specified transaction. The transaction must be compatible with the
+            /// underlying database connection.</remarks>
+            /// <param name="tran">The database transaction to associate with this materializer. Can be null to clear the current
+            /// transaction.</param>
+            public void SetDbTransaction(IDbTransaction tran)
+                => typeof(SqlMaterializer).GetProperty("DbTransaction", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, tran);
+
+            /// <summary>
             /// Sets the disposed state of the current instance.
             /// </summary>
             /// <remarks>This method is intended for advanced scenarios where manual control of the
@@ -189,7 +212,17 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// leaks.</remarks>
             /// <param name="value">true to mark the instance as disposed; otherwise, false.</param>
             public void SetDisposed(bool value)
-                => typeof(SqlMaterializer).GetProperty("IsDisposed", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, value);
+                => typeof(SqlMaterializer).GetProperty("IsDisposed")?.SetValue(this, value);
+
+            /// <summary>
+            /// Sets the disposing state of the current instance.
+            /// </summary>
+            /// <remarks>This method is intended for advanced scenarios where manual control of the
+            /// disposing state is required. Changing the disposing state may affect resource cleanup and object
+            /// lifecycle management.</remarks>
+            /// <param name="value">true to indicate that the instance is disposing; otherwise, false.</param>
+            public void SetDisposing(bool value)
+                => typeof(SqlMaterializer).GetProperty("IsDisposing")?.SetValue(this, value);
         }
 
         /// <summary>

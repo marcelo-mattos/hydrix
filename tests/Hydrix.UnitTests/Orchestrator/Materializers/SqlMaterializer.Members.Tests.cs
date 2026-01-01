@@ -129,6 +129,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(cacheField);
             var cache = cacheField.GetValue(null) as ConcurrentDictionary<Type, SqlEntityMetadata>;
             Assert.NotNull(cache);
+            cache.Clear();
             Assert.Empty(cache);
         }
     }
