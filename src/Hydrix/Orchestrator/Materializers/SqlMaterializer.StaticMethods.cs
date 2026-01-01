@@ -46,8 +46,8 @@ namespace Hydrix.Orchestrator.Materializers
             ArgumentNullException.ThrowIfNull(
                 dataReader);
 #else
-                if (dataReader == null)
-                    throw new ArgumentNullException(nameof(dataReader));
+            if (dataReader == null)
+                throw new ArgumentNullException(nameof(dataReader));
 #endif
 
             var entities = new List<TEntity>();

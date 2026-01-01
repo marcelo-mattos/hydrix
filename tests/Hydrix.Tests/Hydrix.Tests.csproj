@@ -38,7 +38,7 @@
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>
     <PackageReference Include="Faker" Version="1.2.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.3" />
   </ItemGroup>  
   
   <ItemGroup>

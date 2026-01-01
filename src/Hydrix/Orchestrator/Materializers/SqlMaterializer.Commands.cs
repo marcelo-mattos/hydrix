@@ -358,11 +358,11 @@ namespace Hydrix.Orchestrator.Materializers
             ArgumentNullException.ThrowIfNull(
                 sqlProcedure);
 #else
-                if (this.IsDisposed)
-                    throw new ObjectDisposedException("The connection has been disposed.");
+            if (this.IsDisposed)
+                throw new ObjectDisposedException("The connection has been disposed.");
 
-                if (sqlProcedure == null)
-                    throw new ArgumentNullException(nameof(sqlProcedure));
+            if (sqlProcedure == null)
+                throw new ArgumentNullException(nameof(sqlProcedure));
 #endif
 
             if (DbConnection.State != ConnectionState.Open)

@@ -2,8 +2,8 @@
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
+using Microsoft.Data.SqlClient;
 using System;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
 
 namespace Hydrix.Tests

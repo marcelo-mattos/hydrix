@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Schemas;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace Hydrix.Tests.Database.Procedure
 {
