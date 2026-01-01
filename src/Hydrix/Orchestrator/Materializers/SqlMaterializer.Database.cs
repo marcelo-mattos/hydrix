@@ -14,14 +14,14 @@ namespace Hydrix.Orchestrator.Materializers
         /// of the provider-specific Connection object.
         /// </summary>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        public void OpenConnection()
+        public virtual void OpenConnection()
         {
             if (this.IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
             lock (this._lockConnection)
             {
-                if (this.DbConnection.State == ConnectionState.Closed)
+                if (this.DbConnection != null && this.DbConnection.State == ConnectionState.Closed)
                     this.DbConnection.Open();
             }
         }
@@ -30,13 +30,14 @@ namespace Hydrix.Orchestrator.Materializers
         /// Closes the connection to the database.
         /// </summary>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        public void CloseConnection()
+        public virtual void CloseConnection()
         {
             if (this.IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
             lock (this._lockConnection)
-                this.DbConnection.Close();
+                if (this.DbConnection != null && this.DbConnection.State != ConnectionState.Closed)
+                    this.DbConnection.Close();
         }
 
         /// <summary>
@@ -45,7 +46,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="isolationLevel">Specifies the transaction locking behavior for the connection.</param>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="InvalidOperationException">There is another active transaction.</exception>
-        public void BeginTransaction(IsolationLevel isolationLevel)
+        public virtual void BeginTransaction(IsolationLevel isolationLevel)
         {
             if (this.IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
@@ -69,7 +70,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The transaction has already been committed or rolled back. -or- The connection is broken.
         /// </exception>
         /// <exception cref="InvalidOperationException">There is no active transaction.</exception>
-        public void CommitTransaction()
+        public virtual void CommitTransaction()
         {
             if (this.IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
@@ -94,7 +95,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The transaction has already been committed or rolled back. -or- The connection is broken.
         /// </exception>
         /// <exception cref="InvalidOperationException">There is no active transaction.</exception>
-        public void RollbackTransaction()
+        public virtual void RollbackTransaction()
         {
             if (this.IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
