@@ -88,11 +88,6 @@ jobs:
             /d:sonar.pullrequest.branch="$PR_BRANCH" \
             /d:sonar.pullrequest.base="$PR_BASE"
 
-      - name: Build
-        run: |
-          dotnet build \
-            --configuration Release
-
       - name: Test with coverage
         run: |
           dotnet test \
