@@ -1624,7 +1624,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>The returned mock IDataReader supports common data reader operations such as Read,
         /// GetValue, GetName, and IsDBNull, based on a predefined in-memory data table. This method is intended for
         /// testing scenarios where a real database connection is not required.</remarks>
-        /// <returns>A Mock<IDataReader> instance configured to simulate reading from a sample data table.</returns>
+        /// <returns>A Mock&lt;IDataReader&gt; instance configured to simulate reading from a sample data table.</returns>
         private static Mock<IDataReader> CreateMockReader()
         {
             var table = CreateSampleTable();
