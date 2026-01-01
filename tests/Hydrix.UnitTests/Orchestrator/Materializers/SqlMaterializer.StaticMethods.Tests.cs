@@ -1,6 +1,4 @@
-﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Materializers;
-using Hydrix.Schemas;
+﻿using Hydrix.Orchestrator.Materializers;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -12,52 +10,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 {
     public partial class SqlMaterializerTests
     {
-        /// <summary>
-        /// Represents an entity mapped to a SQL table with fields for identifier and name.
-        /// </summary>
-        [SqlEntity]
-        private class TestEntity : ISqlEntity
-        {
-            /// <summary>
-            /// Gets or sets the unique identifier for the entity.
-            /// </summary>
-            [SqlField("Id")]
-            public int Id { get; set; }
-
-            /// <summary>
-            /// Gets or sets the name associated with the entity.
-            /// </summary>
-            [SqlField("Name")]
-            public string Name { get; set; }
-        }
-
-        /// <summary>
-        /// Represents a SQL entity with an integer identifier.
-        /// </summary>
-        [SqlEntity]
-        private class NoFieldEntity : ISqlEntity
-        {
-            /// <summary>
-            /// Gets or sets the unique identifier for the entity.
-            /// </summary>
-            public int Id { get; set; }
-        }
-
-        /// <summary>
-        /// Represents an entity without additional attributes for use with SQL mapping.
-        /// </summary>
-        /// <remarks>This class is intended for scenarios where an entity requires only the default SQL
-        /// mapping behavior provided by the ISqlEntity interface. It does not define any custom attributes beyond the
-        /// required fields.</remarks>
-        private class NoAttributeEntity : ISqlEntity
-        {
-            /// <summary>
-            /// Gets or sets the unique identifier for the entity.
-            /// </summary>
-            [SqlField]
-            public int Id { get; set; }
-        }
-
         /// <summary>
         /// Verifies that the ConvertDataReaderToEntities method returns a collection of entities populated from the
         /// provided IDataReader.
