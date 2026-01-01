@@ -118,7 +118,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>TestSqlMaterializer exposes additional properties and methods to facilitate testing
         /// of transaction rollback and connection management behaviors. It allows inspection and manipulation of
         /// internal state relevant to connection and transaction handling.</remarks>
-        private class TestSqlMaterializer : SqlMaterializer
+        private class TestSqlMaterializerDispose : SqlMaterializer
         {
             /// <summary>
             /// Gets or sets a value indicating whether the rollback operation has been called.
@@ -144,7 +144,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// <remarks>This constructor configures the base SqlMaterializer with test-specific
             /// dependencies, allowing for isolated unit testing without requiring a real database connection. It is
             /// intended for use in test environments only.</remarks>
-            public TestSqlMaterializer() : base(null)
+            public TestSqlMaterializerDispose() : base(null)
             {
                 typeof(SqlMaterializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, new TestDbConnection());
                 typeof(SqlMaterializer).GetField("_lockConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, new object());
@@ -231,7 +231,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>This class is intended for use in testing scenarios where it is necessary to simulate
         /// failures during transaction rollback or connection closure. It overrides specific methods to throw
         /// exceptions after invoking the base implementation, allowing tests to verify error handling logic.</remarks>
-        private class ExceptionThrowingSqlMaterializer : TestSqlMaterializer
+        private class ExceptionThrowingSqlMaterializer : TestSqlMaterializerDispose
         {
             /// <summary>
             /// Rolls back the current transaction.
@@ -263,7 +263,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void Dispose_SetsIsDisposedAndIsDisposing()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.Dispose();
             Assert.True(mat.IsDisposed);
             Assert.True(mat.IsDisposing);
@@ -277,7 +277,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void Dispose_CallsRollbackAndClose()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.Dispose();
             Assert.True(mat.RollbackCalled);
             Assert.True(mat.CloseCalled);
@@ -293,7 +293,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void Dispose_DisposesDbConnectionAndSetsNull()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             var conn = (TestDbConnection)mat.DbConnection;
             mat.Dispose();
             Assert.True(conn.Disposed);
@@ -309,7 +309,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void Dispose_DoesNotDisposeTwice()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.Dispose();
             var disposedState = mat.IsDisposed;
             mat.RollbackCalled = false;

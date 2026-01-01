@@ -124,7 +124,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">
         /// Thrown when the database connection is not open.
         /// </exception>
-        private IDbCommand CreateCommandCore(
+        protected IDbCommand CreateCommandCore(
             CommandType commandType,
             string sql,
             Action<IDbCommand> parameterBinder,

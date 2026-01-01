@@ -27,7 +27,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var connMock = new Mock<DbConnection>();
             connMock.SetupGet(c => c.State).Returns(ConnectionState.Closed);
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDbConnection(connMock.Object);
 
             mat.OpenConnection();
@@ -45,7 +45,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var connMock = new Mock<DbConnection>();
             connMock.SetupGet(c => c.State).Returns(ConnectionState.Open);
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDbConnection(connMock.Object);
 
             mat.OpenConnection();
@@ -62,7 +62,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void OpenConnection_Throws_WhenDisposed()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDisposed(true);
 
             Assert.Throws<ObjectDisposedException>(() => mat.OpenConnection());
@@ -79,7 +79,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var connMock = new Mock<DbConnection>();
             connMock.SetupGet(c => c.State).Returns(ConnectionState.Open);
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDbConnection(connMock.Object);
 
             mat.CloseConnection();
@@ -98,7 +98,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var connMock = new Mock<DbConnection>();
             connMock.SetupGet(c => c.State).Returns(ConnectionState.Closed);
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDbConnection(connMock.Object);
 
             mat.CloseConnection();
@@ -113,7 +113,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void CloseConnection_Throws_WhenDisposed()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDisposed(true);
 
             Assert.Throws<ObjectDisposedException>(() => mat.CloseConnection());
@@ -131,7 +131,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var connMock = new Mock<IDbConnection>();
             var tranMock = new Mock<IDbTransaction>();
             connMock.Setup(c => c.BeginTransaction(It.IsAny<IsolationLevel>())).Returns(tranMock.Object);
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDbConnection(connMock.Object);
 
             mat.BeginTransaction(IsolationLevel.ReadCommitted);
@@ -150,7 +150,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void BeginTransaction_Throws_WhenActiveTransaction()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             var tranMock = new Mock<DbTransaction>();
             mat.SetDbTransaction(tranMock.Object);
 
@@ -166,7 +166,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void BeginTransaction_Throws_WhenDisposed()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDisposed(true);
 
             Assert.Throws<ObjectDisposedException>(() => mat.BeginTransaction(IsolationLevel.ReadCommitted));
@@ -183,7 +183,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void CommitTransaction_Commits_AndDisposes()
         {
             var tranMock = new Mock<IDbTransaction>();
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDbTransaction(tranMock.Object);
 
             mat.CommitTransaction();
@@ -202,7 +202,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void CommitTransaction_Throws_WhenNoTransaction()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
 
             Assert.Throws<InvalidOperationException>(() => mat.CommitTransaction());
         }
@@ -214,7 +214,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void CommitTransaction_Throws_WhenDisposed()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDisposed(true);
 
             Assert.Throws<ObjectDisposedException>(() => mat.CommitTransaction());
@@ -230,7 +230,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void RollbackTransaction_RollsBack_AndDisposes()
         {
             var tranMock = new Mock<IDbTransaction>();
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDbTransaction(tranMock.Object);
 
             mat.RollbackTransaction();
@@ -249,7 +249,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void RollbackTransaction_Throws_WhenNoTransaction_AndNotDisposing()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDisposing(false);
 
             Assert.Throws<InvalidOperationException>(() => mat.RollbackTransaction());
@@ -265,7 +265,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void RollbackTransaction_DoesNothing_WhenNoTransaction_AndDisposing()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDisposing(true);
 
             var ex = Record.Exception(() => mat.RollbackTransaction());
@@ -281,7 +281,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void RollbackTransaction_Throws_WhenDisposed()
         {
-            var mat = new TestSqlMaterializer();
+            var mat = new TestSqlMaterializerDispose();
             mat.SetDisposed(true);
 
             Assert.Throws<ObjectDisposedException>(() => mat.RollbackTransaction());
