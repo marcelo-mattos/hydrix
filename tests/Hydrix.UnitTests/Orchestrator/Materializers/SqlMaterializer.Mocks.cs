@@ -1603,5 +1603,57 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             return materializer;
         }
+
+        /// <summary>
+        /// Creates a sample DataTable containing predefined columns and rows for demonstration or testing purposes.
+        /// </summary>
+        /// <returns>A DataTable with two columns, "Id" and "Name", and two rows of sample data.</returns>
+        private static DataTable CreateSampleTable()
+        {
+            var table = new DataTable(nameof(SqlMaterializer));
+            table.Columns.Add("Id", typeof(int));
+            table.Columns.Add("Name", typeof(string));
+            table.Rows.Add(1, "Alice");
+            table.Rows.Add(2, "Bob");
+            return table;
+        }
+
+        /// <summary>
+        /// Creates a mock implementation of the IDataReader interface for use in unit tests.
+        /// </summary>
+        /// <remarks>The returned mock IDataReader supports common data reader operations such as Read,
+        /// GetValue, GetName, and IsDBNull, based on a predefined in-memory data table. This method is intended for
+        /// testing scenarios where a real database connection is not required.</remarks>
+        /// <returns>A Mock<IDataReader> instance configured to simulate reading from a sample data table.</returns>
+        private static Mock<IDataReader> CreateMockReader()
+        {
+            var table = CreateSampleTable();
+            var reader = new Mock<IDataReader>();
+            int rowIndex = -1;
+
+            reader.Setup(r => r.Read()).Returns(() =>
+            {
+                rowIndex++;
+                return rowIndex < table.Rows.Count;
+            });
+            reader.Setup(r => r.FieldCount).Returns(table.Columns.Count);
+            reader.Setup(r => r.GetName(It.IsAny<int>())).Returns((int i) => table.Columns[i].ColumnName);
+            reader.Setup(r => r.GetValue(It.IsAny<int>())).Returns((int i) => table.Rows[rowIndex][i]);
+            reader.Setup(r => r.GetFieldType(It.IsAny<int>())).Returns((int i) => table.Columns[i].DataType);
+            reader.Setup(r => r[It.IsAny<int>()]).Returns((int i) => table.Rows[rowIndex][i]);
+            reader.Setup(r => r[It.IsAny<string>()]).Returns((string name) => table.Rows[rowIndex][name]);
+            reader.Setup(r => r.IsDBNull(It.IsAny<int>())).Returns((int i) => table.Rows[rowIndex][i] == DBNull.Value);
+            reader.Setup(r => r.GetValues(It.IsAny<object[]>()))
+              .Returns((object[] values) =>
+              {
+                  for (var i = 0; i < table.Columns.Count; i++)
+                      values[i] = table.Rows[rowIndex][i];
+
+                  return table.Columns.Count;
+              });
+            reader.Setup(r => r.Dispose());
+
+            return reader;
+        }
     }
 }
