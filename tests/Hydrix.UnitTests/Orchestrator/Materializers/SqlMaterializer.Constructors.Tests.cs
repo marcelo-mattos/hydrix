@@ -118,8 +118,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(ctor);
             return (SqlMaterializer)ctor.Invoke(new object[] {
                 null,
-                timeout ?? Faker.NumberFaker.Number(30, 120),
-                parameterPrefix ?? Faker.StringFaker.Alpha(100)
+                timeout ?? 60,
+                parameterPrefix ?? ":"
             });
         }
 

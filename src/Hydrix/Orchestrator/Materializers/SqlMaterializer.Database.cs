@@ -21,7 +21,7 @@ namespace Hydrix.Orchestrator.Materializers
 
             lock (this._lockConnection)
             {
-                if (this.DbConnection != null && this.DbConnection.State == ConnectionState.Closed)
+                if (this.DbConnection.State == ConnectionState.Closed)
                     this.DbConnection.Open();
             }
         }
@@ -36,8 +36,10 @@ namespace Hydrix.Orchestrator.Materializers
                 throw new ObjectDisposedException("The connection has been disposed.");
 
             lock (this._lockConnection)
-                if (this.DbConnection != null && this.DbConnection.State != ConnectionState.Closed)
+            {
+                if (this.DbConnection.State != ConnectionState.Closed)
                     this.DbConnection.Close();
+            }
         }
 
         /// <summary>
@@ -53,7 +55,7 @@ namespace Hydrix.Orchestrator.Materializers
 
             lock (this._lockTransaction)
             {
-                if (null != this.DbTransaction)
+                if (this.DbTransaction != null)
                     throw new InvalidOperationException("There is another active transaction.");
 
                 lock (this._lockConnection)
