@@ -26,9 +26,10 @@ jobs:
             --no-restore \
             --configuration Release
 
-  test-netcore31:
-    name: dotnet-test-netcoreapp3.1
+  test:
+    name: dotnet-test
     runs-on: ubuntu-20.04
+    needs: build
 
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +48,7 @@ jobs:
   sonar:
     name: sonar-quality-gate
     runs-on: ubuntu-latest
-    needs: tests-netcore31
+    needs: test
 
     permissions:
       contents: read
@@ -88,7 +89,9 @@ jobs:
             /d:sonar.pullrequest.base="$PR_BASE"
 
       - name: Build
-        run: dotnet build --configuration Release
+        run: |
+          dotnet build \
+            --configuration Release
 
       - name: Test with coverage
         run: |
