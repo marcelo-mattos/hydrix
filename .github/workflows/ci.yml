@@ -44,6 +44,13 @@ jobs:
             --configuration Release \
             --collect:"XPlat Code Coverage"
 
+      - name: Upload coverage netcoreapp3.1
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-netcore31
+          path: |
+            **/TestResults/**/coverage.cobertura.xml
+
   sonar:
     name: sonar-quality-gate
     runs-on: ubuntu-latest
@@ -70,6 +77,17 @@ jobs:
       - name: Install SonarScanner
         run: dotnet tool install --global dotnet-sonarscanner
 
+      - name: Download coverage netcoreapp3.1
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-netcore31
+          path: .
+
+      - name: Debug coverage files
+        run: |
+          echo "=== Coverage files found ==="
+          find . -name "coverage.cobertura.xml"
+
       - name: Sonar Begin
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -82,7 +100,7 @@ jobs:
             /o:"marcelo-mattos" \
             /d:sonar.login="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.cobertura.reportsPaths="**/TestResults/**/coverage.cobertura.xml" \
+            /d:sonar.cs.cobertura.reportsPaths="tests/**/TestResults/**/coverage.cobertura.xml" \
             /d:sonar.pullrequest.key="$PR_NUMBER" \
             /d:sonar.pullrequest.branch="$PR_BRANCH" \
             /d:sonar.pullrequest.base="$PR_BASE"
