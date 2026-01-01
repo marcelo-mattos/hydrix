@@ -160,7 +160,8 @@ namespace Hydrix.Orchestrator.Metadata
                 .Select(p =>
                 {
                     var attr = (SqlFieldAttribute)p
-                        .GetCustomAttributes(typeof(SqlFieldAttribute), false)[0];
+                        .GetCustomAttributes(typeof(SqlFieldAttribute), false)
+                        .First();
 
                     var targetType = p.PropertyType;
 
@@ -181,7 +182,8 @@ namespace Hydrix.Orchestrator.Metadata
                 .Select(p => new SqlEntityMap(
                     p,
                     (SqlEntityAttribute)p
-                        .GetCustomAttributes(typeof(SqlEntityAttribute), false)[0]))
+                        .GetCustomAttributes(typeof(SqlEntityAttribute), false)
+                        .First()))
                 .ToList();
 
             return SqlMetadataFactory.CreateEntity(

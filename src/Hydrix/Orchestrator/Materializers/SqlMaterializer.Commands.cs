@@ -135,8 +135,8 @@ namespace Hydrix.Orchestrator.Materializers
                 IsDisposed,
                 nameof(Contract.ISqlMaterializer));
 #else
-                if (IsDisposed)
-                    throw new ObjectDisposedException(nameof(Contract.ISqlMaterializer));
+            if (IsDisposed)
+                throw new ObjectDisposedException(nameof(Contract.ISqlMaterializer));
 #endif
 
             if (DbConnection.State != ConnectionState.Open)
@@ -150,6 +150,9 @@ namespace Hydrix.Orchestrator.Materializers
             command.CommandType = commandType;
             command.CommandText = sql;
             command.CommandTimeout = Timeout;
+
+            if (transaction == null && IsTransactionActive)
+                transaction = DbTransaction;
 
             if (transaction != null)
                 command.Transaction = transaction;

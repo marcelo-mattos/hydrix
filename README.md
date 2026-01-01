@@ -1,5 +1,10 @@
 # Hydrix
 
+![NuGet](https://img.shields.io/nuget/v/Hydrix)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Hydrix)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=marcelo-mattos_hydrix&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=marcelo-mattos_hydrix)
+
 **A lightweight, explicit, and provider-agnostic SQL materialization framework for .NET.**
 
 Hydrix is a **micro-ORM** designed for developers who require **full control over SQL execution**, **predictable behavior**, and **efficient entity materialization**, without introducing hidden abstractions or proprietary query languages.
@@ -8,9 +13,6 @@ The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and h
 
 > ✅ The **Hydrix** package ID prefix is officially reserved on NuGet.org.
 
-![NuGet](https://img.shields.io/nuget/v/Hydrix)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Hydrix)
-![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
 ---
 
