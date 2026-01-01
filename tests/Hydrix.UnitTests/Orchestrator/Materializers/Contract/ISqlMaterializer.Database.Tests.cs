@@ -22,6 +22,16 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         private readonly Mock<ISqlMaterializer> _materializerMock;
 
         /// <summary>
+        /// Mock list of DummyEntity objects for testing purposes.
+        /// </summary>
+        private readonly IList<DummyEntity> _entityList = new List<DummyEntity> { new DummyEntity() };
+
+        /// <summary>
+        /// Mock instance of DummyEntity for testing purposes.
+        /// </summary>
+        private readonly DummyEntity _entity = new DummyEntity();
+
+        /// <summary>
         /// Initializes a new instance of the ISqlMaterializerTests class for unit testing implementations of
         /// ISqlMaterializer.
         /// </summary>
@@ -31,6 +41,15 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             _materializerMock = new Mock<ISqlMaterializer>();
         }
+
+        /// <summary>
+        /// Represents a placeholder or test entity that implements the ISqlEntity interface.
+        /// </summary>
+        /// <remarks>This class is typically used for testing, prototyping, or as a stand-in where an
+        /// ISqlEntity implementation is required. It does not provide any additional functionality beyond the interface
+        /// contract.</remarks>
+        public class DummyEntity : ISqlEntity
+        { }
 
         /// <summary>
         /// Represents a parameter to a command object, such as a SQL query or stored procedure, for use with data
