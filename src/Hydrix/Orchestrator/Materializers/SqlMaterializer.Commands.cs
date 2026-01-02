@@ -151,7 +151,8 @@ namespace Hydrix.Orchestrator.Materializers
             command.CommandText = sql;
             command.CommandTimeout = Timeout;
 
-            command.Transaction = transaction ?? (IsTransactionActive ? DbTransaction : null);
+            lock (_lockTransaction)
+                command.Transaction = transaction ?? (IsTransactionActive ? DbTransaction : null);
 
             parameterBinder?.Invoke(command);
 
