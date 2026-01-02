@@ -1,16 +1,22 @@
 # Hydrix
 
+![NuGet](https://img.shields.io/nuget/v/Hydrix)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Hydrix)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=marcelo-mattos_hydrix&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=marcelo-mattos_hydrix)
+
 **A lightweight, explicit, and provider-agnostic SQL materialization framework for .NET.**
 
 Hydrix is a **micro-ORM** designed for developers who require **full control over SQL execution**, **predictable behavior**, and **efficient entity materialization**, without introducing hidden abstractions or proprietary query languages.
 
 The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and heavyweight ORMs such as Entity Framework, offering a Dapper-like experience enhanced with **hierarchical entity materialization**, **metadata caching**, and **native support for nested entities**.
 
-![NuGet](https://img.shields.io/nuget/v/Hydrix)
+> ✅ The **Hydrix** package ID prefix is officially reserved on NuGet.org.
+
 
 ---
 
-## 🧭Why Hydrix?
+## 🧭 Why Hydrix?
 
 * You want full control over your SQL
 * You work with complex or performance-critical queries
@@ -21,7 +27,7 @@ The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and h
 
 ---
 
-## ⚠️What Hydrix is not?
+## ⚠️ What Hydrix is not?
 
 * A LINQ provider
 * An automatic SQL generator
@@ -29,7 +35,7 @@ The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and h
 
 ---
 
-## ⚙️Supported frameworks
+## ⚙️ Supported frameworks
 
 * .NET Core 3.1
 * .NET 6
@@ -220,6 +226,21 @@ Hydrix is built around the following principles:
 
 ---
 
+## ❤️ Supporting Hydrix
+
+Hydrix is an open-source project built and maintained with care, transparency, and a long-term vision.
+
+If Hydrix helps you build reliable, predictable, and high-performance data access layers, consider supporting the project. Your support helps ensure ongoing maintenance, improvements, documentation, and long-term sustainability.
+
+You can support Hydrix through GitHub Sponsors:
+
+👉 https://github.com/sponsors/marcelo-matos
+
+Every contribution, whether financial or by sharing feedback and usage experiences, is deeply appreciated.
+
+
+---
+
 ## 📄 License
 
 This project is licensed under the Apache License 2.0. See the LICENSE and NOTICE files for details.
@@ -229,4 +250,5 @@ This project is licensed under the Apache License 2.0. See the LICENSE and NOTIC
 
 ## 👨‍💻 Author
 
-**Marcelo Matos dos Santos**
+**Marcelo Matos dos Santos**  
+Software Engineer • Open Source Maintainer.

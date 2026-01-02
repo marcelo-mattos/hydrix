@@ -1,0 +1,114 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net8.0;net6.0;netcoreapp3.1</TargetFrameworks>
+    <Authors>Marcelo Matos dos Santos</Authors>
+    <Owners>Marcelo Matos dos Santos</Owners>
+    <Title>Hydrix</Title>
+    <Company>Marcelo Matos dos Santos</Company>
+    <Description>Hydrix SQL Materializer Library</Description>
+    <Copyright>© 2025 Marcelo Matos dos Santos</Copyright>
+    <PackageTags>hydrix sql data orm micro-orm hydration materializer</PackageTags>
+    <Product>Hydrix</Product>
+    <ApplicationIcon>Hydrix.ico</ApplicationIcon>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Version>1.1.0</Version>
+    <RepositoryUrl>https://github.com/marcelo-mattos/hydrix</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageReleaseNotes>
+      - (1.1.0) Features and Enhancements
+
+      - Minimal ORM Core:
+      Introduced a minimal ORM for .NET, empowering developers with full control over SQL execution. The design prioritizes performance, predictability, and transparent object hydration.
+
+      - SqlWhereBuilder Improvements:
+      Enhanced the `SqlWhereBuilder` with new options for flexible and expressive WHERE clause construction, enabling more advanced query scenarios.
+
+      - ExecuteNonQuery Overloads:
+      Added new `ExecuteNonQuery(string, object)` method overloads to support external `DbTransaction` parameterization, improving transaction management and integration with existing workflows.
+
+      - Nested Entity Mapping:
+      Refactored `SqlEntityMap` to provide more robust and efficient mapping of nested SQL entities, including improved primary key detection, entity instantiation, and value conversion logic.
+    </PackageReleaseNotes>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/marcelo-mattos/hydrix</PackageProjectUrl>
+    <PackageIcon>Hydrix.png</PackageIcon>
+    <PackageIconUrl />
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <EnableSourceLink>true</EnableSourceLink>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>    
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\dbg\Hydrix\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix\</BaseIntermediateOutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\dbg\Hydrix\Hydrix.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+ 	  <MSBuildProjectExtensionsPath>..\..\obj\Hydrix\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\bin\Hydrix\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>..\..\obj\Hydrix\</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\bin\Hydrix\Hydrix.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp3.1|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp3.1|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\..\NOTICE" Pack="true" PackagePath="\" />
+    <None Include="..\Hydrix.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+  
+</Project>

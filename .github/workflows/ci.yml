@@ -1,0 +1,138 @@
+name: dotnet-ci
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    name: dotnet-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.x
+            8.0.x
+            6.0.x
+            3.1.x
+
+      - run: dotnet restore
+      - run: |
+          dotnet build \
+            --no-restore \
+            --configuration Release
+
+  test:
+    name: dotnet-test
+    runs-on: ubuntu-latest
+    needs: build
+
+    container:
+      image: mcr.microsoft.com/dotnet/core/sdk:3.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test netcoreapp3.1 with coverage
+        run: |
+          dotnet test \
+            --framework netcoreapp3.1 \
+            --configuration Release \
+            --collect:"XPlat Code Coverage"
+
+      - name: Upload coverage netcoreapp3.1
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-netcore31
+          path: |
+            **/TestResults/**/coverage.cobertura.xml
+
+  sonar:
+    name: sonar-quality-gate
+    runs-on: ubuntu-latest
+    needs: test
+
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.x
+            8.0.x
+            6.0.x
+
+      - name: Install SonarScanner
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Download coverage netcoreapp3.1
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-netcore31
+          path: .
+
+      - name: Debug coverage files
+        run: |
+          echo "=== Coverage files found ==="
+          find . -name "coverage.cobertura.xml"
+
+      - name: Sonar Begin
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"marcelo-mattos_hydrix" \
+            /o:"marcelo-mattos" \
+            /d:sonar.login="$SONAR_TOKEN" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.cobertura.reportsPaths="tests/**/TestResults/**/coverage.cobertura.xml" \
+            /d:sonar.pullrequest.key="$PR_NUMBER" \
+            /d:sonar.pullrequest.branch="$PR_BRANCH" \
+            /d:sonar.pullrequest.base="$PR_BASE"
+
+      - name: Build
+        run: |
+          dotnet build \
+            --configuration Release
+
+      - name: Test with coverage
+        run: |
+          dotnet test \
+            --framework net6.0 \
+            --no-build \
+            --configuration Release \
+            --collect:"XPlat Code Coverage"
+
+          dotnet test \
+            --framework net8.0 \
+            --no-build \
+            --configuration Release \
+            --collect:"XPlat Code Coverage"
+
+          dotnet test \
+            --framework net10.0 \
+            --no-build \
+            --configuration Release \
+            --collect:"XPlat Code Coverage"
+
+      - name: Sonar End
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner end \
+            /d:sonar.login="$SONAR_TOKEN"
