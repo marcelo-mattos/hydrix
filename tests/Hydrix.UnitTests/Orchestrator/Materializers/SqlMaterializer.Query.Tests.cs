@@ -41,6 +41,25 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the Query method returns an empty result when entity request validation fails for the provided
+        /// SQL and parameters.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the Query
+        /// method does not return any entities, regardless of the SQL or parameters supplied.</remarks>
+        [Fact]
+        public void Query_WithSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>("SELECT 1", new { Id = 1 });
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the Query method returns the expected entities when provided with SQL parameters and a
         /// database transaction.
         /// </summary>
@@ -63,6 +82,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the Query method returns an empty result when entity request validation fails, using SQL
+        /// parameters and a transaction.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the Query
+        /// method does not return any entities, even when provided with SQL parameters and an active transaction. It
+        /// helps confirm correct handling of invalid requests in data access scenarios.</remarks>
+        [Fact]
+        public void Query_WithSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that querying with only a SQL statement returns the expected entities.
         /// </summary>
         /// <remarks>This test ensures that the materializer correctly maps the results of a SQL query to
@@ -80,6 +119,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the Query method returns an empty result when called with SQL-only input and entity request
+        /// validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request validation does not pass, the Query
+        /// method does not return any entities, even if a valid SQL statement is provided. This helps confirm correct
+        /// handling of invalid entity requests in the data materializer.</remarks>
+        [Fact]
+        public void Query_WithSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>("SELECT 1");
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -104,6 +163,25 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the Query method returns an empty result when called with only SQL and transaction parameters
+        /// and the entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the Query
+        /// method does not return any entities, even if a valid SQL statement and transaction are provided.</remarks>
+        [Fact]
+        public void Query_WithSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>("SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the Query method returns a list of entities when executed with a SQL command type, a SQL query
         /// string, and a collection of parameters.
         /// </summary>
@@ -122,6 +200,25 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the Query method returns an empty result when called with CommandType.Text, a SQL command, and
+        /// parameters, if entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that the materializer does not return any entities when the entity
+        /// request is invalid, helping to confirm correct handling of validation failures.</remarks>
+        [Fact]
+        public void Query_WithCommandTypeSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -147,6 +244,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the Query method returns an empty result when ValidateEntityRequest fails, using CommandType,
+        /// SQL parameters, and a transaction.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity validation fails, the Query method does not
+        /// return any results, regardless of the provided command type, SQL parameters, or transaction. It helps
+        /// confirm correct handling of invalid entity requests in the data materializer.</remarks>
+        [Fact]
+        public void Query_WithCommandTypeSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that querying with only a command type and SQL statement returns the expected entities.
         /// </summary>
         /// <remarks>This test ensures that the materializer correctly executes a query when provided with
@@ -165,6 +282,25 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the Query method returns an empty result when called with only CommandType and SQL, and the
+        /// entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the Query
+        /// method does not return any entities, even if a valid SQL command is provided.</remarks>
+        [Fact]
+        public void Query_WithCommandTypeAndSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1");
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -190,6 +326,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the Query method returns an empty result when called with CommandType.Text, a SQL command, and
+        /// a transaction, if the entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that the Query method does not return any entities when the input
+        /// parameters are valid but the entity request fails validation. It helps confirm correct handling of invalid
+        /// entity requests in scenarios involving SQL command type and transactions.</remarks>
+        [Fact]
+        public void Query_WithCommandTypeSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that querying with a SQL procedure returns the expected collection of entities.
         /// </summary>
         /// <remarks>This test ensures that the materializer correctly executes a SQL procedure and
@@ -211,6 +367,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the Query method returns an empty result when entity request validation fails for a SQL
+        /// procedure.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the Query
+        /// method does not return any entities. It is intended to confirm correct handling of invalid requests in the
+        /// data materialization process.</remarks>
+        [Fact]
+        public void Query_WithSqlProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that querying with a SQL procedure and an explicit transaction returns the expected entities.
         /// </summary>
         /// <remarks>This test ensures that the materializer correctly executes a SQL procedure within the
@@ -229,6 +405,25 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the Query method returns an empty result when ValidateEntityRequest fails during execution
+        /// with a SQL procedure and transaction.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity validation fails, the Query method does not
+        /// return any results, confirming correct handling of validation failures in the data access layer.</remarks>
+        [Fact]
+        public void Query_WithSqlProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -255,6 +450,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that QueryAsync returns an empty result when entity request validation fails for the provided SQL
+        /// and parameters.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the
+        /// QueryAsync method does not return any entities, even if a SQL query and parameters are supplied.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1", new { Id = 1 });
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the QueryAsync method returns the expected entities when provided with SQL parameters and a
         /// transaction.
         /// </summary>
@@ -278,6 +493,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that QueryAsync returns an empty result when entity request validation fails, using SQL parameters
+        /// and a transaction.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request validation fails, the QueryAsync
+        /// method does not return any results, even when provided with SQL parameters and a transaction.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the QueryAsync method returns the expected entities when executed with only a SQL query
         /// string.
         /// </summary>
@@ -297,6 +532,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that QueryAsync returns an empty result when called with a SQL-only query and entity request
+        /// validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that the QueryAsync method does not return any entities if the
+        /// entity request fails validation, even when a valid SQL query is provided. It is intended to confirm correct
+        /// handling of validation failures in the data access layer.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1");
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -323,6 +579,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that QueryAsync returns an empty result when called with only SQL and transaction parameters and
+        /// the entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when entity request validation fails, QueryAsync does not
+        /// return null but instead returns an empty result set. This behavior helps prevent null reference exceptions
+        /// and clarifies the contract for consumers of QueryAsync.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the QueryAsync method returns a list of entities when executed with a SQL command type, a SQL
         /// query string, and a collection of parameters.
         /// </summary>
@@ -342,6 +619,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that QueryAsync returns an empty result when ValidateEntityRequest fails for the specified command
+        /// type, SQL, and parameters.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request validation fails, the QueryAsync
+        /// method does not return any entities, regardless of the provided SQL command and parameters.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithCommandTypeSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -368,6 +665,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that QueryAsync returns an empty result when entity request validation fails, using a command type,
+        /// SQL parameters, and a transaction.
+        /// </summary>
+        /// <remarks>This unit test ensures that when the entity request validation fails, the QueryAsync
+        /// method does not return any results, regardless of the provided command type, SQL parameters, or transaction.
+        /// This helps confirm correct handling of invalid entity requests in the data access layer.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithCommandTypeSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the QueryAsync method returns a collection of entities when called with a command type and SQL
         /// statement only.
         /// </summary>
@@ -388,6 +706,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the QueryAsync method returns an empty result when called with only CommandType and SQL, and
+        /// the entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when entity request validation does not pass, QueryAsync does
+        /// not return any entities, even if a valid command and SQL are provided. This helps confirm correct handling
+        /// of invalid entity requests in the data materializer.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithCommandTypeAndSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1");
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -414,6 +753,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that QueryAsync returns an empty result when called with CommandType.Text, a SQL command, and a
+        /// transaction, if entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when entity request validation fails, QueryAsync does not
+        /// return any entities, even when provided with valid command type, SQL, and transaction parameters.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithCommandTypeSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the QueryAsync method returns the expected entities when executed with a SQL procedure.
         /// </summary>
         /// <remarks>This test ensures that the materializer correctly maps the results of a SQL procedure
@@ -432,6 +791,28 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the QueryAsync method returns an empty result when the entity request validation fails for a
+        /// SQL procedure.
+        /// </summary>
+        /// <remarks>This test ensures that when QueryAsync is called with a SQL procedure and the entity
+        /// request does not pass validation, the method returns an empty collection rather than null or throwing an
+        /// exception. This behavior helps confirm that failed validations are handled gracefully by the data access
+        /// layer.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithSqlProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
@@ -458,6 +839,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that QueryAsync returns an empty result when entity request validation fails for a SQL procedure
+        /// with a transaction.
+        /// </summary>
+        /// <remarks>This test ensures that the QueryAsync method does not return any entities if the
+        /// entity request fails validation, even when executed with a SQL procedure and an explicit
+        /// transaction.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithSqlProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that the Query method returns an empty result when input validation fails.
         /// </summary>
         /// <remarks>This test ensures that when the Query method is called with parameters that do not
@@ -478,6 +880,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the Query method returns an empty result when entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the Query
+        /// method does not return any results. It checks that the returned collection is not null and contains no
+        /// elements.</remarks>
+        [Fact]
+        public void Query_ValidationFails_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<NoFieldEntity>("SELECT 1", new { Id = 1 });
+
+            Assert.NotNull(result);
+            Assert.Equal(0, result.Count);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
         /// Verifies that QueryAsync returns an empty collection when input validation fails.
         /// </summary>
         /// <remarks>This test ensures that when QueryAsync is called with parameters that do not pass
@@ -491,6 +913,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<TestEntity>("SELECT 1", new { Id = 1 });
+
+            Assert.NotNull(result);
+            Assert.Equal(0, result.Count);
+            Assert.Empty(result);
+        }
+
+        /// <summary>
+        /// Verifies that QueryAsync returns an empty result when entity request validation fails.
+        /// </summary>
+        /// <remarks>This test ensures that when the entity request does not pass validation, the
+        /// QueryAsync method returns an empty collection rather than null or throwing an exception. This behavior helps
+        /// prevent errors when consuming the result of a failed query.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_ValidationFails_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1", new { Id = 1 });
 
             Assert.NotNull(result);
             Assert.Equal(0, result.Count);

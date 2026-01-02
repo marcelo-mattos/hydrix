@@ -43,7 +43,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Verifies that the SingleOrDefault method returns null when executing a SQL query with parameters and no
         /// matching records are found.
         /// </summary>
-        /// <remarks>This test ensures that SingleOrDefault<T> correctly returns null when the result set
+        /// <remarks>This test ensures that SingleOrDefault&lt;T&gt; correctly returns null when the result set
         /// is empty, validating expected behavior for queries that yield no results.</remarks>
         [Fact]
         public void SingleOrDefault_WithSqlAndParameters_ReturnsNull()
