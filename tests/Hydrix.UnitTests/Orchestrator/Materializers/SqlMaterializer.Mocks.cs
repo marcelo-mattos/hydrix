@@ -1608,11 +1608,15 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Creates a sample DataTable containing predefined columns and rows for demonstration or testing purposes.
         /// </summary>
         /// <returns>A DataTable with two columns, "Id" and "Name", and two rows of sample data.</returns>
-        private static DataTable CreateSampleTable()
+        private static DataTable CreateSampleTable(bool empty = false)
         {
             var table = new DataTable(nameof(SqlMaterializer));
+
             table.Columns.Add("Id", typeof(int));
             table.Columns.Add("Name", typeof(string));
+            if (empty)
+                return table;
+
             table.Rows.Add(1, "Alice");
             table.Rows.Add(2, "Bob");
             return table;
@@ -1625,9 +1629,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// GetValue, GetName, and IsDBNull, based on a predefined in-memory data table. This method is intended for
         /// testing scenarios where a real database connection is not required.</remarks>
         /// <returns>A Mock&lt;IDataReader&gt; instance configured to simulate reading from a sample data table.</returns>
-        private static Mock<IDataReader> CreateMockReader()
+        private static Mock<IDataReader> CreateMockReader(bool empty = false)
         {
-            var table = CreateSampleTable();
+            var table = CreateSampleTable(empty);
             var reader = new Mock<IDataReader>();
             int rowIndex = -1;
 
@@ -1636,7 +1640,17 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
                 rowIndex++;
                 return rowIndex < table.Rows.Count;
             });
+
             reader.Setup(r => r.FieldCount).Returns(table.Columns.Count);
+            reader.Setup(r => r.GetOrdinal(It.IsAny<string>())).Returns((string columnName) =>
+                columnName switch
+                {
+                    "Id" => 0,
+                    "Name" => 1,
+                    _ => throw new IndexOutOfRangeException(
+                            $"Column '{columnName}' not found.")
+                });
+            reader.Setup(r => r.GetOrdinal("Name")).Returns(1);
             reader.Setup(r => r.GetName(It.IsAny<int>())).Returns((int i) => table.Columns[i].ColumnName);
             reader.Setup(r => r.GetValue(It.IsAny<int>())).Returns((int i) => table.Rows[rowIndex][i]);
             reader.Setup(r => r.GetFieldType(It.IsAny<int>())).Returns((int i) => table.Columns[i].DataType);
