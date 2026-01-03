@@ -1,5 +1,4 @@
 ﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Adapters;
 using Hydrix.Orchestrator.Metadata;
 using Hydrix.Schemas;
 using System;
@@ -107,77 +106,27 @@ namespace Hydrix.Orchestrator.Mapping
         }
 
         /// <summary>
-        /// Recursively populates an <see cref="ISqlEntity"/> instance from a <see cref="DataRow"/>
-        /// using precomputed SQL entity metadata.
+        /// Populates the specified SQL entity with data from the provided data record, including nested entities as
+        /// defined by the metadata.
         /// </summary>
-        /// <param name="entity">
-        /// The target entity instance to be populated with values from the current <see cref="DataRow"/>.
-        /// </param>
-        /// <param name="row">The data row containing the flattened SQL result set values.</param>
-        /// <param name="metadata">
-        /// The metadata definition associated with the entity type, describing all scalar fields
-        /// and nested entities participating in the mapping process.
-        /// </param>
-        /// <param name="path">
-        /// The hierarchical path representing the current entity nesting level, used to resolve
-        /// prefixed column names in flattened SQL projections (e.g. <c>Parent.Child.Property</c>).
-        /// </param>
-        /// <param name="entityMetadataCache">
-        /// A shared cache of <see cref="SqlEntityMetadata"/> instances indexed by entity <see
-        /// cref="Type"/>, used to avoid repeated reflection when processing nested entities.
-        /// </param>
-        /// <remarks>
-        /// This method is the core recursive engine responsible for materializing hierarchical
-        /// object graphs from flat SQL result sets.
-        ///
-        /// The mapping process follows these rules:
-        /// <list type="number">
-        /// <item>
-        /// <description>
-        /// Scalar fields decorated with <see cref="SqlFieldAttribute"/> are populated by resolving
-        /// their corresponding column names using the current path prefix.
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// Nested entities decorated with <see cref="SqlEntityAttribute"/> are conditionally
-        /// instantiated based on the presence and value of their configured primary key column,
-        /// preventing the creation of empty objects when LEFT JOINs return null values.
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// For each instantiated nested entity, the method recursively applies the same mapping
-        /// logic using updated path information.
-        /// </description>
-        /// </item>
-        /// </list>
-        /// All metadata used during the mapping process is retrieved from a shared, thread-safe
-        /// cache, ensuring optimal performance even when processing large result sets or deeply
-        /// nested entity graphs.
-        ///
-        /// This method intentionally avoids any SQL or provider-specific logic, operating purely on
-        /// ADO.NET primitives and reflection-derived metadata.
-        /// </remarks>
-        internal static void SetEntity(
-            ISqlEntity entity,
-            DataRow row,
-            SqlEntityMetadata metadata,
-            IReadOnlyList<string> path,
-            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache)
-            => SetEntity(
-                entity,
-                new DataRowDataRecordAdapter(row),
-                metadata,
-                path,
-                entityMetadataCache);
-
+        /// <remarks>This method is intended for internal use when materializing entities from data
+        /// records, such as during data access operations. It supports recursive population of nested entities based on
+        /// the provided metadata and path.</remarks>
+        /// <param name="entity">The SQL entity instance to populate with values from the data record. Cannot be null.</param>
+        /// <param name="record">The data record containing the values to assign to the entity's fields and nested entities. Cannot be null.</param>
+        /// <param name="metadata">The metadata describing the structure and mapping of the SQL entity. Cannot be null.</param>
+        /// <param name="path">The hierarchical path representing the nesting context of the current entity within the overall object
+        /// graph. Used to resolve field prefixes for nested entities. Cannot be null.</param>
+        /// <param name="entityMetadataCache">A thread-safe cache of entity metadata, keyed by entity type, used to optimize metadata lookups for nested
+        /// entities. Cannot be null.</param>
+        /// <param name="ordinals">A mapping from field names to their corresponding ordinal positions in the data record. Cannot be null.</param>
         internal static void SetEntity(
             ISqlEntity entity,
             IDataRecord record,
             SqlEntityMetadata metadata,
             IReadOnlyList<string> path,
-            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache)
+            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache,
+            IReadOnlyDictionary<string, int> ordinals)
         {
             string prefix = path.Count > 0
                 ? $"{string.Join(".", path)}."
@@ -187,7 +136,8 @@ namespace Hydrix.Orchestrator.Mapping
                 entity,
                 record,
                 metadata,
-                prefix);
+                prefix,
+                ordinals);
 
             SetEntityNestedEntities(
                 entity,
@@ -195,7 +145,8 @@ namespace Hydrix.Orchestrator.Mapping
                 metadata,
                 path,
                 entityMetadataCache,
-                prefix);
+                prefix,
+                ordinals);
         }
 
         /// <summary>
@@ -209,11 +160,13 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="metadata">The metadata describing the mapping between the entity's properties and the data record columns.</param>
         /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record. Can be an empty
         /// string if no prefix is required.</param>
+        /// <param name="ordinals">A dictionary containing the column ordinals for efficient lookup.</param>
         private static void SetEntityFields(
             ISqlEntity entity,
             IDataRecord record,
             SqlEntityMetadata metadata,
-            String prefix)
+            String prefix,
+            IReadOnlyDictionary<string, int> ordinals)
         {
             foreach (var field in metadata.Fields)
             {
@@ -221,19 +174,12 @@ namespace Hydrix.Orchestrator.Mapping
                         ? $"{prefix}{field.Property.Name}"
                         : $"{prefix}{field.Attribute.FieldName}";
 
-                int ordinal;
-                try
-                {
-                    ordinal = record.GetOrdinal(columnName);
-                }
-                catch (IndexOutOfRangeException)
-                {
+                if (!ordinals.TryGetValue(columnName, out var ordinal))
                     continue;
-                }
 
                 if (record.IsDBNull(ordinal))
                 {
-                    field.Setter(entity, null);
+                    field.Setter(entity, field.DefaultValue);
                     continue;
                 }
 
@@ -257,13 +203,15 @@ namespace Hydrix.Orchestrator.Mapping
         /// null.</param>
         /// <param name="prefix">The prefix to apply to column names when accessing nested entity values in the data record. Can be an empty
         /// string.</param>
+        /// <param name="ordinals">A dictionary containing the column ordinals for efficient lookup.</param>
         private static void SetEntityNestedEntities(
             ISqlEntity entity,
             IDataRecord record,
             SqlEntityMetadata metadata,
             IReadOnlyList<string> path,
             ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache,
-            string prefix)
+            string prefix,
+            IReadOnlyDictionary<string, int> ordinals)
         {
             foreach (var nested in metadata.Entities)
             {
@@ -273,15 +221,8 @@ namespace Hydrix.Orchestrator.Mapping
 
                 if (primaryKeyColumn != null)
                 {
-                    int pkOrdinal;
-                    try
-                    {
-                        pkOrdinal = record.GetOrdinal(primaryKeyColumn);
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
+                    if (!ordinals.TryGetValue(primaryKeyColumn, out var pkOrdinal))
                         continue;
-                    }
 
                     if (record.IsDBNull(pkOrdinal))
                         continue;
@@ -300,7 +241,8 @@ namespace Hydrix.Orchestrator.Mapping
                     record,
                     nestedMetadata,
                     new List<string>(path) { nested.Property.Name },
-                    entityMetadataCache
+                    entityMetadataCache,
+                    ordinals
                 );
             }
         }

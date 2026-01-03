@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.1] - 2026-01-03
+
+This release focuses on correctness and performance improvements in the
+entity materialization pipeline, addressing edge cases involving `DBNull`
+handling and removing reflection from runtime execution paths.
+No breaking changes were introduced.
+
+### 🐞 Fixed
+
+- Correct handling of `DBNull` values for non-nullable value types during
+  entity materialization, preventing runtime assignment exceptions.
+- Ensured default values for value types are safely applied when database
+  fields contain `NULL`.
+
+### 🚀 Improved
+
+- Eliminated reflection from hot paths in entity materialization by caching
+  default values and compiled setters in metadata.
+- Improved overall performance and predictability of SQL-to-entity mapping
+  without altering the public API.
+
+---
+
 ## [1.1.0] - 2025-12-24
 
 This release represents a significant evolution of Hydrix, focusing on

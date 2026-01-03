@@ -42,6 +42,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var property = typeof(TestEntity).GetProperty(nameof(TestEntity.Id));
             var attribute = new SqlFieldAttribute("id");
             var targetType = typeof(int);
+            var defaultValue = 0;
 
             // Act
             var map = new SqlFieldMap(property, attribute, targetType);
@@ -50,6 +51,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             Assert.Equal(property, map.Property);
             Assert.Equal(attribute, map.Attribute);
             Assert.Equal(targetType, map.TargetType);
+            Assert.Equal(defaultValue, map.DefaultValue);
             Assert.NotNull(map.Setter);
         }
 

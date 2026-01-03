@@ -12,26 +12,26 @@
     <Product>Hydrix</Product>
     <ApplicationIcon>Hydrix.ico</ApplicationIcon>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <RepositoryUrl>https://github.com/marcelo-mattos/hydrix</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageReleaseNotes>
-      - (1.1.0) Features and Enhancements
+      - (1.1.1) Correctness and Performance Fixes
 
-      - Minimal ORM Core:
-      Introduced a minimal ORM for .NET, empowering developers with full control over SQL execution. The design prioritizes performance, predictability, and transparent object hydration.
+      - Fixed DBNull handling for non-nullable value types during entity materialization,
+      preventing runtime assignment exceptions.
 
-      - SqlWhereBuilder Improvements:
-      Enhanced the `SqlWhereBuilder` with new options for flexible and expressive WHERE clause construction, enabling more advanced query scenarios.
+      - Improved entity materialization performance by removing reflection from runtime
+      execution paths and relying on cached metadata and compiled setters.
 
-      - ExecuteNonQuery Overloads:
-      Added new `ExecuteNonQuery(string, object)` method overloads to support external `DbTransaction` parameterization, improving transaction management and integration with existing workflows.
+      - Increased robustness and predictability of SQL-to-entity mapping without
+      introducing breaking changes.
 
-      - Nested Entity Mapping:
-      Refactored `SqlEntityMap` to provide more robust and efficient mapping of nested SQL entities, including improved primary key detection, entity instantiation, and value conversion logic.
+      - Internal refactorings and minor optimizations to improve stability and
+      maintainability of the materialization pipeline.
     </PackageReleaseNotes>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

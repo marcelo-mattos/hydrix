@@ -234,7 +234,7 @@ If Hydrix helps you build reliable, predictable, and high-performance data acces
 
 You can support Hydrix through GitHub Sponsors:
 
-👉 https://github.com/sponsors/marcelo-matos
+👉 https://github.com/sponsors/marcelo-mattos
 
 Every contribution, whether financial or by sharing feedback and usage experiences, is deeply appreciated.
 

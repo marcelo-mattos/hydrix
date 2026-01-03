@@ -1,10 +1,12 @@
 ﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Adapters;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
 using Hydrix.Schemas;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 
 namespace Hydrix.Orchestrator.Materializers
@@ -57,6 +59,8 @@ namespace Hydrix.Orchestrator.Materializers
                 SqlEntityMetadata.BuildEntityMetadata
             );
 
+            var ordinals = BuildOrdinals(dataReader);
+
             while (dataReader.Read())
             {
                 var entity = new TEntity();
@@ -66,7 +70,8 @@ namespace Hydrix.Orchestrator.Materializers
                     dataReader,
                     metadata,
                     Array.Empty<string>(),
-                    _entityMetadataCache
+                    _entityMetadataCache,
+                    ordinals
                 );
 
                 entities.Add(entity);
@@ -88,25 +93,10 @@ namespace Hydrix.Orchestrator.Materializers
             if (dataTable == null || dataTable.Rows.Count == 0)
                 return new List<TEntity>();
 
-            var metadata = _entityMetadataCache.GetOrAdd(
-                typeof(TEntity),
-                SqlEntityMetadata.BuildEntityMetadata);
+            using var dataReader = dataTable.CreateDataReader();
 
-            var entities = new List<TEntity>();
-            foreach (var row in dataTable.Rows.Cast<DataRow>())
-            {
-                var entity = new TEntity();
-                SqlEntityMap.SetEntity(
-                    entity,
-                    row,
-                    metadata,
-                    Array.Empty<string>(),
-                    _entityMetadataCache);
-
-                entities.Add(entity);
-            }
-
-            return entities;
+            return ConvertDataReaderToEntities<TEntity>(
+                dataReader);
         }
 
         /// <summary>
@@ -166,6 +156,29 @@ namespace Hydrix.Orchestrator.Materializers
             }
 
             return dataTable;
+        }
+
+        /// <summary>
+        /// Creates a dictionary that maps column names to their ordinal positions in the specified data reader.
+        /// </summary>
+        /// <remarks>The returned dictionary uses ordinal, case-insensitive string comparison for column
+        /// names. This can be useful for efficient column lookup when processing data from the reader.</remarks>
+        /// <param name="reader">The data reader from which to retrieve column names and their ordinal positions. Must not be null.</param>
+        /// <returns>A dictionary containing column names as keys and their corresponding zero-based ordinal positions as values.
+        /// The dictionary is case-insensitive with respect to column names.</returns>
+        private static Dictionary<string, int> BuildOrdinals(
+            IDataReader reader)
+        {
+            var ordinals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                var name = reader.GetName(i);
+                if (!string.IsNullOrWhiteSpace(name) && !ordinals.ContainsKey(name))
+                    ordinals.Add(name, i);
+            }
+
+            return ordinals;
         }
 
         /// <summary>
