@@ -65,6 +65,11 @@ namespace Hydrix.Orchestrator.Mapping
         public Type TargetType { get; }
 
         /// <summary>
+        /// Gets the default value associated with this member.
+        /// </summary>
+        public object DefaultValue { get; }
+
+        /// <summary>
         /// Gets the compiled setter delegate used to assign values
         /// to the entity property without reflection.
         /// </summary>
@@ -87,6 +92,10 @@ namespace Hydrix.Orchestrator.Mapping
             Attribute = attribute;
             TargetType = targetType;
             Setter = SqlMetadataFactory.CreateSetter(property);
+
+            DefaultValue = targetType.IsValueType
+                ? Activator.CreateInstance(targetType)
+                : null;
         }
     }
 }

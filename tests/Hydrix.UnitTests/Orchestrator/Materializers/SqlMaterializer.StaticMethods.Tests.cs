@@ -22,17 +22,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var mockReader = new Mock<IDataReader>();
             var callCount = 0;
             mockReader.Setup(r => r.Read()).Returns(() => callCount++ < 2);
+            mockReader.Setup(r => r.FieldCount).Returns(2);
             mockReader.Setup(r => r.GetOrdinal("Id")).Returns(0);
-            mockReader.Setup(r => r.GetValue(0)).Returns(1);
+            mockReader.Setup(r => r.IsDBNull(0)).Returns(true);
+            mockReader.Setup(r => r.GetValue(0)).Returns(DBNull.Value);
+            mockReader.Setup(r => r.GetName(0)).Returns("Id");
             mockReader.Setup(r => r.GetOrdinal("Name")).Returns(1);
             mockReader.Setup(r => r.GetValue(1)).Returns("Test");
+            mockReader.Setup(r => r.GetName(1)).Returns("Name");
 
             var entities = SqlMaterializer.ConvertDataReaderToEntities<TestEntity>(mockReader.Object);
 
             Assert.Equal(2, entities.Count);
             Assert.All(entities, e =>
             {
-                Assert.Equal(1, e.Id);
+                Assert.Equal(0, e.Id);
                 Assert.Equal("Test", e.Name);
             });
         }

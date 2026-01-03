@@ -86,6 +86,11 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             public Type TargetType { get; set; }
 
             /// <summary>
+            /// Gets or sets the default value associated with the member.
+            /// </summary>
+            public object DefaultValue { get; set; }
+
+            /// <summary>
             /// Gets or sets the delegate used to assign a value to an <see cref="ISqlEntity"/> instance.
             /// </summary>
             /// <remarks>The delegate receives the target <see cref="ISqlEntity"/> and the value to
@@ -152,14 +157,14 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
-        /// Verifies that the SetEntity method delegates property assignment to the IDataRecord implementation when
-        /// provided with a DataRow.
+        /// Verifies that the SetEntity method correctly handles an IDataRecord created from a DataRow without throwing
+        /// exceptions.
         /// </summary>
-        /// <remarks>This test ensures that calling SetEntity with a DataRow does not throw an exception
-        /// and that the method correctly interacts with the data record abstraction. It is intended to validate the
-        /// delegation logic for entity property mapping in scenarios involving DataRow inputs.</remarks>
+        /// <remarks>This test ensures that SetEntity operates as expected when provided with a
+        /// DataRow-based IDataRecord, even when the DataRowDataRecordAdapter is not explicitly mocked. It confirms that
+        /// the method is a no-op in this scenario and does not alter the entity or throw errors.</remarks>
         [Fact]
-        public void SetEntity_DataRow_DelegatesToIDataRecord()
+        public void SetEntity_IDataRecord_FromDataRow_IsHandledCorrectly()
         {
             // Arrange
             var entity = new TestEntity();
@@ -170,10 +175,17 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             );
             var row = new DataTable().NewRow();
             var cache = new ConcurrentDictionary<Type, SqlEntityMetadata>();
+            var reader = row.Table.CreateDataReader();
 
             // Act
             // Should not throw (no-op, as DataRowDataRecordAdapter is not mocked)
-            SqlEntityMap.SetEntity(entity, row, metadata, new List<string>(), cache);
+            SqlEntityMap.SetEntity(
+                entity,
+                reader,
+                metadata,
+                new List<string>(),
+                cache,
+                new Dictionary<string, int>());
 
             // Assert
             Assert.NotNull(entity);
@@ -206,8 +218,20 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 [typeof(TestEntity)] = metadata
             };
 
+            var ordinals = new Dictionary<string, int>
+            {
+                ["Id"] = 0,
+                ["Nested.Id"] = 1
+            };
+
             // Act
-            SqlEntityMap.SetEntity(entity, record.Object, metadata, new List<string>(), cache);
+            SqlEntityMap.SetEntity(
+                entity,
+                record.Object,
+                metadata,
+                new List<string>(),
+                cache,
+                ordinals);
 
             // Assert
             Assert.Equal(42, entity.Id);
@@ -233,14 +257,37 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             // Act (should not throw)
             var method = typeof(SqlEntityMap).GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static);
-            method.Invoke(null, new object[] { entity, record.Object, metadata, "" });
+            method.Invoke(
+                null,
+                new object[]
+                {
+                    entity,
+                    record.Object,
+                    metadata,
+                    "",
+                    new Dictionary<string, int>()
+                });
+
+            var ordinals = new Dictionary<string, int>
+            {
+                ["Id"] = 0
+            };
 
             // Now test with a valid column
             record.Setup(r => r.GetOrdinal("Id")).Returns(0);
             record.Setup(r => r.IsDBNull(0)).Returns(false);
             record.Setup(r => r.GetValue(0)).Returns(123);
 
-            method.Invoke(null, new object[] { entity, record.Object, metadata, "" });
+            method.Invoke(
+                null,
+                new object[]
+                {
+                    entity,
+                    record.Object,
+                    metadata,
+                    "",
+                    ordinals
+                });
 
             // Assert
             Assert.Equal(123, entity.Id);
@@ -271,13 +318,40 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var method = typeof(SqlEntityMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act (should not throw)
-            method.Invoke(null, new object[] { entity, record.Object, metadata, new List<string>(), cache, "" });
+            method.Invoke(
+                null,
+                new object[]
+                {
+                    entity,
+                    record.Object,
+                    metadata,
+                    new List<string>(),
+                    cache,
+                    "",
+                    new Dictionary<string, int>()
+                });
+
+            var ordinals = new Dictionary<string, int>
+            {
+                ["Id"] = 0
+            };
 
             // Now test with PK column present but null
             record.Setup(r => r.GetOrdinal("Nested.Id")).Returns(0);
             record.Setup(r => r.IsDBNull(0)).Returns(true);
 
-            method.Invoke(null, new object[] { entity, record.Object, metadata, new List<string>(), cache, "" });
+            method.Invoke(
+                null,
+                new object[]
+                {
+                    entity,
+                    record.Object,
+                    metadata,
+                    new List<string>(),
+                    cache,
+                    "",
+                    ordinals
+                });
 
             // Assert
             Assert.Null(entity.Nested);
@@ -349,17 +423,30 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 Attribute = new DummyAttribute { FieldName = " " },
                 Property = new DummyProperty { Name = "TestProp" },
                 TargetType = typeof(string),
-                Setter = (e, v) => ((DummyEntity)e).Value = v
+                Setter = (e, v) => ((DummyEntity)e).Value = v,
+                DefaultValue = null
             };
             var metadata = new DummyMetadata { Fields = new List<DummyField> { field } };
             string prefix = "p_";
 
+            var ordinals = new Dictionary<string, int>
+            {
+                ["p_TestProp"] = 0
+            };
+
             recordMock.Setup(r => r.GetOrdinal("p_TestProp")).Returns(0);
             recordMock.Setup(r => r.IsDBNull(0)).Returns(false);
             recordMock.Setup(r => r.GetValue(0)).Returns("abc");
+            recordMock.Setup(r => r.FieldCount).Returns(1);
+            recordMock.Setup(r => r.GetName(0)).Returns("TestProp");
 
             // Act
-            SqlEntityMaterializerTestHelper.SetEntityFields(entity, recordMock.Object, metadata, prefix);
+            SqlEntityMaterializerTestHelper.SetEntityFields(
+                entity,
+                recordMock.Object,
+                metadata,
+                prefix,
+                ordinals);
 
             // Assert
             Assert.Equal("abc", entity.Value);
@@ -384,17 +471,30 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 Attribute = new DummyAttribute { FieldName = "FieldA" },
                 Property = new DummyProperty { Name = "TestProp" },
                 TargetType = typeof(string),
-                Setter = (e, v) => ((DummyEntity)e).Value = v
+                Setter = (e, v) => ((DummyEntity)e).Value = v,
+                DefaultValue = null
             };
             var metadata = new DummyMetadata { Fields = new List<DummyField> { field } };
             string prefix = "p_";
 
+            var ordinals = new Dictionary<string, int>
+            {
+                ["p_FieldA"] = 0
+            };
+
             recordMock.Setup(r => r.GetOrdinal("p_FieldA")).Returns(0);
             recordMock.Setup(r => r.IsDBNull(0)).Returns(false);
             recordMock.Setup(r => r.GetValue(0)).Returns("xyz");
+            recordMock.Setup(r => r.FieldCount).Returns(1);
+            recordMock.Setup(r => r.GetName(0)).Returns("TestProp");
 
             // Act
-            SqlEntityMaterializerTestHelper.SetEntityFields(entity, recordMock.Object, metadata, prefix);
+            SqlEntityMaterializerTestHelper.SetEntityFields(
+                entity,
+                recordMock.Object,
+                metadata,
+                prefix,
+                ordinals);
 
             // Assert
             Assert.Equal("xyz", entity.Value);
@@ -418,19 +518,127 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 Attribute = new DummyAttribute { FieldName = "FieldB" },
                 Property = new DummyProperty { Name = "TestProp" },
                 TargetType = typeof(string),
-                Setter = (e, v) => ((DummyEntity)e).Value = v
+                Setter = (e, v) => ((DummyEntity)e).Value = v,
+                DefaultValue = null
             };
             var metadata = new DummyMetadata { Fields = new List<DummyField> { field } };
             string prefix = "";
 
+            var ordinals = new Dictionary<string, int>
+            {
+                ["FieldB"] = 0
+            };
+
             recordMock.Setup(r => r.GetOrdinal("FieldB")).Returns(0);
             recordMock.Setup(r => r.IsDBNull(0)).Returns(true);
+            recordMock.Setup(r => r.FieldCount).Returns(1);
+            recordMock.Setup(r => r.GetName(0)).Returns("FieldB");
 
             // Act
-            SqlEntityMaterializerTestHelper.SetEntityFields(entity, recordMock.Object, metadata, prefix);
+            SqlEntityMaterializerTestHelper.SetEntityFields(
+                entity,
+                recordMock.Object,
+                metadata,
+                prefix,
+                ordinals);
 
             // Assert
             Assert.Null(entity.Value);
+        }
+
+        /// <summary>
+        /// Verifies that the SetEntityFields method assigns the default value to an entity field when the corresponding
+        /// data record column is DBNull.
+        /// </summary>
+        /// <remarks>This test ensures that when a data record indicates a field is DBNull, the entity's
+        /// field is set to its defined default value rather than null or an uninitialized state. This behavior is
+        /// important for maintaining expected default values in entity objects when database fields are missing or
+        /// contain nulls.</remarks>
+        [Fact]
+        public void SetEntityFields_SetsDefaultValue_WhenIsDBNullIsTrue()
+        {
+            // Arrange
+            var entity = new DummyEntity();
+            var recordMock = new Mock<IDataRecord>();
+            var field = new DummyField
+            {
+                Attribute = new DummyAttribute { FieldName = "FieldB" },
+                Property = new DummyProperty { Name = "TestProp" },
+                TargetType = typeof(int),
+                Setter = (e, v) => ((DummyEntity)e).Value = v,
+                DefaultValue = default(int)
+            };
+            var metadata = new DummyMetadata { Fields = new List<DummyField> { field } };
+            string prefix = "";
+
+            var ordinals = new Dictionary<string, int>
+            {
+                ["FieldB"] = 0
+            };
+
+            recordMock.Setup(r => r.GetOrdinal("FieldB")).Returns(0);
+            recordMock.Setup(r => r.IsDBNull(0)).Returns(true);
+            recordMock.Setup(r => r.FieldCount).Returns(1);
+            recordMock.Setup(r => r.GetName(0)).Returns("FieldB");
+
+            // Act
+            SqlEntityMaterializerTestHelper.SetEntityFields(
+                entity,
+                recordMock.Object,
+                metadata,
+                prefix,
+                ordinals);
+
+            // Assert
+            Assert.Equal(field.DefaultValue, entity.Value);
+        }
+
+        /// <summary>
+        /// Verifies that the SetEntityFields method assigns the default value to an integer property when the
+        /// corresponding data record field is DBNull.
+        /// </summary>
+        /// <remarks>This test ensures that when the data record indicates a field is DBNull, the entity's
+        /// property is set to the specified default value rather than left unset or assigned a null value. This
+        /// behavior is important for maintaining expected defaults in entity objects when database fields are missing
+        /// or null.</remarks>
+        [Fact]
+        public void SetEntityFields_SetsDefaultValue_Int_WhenIsDBNullIsTrue()
+        {
+            // Arrange
+            var entity = new DummyEntity();
+            var recordMock = new Mock<IDataRecord>();
+            var field = new DummyField
+            {
+                Attribute = new DummyAttribute { FieldName = "FieldB" },
+                Property = new DummyProperty { Name = "TestProp" },
+                TargetType = typeof(int),
+                Setter = (e, v) => ((DummyEntity)e).Value = v,
+                DefaultValue = default(int)
+            };
+            var metadata = new DummyMetadata { Fields = new List<DummyField> { field } };
+            string prefix = "";
+
+            var ordinals = new Dictionary<string, int>
+            {
+                ["FieldB"] = 0
+            };
+
+            recordMock.Setup(r => r.GetOrdinal("FieldB")).Returns(0);
+            recordMock.Setup(r => r.IsDBNull(0)).Returns(false);
+            recordMock.Setup(r => r.GetValue(0)).Returns(99);
+            recordMock.Setup(r => r.FieldCount).Returns(1);
+            recordMock.Setup(r => r.GetName(0)).Returns("FieldB");
+
+            // Act
+            SqlEntityMaterializerTestHelper.SetEntityFields(
+                entity,
+                recordMock.Object,
+                metadata,
+                prefix,
+                ordinals);
+
+            // Assert
+            Assert.Equal(99, entity.Value);
         }
     }
 
@@ -454,11 +662,13 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         /// <param name="metadata">Metadata describing the mapping between entity properties and data record columns. Must provide a collection
         /// of fields with property and setter information.</param>
         /// <param name="prefix">A string prefix to prepend to column names when matching fields in the data record.</param>
+        /// <param name="ordinals">A dictionary mapping column names to their respective ordinals in the data record for efficient access.</param>
         public static void SetEntityFields(
             ISqlEntity entity,
             IDataRecord record,
             dynamic metadata,
-            string prefix)
+            string prefix,
+            IReadOnlyDictionary<string, int> ordinals)
         {
             foreach (var field in metadata.Fields)
             {
@@ -466,19 +676,12 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                     ? $"{prefix}{field.Property.Name}"
                     : $"{prefix}{field.Attribute.FieldName}";
 
-                int ordinal;
-                try
-                {
-                    ordinal = record.GetOrdinal(columnName);
-                }
-                catch (IndexOutOfRangeException)
-                {
+                if (!ordinals.TryGetValue(columnName, out var ordinal))
                     continue;
-                }
 
                 if (record.IsDBNull(ordinal))
                 {
-                    field.Setter(entity, null);
+                    field.Setter(entity, field.DefaultValue);
                     continue;
                 }
 
