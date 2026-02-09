@@ -18,7 +18,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         [Fact]
         public void ISqlProcedureAttribute_IsInterface()
         {
-            Assert.True(typeof(ISqlProcedureAttribute).IsInterface);
+            Assert.True(typeof(IProcedureAttribute).IsInterface);
         }
 
         /// <summary>
@@ -30,8 +30,8 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         [Fact]
         public void ISqlProcedureAttribute_InheritsFrom_ISqlSchemaAttribute()
         {
-            var baseInterfaces = typeof(ISqlProcedureAttribute).GetInterfaces();
-            Assert.Contains(typeof(ISqlSchemaAttribute), baseInterfaces);
+            var baseInterfaces = typeof(IProcedureAttribute).GetInterfaces();
+            Assert.Contains(typeof(ISchemaAttribute), baseInterfaces);
         }
     }
 }

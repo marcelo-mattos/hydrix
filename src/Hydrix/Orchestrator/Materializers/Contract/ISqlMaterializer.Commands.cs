@@ -118,7 +118,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlEntity does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         IDbCommand CreateCommand<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> sqlProcedure)
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlEntity does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         IDbCommand CreateCommand<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
             where TDataParameterDriver : IDataParameter, new();
     }

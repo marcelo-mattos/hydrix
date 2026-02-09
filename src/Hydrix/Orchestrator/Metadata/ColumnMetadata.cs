@@ -1,15 +1,15 @@
-﻿using Hydrix.Attributes.Schemas;
-using System;
+﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 
 namespace Hydrix.Orchestrator.Metadata
 {
     /// <summary>
-    /// Represents metadata for a scalar SQL-mapped field.
+    /// Represents metadata for a scalar mapped column.
     /// Holds all information required to efficiently assign
     /// a value from a data record to an entity property.
     /// </summary>
-    internal sealed class SqlFieldMetadata
+    internal sealed class ColumnMetadata
     {
         /// <summary>
         /// Gets the reflected property associated with this field.
@@ -31,16 +31,16 @@ namespace Hydrix.Orchestrator.Metadata
         /// <summary>
         /// Gets the SQL field mapping attribute applied to the property.
         /// </summary>
-        public SqlFieldAttribute Attribute { get; }
+        public ColumnAttribute Attribute { get; }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="SqlFieldMetadata"/>.
+        /// Initializes a new instance of <see cref="ColumnMetadata"/>.
         /// </summary>
-        public SqlFieldMetadata(
+        public ColumnMetadata(
             PropertyInfo property,
             Action<object, object> setter,
             Type targetType,
-            SqlFieldAttribute attribute)
+            ColumnAttribute attribute)
         {
             Property = property;
             Setter = setter;

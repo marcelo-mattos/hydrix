@@ -4,6 +4,7 @@ using Hydrix.Schemas;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Reflection;
 
@@ -14,22 +15,22 @@ namespace Hydrix.Orchestrator.Mapping
     /// </summary>
     /// <remarks>
     /// This class encapsulates the metadata required to map a composed or nested <see
-    /// cref="ISqlEntity"/> from a flattened SQL result set.
+    /// cref="ITable"/> from a flattened SQL result set.
     ///
     /// It is used to describe relationships where an entity contains another entity as a property,
     /// typically populated from JOINed tables using aliased column names (e.g. <c>Parent.Child.Property</c>).
     ///
-    /// The mapping behavior is driven by the presence of the <see cref="SqlEntityAttribute"/>,
+    /// The mapping behavior is driven by the presence of the <see cref="TableAttribute"/>,
     /// which defines how and when the nested entity should be instantiated during data materialization.
     /// </remarks>
-    internal sealed class SqlEntityMap
+    internal sealed class TableMap
     {
         /// <summary>
         /// Gets the reflected property that represents the nested entity.
         /// </summary>
         /// <remarks>
         /// This property represents a writable CLR property whose type implements <see
-        /// cref="ISqlEntity"/> and is decorated with <see cref="SqlEntityAttribute"/>.
+        /// cref="ITable"/> and is decorated with <see cref="TableAttribute"/>.
         ///
         /// The underlying <see cref="PropertyInfo"/> is used to:
         /// <list type="bullet">
@@ -49,7 +50,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// Gets the SQL entity attribute that defines the nested mapping behavior.
         /// </summary>
         /// <remarks>
-        /// The <see cref="SqlEntityAttribute"/> provides metadata used to control:
+        /// The <see cref="TableAttribute"/> provides metadata used to control:
         /// <list type="bullet">
         /// <item>
         /// <description>
@@ -67,7 +68,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// This attribute allows the mapper to avoid creating empty or invalid nested entities when
         /// the corresponding SQL data is absent.
         /// </remarks>
-        public SqlEntityAttribute Attribute { get; private set; }
+        public NestedTableAttribute Attribute { get; private set; }
 
         /// <summary>
         /// Compiled factory delegate for nested entity instantiation.
@@ -80,13 +81,13 @@ namespace Hydrix.Orchestrator.Mapping
         public Action<object, object> Setter { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SqlEntityMap"/> class.
+        /// Initializes a new instance of the <see cref="TableMap"/> class.
         /// </summary>
         /// <param name="property">
         /// The reflected property that represents the nested entity on the parent type.
         /// </param>
         /// <param name="attribute">
-        /// The <see cref="SqlEntityAttribute"/> instance associated with the property, defining how
+        /// The <see cref="TableAttribute"/> instance associated with the property, defining how
         /// the nested entity should be resolved and instantiated.
         /// </param>
         /// <remarks>
@@ -95,14 +96,14 @@ namespace Hydrix.Orchestrator.Mapping
         /// Once created, the mapping definition should be treated as immutable and safely reused
         /// across concurrent mapping operations.
         /// </remarks>
-        public SqlEntityMap(
+        public TableMap(
             PropertyInfo property,
-            SqlEntityAttribute attribute)
+            NestedTableAttribute attribute)
         {
             this.Property = property;
             this.Attribute = attribute;
-            this.Factory = SqlMetadataFactory.CreateFactory(property.PropertyType);
-            this.Setter = SqlMetadataFactory.CreateSetter(property);
+            this.Factory = MetadataFactory.CreateFactory(property.PropertyType);
+            this.Setter = MetadataFactory.CreateSetter(property);
         }
 
         /// <summary>
@@ -121,11 +122,11 @@ namespace Hydrix.Orchestrator.Mapping
         /// entities. Cannot be null.</param>
         /// <param name="ordinals">A mapping from field names to their corresponding ordinal positions in the data record. Cannot be null.</param>
         internal static void SetEntity(
-            ISqlEntity entity,
+            ITable entity,
             IDataRecord record,
-            SqlEntityMetadata metadata,
+            TableMetadata metadata,
             IReadOnlyList<string> path,
-            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache,
+            ConcurrentDictionary<Type, TableMetadata> entityMetadataCache,
             IReadOnlyDictionary<string, int> ordinals)
         {
             string prefix = path.Count > 0
@@ -162,17 +163,17 @@ namespace Hydrix.Orchestrator.Mapping
         /// string if no prefix is required.</param>
         /// <param name="ordinals">A dictionary containing the column ordinals for efficient lookup.</param>
         private static void SetEntityFields(
-            ISqlEntity entity,
+            ITable entity,
             IDataRecord record,
-            SqlEntityMetadata metadata,
+            TableMetadata metadata,
             String prefix,
             IReadOnlyDictionary<string, int> ordinals)
         {
             foreach (var field in metadata.Fields)
             {
-                string columnName = string.IsNullOrWhiteSpace(field.Attribute.FieldName)
+                string columnName = string.IsNullOrWhiteSpace(field.Attribute.Name)
                         ? $"{prefix}{field.Property.Name}"
-                        : $"{prefix}{field.Attribute.FieldName}";
+                        : $"{prefix}{field.Attribute.Name}";
 
                 if (!ordinals.TryGetValue(columnName, out var ordinal))
                     continue;
@@ -205,35 +206,35 @@ namespace Hydrix.Orchestrator.Mapping
         /// string.</param>
         /// <param name="ordinals">A dictionary containing the column ordinals for efficient lookup.</param>
         private static void SetEntityNestedEntities(
-            ISqlEntity entity,
+            ITable entity,
             IDataRecord record,
-            SqlEntityMetadata metadata,
+            TableMetadata metadata,
             IReadOnlyList<string> path,
-            ConcurrentDictionary<Type, SqlEntityMetadata> entityMetadataCache,
+            ConcurrentDictionary<Type, TableMetadata> entityMetadataCache,
             string prefix,
             IReadOnlyDictionary<string, int> ordinals)
         {
             foreach (var nested in metadata.Entities)
             {
-                var primaryKeyColumn = string.IsNullOrWhiteSpace(nested.Attribute.PrimaryKey)
+                var keyColumn = string.IsNullOrWhiteSpace(nested.Attribute.Key)
                     ? null
-                    : $"{prefix}{nested.Property.Name}.{nested.Attribute.PrimaryKey}";
+                    : $"{prefix}{nested.Property.Name}.{nested.Attribute.Key}";
 
-                if (primaryKeyColumn != null)
+                if (keyColumn != null)
                 {
-                    if (!ordinals.TryGetValue(primaryKeyColumn, out var pkOrdinal))
+                    if (!ordinals.TryGetValue(keyColumn, out var pkOrdinal))
                         continue;
 
                     if (record.IsDBNull(pkOrdinal))
                         continue;
                 }
 
-                var nestedEntity = (ISqlEntity)nested.Factory();
+                var nestedEntity = (ITable)nested.Factory();
                 nested.Setter(entity, nestedEntity);
 
                 var nestedMetadata = entityMetadataCache.GetOrAdd(
                     nested.Property.PropertyType,
-                    SqlEntityMetadata.BuildEntityMetadata
+                    TableMetadata.BuildEntityMetadata
                 );
 
                 SetEntity(

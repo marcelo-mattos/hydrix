@@ -63,32 +63,32 @@ namespace Hydrix.UnitTests.Schemas
     /// Represents a dummy implementation of a SQL stored procedure for use with the Hydrix schema framework.
     /// </summary>
     /// <remarks>This class is intended for testing or demonstration purposes and does not provide actual
-    /// database functionality. It implements the ISqlProcedure interface using the DummyParameter type
+    /// database functionality. It implements the IProcedure interface using the DummyParameter type
     /// parameter.</remarks>
-    public class DummySqlProcedure :
-        ISqlProcedure<DummyParameter>
+    public class DummyProcedure :
+        IProcedure<DummyParameter>
     { }
 
     /// <summary>
-    /// Provides unit tests for verifying implementations of the ISqlProcedure interface and related parameter types.
+    /// Provides unit tests for verifying implementations of the IProcedure interface and related parameter types.
     /// </summary>
     /// <remarks>This class contains tests to ensure that custom SQL procedure and parameter types conform to
-    /// expected interfaces, such as ISqlProcedure&lt;T&gt; and IDataParameter. These tests are intended for use with the
+    /// expected interfaces, such as IProcedure&lt;T&gt; and IDataParameter. These tests are intended for use with the
     /// xUnit testing framework.</remarks>
-    public class ISqlProcedureTestsImpl
+    public class IProcedureTestsImpl
     {
         /// <summary>
-        /// Verifies that a DummySqlProcedure instance implements the ISqlProcedure interface with DummyParameter as the
+        /// Verifies that a DummyProcedure instance implements the IProcedure interface with DummyParameter as the
         /// parameter type.
         /// </summary>
-        /// <remarks>This test ensures that DummySqlProcedure can be assigned to
-        /// ISqlProcedure&lt;DummyParameter&gt;, confirming correct interface implementation for valid parameter
+        /// <remarks>This test ensures that DummyProcedure can be assigned to
+        /// IProcedure&lt;DummyParameter&gt;, confirming correct interface implementation for valid parameter
         /// types.</remarks>
         [Fact]
-        public void CanImplementISqlProcedure_WithValidParameterType()
+        public void CanImplementIProcedure_WithValidParameterType()
         {
-            var proc = new DummySqlProcedure();
-            Assert.IsAssignableFrom<Hydrix.Schemas.ISqlProcedure<DummyParameter>>(proc);
+            var proc = new DummyProcedure();
+            Assert.IsAssignableFrom<IProcedure<DummyParameter>>(proc);
         }
 
         /// <summary>

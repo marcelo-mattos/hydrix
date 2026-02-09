@@ -440,7 +440,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         DataTable Contract.ISqlMaterializer.ExecuteTable<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> sqlProcedure)
         {
             DataTable dataTable = null;
 
@@ -470,7 +470,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         DataTable Contract.ISqlMaterializer.ExecuteTable<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
         {
             DataTable dataTable = null;
@@ -503,7 +503,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<DataTable> Contract.ISqlMaterializer.ExecuteTableAsync<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             CancellationToken cancellationToken)
         {
             using var dataReader = await (this as Contract.ISqlMaterializer)
@@ -536,7 +536,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<DataTable> Contract.ISqlMaterializer.ExecuteTableAsync<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken)
         {

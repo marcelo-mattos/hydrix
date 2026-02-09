@@ -6,12 +6,12 @@ namespace Hydrix.Attributes.Parameters.Contract
     /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet
     /// columns; and is implemented by .NET Framework data providers that access data sources.
     /// </summary>
-    public interface ISqlParameterAttribute
+    public interface IParameterAttribute
     {
         /// <summary>
         /// Gets or sets the name of the System.Data.IDataParameter.
         /// </summary>
-        string ParameterName { get; }
+        string Name { get; }
 
         /// <summary>
         /// Gets or sets the System.Data.DbType of the parameter.

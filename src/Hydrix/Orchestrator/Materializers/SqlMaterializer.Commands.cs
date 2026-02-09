@@ -312,7 +312,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         IDbCommand Contract.ISqlMaterializer.CreateCommand<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> sqlProcedure)
         {
             IDbTransaction transaction = null;
 
@@ -348,7 +348,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         IDbCommand Contract.ISqlMaterializer.CreateCommand<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
         {
 #if NET8_0_OR_GREATER
@@ -372,8 +372,8 @@ namespace Hydrix.Orchestrator.Materializers
             var procedureType = sqlProcedure.GetType();
 
             var sqlProcedureAttribute = procedureType
-                .GetCustomAttributes(typeof(SqlProcedureAttribute), false)
-                .Cast<SqlProcedureAttribute>()
+                .GetCustomAttributes(typeof(ProcedureAttribute), false)
+                .Cast<ProcedureAttribute>()
                 .FirstOrDefault() ?? throw new MissingMemberException(
                     "The SqlProcedure does not have a SqlProcedureAttribute decorating itself.");
 
@@ -396,14 +396,14 @@ namespace Hydrix.Orchestrator.Materializers
             foreach (var property in properties)
             {
                 var parameterAttributes = property
-                    .GetCustomAttributes(typeof(SqlParameterAttribute), false)
-                    .Cast<SqlParameterAttribute>();
+                    .GetCustomAttributes(typeof(ParameterAttribute), false)
+                    .Cast<ParameterAttribute>();
 
                 foreach (var parameterAttribute in parameterAttributes)
                 {
                     var dataParameter = new TDataParameterDriver
                     {
-                        ParameterName = parameterAttribute.ParameterName,
+                        ParameterName = parameterAttribute.Name,
                         Direction = parameterAttribute.Direction,
                         Value = property.GetValue(sqlProcedure) ?? DBNull.Value
                     };

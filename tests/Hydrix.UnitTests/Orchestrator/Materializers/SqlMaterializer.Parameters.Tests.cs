@@ -1,12 +1,6 @@
-﻿using Hydrix.Orchestrator.Materializers;
-using Microsoft.Data.SqlClient;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
-using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers

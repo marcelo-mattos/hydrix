@@ -582,7 +582,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         public DataSet ExecuteDataSet<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> sqlProcedure)
             where TDataParameterDriver : IDataParameter, new()
         {
             DataSet dataSet = null;
@@ -624,7 +624,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         public DataSet ExecuteDataSet<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
             where TDataParameterDriver : IDataParameter, new()
         {
@@ -669,7 +669,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<DataSet> ExecuteDataSetAsync<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
@@ -714,7 +714,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<DataSet> ExecuteDataSetAsync<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()

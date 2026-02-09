@@ -19,9 +19,9 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         [Fact]
         public void Constructor_SetsProperties_Correctly()
         {
-            var attr = new SqlParameterAttribute("param1", DbType.Int32);
+            var attr = new ParameterAttribute("param1", DbType.Int32);
 
-            Assert.Equal("param1", attr.ParameterName);
+            Assert.Equal("param1", attr.Name);
             Assert.Equal(DbType.Int32, attr.DbType);
             Assert.Equal(ParameterDirection.Input, attr.Direction);
         }
@@ -33,9 +33,12 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         [Fact]
         public void Constructor_WithDirection_SetsProperties_Correctly()
         {
-            var attr = new SqlParameterAttribute("param2", DbType.DateTime, ParameterDirection.Output);
+            var attr = new ParameterAttribute("param2", DbType.DateTime)
+            {
+                Direction = ParameterDirection.Output
+            };
 
-            Assert.Equal("param2", attr.ParameterName);
+            Assert.Equal("param2", attr.Name);
             Assert.Equal(DbType.DateTime, attr.DbType);
             Assert.Equal(ParameterDirection.Output, attr.Direction);
         }
@@ -50,9 +53,12 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         [Fact]
         public void Constructor_Allows_EmptyParameterName()
         {
-            var attr = new SqlParameterAttribute(string.Empty, DbType.String, ParameterDirection.Input);
+            var attr = new ParameterAttribute(string.Empty, DbType.String)
+            {
+                Direction = ParameterDirection.Input
+            };
 
-            Assert.Equal(string.Empty, attr.ParameterName);
+            Assert.Equal(string.Empty, attr.Name);
             Assert.Equal(DbType.String, attr.DbType);
             Assert.Equal(ParameterDirection.Input, attr.Direction);
         }
@@ -66,7 +72,10 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         [Fact]
         public void Constructor_Allows_AnyDbType_EnumValue()
         {
-            var attr = new SqlParameterAttribute("param", (DbType)999, ParameterDirection.Input);
+            var attr = new ParameterAttribute("param", (DbType)999)
+            {
+                Direction = ParameterDirection.Input
+            };
 
             Assert.Equal((DbType)999, attr.DbType);
         }
@@ -81,7 +90,10 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         [Fact]
         public void Constructor_Allows_AnyParameterDirection_EnumValue()
         {
-            var attr = new SqlParameterAttribute("param", DbType.String, (ParameterDirection)999);
+            var attr = new ParameterAttribute("param", DbType.String)
+            {
+                Direction = (ParameterDirection)999
+            };
 
             Assert.Equal((ParameterDirection)999, attr.Direction);
         }

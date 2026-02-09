@@ -18,28 +18,29 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         /// Verifies that the default constructor of the SqlEntityAttribute class initializes all string properties to
         /// empty strings.
         /// </summary>
-        /// <remarks>This test ensures that the Schema, Name, and PrimaryKey properties are set to
+        /// <remarks>This test ensures that the Schema, Name, and Key properties are set to
         /// string.Empty when a new instance is created using the default constructor.</remarks>
         [Fact]
         public void DefaultConstructor_SetsEmptyProperties()
         {
-            var attr = new SqlEntityAttribute();
-            Assert.Equal(string.Empty, attr.Schema);
-            Assert.Equal(string.Empty, attr.Name);
-            Assert.Equal(string.Empty, attr.PrimaryKey);
+            Assert.Throws<ArgumentException>(() => new NestedTableAttribute(string.Empty));
         }
 
         /// <summary>
         /// Verifies that the parameterized constructor of the SqlEntityAttribute class correctly sets the Schema, Name,
-        /// and PrimaryKey properties.
+        /// and Key properties.
         /// </summary>
         [Fact]
         public void ParameterizedConstructor_SetsPropertiesCorrectly()
         {
-            var attr = new SqlEntityAttribute("dbo", "Users", "UserId");
+            var attr = new NestedTableAttribute("Users")
+            {
+                Schema = "dbo",
+                Key = "UserId"
+            };
             Assert.Equal("dbo", attr.Schema);
             Assert.Equal("Users", attr.Name);
-            Assert.Equal("UserId", attr.PrimaryKey);
+            Assert.Equal("UserId", attr.Key);
         }
 
         /// <summary>
@@ -50,7 +51,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         [Fact]
         public void AttributeUsage_IsCorrect()
         {
-            var usage = typeof(SqlEntityAttribute)
+            var usage = typeof(NestedTableAttribute)
                 .GetCustomAttribute<AttributeUsageAttribute>();
             Assert.NotNull(usage);
             Assert.Equal(AttributeTargets.Class | AttributeTargets.Property, usage.ValidOn);

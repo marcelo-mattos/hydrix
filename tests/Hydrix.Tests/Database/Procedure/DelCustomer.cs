@@ -7,8 +7,8 @@ namespace Hydrix.Tests.Database.Procedure
     /// <summary>
     /// GetCustomer Procedure
     /// </summary>
-    [SqlProcedure("[dbo]", "[DelCustomers]")]
+    [Procedure("[DelCustomers]", Schema = "[dbo]")]
     public class DelCustomers :
-        ISqlProcedure<SqlParameter>
+        IProcedure<SqlParameter>
     { }
 }

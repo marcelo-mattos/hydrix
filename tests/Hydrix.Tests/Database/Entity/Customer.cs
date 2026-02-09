@@ -1,58 +1,52 @@
-﻿using Hydrix.Attributes.Parameters;
-using Hydrix.Attributes.Schemas;
-using Hydrix.Schemas;
+﻿using Hydrix.Schemas;
 using System;
-using System.Data;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Hydrix.Tests.Database.Entity
 {
     /// <summary>
     /// Customer Entity
     /// </summary>
-    [SqlEntity("[dbo]", nameof(Customer), nameof(Id))]
+    [Table(nameof(Customer), Schema = "[dbo]")]
     public class Customer :
-        ISqlEntity
+        ITable
     {
         /// <summary>
         /// Id field
         /// </summary>
-        [SqlField]
-        [SqlParameter("@p_Id", DbType.Guid)]
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [Column]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Name field
         /// </summary>
-        [SqlField]
-        [SqlParameter("@p_Name", DbType.String)]
+        [Column]
         public String Name { get; set; }
 
         /// <summary>
         /// Birthdate field
         /// </summary>
-        [SqlField]
-        [SqlParameter("@p_Birthdate", DbType.DateTime)]
+        [Column]
         public DateTime? Birthdate { get; set; }
 
         /// <summary>
         /// Level field
         /// </summary>
-        [SqlField]
-        [SqlParameter("@p_Level", DbType.Int32)]
+        [Column]
         public Int32 Level { get; set; }
 
         /// <summary>
         /// Salary field
         /// </summary>
-        [SqlField]
-        [SqlParameter("@p_Salary", DbType.Decimal)]
+        [Column]
         public Decimal? Salary { get; set; }
 
         /// <summary>
         /// IsActive field
         /// </summary>
-        [SqlField]
-        [SqlParameter("@p_IsActive", DbType.Boolean)]
+        [Column]
         public Boolean? IsActive { get; set; }
     }
 }

@@ -5,7 +5,7 @@ namespace Hydrix.Attributes.Commands.Contract
     /// <summary>
     /// Command attribute to decarates a class that holds table fields or procedures parameters.
     /// </summary>
-    internal interface ISqlCommandAttribute
+    internal interface ICommandAttribute
     {
         /// <summary>
         /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.

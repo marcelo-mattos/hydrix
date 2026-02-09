@@ -2,6 +2,7 @@
 using Hydrix.Orchestrator.Mapping;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -11,37 +12,37 @@ namespace Hydrix.Orchestrator.Metadata
     /// Provides factory methods for creating compiled metadata
     /// components used during entity materialization.
     /// </summary>
-    internal static class SqlMetadataFactory
+    internal static class MetadataFactory
     {
         /// <summary>
-        /// Creates metadata for a scalar SQL field.
+        /// Creates metadata for a scalar xolumn.
         /// </summary>
-        public static SqlFieldMetadata CreateField(
+        public static ColumnMetadata CreateField(
             PropertyInfo property,
-            SqlFieldAttribute attribute)
-            => new SqlFieldMetadata(
+            ColumnAttribute attribute)
+            => new ColumnMetadata(
                     property,
                     CreateSetter(property),
                     property.PropertyType,
                     attribute);
 
         /// <summary>
-        /// Creates metadata for a SQL entity.
+        /// Creates metadata for a table.
         /// </summary>
-        public static SqlEntityMetadata CreateEntity(
-            IReadOnlyList<SqlFieldMap> fields,
-            IReadOnlyList<SqlEntityMap> entities)
-            => new SqlEntityMetadata(
+        public static TableMetadata CreateEntity(
+            IReadOnlyList<ColumnMap> fields,
+            IReadOnlyList<TableMap> entities)
+            => new TableMetadata(
                     fields,
                     entities);
 
         /// <summary>
-        /// Creates metadata for a nested SQL entity relationship.
+        /// Creates metadata for a nested table relationship.
         /// </summary>
-        public static SqlNestedEntityMetadata CreateNestedEntity(
+        public static NestedTableMetadata CreateNestedEntity(
             PropertyInfo property,
-            SqlEntityAttribute attribute)
-            => new SqlNestedEntityMetadata(
+            NestedTableAttribute attribute)
+            => new NestedTableMetadata(
                     property,
                     attribute,
                     CreateFactory(property.PropertyType),

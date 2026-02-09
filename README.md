@@ -11,9 +11,6 @@ Hydrix is a **micro-ORM** designed for developers who require **full control ove
 
 The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and heavyweight ORMs such as Entity Framework, offering a Dapper-like experience enhanced with **hierarchical entity materialization**, **metadata caching**, and **native support for nested entities**.
 
-> ✅ The **Hydrix** package ID prefix is officially reserved on NuGet.org.
-
-
 ---
 
 ## 🧭 Why Hydrix?
@@ -47,8 +44,8 @@ The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and h
 ## ✨ Key Features
 
 * Explicit SQL execution (Text and Stored Procedures)
-* Automatic materialization of entities (`ISqlEntity`)
-* Support for nested entities (flat JOINs → object graphs)
+* Entity materialization using **standard .NET DataAnnotations**
+* Support for **nested entities** (flat JOINs → object graphs)
 * Thread-safe metadata caching with optimized reflection
 * Native support for SQL `IN` clauses with safe parameter expansion
 * SQL command logging similar to Entity Framework
@@ -129,13 +126,15 @@ Each value is bound as an individual parameter, ensuring safety and compatibilit
 ### Simple Entity
 
 ```csharp
-[SqlEntity]
-public class Order : ISqlEntity
+using System.ComponentModel.DataAnnotations.Schema;
+
+[Table("orders")]
+public class Order
 {
-    [SqlField]
+    [Column("id")]
     public Guid Id { get; set; }
 
-    [SqlField]
+    [Column("total")]
     public decimal Total { get; set; }
 }
 ```
@@ -146,19 +145,34 @@ public class Order : ISqlEntity
 ### Nested Entities (Flat JOINs)
 
 ```csharp
-[SqlEntity]
-public class Order : ISqlEntity
+[Table("orders")]
+public class Order
 {
-    [SqlField]
+    [Column("id")]
     public Guid Id { get; set; }
 
-    [SqlEntity(PrimaryKey = "Id")]
+    [NestedTable(Key = "Id")]
     public Customer Customer { get; set; }
 }
 ```
 
-The materializer automatically constructs the object graph when the related data is present, preventing the creation of empty nested objects when LEFT JOINs return null values.
+Hydrix automatically builds the object graph only when related data is present, preventing empty nested objects when LEFT JOINs return NULL.
 
+---
+
+### Stored Procedures
+
+```csharp
+[Procedure("sp_create_order")]
+public class CreateOrder : IProcedure<int>
+{
+    [Parameter("@id")]
+    public Guid Id { get; set; }
+
+    [Parameter("@total")]
+    public decimal Total { get; set; }
+}
+```
 
 ---
 
@@ -170,8 +184,8 @@ hydrix.BeginTransaction(IsolationLevel.ReadCommitted);
 
 try
 {
-    hydrix.ExecuteNonQuery(...);
-    hydrix.ExecuteNonQuery(...);
+    await hydrix.ExecuteNonQueryAsync(...);
+    await hydrix.ExecuteNonQueryAsync(...);
 
     hydrix.CommitTransaction();
 }
@@ -206,8 +220,8 @@ Parameters:
 
 Hydrix is built around the following principles:
 
-* SQL should remain explicit and visible
-* Developers must retain full control over execution
+* SQL must remain explicit and visible
+* Developers retain full control over execution
 * No hidden behaviors or implicit query generation
 * Performance, predictability, and transparency over convenience
 * [ADO.NET](http://ADO.NET) as a solid and proven foundation
@@ -243,7 +257,8 @@ Every contribution, whether financial or by sharing feedback and usage experienc
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0. See the LICENSE and NOTICE files for details.
+This project is licensed under the Apache License 2.0. 
+See the LICENSE and NOTICE files for details.
 
 
 ---

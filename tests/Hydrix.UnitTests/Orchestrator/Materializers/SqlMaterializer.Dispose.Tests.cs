@@ -1,8 +1,4 @@
-﻿using Hydrix.Orchestrator.Materializers;
-using System;
-using System.Data;
-using System.Data.Common;
-using System.Reflection;
+﻿using System;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers

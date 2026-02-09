@@ -6,6 +6,7 @@ using Moq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Reflection;
 using Xunit;
@@ -13,51 +14,51 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Mapping
 {
     /// <summary>
-    /// Contains unit tests for the SqlEntityMap class, verifying the correct behavior of entity mapping, property
+    /// Contains unit tests for the TableMap class, verifying the correct behavior of entity mapping, property
     /// assignment, and value conversion logic.
     /// </summary>
     /// <remarks>These tests cover scenarios such as property and delegate initialization, mapping from
     /// IDataRecord and DataRow sources, handling of missing or null primary keys in nested entities, and type
     /// conversion for supported types. The class uses dummy entity implementations to validate mapping logic in
     /// isolation from external dependencies.</remarks>
-    public class SqlEntityMapTests
+    public class TableMapTests
     {
         /// <summary>
-        /// Dummy implementation of <see cref="ISqlEntity"/> for testing.
+        /// Dummy implementation of <see cref="ITable"/> for testing.
         /// </summary>
-        [SqlEntity]
-        private class TestEntity : ISqlEntity
+        [Table("Test")]
+        private class TestEntity : ITable
         {
             /// <summary>
             /// Gets or sets a test integer property.
             /// </summary>
-            [SqlField]
+            [Column]
             public int Id { get; set; }
 
             /// <summary>
             /// Gets or sets a nested entity.
             /// </summary>
-            [SqlEntity("text", "Nested", "Id")]
+            [NestedTable("text", Schema = "Nested", Key = "Id")]
             public TestNestedEntity Nested { get; set; }
         }
 
         /// <summary>
         /// Dummy nested entity for testing.
         /// </summary>
-        [SqlEntity]
-        private class TestNestedEntity : ISqlEntity
+        [Table("TestNested")]
+        private class TestNestedEntity : ITable
         {
             /// <summary>
             /// Gets or sets a string property.
             /// </summary>
-            [SqlField]
+            [Column]
             public string Name { get; set; }
         }
 
         /// <summary>
         /// Dummy implementation of ISqlEntity for testing purposes.
         /// </summary>
-        public class DummyEntity : ISqlEntity
+        public class DummyEntity : ITable
         {
             /// <summary>
             /// Gets or sets a value for testing.
@@ -91,12 +92,12 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             public object DefaultValue { get; set; }
 
             /// <summary>
-            /// Gets or sets the delegate used to assign a value to an <see cref="ISqlEntity"/> instance.
+            /// Gets or sets the delegate used to assign a value to an <see cref="ITable"/> instance.
             /// </summary>
-            /// <remarks>The delegate receives the target <see cref="ISqlEntity"/> and the value to
+            /// <remarks>The delegate receives the target <see cref="ITable"/> and the value to
             /// assign. This property enables custom logic for setting entity values, such as type conversion or
             /// validation, during data mapping operations.</remarks>
-            public Action<ISqlEntity, object> Setter { get; set; }
+            public Action<ITable, object> Setter { get; set; }
         }
 
         /// <summary>
@@ -135,7 +136,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
-        /// Verifies that the SqlEntityMap constructor correctly initializes its properties and delegates.
+        /// Verifies that the TableMap constructor correctly initializes its properties and delegates.
         /// </summary>
         /// <remarks>This test ensures that the Property and Attribute properties are set to the provided
         /// values and that the Factory and Setter delegates are not null after construction.</remarks>
@@ -144,10 +145,14 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             // Arrange
             var property = typeof(TestEntity).GetProperty(nameof(TestEntity.Nested));
-            var attribute = new SqlEntityAttribute("text", "Nested", "Id");
+            var attribute = new NestedTableAttribute("text")
+            {
+                Schema = "Nested",
+                Key = "Id"
+            };
 
             // Act
-            var map = new SqlEntityMap(property, attribute);
+            var map = new TableMap(property, attribute);
 
             // Assert
             Assert.Equal(property, map.Property);
@@ -169,17 +174,17 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var entity = new TestEntity();
 
-            var metadata = new SqlEntityMetadata(
-                new List<SqlFieldMap>(),
-                new List<SqlEntityMap>()
+            var metadata = new TableMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>()
             );
             var row = new DataTable().NewRow();
-            var cache = new ConcurrentDictionary<Type, SqlEntityMetadata>();
+            var cache = new ConcurrentDictionary<Type, TableMetadata>();
             var reader = row.Table.CreateDataReader();
 
             // Act
             // Should not throw (no-op, as DataRowDataRecordAdapter is not mocked)
-            SqlEntityMap.SetEntity(
+            TableMap.SetEntity(
                 entity,
                 reader,
                 metadata,
@@ -202,7 +207,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             // Arrange
             var entity = new TestEntity();
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             var record = new Mock<IDataRecord>();
             record.Setup(r => r.GetOrdinal("Id")).Returns(0);
@@ -213,7 +218,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             record.Setup(r => r.IsDBNull(1)).Returns(false);
             record.Setup(r => r.GetValue(1)).Returns(7);
 
-            var cache = new ConcurrentDictionary<Type, SqlEntityMetadata>
+            var cache = new ConcurrentDictionary<Type, TableMetadata>
             {
                 [typeof(TestEntity)] = metadata
             };
@@ -225,7 +230,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             };
 
             // Act
-            SqlEntityMap.SetEntity(
+            TableMap.SetEntity(
                 entity,
                 record.Object,
                 metadata,
@@ -250,13 +255,13 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             // Arrange
             var entity = new TestEntity();
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             var record = new Mock<IDataRecord>();
             record.Setup(r => r.GetOrdinal("Id")).Throws<IndexOutOfRangeException>();
 
             // Act (should not throw)
-            var method = typeof(SqlEntityMap).GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static);
+            var method = typeof(TableMap).GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static);
             method.Invoke(
                 null,
                 new object[]
@@ -301,21 +306,21 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         /// primary key column is absent from the data record or contains a null value. This behavior prevents the
         /// creation of incomplete or invalid nested entities during data mapping.</remarks>
         [Fact]
-        public void SetEntityNestedEntities_SkipsWhenPrimaryKeyMissingOrNull()
+        public void SetEntityNestedEntities_SkipsWhenKeyMissingOrNull()
         {
             // Arrange
             var entity = new TestEntity();
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             var record = new Mock<IDataRecord>();
             record.Setup(r => r.GetOrdinal("Nested.Id")).Throws<IndexOutOfRangeException>();
 
-            var cache = new ConcurrentDictionary<Type, SqlEntityMetadata>
+            var cache = new ConcurrentDictionary<Type, TableMetadata>
             {
                 [typeof(TestEntity)] = metadata
             };
 
-            var method = typeof(SqlEntityMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act (should not throw)
             method.Invoke(
@@ -363,12 +368,12 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         /// </summary>
         /// <remarks>This test ensures that ConvertValue can convert integer values to enum types, parse
         /// Guid values from both Guid instances and their string representations, and convert string representations of
-        /// integers to int. It covers typical scenarios for type conversion in the SqlEntityMap class.</remarks>
+        /// integers to int. It covers typical scenarios for type conversion in the TableMap class.</remarks>
         [Fact]
         public void ConvertValue_HandlesEnumsGuidsAndOtherTypes()
         {
             // Arrange
-            var method = typeof(SqlEntityMap).GetMethod("ConvertValue", BindingFlags.NonPublic | BindingFlags.Static);
+            var method = typeof(TableMap).GetMethod("ConvertValue", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Enum
             var enumValue = method.Invoke(null, new object[] { 1, typeof(TestEnum) });
@@ -664,7 +669,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         /// <param name="prefix">A string prefix to prepend to column names when matching fields in the data record.</param>
         /// <param name="ordinals">A dictionary mapping column names to their respective ordinals in the data record for efficient access.</param>
         public static void SetEntityFields(
-            ISqlEntity entity,
+            ITable entity,
             IDataRecord record,
             dynamic metadata,
             string prefix,

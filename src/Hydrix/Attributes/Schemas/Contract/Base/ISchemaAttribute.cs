@@ -3,7 +3,7 @@
     /// <summary>
     /// Define the basics of a Sql object.
     /// </summary>
-    public interface ISqlSchemaAttribute :
+    public interface ISchemaAttribute :
         ISqlAttribute
     {
         /// <summary>

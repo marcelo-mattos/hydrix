@@ -9,7 +9,7 @@ namespace Hydrix.Orchestrator.Metadata
     /// Provides factory and setter delegates for efficient
     /// instantiation and assignment without reflection.
     /// </summary>
-    internal sealed class SqlNestedEntityMetadata
+    internal sealed class NestedTableMetadata
     {
         /// <summary>
         /// Gets the property representing the nested entity.
@@ -19,7 +19,7 @@ namespace Hydrix.Orchestrator.Metadata
         /// <summary>
         /// Gets the SQL entity mapping attribute.
         /// </summary>
-        public SqlEntityAttribute Attribute { get; }
+        public NestedTableAttribute Attribute { get; }
 
         /// <summary>
         /// Gets the compiled factory delegate used to create
@@ -34,11 +34,11 @@ namespace Hydrix.Orchestrator.Metadata
         public Action<object, object> Setter { get; }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="SqlNestedEntityMetadata"/>.
+        /// Initializes a new instance of <see cref="NestedTableMetadata"/>.
         /// </summary>
-        public SqlNestedEntityMetadata(
+        public NestedTableMetadata(
             PropertyInfo property,
-            SqlEntityAttribute attribute,
+            NestedTableAttribute attribute,
             Func<object> factory,
             Action<object, object> setter)
         {

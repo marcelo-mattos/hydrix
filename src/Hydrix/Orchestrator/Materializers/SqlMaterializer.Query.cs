@@ -25,12 +25,12 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             string sql,
             object parameters)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -58,13 +58,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             string sql,
             object parameters,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -91,11 +91,11 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             string sql)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => Query<TEntity>(
                 sql,
                 (object)null);
@@ -112,12 +112,12 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             string sql,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => Query<TEntity>(
                 sql,
                 (object)null,
@@ -136,13 +136,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -172,14 +172,14 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -208,12 +208,12 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             CommandType commandType,
             string sql)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => Query<TEntity>(
                 commandType,
                 sql,
@@ -232,13 +232,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity>(
             CommandType commandType,
             string sql,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => Query<TEntity>(
                 commandType,
                 sql,
@@ -258,14 +258,14 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
             string sql,
             object parameters,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -296,7 +296,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
@@ -304,7 +304,7 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -334,13 +334,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
             string sql,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => await QueryAsync<TEntity>(
                 sql,
                 (object)null,
@@ -360,14 +360,14 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
             string sql,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => await QueryAsync<TEntity>(
                 sql,
                 (object)null,
@@ -389,7 +389,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
@@ -397,7 +397,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -430,7 +430,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
@@ -439,7 +439,7 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var result = ValidateEntityRequest<TEntity>();
             if (!result)
@@ -471,14 +471,14 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
             CommandType commandType,
             string sql,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => await QueryAsync<TEntity>(
                 commandType,
                 sql,
@@ -500,7 +500,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity>(
@@ -508,7 +508,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             => await QueryAsync<TEntity>(
                 commandType,
                 sql,
@@ -532,11 +532,11 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure)
-            where TEntity : ISqlEntity, new()
+            IProcedure<TDataParameterDriver> sqlProcedure)
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
             var result = ValidateEntityRequest<TEntity>();
@@ -567,12 +567,12 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
             var result = ValidateEntityRequest<TEntity>();
@@ -604,13 +604,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
             var result = ValidateEntityRequest<TEntity>();
@@ -644,14 +644,14 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlEntityAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
             var result = ValidateEntityRequest<TEntity>();

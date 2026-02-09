@@ -3,20 +3,21 @@ using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
 using Hydrix.Schemas;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata
 {
     /// <summary>
-    /// Unit tests for <see cref="SqlEntityMetadata"/>.
+    /// Unit tests for <see cref="TableMetadata"/>.
     /// </summary>
-    public class SqlEntityMetadataTests
+    public class TableMetadataTests
     {
         /// <summary>
         /// Test entity with no mapping attributes.
         /// </summary>
-        private class NoAttributesEntity : ISqlEntity
+        private class NoAttributesEntity : ITable
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
@@ -32,50 +33,50 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         /// <summary>
         /// Test child entity for nested mapping.
         /// </summary>
-        [SqlEntity("tests", "Child", "ChildId")]
-        private class TestChildEntity : ISqlEntity
+        [Table("Child", Schema = "tests")]
+        private class TestChildEntity : ITable
         {
             /// <summary>
             /// Gets or sets the identifier of the child entity associated with this record.
             /// </summary>
-            [SqlField("ChildId")]
+            [Column("ChildId")]
             public int ChildId { get; set; }
 
             /// <summary>
             /// Gets or sets the name of the child associated with this entity.
             /// </summary>
-            [SqlField("ChildName")]
+            [Column("ChildName")]
             public string ChildName { get; set; }
         }
 
         /// <summary>
         /// Test entity with scalar and nested mappings.
         /// </summary>
-        [SqlEntity("tests", "Test", "Id")]
-        private class TestEntity : ISqlEntity
+        [Table("Test", Schema = "tests")]
+        private class TestEntity : ITable
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
             /// </summary>
-            [SqlField("Id")]
+            [Column("Id")]
             public int Id { get; set; }
 
             /// <summary>
             /// Gets or sets the name associated with the entity.
             /// </summary>
-            [SqlField("Name")]
+            [Column("Name")]
             public string Name { get; set; }
 
             /// <summary>
             /// Gets or sets the nullable integer value associated with this instance.
             /// </summary>
-            [SqlField("NullableValue")]
+            [Column("NullableValue")]
             public int? NullableValue { get; set; }
 
             /// <summary>
             /// Gets or sets the child entity associated with this instance.
             /// </summary>
-            [SqlEntity("tests", "Child", "ChildId")]
+            [NestedTable("Child", Schema = "tests", Key = "ChildId")]
             public TestChildEntity Child { get; set; }
 
             /// <summary>
@@ -90,7 +91,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_MapsScalarFieldsAndEntities()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             Assert.NotNull(metadata);
             Assert.Equal(3, metadata.Fields.Count);
@@ -106,7 +107,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
 
             var entity = metadata.Entities[0];
             Assert.Equal("Child", entity.Property.Name);
-            Assert.IsType<SqlEntityAttribute>(entity.Attribute);
+            Assert.IsType<NestedTableAttribute>(entity.Attribute);
         }
 
         /// <summary>
@@ -115,7 +116,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_UnwrapsNullableTypes()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
             var nullableField = metadata.Fields.FirstOrDefault(f => f.Property.Name == "NullableValue");
             Assert.NotNull(nullableField);
             Assert.Equal(typeof(int), nullableField.TargetType);
@@ -127,7 +128,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_IgnoresNonDecoratedProperties()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
             Assert.DoesNotContain(metadata.Fields, f => f.Property.Name == "NotMapped");
         }
 
@@ -137,9 +138,9 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void SqlEntityMetadata_IsImmutableAfterConstruction()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
-            Assert.IsAssignableFrom<IReadOnlyList<SqlFieldMap>>(metadata.Fields);
-            Assert.IsAssignableFrom<IReadOnlyList<SqlEntityMap>>(metadata.Entities);
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            Assert.IsAssignableFrom<IReadOnlyList<ColumnMap>>(metadata.Fields);
+            Assert.IsAssignableFrom<IReadOnlyList<TableMap>>(metadata.Entities);
         }
 
         /// <summary>
@@ -148,7 +149,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_EmptyForNoAttributes()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(NoAttributesEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(NoAttributesEntity));
             Assert.Empty(metadata.Fields);
             Assert.Empty(metadata.Entities);
         }
@@ -159,7 +160,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_MapsTestChildEntityFields()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestChildEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestChildEntity));
 
             Assert.NotNull(metadata);
             Assert.Equal(2, metadata.Fields.Count);
@@ -171,13 +172,13 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
 
             var childIdField = metadata.Fields.First(f => f.Property.Name == "ChildId");
             Assert.Equal(typeof(int), childIdField.TargetType);
-            Assert.IsType<SqlFieldAttribute>(childIdField.Attribute);
-            Assert.Equal("ChildId", ((SqlFieldAttribute)childIdField.Attribute).FieldName);
+            Assert.IsType<ColumnAttribute>(childIdField.Attribute);
+            Assert.Equal("ChildId", ((ColumnAttribute)childIdField.Attribute).Name);
 
             var childNameField = metadata.Fields.First(f => f.Property.Name == "ChildName");
             Assert.Equal(typeof(string), childNameField.TargetType);
-            Assert.IsType<SqlFieldAttribute>(childNameField.Attribute);
-            Assert.Equal("ChildName", ((SqlFieldAttribute)childNameField.Attribute).FieldName);
+            Assert.IsType<ColumnAttribute>(childNameField.Attribute);
+            Assert.Equal("ChildName", ((ColumnAttribute)childNameField.Attribute).Name);
         }
 
         /// <summary>
@@ -186,19 +187,19 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_MapsTestEntityChildEntity()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             Assert.NotNull(metadata);
             Assert.Single(metadata.Entities);
 
             var childEntity = metadata.Entities[0];
             Assert.Equal("Child", childEntity.Property.Name);
-            Assert.IsType<SqlEntityAttribute>(childEntity.Attribute);
+            Assert.IsType<NestedTableAttribute>(childEntity.Attribute);
 
-            var attr = (SqlEntityAttribute)childEntity.Attribute;
+            var attr = (NestedTableAttribute)childEntity.Attribute;
             Assert.Equal("tests", attr.Schema);
             Assert.Equal("Child", attr.Name);
-            Assert.Equal("ChildId", attr.PrimaryKey);
+            Assert.Equal("ChildId", attr.Key);
         }
 
         /// <summary>
@@ -207,7 +208,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_DoesNotMapNotMappedProperty()
         {
-            var metadata = SqlEntityMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             Assert.DoesNotContain(metadata.Fields, f => f.Property.Name == "NotMapped");
             Assert.DoesNotContain(metadata.Entities, e => e.Property.Name == "NotMapped");

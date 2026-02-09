@@ -21,7 +21,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         [Fact]
         public void ISqlFieldAttribute_ShouldBeInterface()
         {
-            var type = typeof(ISqlFieldAttribute);
+            var type = typeof(IColumnAttribute);
             Assert.True(type.IsInterface);
         }
 
@@ -33,7 +33,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         [Fact]
         public void ISqlFieldAttribute_ShouldInheritFromISqlAttribute()
         {
-            var type = typeof(ISqlFieldAttribute);
+            var type = typeof(IColumnAttribute);
             var baseInterface = typeof(ISqlAttribute);
             Assert.Contains(baseInterface, type.GetInterfaces());
         }
@@ -41,7 +41,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         /// <summary>
         /// Represents a placeholder implementation of the ISqlFieldAttribute interface for internal use.
         /// </summary>
-        private class DummySqlFieldAttribute : ISqlFieldAttribute
+        private class DummySqlFieldAttribute : IColumnAttribute
         { }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         [Fact]
         public void ISqlFieldAttribute_CanBeImplemented()
         {
-            ISqlFieldAttribute instance = new DummySqlFieldAttribute();
+            IColumnAttribute instance = new DummySqlFieldAttribute();
             Assert.NotNull(instance);
         }
     }

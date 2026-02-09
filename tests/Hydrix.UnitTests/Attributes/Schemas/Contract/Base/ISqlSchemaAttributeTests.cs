@@ -14,7 +14,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract.Base
         /// <summary>
         /// Represents a SQL schema attribute with a specified schema and object name.
         /// </summary>
-        private class TestSqlSchemaAttribute : ISqlSchemaAttribute
+        private class TestSqlSchemaAttribute : ISchemaAttribute
         {
             /// <summary>
             /// Initializes a new instance of the TestSqlSchemaAttribute class with the specified schema and name.

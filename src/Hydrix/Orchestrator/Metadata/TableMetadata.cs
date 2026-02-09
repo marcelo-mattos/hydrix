@@ -3,6 +3,7 @@ using Hydrix.Orchestrator.Mapping;
 using Hydrix.Schemas;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
 namespace Hydrix.Orchestrator.Metadata
@@ -13,7 +14,7 @@ namespace Hydrix.Orchestrator.Metadata
     /// <remarks>
     /// This class centralizes all reflection-derived information required to map a <see
     /// cref="System.Data.DataTable"/> or <see cref="System.Data.DataRow"/> into an <see
-    /// cref="ISqlEntity"/> instance.
+    /// cref="ITable"/> instance.
     ///
     /// The metadata is built once per entity type and reused through an internal cache,
     /// significantly reducing reflection overhead during large result set processing.
@@ -22,13 +23,13 @@ namespace Hydrix.Orchestrator.Metadata
     /// <list type="bullet">
     /// <item>
     /// <description>
-    /// A collection of mapped scalar fields decorated with <see cref="SqlFieldAttribute"/>,
+    /// A collection of mapped scalar fields decorated with <see cref="ColumnAttribute"/>,
     /// including their resolved target types and property accessors.
     /// </description>
     /// </item>
     /// <item>
     /// <description>
-    /// A collection of nested entity mappings decorated with <see cref="SqlEntityAttribute"/>,
+    /// A collection of nested entity mappings decorated with <see cref="NestedTableAttribute"/>,
     /// enabling recursive object graph construction from flattened SQL projections.
     /// </description>
     /// </item>
@@ -36,20 +37,20 @@ namespace Hydrix.Orchestrator.Metadata
     /// This structure is intentionally immutable after construction to ensure thread safety and
     /// predictable behavior during concurrent mapping operations.
     /// </remarks>
-    internal sealed class SqlEntityMetadata
+    internal sealed class TableMetadata
     {
         /// <summary>
         /// Gets the collection of scalar field mappings for the entity.
         /// </summary>
         /// <remarks>
         /// Each item in this collection represents a writable property decorated with <see
-        /// cref="SqlFieldAttribute"/>, including:
+        /// cref="ColumnAttribute"/>, including:
         /// <list type="bullet">
         /// <item>
         /// <description>The reflected <see cref="System.Reflection.PropertyInfo"/>.</description>
         /// </item>
         /// <item>
-        /// <description>The associated <see cref="SqlFieldAttribute"/> instance.</description>
+        /// <description>The associated <see cref="ColumnAttribute"/> instance.</description>
         /// </item>
         /// <item>
         /// <description>
@@ -61,15 +62,15 @@ namespace Hydrix.Orchestrator.Metadata
         /// These mappings are used to assign column values from a <see cref="System.Data.DataRow"/>
         /// to the corresponding entity properties in a safe and performant manner.
         /// </remarks>
-        public IReadOnlyList<SqlFieldMap> Fields { get; private set; }
+        public IReadOnlyList<ColumnMap> Fields { get; private set; }
 
         /// <summary>
         /// Gets the collection of nested entity mappings for the entity.
         /// </summary>
         /// <remarks>
         /// Each item in this collection represents a writable property decorated with <see
-        /// cref="SqlEntityAttribute"/>, defining a composition relationship between the current
-        /// entity and another <see cref="ISqlEntity"/>.
+        /// cref="NestedTableAttribute"/>, defining a composition relationship between the current
+        /// entity and another <see cref="ITable"/>.
         ///
         /// These mappings allow the data handler to:
         /// <list type="bullet">
@@ -87,18 +88,18 @@ namespace Hydrix.Orchestrator.Metadata
         /// </list>
         /// This mechanism enables complex projections without requiring an ORM or provider-specific features.
         /// </remarks>
-        public IReadOnlyList<SqlEntityMap> Entities { get; private set; }
+        public IReadOnlyList<TableMap> Entities { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SqlEntityMetadata"/> class.
+        /// Initializes a new instance of the <see cref="TableMetadata"/> class.
         /// </summary>
         /// <param name="fields">
         /// The collection of scalar field mappings associated with the entity type, typically
-        /// derived from properties decorated with <see cref="SqlFieldAttribute"/>.
+        /// derived from properties decorated with <see cref="ColumnAttribute"/>.
         /// </param>
         /// <param name="entities">
         /// The collection of nested entity mappings associated with the entity type, typically
-        /// derived from properties decorated with <see cref="SqlEntityAttribute"/>.
+        /// derived from properties decorated with <see cref="NestedTableAttribute"/>.
         /// </param>
         /// <remarks>
         /// This constructor is intended to be invoked exclusively by the metadata builder
@@ -107,9 +108,9 @@ namespace Hydrix.Orchestrator.Metadata
         /// Once created, the metadata instance should be treated as read-only and reused across
         /// multiple mapping operations to ensure optimal performance and consistency.
         /// </remarks>
-        public SqlEntityMetadata(
-            IReadOnlyList<SqlFieldMap> fields,
-            IReadOnlyList<SqlEntityMap> entities)
+        public TableMetadata(
+            IReadOnlyList<ColumnMap> fields,
+            IReadOnlyList<TableMap> entities)
         {
             this.Fields = fields;
             this.Entities = entities;
@@ -119,11 +120,11 @@ namespace Hydrix.Orchestrator.Metadata
         /// Builds and returns the metadata definition for a SQL-mapped entity type.
         /// </summary>
         /// <param name="type">
-        /// The CLR type representing an entity that implements <see cref="ISqlEntity"/> and is
+        /// The CLR type representing an entity that implements <see cref="ITable"/> and is
         /// decorated with SQL mapping attributes.
         /// </param>
         /// <returns>
-        /// A fully populated <see cref="SqlEntityMetadata"/> instance containing all scalar field
+        /// A fully populated <see cref="TableMetadata"/> instance containing all scalar field
         /// and nested entity mappings associated with the specified type.
         /// </returns>
         /// <remarks>
@@ -134,13 +135,13 @@ namespace Hydrix.Orchestrator.Metadata
         /// <list type="bullet">
         /// <item>
         /// <description>
-        /// Scalar field mappings for properties decorated with <see cref="SqlFieldAttribute"/>,
+        /// Scalar field mappings for properties decorated with <see cref="ColumnAttribute"/>,
         /// including resolved target types for safe value conversion.
         /// </description>
         /// </item>
         /// <item>
         /// <description>
-        /// Nested entity mappings for properties decorated with <see cref="SqlEntityAttribute"/>,
+        /// Nested entity mappings for properties decorated with <see cref="NestedTableAttribute"/>,
         /// enabling recursive object graph materialization from flattened SQL projections.
         /// </description>
         /// </item>
@@ -152,15 +153,15 @@ namespace Hydrix.Orchestrator.Metadata
         /// Nullable property types are normalized by unwrapping their underlying CLR type, ensuring
         /// compatibility with <see cref="System.Convert"/> during runtime value conversion.
         /// </remarks>
-        internal static SqlEntityMetadata BuildEntityMetadata(Type type)
+        internal static TableMetadata BuildEntityMetadata(Type type)
         {
             var fields = type
                 .GetProperties()
-                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(SqlFieldAttribute)))
+                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(ColumnAttribute)))
                 .Select(p =>
                 {
-                    var attr = (SqlFieldAttribute)p
-                        .GetCustomAttributes(typeof(SqlFieldAttribute), false)
+                    var attr = (ColumnAttribute)p
+                        .GetCustomAttributes(typeof(ColumnAttribute), false)
                         .First();
 
                     var targetType = p.PropertyType;
@@ -169,7 +170,7 @@ namespace Hydrix.Orchestrator.Metadata
                         targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
                         targetType = Nullable.GetUnderlyingType(targetType);
 
-                    return new SqlFieldMap(
+                    return new ColumnMap(
                         p,
                         attr,
                         targetType);
@@ -178,15 +179,15 @@ namespace Hydrix.Orchestrator.Metadata
 
             var entities = type
                 .GetProperties()
-                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(SqlEntityAttribute)))
-                .Select(p => new SqlEntityMap(
+                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(NestedTableAttribute)))
+                .Select(p => new TableMap(
                     p,
-                    (SqlEntityAttribute)p
-                        .GetCustomAttributes(typeof(SqlEntityAttribute), false)
+                    (NestedTableAttribute)p
+                        .GetCustomAttributes(typeof(NestedTableAttribute), false)
                         .First()))
                 .ToList();
 
-            return SqlMetadataFactory.CreateEntity(
+            return MetadataFactory.CreateEntity(
                 fields,
                 entities);
         }

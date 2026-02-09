@@ -19,12 +19,12 @@ namespace Hydrix.UnitTests.Attributes.Parameters.Contract
         /// testing scenarios.
         /// </summary>
         private class TestSqlParameterAttribute :
-            ISqlParameterAttribute
+            IParameterAttribute
         {
             /// <summary>
             /// Gets the name of the parameter associated with the exception.
             /// </summary>
-            public string ParameterName { get; }
+            public string Name { get; }
 
             /// <summary>
             /// Gets the database type of the parameter.
@@ -54,7 +54,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters.Contract
                 DbType dbType,
                 ParameterDirection direction)
             {
-                ParameterName = parameterName;
+                Name = parameterName;
 
                 if (!Enum.IsDefined(typeof(DbType), dbType))
                     throw new ArgumentOutOfRangeException(nameof(dbType));
@@ -74,7 +74,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters.Contract
         public void ParameterName_ShouldReturnValue()
         {
             var attr = new TestSqlParameterAttribute("p1", DbType.String, ParameterDirection.Input);
-            Assert.Equal("p1", attr.ParameterName);
+            Assert.Equal("p1", attr.Name);
         }
 
         /// <summary>

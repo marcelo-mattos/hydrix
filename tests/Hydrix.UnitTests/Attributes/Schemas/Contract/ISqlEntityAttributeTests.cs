@@ -21,13 +21,13 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         public void SqlEntityAttribute_Implements_ISqlEntityAttribute()
         {
             // Arrange
-            var type = typeof(SqlEntityAttribute);
+            var type = typeof(NestedTableAttribute);
 
             // Act
             var interfaces = type.GetInterfaces();
 
             // Assert
-            Assert.Contains(typeof(ISqlEntityAttribute), interfaces);
+            Assert.Contains(typeof(ITableAttribute), interfaces);
         }
 
         /// <summary>
@@ -39,13 +39,13 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         public void ISqlEntityAttribute_Inherits_ISqlSchemaAttribute()
         {
             // Arrange
-            var type = typeof(ISqlEntityAttribute);
+            var type = typeof(ITableAttribute);
 
             // Act
             var interfaces = type.GetInterfaces();
 
             // Assert
-            Assert.Contains(typeof(ISqlSchemaAttribute), interfaces);
+            Assert.Contains(typeof(ISchemaAttribute), interfaces);
         }
     }
 }

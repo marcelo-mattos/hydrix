@@ -3,19 +3,20 @@ using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
 using Hydrix.Schemas;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata
 {
     /// <summary>
-    /// Unit tests for <see cref="SqlMetadataFactory"/>.
+    /// Unit tests for <see cref="MetadataFactory"/>.
     /// </summary>
-    public class SqlMetadataFactoryTests
+    public class MetadataFactoryTests
     {
         /// <summary>
         /// Represents a simple SQL entity with a string property for demonstration or placeholder purposes.
         /// </summary>
-        private class DummyEntity : ISqlEntity
+        private class DummyEntity : ITable
         {
             /// <summary>
             /// Gets or sets the string value associated with this property.
@@ -40,14 +41,14 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         }
 
         /// <summary>
-        /// Tests that <see cref="SqlMetadataFactory.CreateField"/> creates correct metadata and the setter works.
+        /// Tests that <see cref="MetadataFactory.CreateField"/> creates correct metadata and the setter works.
         /// </summary>
         [Fact]
         public void CreateField_CreatesCorrectMetadata_AndSetterWorks()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
-            var attr = new SqlFieldAttribute("int_prop");
-            var metadata = SqlMetadataFactory.CreateField(prop, attr);
+            var attr = new ColumnAttribute("int_prop");
+            var metadata = MetadataFactory.CreateField(prop, attr);
 
             Assert.Equal(prop, metadata.Property);
             Assert.Equal(typeof(int), metadata.TargetType);
@@ -59,37 +60,45 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         }
 
         /// <summary>
-        /// Tests that <see cref="SqlMetadataFactory.CreateEntity"/> creates correct metadata.
+        /// Tests that <see cref="MetadataFactory.CreateEntity"/> creates correct metadata.
         /// </summary>
         [Fact]
         public void CreateEntity_CreatesCorrectMetadata()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
-            var attr = new SqlFieldAttribute("int_prop");
-            var fieldMap = new SqlFieldMap(prop, attr, typeof(int));
+            var attr = new ColumnAttribute("int_prop");
+            var fieldMap = new ColumnMap(prop, attr, typeof(int));
 
             var entityProp = typeof(Dummy).GetProperty(nameof(Dummy.EntityProp));
-            var entityAttr = new SqlEntityAttribute("dummy_schema", "dummy_entity", "dummy_key");
-            var entityMap = new SqlEntityMap(entityProp, entityAttr);
+            var entityAttr = new NestedTableAttribute("dummy_entity")
+            {
+                Schema = "dummy_schema",
+                Key = "dummy_key"
+            };
+            var entityMap = new TableMap(entityProp, entityAttr);
 
-            var fields = new List<SqlFieldMap> { fieldMap };
-            var entities = new List<SqlEntityMap> { entityMap };
+            var fields = new List<ColumnMap> { fieldMap };
+            var entities = new List<TableMap> { entityMap };
 
-            var metadata = SqlMetadataFactory.CreateEntity(fields, entities);
+            var metadata = MetadataFactory.CreateEntity(fields, entities);
 
             Assert.Equal(fields, metadata.Fields);
             Assert.Equal(entities, metadata.Entities);
         }
 
         /// <summary>
-        /// Tests that <see cref="SqlMetadataFactory.CreateNestedEntity"/> creates correct metadata and delegates work.
+        /// Tests that <see cref="MetadataFactory.CreateNestedEntity"/> creates correct metadata and delegates work.
         /// </summary>
         [Fact]
         public void CreateNestedEntity_CreatesCorrectMetadata_AndDelegatesWork()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.EntityProp));
-            var attr = new SqlEntityAttribute("dummy_schema", "dummy_entity", "dummy_key");
-            var metadata = SqlMetadataFactory.CreateNestedEntity(prop, attr);
+            var attr = new NestedTableAttribute("dummy_entity")
+            {
+                Schema = "dummy_schema",
+                Key = "dummy_key"
+            };
+            var metadata = MetadataFactory.CreateNestedEntity(prop, attr);
 
             Assert.Equal(prop, metadata.Property);
             Assert.Equal(attr, metadata.Attribute);
@@ -105,13 +114,13 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         }
 
         /// <summary>
-        /// Tests that <see cref="SqlMetadataFactory.CreateSetter"/> sets property value.
+        /// Tests that <see cref="MetadataFactory.CreateSetter"/> sets property value.
         /// </summary>
         [Fact]
         public void CreateSetter_SetsPropertyValue()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
-            var setter = SqlMetadataFactory.CreateSetter(prop);
+            var setter = MetadataFactory.CreateSetter(prop);
 
             var dummy = new Dummy();
             setter(dummy, 99);
@@ -119,12 +128,12 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         }
 
         /// <summary>
-        /// Tests that <see cref="SqlMetadataFactory.CreateFactory"/> creates a new instance.
+        /// Tests that <see cref="MetadataFactory.CreateFactory"/> creates a new instance.
         /// </summary>
         [Fact]
         public void CreateFactory_CreatesNewInstance()
         {
-            var factory = SqlMetadataFactory.CreateFactory(typeof(Dummy));
+            var factory = MetadataFactory.CreateFactory(typeof(Dummy));
             var instance = factory();
             Assert.IsType<Dummy>(instance);
         }

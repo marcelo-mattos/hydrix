@@ -36,7 +36,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -44,7 +44,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IList<TEntity> Query<TEntity>(
             string sql,
             object parameters)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -70,7 +70,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -79,7 +79,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             object parameters,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -100,14 +100,14 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         IList<TEntity> Query<TEntity>(
             string sql)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -129,7 +129,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -137,7 +137,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IList<TEntity> Query<TEntity>(
             string sql,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -165,7 +165,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -174,7 +174,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -203,7 +203,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -213,7 +213,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -237,7 +237,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -245,7 +245,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IList<TEntity> Query<TEntity>(
             CommandType commandType,
             string sql)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -270,7 +270,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -279,7 +279,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             CommandType commandType,
             string sql,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -305,7 +305,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -315,7 +315,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             object parameters,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -342,7 +342,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -353,7 +353,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             object parameters,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -375,7 +375,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -384,7 +384,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         Task<IList<TEntity>> QueryAsync<TEntity>(
             string sql,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -407,7 +407,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -417,7 +417,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -446,7 +446,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -457,7 +457,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             IEnumerable<IDataParameter> parameters,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -487,7 +487,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -499,7 +499,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -524,7 +524,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -534,7 +534,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             CommandType commandType,
             string sql,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -560,7 +560,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -571,7 +571,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new();
+            where TEntity : ITable, new();
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the
@@ -602,8 +602,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure)
-            where TEntity : ISqlEntity, new()
+            IProcedure<TDataParameterDriver> sqlProcedure)
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -636,9 +636,9 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -668,16 +668,16 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -708,17 +708,17 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlEntityAttibute decorating itself.
+        /// The entity does not have a TableAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new();
     }
 }

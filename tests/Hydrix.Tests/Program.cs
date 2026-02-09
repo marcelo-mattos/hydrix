@@ -28,30 +28,58 @@ namespace Hydrix.Tests
 
             for (var i = 0; i < 10; i++)
             {
-                sqlMaterializer.ExecuteNonQuery($@"
-                INSERT INTO Customer (
-                    Id,
-                    Name,
-                    BirthDate,
-                    Level,
-                    Salary,
-                    IsActive
-                ) VALUES (
-                    @Id,
-                    @Name,
-                    @BirthDate,
-                    @Level,
-                    @Salary,
-                    @IsActive
-                );",
+                var customerId = Guid.NewGuid();
+
+                await sqlMaterializer.ExecuteNonQueryAsync(@"
+                    INSERT INTO Customer (
+                        Id,
+                        Name,
+                        BirthDate,
+                        Level,
+                        Salary,
+                        IsActive
+                    ) VALUES (
+                        @Id,
+                        @Name,
+                        @BirthDate,
+                        @Level,
+                        @Salary,
+                        @IsActive
+                    );",
                     new
                     {
-                        Id = Guid.NewGuid(),
+                        Id = customerId,
                         Name = Faker.NameFaker.Name(),
                         Birthdate = Faker.DateTimeFaker.BirthDay(18, 65),
                         Level = Faker.NumberFaker.Number(1, 7),
                         Salary = (decimal)Faker.NumberFaker.Number(12000, 75000),
                         IsActive = Faker.BooleanFaker.Boolean()
+                    });
+
+                await sqlMaterializer.ExecuteNonQueryAsync(@"
+                    INSERT INTO Product (
+                        Id,
+                        CustomerId,
+                        Name,
+                        Ean,
+                        Quantity,
+                        Price
+                    ) VALUES (
+                        @Id,
+                        @CustomerId,
+                        @Name,
+                        @Ean,
+                        @Quantity,
+                        @Price  
+                    );",
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        CustomerId = customerId,
+                        Name = Faker.StringFaker.AlphaNumeric(50),
+                        Ean = Faker.StringFaker.Numeric(13),
+                        Quantity = (decimal)Faker.NumberFaker.Number(1, 35),
+                        Price = (decimal)Faker.NumberFaker.Number(1, 500)
                     });
             }
 
@@ -121,9 +149,36 @@ namespace Hydrix.Tests
                     Levels = levels
                 });
 
+            sql = $@"
+                SELECT
+                    p.Id,
+                    p.CustomerId,
+                    p.Name,
+                    p.Ean,
+                    p.Quantity,
+                    p.Price,
+                    c.Id        as [Customer.Id],
+                    c.Name      as [Customer.Name],
+                    c.BirthDate as [Customer.BirthDate],
+                    c.Level     as [Customer.Level],
+                    c.Salary    as [Customer.Salary],
+                    c.IsActive  as [Customer.IsActive]
+                FROM Product p
+                LEFT JOIN Customer c ON p.CustomerId = c.Id
+                ORDER BY
+                    p.CustomerId;";
+
+            var productResult = await sqlMaterializer.QueryAsync<Product>(
+                sql);
+
             // ----------------- DELETE DATA -----------------
 
-            sqlMaterializer.ExecuteNonQuery(new DelCustomers());
+            await sqlMaterializer.ExecuteNonQueryAsync(@"
+                DELETE
+                FROM [dbo].[Product]
+            ");
+
+            await sqlMaterializer.ExecuteNonQueryAsync(new DelCustomers());
 
             // ----------------- INSERT DATA -----------------
 
@@ -137,7 +192,7 @@ namespace Hydrix.Tests
                 IsActive = Faker.BooleanFaker.Boolean()
             };
 
-            sqlMaterializer.ExecuteNonQuery(addCustomer);
+            await sqlMaterializer.ExecuteNonQueryAsync(addCustomer);
 
             addCustomer = new AddCustomer()
             {
@@ -149,15 +204,15 @@ namespace Hydrix.Tests
                 IsActive = null
             };
 
-            sqlMaterializer.ExecuteNonQuery(addCustomer);
+            await sqlMaterializer.ExecuteNonQueryAsync(addCustomer);
 
             // ----------------- SELECT DATA -----------------
 
-            var customer = sqlMaterializer.Query<Customer, SqlParameter>(new GetCustomer());
+            var customer = await sqlMaterializer.QueryAsync<Customer, SqlParameter>(new GetCustomer());
 
             // ----------------- DELETE DATA -----------------
 
-            sqlMaterializer.ExecuteNonQuery(new DelCustomers());
+            await sqlMaterializer.ExecuteNonQueryAsync(new DelCustomers());
 
             Console.ReadKey();
         }

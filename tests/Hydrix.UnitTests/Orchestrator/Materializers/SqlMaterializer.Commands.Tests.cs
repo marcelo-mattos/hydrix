@@ -1,7 +1,4 @@
-﻿using Hydrix.Attributes.Parameters;
-using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Materializers.Contract;
-using Hydrix.Schemas;
+﻿using Hydrix.Orchestrator.Materializers.Contract;
 using System;
 using System.Data;
 using System.Linq;

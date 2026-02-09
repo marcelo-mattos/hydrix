@@ -2,11 +2,11 @@
 using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Schemas;
-using Microsoft.Data.SqlClient;
 using Moq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -576,41 +576,41 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>This class is intended for testing scenarios and provides metadata for the
         /// 'dbo.TestProc' stored procedure, including its parameter definitions. It is not intended for production
         /// use.</remarks>
-        [SqlProcedure("dbo", "TestProc")]
+        [Procedure("TestProc", Schema = "dbo")]
         private class TestSqlProcedure :
-            ISqlProcedure<FakeDataParameter>
+            IProcedure<FakeDataParameter>
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
             /// </summary>
-            [SqlParameter("Id", DbType.Int32)]
+            [Parameter("Id", DbType.Int32)]
             public int Id { get; set; }
         }
 
         /// <summary>
         /// Represents an entity mapped to a SQL table with fields for identifier and name.
         /// </summary>
-        [SqlEntity]
-        private class TestEntity : ISqlEntity
+        [Table("Test")]
+        private class TestEntity : ITable
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
             /// </summary>
-            [SqlField("Id")]
+            [Column("Id")]
             public int Id { get; set; }
 
             /// <summary>
             /// Gets or sets the name associated with the entity.
             /// </summary>
-            [SqlField("Name")]
+            [Column("Name")]
             public string Name { get; set; }
         }
 
         /// <summary>
         /// Represents a SQL entity with an integer identifier.
         /// </summary>
-        [SqlEntity]
-        private class NoFieldEntity : ISqlEntity
+        [Table("NoField")]
+        private class NoFieldEntity : ITable
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
@@ -624,12 +624,12 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>This class is intended for scenarios where an entity requires only the default SQL
         /// mapping behavior provided by the ISqlEntity interface. It does not define any custom attributes beyond the
         /// required fields.</remarks>
-        private class NoAttributeEntity : ISqlEntity
+        private class NoAttributeEntity : ITable
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
             /// </summary>
-            [SqlField]
+            [Column]
             public int Id { get; set; }
         }
 
@@ -639,20 +639,20 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>This class is typically used to map .NET properties to SQL procedure parameters via
         /// attributes, enabling type-safe invocation and parameter binding. It is intended for scenarios where
         /// procedures are invoked programmatically and parameter metadata is required for correct execution.</remarks>
-        [SqlProcedure("dbo", "TestProc")]
+        [Procedure("TestProc", Schema = "dbo")]
         private class ProcedureWithAttributes :
-            ISqlProcedure<AttributeParameter>
+            IProcedure<AttributeParameter>
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
             /// </summary>
-            [SqlParameter("@Id", DbType.Int32)]
+            [Parameter("@Id", DbType.Int32)]
             public int Id { get; set; }
 
             /// <summary>
             /// Gets or sets the name associated with this entity.
             /// </summary>
-            [SqlParameter("@Name", DbType.String)]
+            [Parameter("@Name", DbType.String)]
             public string Name { get; set; }
         }
 
@@ -811,7 +811,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Represents a SQL procedure that operates on parameters of type NoAttributeParameter.
         /// </summary>
         private class NoAttributeProcedure :
-            ISqlProcedure<NoAttributeParameter>
+            IProcedure<NoAttributeParameter>
         {
             /// <summary>
             /// Gets or sets the unique identifier for the entity.

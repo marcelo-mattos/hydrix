@@ -8,13 +8,26 @@ namespace Hydrix.Attributes.Schemas
     /// columns; and is implemented by .NET Framework data providers that access data sources.
     /// </summary>
     [System.AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    public sealed class SqlProcedureAttribute :
-        Commands.SqlCommandAttribute, Contract.ISqlProcedureAttribute
+    public sealed class ProcedureAttribute :
+        Commands.CommandAttribute, Contract.IProcedureAttribute
     {
+        /// <summary>
+        /// The procedure schema.
+        /// </summary>
+        private string _schema = string.Empty;
+
         /// <summary>
         /// Gets or sets the procedure schema.
         /// </summary>
-        public string Schema { get; private set; } = string.Empty;
+        public string Schema
+        {
+            get => _schema;
+            set
+            {
+                _schema = value;
+                CommandText = $"{_schema}.{Name}";
+            }
+        }
 
         /// <summary>
         /// Gets or sets the procedure name.
@@ -24,15 +37,12 @@ namespace Hydrix.Attributes.Schemas
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="schema">Gets or sets the procedure schema.</param>
         /// <param name="name">Gets or sets the procedure name.</param>
-        public SqlProcedureAttribute(
-            string schema,
+        public ProcedureAttribute(
             string name) :
             base(CommandType.StoredProcedure,
-                $"{schema}.{name}")
+                name)
         {
-            this.Schema = schema;
             this.Name = name;
         }
     }

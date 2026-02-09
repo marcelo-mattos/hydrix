@@ -48,7 +48,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// <remarks>This class is typically used for testing, prototyping, or as a stand-in where an
         /// ISqlEntity implementation is required. It does not provide any additional functionality beyond the interface
         /// contract.</remarks>
-        public class DummyEntity : ISqlEntity
+        public class DummyEntity : ITable
         { }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// <summary>
         /// Represents a SQL stored procedure with a predefined set of parameters for demonstration or testing purposes.
         /// </summary>
-        public class DummySqlProcedure : ISqlProcedure<DummyParameter>
+        public class DummySqlProcedure : IProcedure<DummyParameter>
         {
             /// <summary>
             /// Gets the collection of parameters associated with the current instance.

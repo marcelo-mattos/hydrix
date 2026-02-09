@@ -1,8 +1,4 @@
-﻿using Hydrix.Orchestrator.Materializers;
-using Hydrix.Orchestrator.Materializers.Contract;
-using Hydrix.Schemas;
-using Moq;
-using System;
+﻿using Moq;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;

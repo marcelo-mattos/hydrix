@@ -1,12 +1,11 @@
 ﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Adapters;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
 using Hydrix.Schemas;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 
 namespace Hydrix.Orchestrator.Materializers
@@ -19,7 +18,7 @@ namespace Hydrix.Orchestrator.Materializers
     {
         /// <summary>
         /// Converts a <see cref="IDataReader"/> result set into a list of
-        /// <see cref="ISqlEntity"/> instances using streaming access.
+        /// <see cref="ITable"/> instances using streaming access.
         ///
         /// This method iterates through the <see cref="IDataReader"/> sequentially,
         /// materializing each row into a new entity instance based on precomputed
@@ -29,7 +28,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// intermediate structures such as <see cref="DataTable"/>.
         /// </summary>
         /// <typeparam name="TEntity">
-        /// Represents a SQL-mapped entity type that implements <see cref="ISqlEntity"/>.
+        /// Represents a SQL-mapped entity type that implements <see cref="ITable"/>.
         /// </typeparam>
         /// <param name="dataReader">
         /// The <see cref="IDataReader"/> containing the result set to be mapped.
@@ -42,7 +41,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// </exception>
         public static IList<TEntity> ConvertDataReaderToEntities<TEntity>(
             IDataReader dataReader)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
 #if NET8_0_OR_GREATER
             ArgumentNullException.ThrowIfNull(
@@ -56,7 +55,7 @@ namespace Hydrix.Orchestrator.Materializers
 
             var metadata = _entityMetadataCache.GetOrAdd(
                 typeof(TEntity),
-                SqlEntityMetadata.BuildEntityMetadata
+                TableMetadata.BuildEntityMetadata
             );
 
             var ordinals = BuildOrdinals(dataReader);
@@ -65,7 +64,7 @@ namespace Hydrix.Orchestrator.Materializers
             {
                 var entity = new TEntity();
 
-                SqlEntityMap.SetEntity(
+                TableMap.SetEntity(
                     entity,
                     dataReader,
                     metadata,
@@ -88,7 +87,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// result.</returns>
         public static IList<TEntity> ConvertDataTableToEntity<TEntity>(
             DataTable dataTable)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             if (dataTable == null || dataTable.Rows.Count == 0)
                 return new List<TEntity>();
@@ -106,18 +105,18 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="entities">ISqlEntity list with data to convert.</param>
         /// <returns>An System.Data.DataTable object.</returns>
         public static DataTable ConvertEntityToDataTable<TEntity>(IList<TEntity> entities)
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
             var dataTable = new DataTable();
 
             var properties = typeof(TEntity)
                 .GetProperties()
-                .Where(p => p.CanRead && Attribute.IsDefined(p, typeof(SqlFieldAttribute)))
+                .Where(p => p.CanRead && Attribute.IsDefined(p, typeof(ColumnAttribute)))
                 .Select(p => new
                 {
                     Property = p,
-                    Attribute = (SqlFieldAttribute)p
-                        .GetCustomAttributes(typeof(SqlFieldAttribute), false)
+                    Attribute = (ColumnAttribute)p
+                        .GetCustomAttributes(typeof(ColumnAttribute), false)
                         .First()
                 })
                 .ToList();
@@ -129,9 +128,9 @@ namespace Hydrix.Orchestrator.Materializers
                 if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                     type = Nullable.GetUnderlyingType(type);
 
-                var columnName = string.IsNullOrWhiteSpace(property.Attribute.FieldName)
+                var columnName = string.IsNullOrWhiteSpace(property.Attribute.Name)
                     ? property.Property.Name
-                    : property.Attribute.FieldName;
+                    : property.Attribute.Name;
 
                 dataTable.Columns.Add(columnName, type);
             }
@@ -145,9 +144,9 @@ namespace Hydrix.Orchestrator.Materializers
 
                 foreach (var item in properties)
                 {
-                    var columnName = string.IsNullOrWhiteSpace(item.Attribute.FieldName)
+                    var columnName = string.IsNullOrWhiteSpace(item.Attribute.Name)
                         ? item.Property.Name
-                        : item.Attribute.FieldName;
+                        : item.Attribute.Name;
 
                     row[columnName] = item.Property.GetValue(entity) ?? DBNull.Value;
                 }
@@ -188,41 +187,41 @@ namespace Hydrix.Orchestrator.Materializers
         /// The method ensures that:
         /// <list type="bullet">
         /// <item>
-        /// The entity type is decorated with <see cref="SqlEntityAttribute"/>.
+        /// The entity type is decorated with <see cref="NestedTableAttribute"/>.
         /// </item>
         /// <item>
         /// The entity exposes at least one readable property decorated with
-        /// <see cref="SqlFieldAttribute"/>.
+        /// <see cref="ColumnAttribute"/>.
         /// </item>
         /// </list>
         ///
-        /// If the entity does not declare <see cref="SqlEntityAttribute"/>, a
+        /// If the entity does not declare <see cref="NestedTableAttribute"/>, a
         /// <see cref="MissingMemberException"/> is thrown.
         ///
         /// The return value indicates whether the entity contains mappable SQL fields,
         /// allowing the execution flow to short-circuit when no valid fields are defined.
         /// </summary>
         /// <typeparam name="TEntity">
-        /// Represents a SQL-mapped entity type that implements <see cref="ISqlEntity"/>.
+        /// Represents a SQL-mapped entity type that implements <see cref="ITable"/>.
         /// </typeparam>
         /// <returns>
         /// <c>true</c> if the entity contains at least one property mapped with
-        /// <see cref="SqlFieldAttribute"/>; otherwise, <c>false</c>.
+        /// <see cref="ColumnAttribute"/>; otherwise, <c>false</c>.
         /// </returns>
         private static bool ValidateEntityRequest<TEntity>()
-            where TEntity : ISqlEntity, new()
+            where TEntity : ITable, new()
         {
-            var sqlEntityAttribute = (typeof(TEntity)
-                .GetCustomAttributes(typeof(SqlEntityAttribute), false) as SqlEntityAttribute[])
+            var tableAttribute = (typeof(TEntity)
+                .GetCustomAttributes(typeof(TableAttribute), false) as TableAttribute[])
                 .FirstOrDefault();
 
-            if (null == sqlEntityAttribute)
-                throw new MissingMemberException("The SqlEntity does not have a SqlEntityAttibute decorating itself.");
+            if (null == tableAttribute)
+                throw new MissingMemberException("The entity does not have a TableAttibute decorating itself.");
 
             var properties = typeof(TEntity)
                 .GetProperties()
                 .Where(property => property
-                    .GetCustomAttributes(typeof(SqlFieldAttribute), false)
+                    .GetCustomAttributes(typeof(ColumnAttribute), false)
                     .Any())
                 .ToArray();
 

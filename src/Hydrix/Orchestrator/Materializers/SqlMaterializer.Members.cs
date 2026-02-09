@@ -45,7 +45,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// Caches SQL entity metadata by CLR type to avoid repeated reflection analysis.
         /// </summary>
         /// <remarks>
-        /// This cache stores <see cref="SqlEntityMetadata"/> instances indexed by the
+        /// This cache stores <see cref="TableMetadata"/> instances indexed by the
         /// corresponding entity <see cref="Type"/>.
         ///
         /// Each metadata entry is built once via the metadata builder and reused across
@@ -56,7 +56,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// to ensure thread-safe access and lazy initialization in multi-threaded
         /// execution environments.
         /// </remarks>
-        private static readonly ConcurrentDictionary<Type, SqlEntityMetadata> _entityMetadataCache
-            = new ConcurrentDictionary<Type, SqlEntityMetadata>();
+        private static readonly ConcurrentDictionary<Type, TableMetadata> _entityMetadataCache
+            = new ConcurrentDictionary<Type, TableMetadata>();
     }
 }

@@ -12,26 +12,31 @@
     <Product>Hydrix</Product>
     <ApplicationIcon>Hydrix.ico</ApplicationIcon>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <Version>1.1.1</Version>
+    <Version>2.0.0</Version>
     <RepositoryUrl>https://github.com/marcelo-mattos/hydrix</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageReleaseNotes>
-      - (1.1.1) Correctness and Performance Fixes
+      - (2.0.0) Modernize attribute and metadata mapping system
 
-      - Fixed DBNull handling for non-nullable value types during entity materialization,
-      preventing runtime assignment exceptions.
+      - Replaced legacy Hydrix SQL attributes with .NET DataAnnotations
+      ([Table], [Column]) and introduced new Hydrix-specific attributes
+      ([NestedTable], [Procedure], [Parameter]).
 
-      - Improved entity materialization performance by removing reflection from runtime
-      execution paths and relying on cached metadata and compiled setters.
+      - Implemented a new mapping and metadata infrastructure including
+      ITable, IProcedure&lt;T&gt;, ColumnMap, TableMap, TableMetadata, and
+      supporting factories and utilities. Removed obsolete attribute
+      classes, interfaces, and legacy mapping code.
 
-      - Increased robustness and predictability of SQL-to-entity mapping without
-      introducing breaking changes.
+      - Updated materializers, metadata resolution, and unit tests to align
+      with the new attribute model. Added comprehensive test coverage for
+      the new mapping system, standardized naming, and improved internal
+      documentation.
 
-      - Internal refactorings and minor optimizations to improve stability and
-      maintainability of the materialization pipeline.
+      BREAKING CHANGE: consumers must migrate entities, procedures, and
+      parameters to the new DataAnnotations-based attribute model.
     </PackageReleaseNotes>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

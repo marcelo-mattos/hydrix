@@ -91,7 +91,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void CreateCommand_Generic_WithSqlProcedure_CallsMethod()
         {
-            var proc = Mock.Of<ISqlProcedure<SqlParameter>>();
+            var proc = Mock.Of<IProcedure<SqlParameter>>();
             _materializerMock.Setup(m => m.CreateCommand<SqlParameter>(proc))
                 .Returns(Mock.Of<IDbCommand>());
             var cmd = _materializerMock.Object.CreateCommand<SqlParameter>(proc);
@@ -109,7 +109,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void CreateCommand_Generic_WithSqlProcedureAndTransaction_CallsMethod()
         {
-            var proc = Mock.Of<ISqlProcedure<SqlParameter>>();
+            var proc = Mock.Of<IProcedure<SqlParameter>>();
             _materializerMock.Setup(m => m.CreateCommand<SqlParameter>(proc, null))
                 .Returns(Mock.Of<IDbCommand>());
             var cmd = _materializerMock.Object.CreateCommand<SqlParameter>(proc, null);

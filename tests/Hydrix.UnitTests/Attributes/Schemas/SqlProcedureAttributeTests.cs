@@ -29,7 +29,10 @@ namespace Hydrix.UnitTests.Attributes.Schemas
             var name = "MyProc";
 
             // Act
-            var attr = new SqlProcedureAttribute(schema, name);
+            var attr = new ProcedureAttribute(name)
+            {
+                Schema = schema
+            };
 
             // Assert
             Assert.Equal(schema, attr.Schema);
@@ -51,7 +54,10 @@ namespace Hydrix.UnitTests.Attributes.Schemas
             var name = "GetEmployee";
 
             // Act
-            var attr = new SqlProcedureAttribute(schema, name);
+            var attr = new ProcedureAttribute(name)
+            {
+                Schema = schema
+            };
 
             // Assert
             Assert.Equal(CommandType.StoredProcedure, attr.CommandType);
@@ -69,7 +75,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         public void AttributeUsage_IsClassOnly_AndNotAllowMultiple()
         {
             // Act
-            var usage = typeof(SqlProcedureAttribute)
+            var usage = typeof(ProcedureAttribute)
                 .GetCustomAttribute<AttributeUsageAttribute>();
 
             // Assert

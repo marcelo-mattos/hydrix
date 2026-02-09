@@ -1,6 +1,6 @@
-﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Metadata;
+﻿using Hydrix.Orchestrator.Metadata;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 
 namespace Hydrix.Orchestrator.Mapping
@@ -26,7 +26,7 @@ namespace Hydrix.Orchestrator.Mapping
     /// </item>
     /// <item>
     /// <description>
-    /// The <see cref="SqlFieldAttribute"/> that defines the column mapping metadata.
+    /// The <see cref="ColumnAttribute"/> that defines the column mapping metadata.
     /// </description>
     /// </item>
     /// <item>
@@ -46,7 +46,7 @@ namespace Hydrix.Orchestrator.Mapping
     /// entity materialization by moving all reflection costs to the metadata
     /// initialization phase.
     /// </remarks>
-    internal sealed class SqlFieldMap
+    internal sealed class ColumnMap
     {
         /// <summary>
         /// Gets the reflected property associated with this field.
@@ -57,7 +57,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// <summary>
         /// Gets the SQL field mapping attribute.
         /// </summary>
-        public SqlFieldAttribute Attribute { get; }
+        public ColumnAttribute Attribute { get; }
 
         /// <summary>
         /// Gets the normalized target CLR type for value conversion.
@@ -83,19 +83,27 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="attribute">The SQL field attribute that provides mapping metadata for the property. Cannot be null.</param>
         /// <param name="targetType">The target type that the property value will be converted to when mapping to or from the SQL field. Cannot
         /// be null.</param>
-        public SqlFieldMap(
+        public ColumnMap(
             PropertyInfo property,
-            SqlFieldAttribute attribute,
+            ColumnAttribute attribute,
             Type targetType)
         {
             Property = property;
             Attribute = attribute;
-            TargetType = targetType;
-            Setter = SqlMetadataFactory.CreateSetter(property);
 
-            DefaultValue = targetType.IsValueType
-                ? Activator.CreateInstance(targetType)
-                : null;
+            var isNullable =
+                !property.PropertyType.IsValueType ||
+                Nullable.GetUnderlyingType(property.PropertyType) != null;
+
+            TargetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+            Setter = MetadataFactory.CreateSetter(property);
+
+            if (isNullable)
+                DefaultValue = null;
+            else
+                DefaultValue = TargetType.IsValueType
+                    ? Activator.CreateInstance(TargetType)
+                    : null;
         }
     }
 }

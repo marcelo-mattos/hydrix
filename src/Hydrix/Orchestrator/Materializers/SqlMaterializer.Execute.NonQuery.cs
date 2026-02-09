@@ -437,7 +437,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public int ExecuteNonQuery<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> sqlProcedure)
             where TDataParameterDriver : IDataParameter, new()
         {
             using var command = (this as Contract.ISqlMaterializer)
@@ -463,7 +463,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public int ExecuteNonQuery<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction)
             where TDataParameterDriver : IDataParameter, new()
         {
@@ -492,7 +492,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<int> ExecuteNonQueryAsync<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
@@ -529,7 +529,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<int> ExecuteNonQueryAsync<TDataParameterDriver>(
-            ISqlProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> sqlProcedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
