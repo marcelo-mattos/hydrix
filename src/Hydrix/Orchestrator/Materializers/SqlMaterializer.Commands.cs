@@ -1,6 +1,7 @@
 ﻿using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
 using Hydrix.Schemas;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -45,27 +46,29 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="command">
         /// The <see cref="IDbCommand"/> instance representing the SQL operation about to be executed.
         /// </param>
-        private static void LogCommand(IDbCommand command)
+        private void LogCommand(IDbCommand command)
         {
-            Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine("Executing DbCommand");
-            Console.WriteLine();
-            Console.WriteLine(command.CommandText);
-            Console.WriteLine();
+            if (_logger is null)
+                return;
+
+            var logMessage = new System.Text.StringBuilder();
+            //logMessage.AppendLine("--------------------------------------------------");
+            logMessage.AppendLine("Executing DbCommand");
+            logMessage.AppendLine(command.CommandText);
 
             if (command.Parameters.Count > 0)
             {
-                Console.WriteLine("Parameters:");
-
+                logMessage.AppendLine("Parameters:");
                 foreach (IDataParameter parameter in command.Parameters)
                 {
-                    Console.WriteLine(
+                    logMessage.AppendLine(
                         $"  {parameter.ParameterName} = {FormatParameterValue(parameter.Value)} ({parameter.DbType})"
                     );
                 }
             }
 
-            Console.WriteLine("--------------------------------------------------");
+            //logMessage.AppendLine("--------------------------------------------------");
+            _logger.LogInformation(logMessage.ToString());
         }
 
         /// <summary>

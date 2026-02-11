@@ -125,7 +125,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         [Fact]
         public void EntityMetadataCache_IsConcurrentDictionary_AndEmpty()
         {
-            var cacheField = typeof(SqlMaterializer).GetField("_entityMetadataCache", BindingFlags.NonPublic | BindingFlags.Static);
+            var cacheField = typeof(SqlMaterializer).GetField("EntityMetadataCache", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(cacheField);
             var cache = cacheField.GetValue(null) as ConcurrentDictionary<Type, TableMetadata>;
             Assert.NotNull(cache);

@@ -3,6 +3,7 @@ using Hydrix.Orchestrator.Materializers;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -18,9 +19,16 @@ namespace Hydrix.Tests
         /// </summary>
         private static async Task Main(string[] _)
         {
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+            ILogger logger = loggerFactory.CreateLogger("Program");
+
             var sqlMaterializer =
                 new SqlMaterializer(
-                    new SqlConnection("Data Source=localhost;Database=HydrixTest;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"));
+                    new SqlConnection("Data Source=localhost;Database=HydrixTest;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"),
+                    logger);
 
             sqlMaterializer.OpenConnection();
 

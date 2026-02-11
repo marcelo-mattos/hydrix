@@ -1,4 +1,6 @@
 ﻿using Hydrix.Orchestrator.Materializers;
+using Microsoft.Extensions.Logging;
+using Moq;
 using System.Reflection;
 using Xunit;
 
@@ -11,6 +13,33 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
     /// property values, apply default values when appropriate, and handle null connections as expected.</remarks>
     public partial class SqlMaterializerTests
     {
+        /// <summary>
+        /// Verifies that the SqlMaterializer constructor correctly assigns the provided connection, logger, timeout, and
+        /// parameter prefix to their respective properties.
+        /// </summary>
+        [Fact]
+        public void Constructor_Assigns_Logger_And_Properties()
+        {
+            var connection = new DummyDbConnection();
+            var logger = new Mock<ILogger>().Object;
+            int timeout = 77;
+            string prefix = "@@";
+            var materializer = new SqlMaterializer(connection, logger, timeout, prefix);
+
+            // DbConnection is public or internal property
+            var dbConnProp = typeof(SqlMaterializer).GetProperty("DbConnection", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var dbConn = dbConnProp.GetValue(materializer);
+            Assert.Same(connection, dbConn);
+
+            var loggerField = typeof(SqlMaterializer).GetField("_logger", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.Same(logger, loggerField.GetValue(materializer));
+
+            var timeoutProp = typeof(SqlMaterializer).GetProperty("Timeout", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.Equal(timeout, (int)timeoutProp.GetValue(materializer));
+
+            Assert.Equal(prefix, GetPrivateParameterPrefix(materializer));
+        }
+
         /// <summary>
         /// Verifies that the SqlMaterializer constructor correctly assigns the provided connection, timeout, and
         /// parameter prefix to their respective properties.

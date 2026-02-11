@@ -53,7 +53,7 @@ namespace Hydrix.Orchestrator.Materializers
 
             var entities = new List<TEntity>();
 
-            var metadata = _entityMetadataCache.GetOrAdd(
+            var metadata = EntityMetadataCache.GetOrAdd(
                 typeof(TEntity),
                 TableMetadata.BuildEntityMetadata
             );
@@ -69,7 +69,7 @@ namespace Hydrix.Orchestrator.Materializers
                     dataReader,
                     metadata,
                     Array.Empty<string>(),
-                    _entityMetadataCache,
+                    EntityMetadataCache,
                     ordinals
                 );
 
