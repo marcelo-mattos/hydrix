@@ -1,4 +1,4 @@
-﻿using Hydrix.Schemas;
+﻿using Hydrix.Schemas.Contract;
 using Microsoft.Data.SqlClient;
 using Moq;
 using System.Collections.Generic;

@@ -1,8 +1,8 @@
-﻿using Hydrix.Schemas;
+﻿using Hydrix.Schemas.Contract;
 using System.Data;
 using Xunit;
 
-namespace Hydrix.UnitTests.Schemas
+namespace Hydrix.UnitTests.Schemas.Contract
 {
     /// <summary>
     /// Represents a parameter to a command object, such as a SQL query or stored procedure, for use with data providers

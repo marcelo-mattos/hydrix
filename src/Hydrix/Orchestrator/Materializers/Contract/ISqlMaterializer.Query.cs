@@ -1,4 +1,4 @@
-﻿using Hydrix.Schemas;
+﻿using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;

@@ -1,7 +1,7 @@
 ﻿using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Materializers;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using Moq;
 using System;
 using System.Collections;

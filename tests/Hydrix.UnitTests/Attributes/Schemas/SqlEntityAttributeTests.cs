@@ -23,7 +23,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         [Fact]
         public void DefaultConstructor_SetsEmptyProperties()
         {
-            Assert.Throws<ArgumentException>(() => new NestedTableAttribute(string.Empty));
+            Assert.Throws<ArgumentException>(() => new ForeignTableAttribute(string.Empty));
         }
 
         /// <summary>
@@ -33,14 +33,14 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         [Fact]
         public void ParameterizedConstructor_SetsPropertiesCorrectly()
         {
-            var attr = new NestedTableAttribute("Users")
+            var attr = new ForeignTableAttribute("Users")
             {
                 Schema = "dbo",
-                Key = "UserId"
+                PrimaryKeys = new[] { "UserId" }
             };
             Assert.Equal("dbo", attr.Schema);
             Assert.Equal("Users", attr.Name);
-            Assert.Equal("UserId", attr.Key);
+            Assert.Equal(new[] { "UserId" }, attr.PrimaryKeys);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         [Fact]
         public void AttributeUsage_IsCorrect()
         {
-            var usage = typeof(NestedTableAttribute)
+            var usage = typeof(ForeignTableAttribute)
                 .GetCustomAttribute<AttributeUsageAttribute>();
             Assert.NotNull(usage);
             Assert.Equal(AttributeTargets.Class | AttributeTargets.Property, usage.ValidOn);

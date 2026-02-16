@@ -39,10 +39,10 @@ namespace Hydrix.Orchestrator.Metadata
         /// <summary>
         /// Creates metadata for a nested table relationship.
         /// </summary>
-        public static NestedTableMetadata CreateNestedEntity(
+        public static ForeignTableMetadata CreateNestedEntity(
             PropertyInfo property,
-            NestedTableAttribute attribute)
-            => new NestedTableMetadata(
+            ForeignTableAttribute attribute)
+            => new ForeignTableMetadata(
                     property,
                     attribute,
                     CreateFactory(property.PropertyType),

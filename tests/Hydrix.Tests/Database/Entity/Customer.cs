@@ -1,4 +1,5 @@
 ﻿using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,7 +11,7 @@ namespace Hydrix.Tests.Database.Entity
     /// </summary>
     [Table(nameof(Customer), Schema = "[dbo]")]
     public class Customer :
-        ITable
+        DatabaseEntity, ITable
     {
         /// <summary>
         /// Id field

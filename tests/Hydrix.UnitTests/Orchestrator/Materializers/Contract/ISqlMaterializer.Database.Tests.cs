@@ -1,5 +1,5 @@
 ﻿using Hydrix.Orchestrator.Materializers.Contract;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using Moq;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-﻿using Hydrix.Schemas;
+﻿using Hydrix.Schemas.Contract;
 using Xunit;
 
 namespace Hydrix.UnitTests.Schemas

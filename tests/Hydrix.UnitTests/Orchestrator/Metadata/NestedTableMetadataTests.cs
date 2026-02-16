@@ -6,9 +6,9 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Metadata
 {
     /// <summary>
-    /// Unit tests for the <see cref="NestedTableMetadata"/> class.
+    /// Unit tests for the <see cref="ForeignTableMetadata"/> class.
     /// </summary>
-    public class NestedTableMetadataTests
+    public class ForeignTableMetadataTests
     {
         /// <summary>
         /// Dummy parent class for testing nested entity property.
@@ -18,7 +18,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
             /// <summary>
             /// Gets or sets the nested child entity associated with this instance.
             /// </summary>
-            [NestedTable("child")]
+            [ForeignTable("child")]
             public Child Nested { get; set; }
         }
 
@@ -36,12 +36,12 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         {
             // Arrange
             var property = typeof(Parent).GetProperty(nameof(Parent.Nested));
-            var attribute = (NestedTableAttribute)Attribute.GetCustomAttribute(property, typeof(NestedTableAttribute));
+            var attribute = (ForeignTableAttribute)Attribute.GetCustomAttribute(property, typeof(ForeignTableAttribute));
             Func<object> factory = () => new Child();
             Action<object, object> setter = (parent, value) => ((Parent)parent).Nested = (Child)value;
 
             // Act
-            var metadata = new NestedTableMetadata(property, attribute, factory, setter);
+            var metadata = new ForeignTableMetadata(property, attribute, factory, setter);
 
             // Assert
             Assert.Equal(property, metadata.Property);
@@ -58,9 +58,9 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         {
             // Arrange
             Func<object> factory = () => new Child();
-            var metadata = new NestedTableMetadata(
+            var metadata = new ForeignTableMetadata(
                 typeof(Parent).GetProperty(nameof(Parent.Nested)),
-                new NestedTableAttribute("child"),
+                new ForeignTableAttribute("child"),
                 factory,
                 (parent, value) => ((Parent)parent).Nested = (Child)value);
 
@@ -82,9 +82,9 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
             var parent = new Parent();
             var child = new Child();
             Action<object, object> setter = (p, v) => ((Parent)p).Nested = (Child)v;
-            var metadata = new NestedTableMetadata(
+            var metadata = new ForeignTableMetadata(
                 typeof(Parent).GetProperty(nameof(Parent.Nested)),
-                new NestedTableAttribute("child"),
+                new ForeignTableAttribute("child"),
                 () => new Child(),
                 setter);
 

@@ -1,7 +1,7 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -76,7 +76,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
             /// <summary>
             /// Gets or sets the child entity associated with this instance.
             /// </summary>
-            [NestedTable("Child", Schema = "tests", Key = "ChildId")]
+            [ForeignTable("Child", Schema = "tests", PrimaryKeys = new[] { "ChildId" })]
             public TestChildEntity Child { get; set; }
 
             /// <summary>
@@ -107,7 +107,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
 
             var entity = metadata.Entities[0];
             Assert.Equal("Child", entity.Property.Name);
-            Assert.IsType<NestedTableAttribute>(entity.Attribute);
+            Assert.IsType<ForeignTableAttribute>(entity.Attribute);
         }
 
         /// <summary>
@@ -194,12 +194,12 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
 
             var childEntity = metadata.Entities[0];
             Assert.Equal("Child", childEntity.Property.Name);
-            Assert.IsType<NestedTableAttribute>(childEntity.Attribute);
+            Assert.IsType<ForeignTableAttribute>(childEntity.Attribute);
 
-            var attr = (NestedTableAttribute)childEntity.Attribute;
+            var attr = (ForeignTableAttribute)childEntity.Attribute;
             Assert.Equal("tests", attr.Schema);
             Assert.Equal("Child", attr.Name);
-            Assert.Equal("ChildId", attr.Key);
+            Assert.Equal(new[] { "ChildId" }, attr.PrimaryKeys);
         }
 
         /// <summary>

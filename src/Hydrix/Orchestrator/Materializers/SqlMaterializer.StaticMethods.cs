@@ -1,7 +1,7 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -187,7 +187,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The method ensures that:
         /// <list type="bullet">
         /// <item>
-        /// The entity type is decorated with <see cref="NestedTableAttribute"/>.
+        /// The entity type is decorated with <see cref="ForeignTableAttribute"/>.
         /// </item>
         /// <item>
         /// The entity exposes at least one readable property decorated with
@@ -195,7 +195,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// </item>
         /// </list>
         ///
-        /// If the entity does not declare <see cref="NestedTableAttribute"/>, a
+        /// If the entity does not declare <see cref="ForeignTableAttribute"/>, a
         /// <see cref="MissingMemberException"/> is thrown.
         ///
         /// The return value indicates whether the entity contains mappable SQL fields,
@@ -222,7 +222,7 @@ namespace Hydrix.Orchestrator.Materializers
                 .GetProperties()
                 .Where(property => property
                     .GetCustomAttributes(typeof(ColumnAttribute), false)
-                    .Any())
+                    .Length != 0)
                 .ToArray();
 
             return properties.Length > 0;

@@ -1,6 +1,7 @@
 ﻿using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
 using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
@@ -12,7 +13,7 @@ namespace Hydrix.Tests.Database.Procedure
     /// </summary>
     [Procedure("[AddCustomer]", Schema = "[dbo]")]
     public class AddCustomer :
-        IProcedure<SqlParameter>
+        DatabaseEntity, IProcedure<SqlParameter>
     {
         /// <summary>
         /// Id parameter

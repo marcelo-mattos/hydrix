@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Metadata;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -68,7 +68,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// This attribute allows the mapper to avoid creating empty or invalid nested entities when
         /// the corresponding SQL data is absent.
         /// </remarks>
-        public NestedTableAttribute Attribute { get; private set; }
+        public ForeignTableAttribute Attribute { get; private set; }
 
         /// <summary>
         /// Compiled factory delegate for nested entity instantiation.
@@ -98,7 +98,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// </remarks>
         public TableMap(
             PropertyInfo property,
-            NestedTableAttribute attribute)
+            ForeignTableAttribute attribute)
         {
             this.Property = property;
             this.Attribute = attribute;
@@ -216,9 +216,9 @@ namespace Hydrix.Orchestrator.Mapping
         {
             foreach (var nested in metadata.Entities)
             {
-                var keyColumn = string.IsNullOrWhiteSpace(nested.Attribute.Key)
+                var keyColumn = nested.Attribute.PrimaryKeys == null || nested.Attribute.PrimaryKeys.Length == 0
                     ? null
-                    : $"{prefix}{nested.Property.Name}.{nested.Attribute.Key}";
+                    : $"{prefix}{nested.Property.Name}.{nested.Attribute.PrimaryKeys[0]}";
 
                 if (keyColumn != null)
                 {

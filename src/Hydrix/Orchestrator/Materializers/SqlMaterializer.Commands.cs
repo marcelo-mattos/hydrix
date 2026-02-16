@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

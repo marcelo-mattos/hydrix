@@ -1,7 +1,7 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
@@ -70,10 +70,10 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
             var fieldMap = new ColumnMap(prop, attr, typeof(int));
 
             var entityProp = typeof(Dummy).GetProperty(nameof(Dummy.EntityProp));
-            var entityAttr = new NestedTableAttribute("dummy_entity")
+            var entityAttr = new ForeignTableAttribute("dummy_entity")
             {
                 Schema = "dummy_schema",
-                Key = "dummy_key"
+                PrimaryKeys = new[] { "dummy_key" }
             };
             var entityMap = new TableMap(entityProp, entityAttr);
 
@@ -93,10 +93,10 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         public void CreateNestedEntity_CreatesCorrectMetadata_AndDelegatesWork()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.EntityProp));
-            var attr = new NestedTableAttribute("dummy_entity")
+            var attr = new ForeignTableAttribute("dummy_entity")
             {
                 Schema = "dummy_schema",
-                Key = "dummy_key"
+                PrimaryKeys = new[] { "dummy_key" }
             };
             var metadata = MetadataFactory.CreateNestedEntity(prop, attr);
 

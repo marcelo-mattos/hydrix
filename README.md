@@ -151,7 +151,7 @@ public class Order
     [Column("id")]
     public Guid Id { get; set; }
 
-    [NestedTable(Key = "Id")]
+    [ForeignTable(Key = "Id")]
     public Customer Customer { get; set; }
 }
 ```

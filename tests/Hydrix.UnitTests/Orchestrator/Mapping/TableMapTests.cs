@@ -1,7 +1,7 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using Moq;
 using System;
 using System.Collections.Concurrent;
@@ -38,7 +38,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             /// <summary>
             /// Gets or sets a nested entity.
             /// </summary>
-            [NestedTable("text", Schema = "Nested", Key = "Id")]
+            [ForeignTable("text", Schema = "Nested", PrimaryKeys = new[] { "Id" })]
             public TestNestedEntity Nested { get; set; }
         }
 
@@ -145,10 +145,10 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             // Arrange
             var property = typeof(TestEntity).GetProperty(nameof(TestEntity.Nested));
-            var attribute = new NestedTableAttribute("text")
+            var attribute = new ForeignTableAttribute("text")
             {
                 Schema = "Nested",
-                Key = "Id"
+                PrimaryKeys = new[] { "Id" }
             };
 
             // Act

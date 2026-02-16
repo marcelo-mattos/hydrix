@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
-using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -29,7 +29,7 @@ namespace Hydrix.Orchestrator.Metadata
     /// </item>
     /// <item>
     /// <description>
-    /// A collection of nested entity mappings decorated with <see cref="NestedTableAttribute"/>,
+    /// A collection of nested entity mappings decorated with <see cref="ForeignTableAttribute"/>,
     /// enabling recursive object graph construction from flattened SQL projections.
     /// </description>
     /// </item>
@@ -69,7 +69,7 @@ namespace Hydrix.Orchestrator.Metadata
         /// </summary>
         /// <remarks>
         /// Each item in this collection represents a writable property decorated with <see
-        /// cref="NestedTableAttribute"/>, defining a composition relationship between the current
+        /// cref="ForeignTableAttribute"/>, defining a composition relationship between the current
         /// entity and another <see cref="ITable"/>.
         ///
         /// These mappings allow the data handler to:
@@ -99,7 +99,7 @@ namespace Hydrix.Orchestrator.Metadata
         /// </param>
         /// <param name="entities">
         /// The collection of nested entity mappings associated with the entity type, typically
-        /// derived from properties decorated with <see cref="NestedTableAttribute"/>.
+        /// derived from properties decorated with <see cref="ForeignTableAttribute"/>.
         /// </param>
         /// <remarks>
         /// This constructor is intended to be invoked exclusively by the metadata builder
@@ -141,7 +141,7 @@ namespace Hydrix.Orchestrator.Metadata
         /// </item>
         /// <item>
         /// <description>
-        /// Nested entity mappings for properties decorated with <see cref="NestedTableAttribute"/>,
+        /// Nested entity mappings for properties decorated with <see cref="ForeignTableAttribute"/>,
         /// enabling recursive object graph materialization from flattened SQL projections.
         /// </description>
         /// </item>
@@ -179,11 +179,11 @@ namespace Hydrix.Orchestrator.Metadata
 
             var entities = type
                 .GetProperties()
-                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(NestedTableAttribute)))
+                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(ForeignTableAttribute)))
                 .Select(p => new TableMap(
                     p,
-                    (NestedTableAttribute)p
-                        .GetCustomAttributes(typeof(NestedTableAttribute), false)
+                    (ForeignTableAttribute)p
+                        .GetCustomAttributes(typeof(ForeignTableAttribute), false)
                         .First()))
                 .ToList();
 

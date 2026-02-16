@@ -2,9 +2,16 @@
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
+using Hydrix.Tests.Resources.Utility;
+using Hydrix.Tests.Validators;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using System;
+using System.Globalization;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Hydrix.Tests
@@ -19,6 +26,16 @@ namespace Hydrix.Tests
         /// </summary>
         private static async Task Main(string[] _)
         {
+            var factory = new ResourceManagerStringLocalizerFactory(
+                Options.Create(new LocalizationOptions { ResourcesPath = "Resources" }),
+                NullLoggerFactory.Instance);
+
+            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("pt-BR");
+            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("pt-BR");
+
+            var assemblyName = new AssemblyName(typeof(Shared).GetTypeInfo().Assembly.FullName);
+            var localizer = factory.Create(nameof(Shared), assemblyName.Name);
+
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
@@ -37,6 +54,37 @@ namespace Hydrix.Tests
             for (var i = 0; i < 10; i++)
             {
                 var customerId = Guid.NewGuid();
+                var type = Faker.StringFaker.SelectFrom(1, "OXK");
+                var token = type switch
+                {
+                    "O" => Faker.NumberFaker.Number(100000, 999999).ToString().PadLeft(6, '0'),
+                    "X" => string.Empty,
+                    "K" => Faker.DateTimeFaker.BirthDay(18, 65).ToString("yyyy-MM-dd"),
+                    _ => throw new InvalidOperationException("Invalid type")
+                };
+
+                var product = new Product()
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerId = customerId,
+                    Name = Faker.StringFaker.AlphaNumeric(50),
+                    Ean = Faker.StringFaker.Numeric(13),
+                    Quantity = (decimal)Faker.NumberFaker.Number(1, 35),
+                    Price = (decimal)Faker.NumberFaker.Number(1, 500),
+                    Type = type,
+                    Token = token
+                };
+
+                var productValidator = new ProductValidator(localizer);
+                if (!product.IsValid(out var validationResults, productValidator))
+                {
+                    logger.LogError(
+                        "Product validation failed: {Errors}",
+                        string.Join(", ", validationResults));
+
+                    Console.ReadKey();
+                    continue;
+                }
 
                 await sqlMaterializer.ExecuteNonQueryAsync(@"
                     INSERT INTO Customer (
@@ -71,23 +119,29 @@ namespace Hydrix.Tests
                         Name,
                         Ean,
                         Quantity,
-                        Price
+                        Price,
+                        Type,
+                        Token
                     ) VALUES (
                         @Id,
                         @CustomerId,
                         @Name,
                         @Ean,
                         @Quantity,
-                        @Price  
+                        @Price,
+                        @Type,
+                        @Token
                     );",
                     new
                     {
-                        Id = Guid.NewGuid(),
-                        CustomerId = customerId,
-                        Name = Faker.StringFaker.AlphaNumeric(50),
-                        Ean = Faker.StringFaker.Numeric(13),
-                        Quantity = (decimal)Faker.NumberFaker.Number(1, 35),
-                        Price = (decimal)Faker.NumberFaker.Number(1, 500)
+                        product.Id,
+                        product.CustomerId,
+                        product.Name,
+                        product.Ean,
+                        product.Quantity,
+                        product.Price,
+                        product.Type,
+                        product.Token
                     });
             }
 
@@ -157,6 +211,17 @@ namespace Hydrix.Tests
                     Levels = levels
                 });
 
+            sql = new Product().BuildQuery("p", builder);
+            var productResult = await sqlMaterializer.QueryAsync<Product>(
+                sql,
+                new
+                {
+                    IsActive = isActive,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    Levels = levels
+                });
+
             sql = $@"
                 SELECT
                     p.Id,
@@ -165,6 +230,8 @@ namespace Hydrix.Tests
                     p.Ean,
                     p.Quantity,
                     p.Price,
+                    p.Type,
+                    p.Token,
                     c.Id        as [Customer.Id],
                     c.Name      as [Customer.Name],
                     c.BirthDate as [Customer.BirthDate],
@@ -176,7 +243,7 @@ namespace Hydrix.Tests
                 ORDER BY
                     p.CustomerId;";
 
-            var productResult = await sqlMaterializer.QueryAsync<Product>(
+            productResult = await sqlMaterializer.QueryAsync<Product>(
                 sql);
 
             // ----------------- DELETE DATA -----------------

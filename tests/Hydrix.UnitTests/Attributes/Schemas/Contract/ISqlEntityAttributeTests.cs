@@ -21,7 +21,7 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         public void SqlEntityAttribute_Implements_ISqlEntityAttribute()
         {
             // Arrange
-            var type = typeof(NestedTableAttribute);
+            var type = typeof(ForeignTableAttribute);
 
             // Act
             var interfaces = type.GetInterfaces();
