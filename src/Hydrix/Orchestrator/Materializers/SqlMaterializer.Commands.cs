@@ -52,7 +52,6 @@ namespace Hydrix.Orchestrator.Materializers
                 return;
 
             var logMessage = new System.Text.StringBuilder();
-            //logMessage.AppendLine("--------------------------------------------------");
             logMessage.AppendLine("Executing DbCommand");
             logMessage.AppendLine(command.CommandText);
 
@@ -67,7 +66,6 @@ namespace Hydrix.Orchestrator.Materializers
                 }
             }
 
-            //logMessage.AppendLine("--------------------------------------------------");
             _logger.LogInformation(logMessage.ToString());
         }
 

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
-namespace Hydrix.Orchestrator.Metadata
+namespace Hydrix.Orchestrator.Metadata.Materializers
 {
     /// <summary>
     /// Represents the cached metadata of a SQL-mapped entity type.
@@ -37,7 +37,7 @@ namespace Hydrix.Orchestrator.Metadata
     /// This structure is intentionally immutable after construction to ensure thread safety and
     /// predictable behavior during concurrent mapping operations.
     /// </remarks>
-    internal sealed class TableMetadata
+    internal sealed class TableMaterializeMetadata
     {
         /// <summary>
         /// Gets the collection of scalar field mappings for the entity.
@@ -91,7 +91,7 @@ namespace Hydrix.Orchestrator.Metadata
         public IReadOnlyList<TableMap> Entities { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TableMetadata"/> class.
+        /// Initializes a new instance of the <see cref="TableMaterializeMetadata"/> class.
         /// </summary>
         /// <param name="fields">
         /// The collection of scalar field mappings associated with the entity type, typically
@@ -108,7 +108,7 @@ namespace Hydrix.Orchestrator.Metadata
         /// Once created, the metadata instance should be treated as read-only and reused across
         /// multiple mapping operations to ensure optimal performance and consistency.
         /// </remarks>
-        public TableMetadata(
+        public TableMaterializeMetadata(
             IReadOnlyList<ColumnMap> fields,
             IReadOnlyList<TableMap> entities)
         {
@@ -124,7 +124,7 @@ namespace Hydrix.Orchestrator.Metadata
         /// decorated with SQL mapping attributes.
         /// </param>
         /// <returns>
-        /// A fully populated <see cref="TableMetadata"/> instance containing all scalar field
+        /// A fully populated <see cref="TableMaterializeMetadata"/> instance containing all scalar field
         /// and nested entity mappings associated with the specified type.
         /// </returns>
         /// <remarks>
@@ -153,7 +153,7 @@ namespace Hydrix.Orchestrator.Metadata
         /// Nullable property types are normalized by unwrapping their underlying CLR type, ensuring
         /// compatibility with <see cref="System.Convert"/> during runtime value conversion.
         /// </remarks>
-        internal static TableMetadata BuildEntityMetadata(Type type)
+        internal static TableMaterializeMetadata BuildEntityMetadata(Type type)
         {
             var fields = type
                 .GetProperties()
@@ -187,7 +187,7 @@ namespace Hydrix.Orchestrator.Metadata
                         .First()))
                 .ToList();
 
-            return MetadataFactory.CreateEntity(
+            return MaterializeMetadataFactory.CreateEntity(
                 fields,
                 entities);
         }

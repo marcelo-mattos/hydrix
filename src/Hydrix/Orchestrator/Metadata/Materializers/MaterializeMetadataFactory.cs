@@ -6,21 +6,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Hydrix.Orchestrator.Metadata
+namespace Hydrix.Orchestrator.Metadata.Materializers
 {
     /// <summary>
     /// Provides factory methods for creating compiled metadata
     /// components used during entity materialization.
     /// </summary>
-    internal static class MetadataFactory
+    internal static class MaterializeMetadataFactory
     {
         /// <summary>
         /// Creates metadata for a scalar xolumn.
         /// </summary>
-        public static ColumnMetadata CreateField(
+        public static ColumnMaterializeMetadata CreateField(
             PropertyInfo property,
             ColumnAttribute attribute)
-            => new ColumnMetadata(
+            => new ColumnMaterializeMetadata(
                     property,
                     CreateSetter(property),
                     property.PropertyType,
@@ -29,20 +29,20 @@ namespace Hydrix.Orchestrator.Metadata
         /// <summary>
         /// Creates metadata for a table.
         /// </summary>
-        public static TableMetadata CreateEntity(
+        public static TableMaterializeMetadata CreateEntity(
             IReadOnlyList<ColumnMap> fields,
             IReadOnlyList<TableMap> entities)
-            => new TableMetadata(
+            => new TableMaterializeMetadata(
                     fields,
                     entities);
 
         /// <summary>
         /// Creates metadata for a nested table relationship.
         /// </summary>
-        public static ForeignTableMetadata CreateNestedEntity(
+        public static ForeignTableMaterializeMetadata CreateNestedEntity(
             PropertyInfo property,
             ForeignTableAttribute attribute)
-            => new ForeignTableMetadata(
+            => new ForeignTableMaterializeMetadata(
                     property,
                     attribute,
                     CreateFactory(property.PropertyType),

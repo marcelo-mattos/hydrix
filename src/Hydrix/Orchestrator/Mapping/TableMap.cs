@@ -1,5 +1,5 @@
 ﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Metadata;
+using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Concurrent;
@@ -102,8 +102,8 @@ namespace Hydrix.Orchestrator.Mapping
         {
             this.Property = property;
             this.Attribute = attribute;
-            this.Factory = MetadataFactory.CreateFactory(property.PropertyType);
-            this.Setter = MetadataFactory.CreateSetter(property);
+            this.Factory = MaterializeMetadataFactory.CreateFactory(property.PropertyType);
+            this.Setter = MaterializeMetadataFactory.CreateSetter(property);
         }
 
         /// <summary>
@@ -124,9 +124,9 @@ namespace Hydrix.Orchestrator.Mapping
         internal static void SetEntity(
             ITable entity,
             IDataRecord record,
-            TableMetadata metadata,
+            TableMaterializeMetadata metadata,
             IReadOnlyList<string> path,
-            ConcurrentDictionary<Type, TableMetadata> entityMetadataCache,
+            ConcurrentDictionary<Type, TableMaterializeMetadata> entityMetadataCache,
             IReadOnlyDictionary<string, int> ordinals)
         {
             string prefix = path.Count > 0
@@ -165,7 +165,7 @@ namespace Hydrix.Orchestrator.Mapping
         private static void SetEntityFields(
             ITable entity,
             IDataRecord record,
-            TableMetadata metadata,
+            TableMaterializeMetadata metadata,
             String prefix,
             IReadOnlyDictionary<string, int> ordinals)
         {
@@ -208,9 +208,9 @@ namespace Hydrix.Orchestrator.Mapping
         private static void SetEntityNestedEntities(
             ITable entity,
             IDataRecord record,
-            TableMetadata metadata,
+            TableMaterializeMetadata metadata,
             IReadOnlyList<string> path,
-            ConcurrentDictionary<Type, TableMetadata> entityMetadataCache,
+            ConcurrentDictionary<Type, TableMaterializeMetadata> entityMetadataCache,
             string prefix,
             IReadOnlyDictionary<string, int> ordinals)
         {
@@ -234,7 +234,7 @@ namespace Hydrix.Orchestrator.Mapping
 
                 var nestedMetadata = entityMetadataCache.GetOrAdd(
                     nested.Property.PropertyType,
-                    TableMetadata.BuildEntityMetadata
+                    TableMaterializeMetadata.BuildEntityMetadata
                 );
 
                 SetEntity(

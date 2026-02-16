@@ -2,14 +2,14 @@
 using System;
 using System.Reflection;
 
-namespace Hydrix.Orchestrator.Metadata
+namespace Hydrix.Orchestrator.Metadata.Materializers
 {
     /// <summary>
     /// Represents metadata for a nested SQL entity relationship.
     /// Provides factory and setter delegates for efficient
     /// instantiation and assignment without reflection.
     /// </summary>
-    internal sealed class ForeignTableMetadata
+    internal sealed class ForeignTableMaterializeMetadata
     {
         /// <summary>
         /// Gets the property representing the nested entity.
@@ -34,9 +34,9 @@ namespace Hydrix.Orchestrator.Metadata
         public Action<object, object> Setter { get; }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="ForeignTableMetadata"/>.
+        /// Initializes a new instance of <see cref="ForeignTableMaterializeMetadata"/>.
         /// </summary>
-        public ForeignTableMetadata(
+        public ForeignTableMaterializeMetadata(
             PropertyInfo property,
             ForeignTableAttribute attribute,
             Func<object> factory,

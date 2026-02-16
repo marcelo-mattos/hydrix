@@ -1,4 +1,4 @@
-﻿using Hydrix.Orchestrator.Metadata;
+﻿using Hydrix.Orchestrator.Metadata.Materializers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -52,7 +52,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// Caches SQL entity metadata by CLR type to avoid repeated reflection analysis.
         /// </summary>
         /// <remarks>
-        /// This cache stores <see cref="TableMetadata"/> instances indexed by the
+        /// This cache stores <see cref="TableMaterializeMetadata"/> instances indexed by the
         /// corresponding entity <see cref="Type"/>.
         ///
         /// Each metadata entry is built once via the metadata builder and reused across
@@ -63,7 +63,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// to ensure thread-safe access and lazy initialization in multithreaded
         /// execution environments.
         /// </remarks>
-        private static readonly ConcurrentDictionary<Type, TableMetadata> EntityMetadataCache
-            = new ConcurrentDictionary<Type, TableMetadata>();
+        private static readonly ConcurrentDictionary<Type, TableMaterializeMetadata> EntityMetadataCache
+            = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
     }
 }

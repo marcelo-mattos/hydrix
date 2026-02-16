@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Metadata;
+using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -55,7 +55,7 @@ namespace Hydrix.Orchestrator.Materializers
 
             var metadata = EntityMetadataCache.GetOrAdd(
                 typeof(TEntity),
-                TableMetadata.BuildEntityMetadata
+                TableMaterializeMetadata.BuildEntityMetadata
             );
 
             var ordinals = BuildOrdinals(dataReader);

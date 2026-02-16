@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Metadata;
+using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using Moq;
 using System;
@@ -174,12 +174,12 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var entity = new TestEntity();
 
-            var metadata = new TableMetadata(
+            var metadata = new TableMaterializeMetadata(
                 new List<ColumnMap>(),
                 new List<TableMap>()
             );
             var row = new DataTable().NewRow();
-            var cache = new ConcurrentDictionary<Type, TableMetadata>();
+            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
             var reader = row.Table.CreateDataReader();
 
             // Act
@@ -207,7 +207,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             // Arrange
             var entity = new TestEntity();
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             var record = new Mock<IDataRecord>();
             record.Setup(r => r.GetOrdinal("Id")).Returns(0);
@@ -218,7 +218,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             record.Setup(r => r.IsDBNull(1)).Returns(false);
             record.Setup(r => r.GetValue(1)).Returns(7);
 
-            var cache = new ConcurrentDictionary<Type, TableMetadata>
+            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>
             {
                 [typeof(TestEntity)] = metadata
             };
@@ -255,7 +255,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             // Arrange
             var entity = new TestEntity();
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             var record = new Mock<IDataRecord>();
             record.Setup(r => r.GetOrdinal("Id")).Throws<IndexOutOfRangeException>();
@@ -310,12 +310,12 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             // Arrange
             var entity = new TestEntity();
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             var record = new Mock<IDataRecord>();
             record.Setup(r => r.GetOrdinal("Nested.Id")).Throws<IndexOutOfRangeException>();
 
-            var cache = new ConcurrentDictionary<Type, TableMetadata>
+            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>
             {
                 [typeof(TestEntity)] = metadata
             };

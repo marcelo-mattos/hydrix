@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Metadata;
+using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,7 +10,7 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Metadata
 {
     /// <summary>
-    /// Unit tests for <see cref="TableMetadata"/>.
+    /// Unit tests for <see cref="TableMaterializeMetadata"/>.
     /// </summary>
     public class TableMetadataTests
     {
@@ -91,7 +91,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_MapsScalarFieldsAndEntities()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             Assert.NotNull(metadata);
             Assert.Equal(3, metadata.Fields.Count);
@@ -116,7 +116,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_UnwrapsNullableTypes()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
             var nullableField = metadata.Fields.FirstOrDefault(f => f.Property.Name == "NullableValue");
             Assert.NotNull(nullableField);
             Assert.Equal(typeof(int), nullableField.TargetType);
@@ -128,7 +128,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_IgnoresNonDecoratedProperties()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
             Assert.DoesNotContain(metadata.Fields, f => f.Property.Name == "NotMapped");
         }
 
@@ -138,7 +138,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void SqlEntityMetadata_IsImmutableAfterConstruction()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
             Assert.IsAssignableFrom<IReadOnlyList<ColumnMap>>(metadata.Fields);
             Assert.IsAssignableFrom<IReadOnlyList<TableMap>>(metadata.Entities);
         }
@@ -149,7 +149,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_EmptyForNoAttributes()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(NoAttributesEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(NoAttributesEntity));
             Assert.Empty(metadata.Fields);
             Assert.Empty(metadata.Entities);
         }
@@ -160,7 +160,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_MapsTestChildEntityFields()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestChildEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestChildEntity));
 
             Assert.NotNull(metadata);
             Assert.Equal(2, metadata.Fields.Count);
@@ -187,7 +187,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_MapsTestEntityChildEntity()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             Assert.NotNull(metadata);
             Assert.Single(metadata.Entities);
@@ -208,7 +208,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         [Fact]
         public void BuildEntityMetadata_DoesNotMapNotMappedProperty()
         {
-            var metadata = TableMetadata.BuildEntityMetadata(typeof(TestEntity));
+            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
 
             Assert.DoesNotContain(metadata.Fields, f => f.Property.Name == "NotMapped");
             Assert.DoesNotContain(metadata.Entities, e => e.Property.Name == "NotMapped");

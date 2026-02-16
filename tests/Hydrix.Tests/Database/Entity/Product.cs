@@ -33,7 +33,7 @@ namespace Hydrix.Tests.Database.Entity
         /// <summary>
         /// Customer data
         /// </summary>
-        [ForeignTable("Customer", Schema = "[dbo]", Alias = "c", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
+        [ForeignTable("Customer", Schema = "[dbo]", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
         public Customer Customer { get; set; }
 
         /// <summary>

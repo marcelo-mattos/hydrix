@@ -1,4 +1,4 @@
-﻿using Hydrix.Orchestrator.Metadata;
+﻿using Hydrix.Orchestrator.Metadata.Materializers;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
@@ -96,7 +96,7 @@ namespace Hydrix.Orchestrator.Mapping
                 Nullable.GetUnderlyingType(property.PropertyType) != null;
 
             TargetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-            Setter = MetadataFactory.CreateSetter(property);
+            Setter = MaterializeMetadataFactory.CreateSetter(property);
 
             if (isNullable)
                 DefaultValue = null;

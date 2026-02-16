@@ -34,6 +34,121 @@ namespace Hydrix.UnitTests.Schemas
         }
 
         /// <summary>
+        /// Represents a product in the inventory system, containing details such as the product's identifier, name, and
+        /// price.
+        /// </summary>
+        /// <remarks>This class is mapped to the 'products' table in the database schema 'dbo'. It
+        /// inherits from the base class 'DatabaseEntity', which provides common properties and methods for database
+        /// entities.</remarks>
+        [Table("products", Schema = "dbo")]
+        private class Product : DatabaseEntity
+        {
+            [Key]
+            [Column("id")]
+            public int Id { get; set; }
+
+            [Column("name")]
+            public string Name { get; set; }
+
+            [Column("price")]
+            public decimal Price { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a sales order, linking a customer to their order details within the sales schema.
+        /// </summary>
+        /// <remarks>The Order class includes a foreign key relationship to the Customer entity. The Id
+        /// property serves as the primary key for the order, while CustomerId identifies the associated customer. This
+        /// class is mapped to the 'orders' table in the 'sales' schema.</remarks>
+        [Table("orders", Schema = "sales")]
+        private class Order : DatabaseEntity
+        {
+            [Key]
+            [Column("id")]
+            public int Id { get; set; }
+
+            [ForeignTable("customers", Alias = "c", Schema = "sales", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
+            public Customer Customer { get; set; }
+
+            [Column("customer_id")]
+            public int CustomerId { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a customer in the sales database, containing essential customer information.
+        /// </summary>
+        /// <remarks>This class is mapped to the 'customers' table in the 'sales' schema. It inherits from
+        /// the DatabaseEntity class, which provides common properties for database entities.</remarks>
+        [Table("customers", Schema = "sales")]
+        private class Customer : DatabaseEntity
+        {
+            [Key]
+            [Column("id")]
+            public int Id { get; set; }
+
+            [Column("name")]
+            public string Name { get; set; }
+
+            [Column]
+            public string Document { get; set; }
+
+            [NotMapped]
+            public string Phone { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a sales agent entity mapped to the 'agents' table in the 'sales' schema.
+        /// </summary>
+        /// <remarks>Inherits from DatabaseEntity, which may provide additional properties or methods
+        /// relevant to database entities.</remarks>
+        [Table("agents", Schema = "sales")]
+        class Agent : DatabaseEntity
+        {
+            [Key]
+            [Column("id")]
+            public int Id { get; set; }
+
+            [Column]
+            public string Name { get; set; }
+
+            [NotMapped]
+            public string Document { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an order in the sales database that is associated with both a customer and an agent.
+        /// </summary>
+        /// <remarks>This class facilitates tracking sales activities by linking each order to a specific
+        /// customer and agent. The properties provide access to related entities and their corresponding foreign keys,
+        /// enabling integration with relational database operations.</remarks>
+        [Table("orders", Schema = "sales")]
+        class OrderWithAgent : DatabaseEntity
+        {
+            [Key]
+            [Column("id")]
+            public int Id { get; set; }
+
+            [ForeignTable("customers", Alias = "c", Schema = "sales", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
+            public Customer Customer { get; set; }
+
+            [ForeignTable("agents", Schema = "sales", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "AgentId" })]
+            public Agent Agent { get; set; }
+
+            [Column("customer_id")]
+            [Required]
+            public int CustomerId { get; set; }
+
+            [Column("agent_id")]
+            public int AgentId { get; set; }
+
+            [NotMapped]
+            public int Sequential { get; set; }
+
+            [Column]
+            public int Hash { get; set; }
+        }
+
+        /// <summary>
         /// Provides validation rules for instances of the TestEntity class using FluentValidation.
         /// </summary>
         /// <remarks>This validator ensures that the Name property is not empty and that the Value
@@ -121,63 +236,6 @@ namespace Hydrix.UnitTests.Schemas
         }
 
         /// <summary>
-        /// Represents a product in the inventory system, containing details such as the product's identifier, name, and
-        /// price.
-        /// </summary>
-        /// <remarks>This class is mapped to the 'products' table in the database schema 'dbo'. It
-        /// inherits from the base class 'DatabaseEntity', which provides common properties and methods for database
-        /// entities.</remarks>
-        [Table("products", Schema = "dbo")]
-        private class Product : DatabaseEntity
-        {
-            [Key]
-            [Column("id")]
-            public int Id { get; set; }
-
-            [Column("name")]
-            public string Name { get; set; }
-
-            [Column("price")]
-            public decimal Price { get; set; }
-        }
-
-        /// <summary>
-        /// Represents a sales order, linking a customer to their order details within the sales schema.
-        /// </summary>
-        /// <remarks>The Order class includes a foreign key relationship to the Customer entity. The Id
-        /// property serves as the primary key for the order, while CustomerId identifies the associated customer. This
-        /// class is mapped to the 'orders' table in the 'sales' schema.</remarks>
-        [Table("orders", Schema = "sales")]
-        private class Order : DatabaseEntity
-        {
-            [Key]
-            [Column("id")]
-            public int Id { get; set; }
-
-            [ForeignTable("customers", Alias = "c", Schema = "sales", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
-            public Customer Customer { get; set; }
-
-            [Column("customer_id")]
-            public int CustomerId { get; set; }
-        }
-
-        /// <summary>
-        /// Represents a customer in the sales database, containing essential customer information.
-        /// </summary>
-        /// <remarks>This class is mapped to the 'customers' table in the 'sales' schema. It inherits from
-        /// the DatabaseEntity class, which provides common properties for database entities.</remarks>
-        [Table("customers", Schema = "sales")]
-        private class Customer : DatabaseEntity
-        {
-            [Key]
-            [Column("id")]
-            public int Id { get; set; }
-
-            [Column("name")]
-            public string Name { get; set; }
-        }
-
-        /// <summary>
         /// Verifies that the BuildQuery method generates a basic SQL SELECT statement for the Product entity without
         /// including any JOIN clauses.
         /// </summary>
@@ -191,10 +249,10 @@ namespace Hydrix.UnitTests.Schemas
             var sql = entity.BuildQuery();
 
             Assert.Contains("SELECT", sql);
-            Assert.Contains("FROM dbo.products t0", sql);
-            Assert.Contains("t0.id", sql);
-            Assert.Contains("t0.name", sql);
-            Assert.Contains("t0.price", sql);
+            Assert.Contains("FROM dbo.products p", sql);
+            Assert.Contains("p.id", sql);
+            Assert.Contains("p.name", sql);
+            Assert.Contains("p.price", sql);
             Assert.DoesNotContain("JOIN", sql);
         }
 
@@ -255,49 +313,10 @@ namespace Hydrix.UnitTests.Schemas
             var sql = entity.BuildQuery();
 
             Assert.Contains("SELECT", sql);
-            Assert.Contains("FROM sales.orders t0", sql);
-            Assert.Contains("LEFT JOIN sales.customers c ON t0.CustomerId = c.Id", sql);
+            Assert.Contains("FROM sales.orders o", sql);
+            Assert.Contains("LEFT JOIN sales.customers c ON o.CustomerId = c.Id", sql);
             Assert.Contains("c.id AS \"customers.id\"", sql);
             Assert.Contains("c.name AS \"customers.name\"", sql);
-        }
-
-        /// <summary>
-        /// Represents a sales agent entity mapped to the 'agents' table in the 'sales' schema.
-        /// </summary>
-        /// <remarks>Inherits from DatabaseEntity, which may provide additional properties or methods
-        /// relevant to database entities.</remarks>
-        [Table("agents", Schema = "sales")]
-        class Agent : DatabaseEntity
-        {
-            [Key]
-            [Column("id")]
-            public int Id { get; set; }
-        }
-
-        /// <summary>
-        /// Represents an order in the sales database that is associated with both a customer and an agent.
-        /// </summary>
-        /// <remarks>This class facilitates tracking sales activities by linking each order to a specific
-        /// customer and agent. The properties provide access to related entities and their corresponding foreign keys,
-        /// enabling integration with relational database operations.</remarks>
-        [Table("orders", Schema = "sales")]
-        class OrderWithAgent : DatabaseEntity
-        {
-            [Key]
-            [Column("id")]
-            public int Id { get; set; }
-
-            [ForeignTable("customers", Alias = "c", Schema = "sales", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
-            public Customer Customer { get; set; }
-
-            [ForeignTable("agents", Alias = "a", Schema = "sales", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "AgentId" })]
-            public Agent Agent { get; set; }
-
-            [Column("customer_id")]
-            public int CustomerId { get; set; }
-
-            [Column("agent_id")]
-            public int AgentId { get; set; }
         }
 
         /// <summary>
@@ -314,8 +333,8 @@ namespace Hydrix.UnitTests.Schemas
             var entity = new OrderWithAgent();
             var sql = entity.BuildQuery();
 
-            Assert.Contains("LEFT JOIN sales.customers c ON t0.CustomerId = c.Id", sql);
-            Assert.Contains("LEFT JOIN sales.agents a ON t0.AgentId = a.Id", sql);
+            Assert.Contains("INNER JOIN sales.customers c ON owa.CustomerId = c.Id", sql);
+            Assert.Contains("LEFT JOIN sales.agents a ON owa.AgentId = a.Id", sql);
             Assert.Contains("c.id AS \"customers.id\"", sql);
             Assert.Contains("a.id AS \"agents.id\"", sql);
         }

@@ -2,14 +2,14 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 
-namespace Hydrix.Orchestrator.Metadata
+namespace Hydrix.Orchestrator.Metadata.Materializers
 {
     /// <summary>
     /// Represents metadata for a scalar mapped column.
     /// Holds all information required to efficiently assign
     /// a value from a data record to an entity property.
     /// </summary>
-    internal sealed class ColumnMetadata
+    internal sealed class ColumnMaterializeMetadata
     {
         /// <summary>
         /// Gets the reflected property associated with this field.
@@ -34,9 +34,9 @@ namespace Hydrix.Orchestrator.Metadata
         public ColumnAttribute Attribute { get; }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="ColumnMetadata"/>.
+        /// Initializes a new instance of <see cref="ColumnMaterializeMetadata"/>.
         /// </summary>
-        public ColumnMetadata(
+        public ColumnMaterializeMetadata(
             PropertyInfo property,
             Action<object, object> setter,
             Type targetType,

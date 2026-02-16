@@ -1,5 +1,5 @@
 ﻿using Hydrix.Orchestrator.Materializers;
-using Hydrix.Orchestrator.Metadata;
+using Hydrix.Orchestrator.Metadata.Materializers;
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -127,7 +127,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var cacheField = typeof(SqlMaterializer).GetField("EntityMetadataCache", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(cacheField);
-            var cache = cacheField.GetValue(null) as ConcurrentDictionary<Type, TableMetadata>;
+            var cache = cacheField.GetValue(null) as ConcurrentDictionary<Type, TableMaterializeMetadata>;
             Assert.NotNull(cache);
             cache.Clear();
             Assert.Empty(cache);

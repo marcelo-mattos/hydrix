@@ -1,4 +1,4 @@
-﻿using Hydrix.Orchestrator.Metadata;
+﻿using Hydrix.Orchestrator.Metadata.Materializers;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
@@ -6,7 +6,7 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Metadata
 {
     /// <summary>
-    /// Unit tests for the <see cref="ColumnMetadata"/> class.
+    /// Unit tests for the <see cref="ColumnMaterializeMetadata"/> class.
     /// </summary>
     public class ColumnMetadataTests
     {
@@ -34,7 +34,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
             var attribute = new ColumnAttribute("Id");
 
             // Act
-            var metadata = new ColumnMetadata(property, setter, targetType, attribute);
+            var metadata = new ColumnMaterializeMetadata(property, setter, targetType, attribute);
 
             // Assert
             Assert.Equal(property, metadata.Property);
@@ -54,7 +54,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
             var setter = new Action<object, object>((obj, value) => property.SetValue(obj, value));
             var targetType = typeof(int);
             var attribute = new ColumnAttribute("Id");
-            var metadata = new ColumnMetadata(property, setter, targetType, attribute);
+            var metadata = new ColumnMaterializeMetadata(property, setter, targetType, attribute);
             var entity = new TestEntity();
 
             // Act
@@ -71,7 +71,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata
         public void Constructor_Allows_Null_Arguments()
         {
             // Act
-            var metadata = new ColumnMetadata(null, null, null, null);
+            var metadata = new ColumnMaterializeMetadata(null, null, null, null);
 
             // Assert
             Assert.Null(metadata.Property);
