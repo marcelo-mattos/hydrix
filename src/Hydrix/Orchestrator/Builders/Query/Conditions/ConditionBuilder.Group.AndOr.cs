@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace Hydrix.Orchestrator.Builders
+namespace Hydrix.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
     /// Provides a fluent SQL builder responsible for composing the WHERE clause
@@ -12,109 +12,109 @@ namespace Hydrix.Orchestrator.Builders
     ///
     /// If no conditions are added, the Build method returns an empty string.
     /// </summary>
-    public sealed partial class SqlWhereBuilder
+    public sealed partial class ConditionBuilder
     {
         /// <summary>
-        /// Adds a grouped OR expression to the WHERE clause, prefixed with AND.
+        /// Adds a grouped AND expression to the WHERE clause, prefixed with OR.
         /// Each condition is treated as a complete SQL expression.
         ///
         /// Example:
-        /// AND (condition1 OR condition2 OR condition3)
+        /// OR (condition1 AND condition2 AND condition3)
         /// </summary>
         /// <param name="conditions">SQL expressions to be combined using OR.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndOrGroup(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrAndGroup(
             params string[] conditions)
-            => AddAndOrGroup(
+            => AddOrAndGroup(
                 false,
                 conditions);
 
         /// <summary>
-        /// Adds a grouped OR expression to the WHERE clause, prefixed with AND NOT.
+        /// Adds a grouped AND expression to the WHERE clause, prefixed with NOT OR.
         /// Each condition is treated as a complete SQL expression.
         ///
         /// Example:
-        /// AND (condition1 OR condition2 OR condition3)
+        /// NOT OR (condition1 AND condition2 AND condition3)
         /// </summary>
         /// <param name="conditions">SQL expressions to be combined using OR.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndOrNotGroup(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrAndNotGroup(
             params string[] conditions)
-            => AddAndOrGroup(
+            => AddOrAndGroup(
                 true,
                 conditions);
 
         /// <summary>
-        /// Conditionally adds a grouped OR expression to the WHERE clause, prefixed with AND.
+        /// Conditionally adds a grouped AND expression to the WHERE clause, prefixed with OR.
         /// Each condition is treated as a complete SQL expression.
         ///
         /// Example:
-        /// AND (condition1 OR condition2 OR condition3)
+        /// OR (condition1 AND condition2 AND condition3)
         /// </summary>
         /// <param name="predicate">Determines whether the condition should be added.</param>
         /// <param name="conditions">SQL expressions to be combined using OR.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndOrGroupIf(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrAndGroupIf(
             bool predicate,
             params string[] conditions)
         {
             if (predicate)
-                AndOrGroup(conditions);
+                OrAndGroup(conditions);
 
             return this;
         }
 
         /// <summary>
-        /// Conditionally adds a grouped OR expression to the WHERE clause, prefixed with AND.
+        /// Conditionally adds a grouped AND expression to the WHERE clause, prefixed with OR.
         /// Each condition is treated as a complete SQL expression.
         ///
         /// Example:
-        /// AND (condition1 OR condition2 OR condition3)
+        /// OR (condition1 AND condition2 AND condition3)
         /// </summary>
         /// <param name="predicates">Determines whether the condition should be added.</param>
         /// <param name="conditions">SQL expressions to be combined using OR.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndOrGroupIf(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrAndGroupIf(
             bool[] predicates,
             params string[] conditions)
-            => AndOrGroupIf(
+            => OrAndGroupIf(
                 predicates?.All(p => p) ?? false,
                 conditions);
 
         /// <summary>
-        /// Conditionally adds a grouped OR expression to the WHERE clause, prefixed with AND NOT.
+        /// Conditionally adds a grouped AND expression to the WHERE clause, prefixed with NOT OR.
         /// Each condition is treated as a complete SQL expression.
         ///
         /// Example:
-        /// AND (condition1 OR condition2 OR condition3)
+        /// NOT OR (condition1 AND condition2 AND condition3)
         /// </summary>
         /// <param name="predicate">Determines whether the condition should be added.</param>
         /// <param name="conditions">SQL expressions to be combined using OR.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndOrNotGroupIf(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrAndNotGroupIf(
             bool predicate,
             params string[] conditions)
         {
             if (predicate)
-                AndOrNotGroup(conditions);
+                OrAndNotGroup(conditions);
 
             return this;
         }
 
         /// <summary>
-        /// Conditionally adds a grouped OR expression to the WHERE clause, prefixed with AND NOT.
+        /// Conditionally adds a grouped AND expression to the WHERE clause, prefixed with NOT OR.
         /// Each condition is treated as a complete SQL expression.
         ///
         /// Example:
-        /// AND (condition1 OR condition2 OR condition3)
+        /// NOT OR (condition1 AND condition2 AND condition3)
         /// </summary>
         /// <param name="predicates">Determines whether the condition should be added.</param>
         /// <param name="conditions">SQL expressions to be combined using OR.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndOrNotGroupIf(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrAndNotGroupIf(
             bool[] predicates,
             params string[] conditions)
-            => AndOrNotGroupIf(
+            => OrAndNotGroupIf(
                 predicates?.All(p => p) ?? false,
                 conditions);
     }

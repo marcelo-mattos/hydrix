@@ -38,8 +38,22 @@ namespace Hydrix.UnitTests.Orchestrator.Adapters
             table.Columns.Add("DecimalCol", typeof(decimal));
             table.Columns.Add("DateTimeCol", typeof(DateTime));
             table.Columns.Add("NullCol", typeof(object));
+            table.Columns.Add("GuidStringCol", typeof(string));
             table.Rows.Add(
-                true, (byte)42, 'A', Guid.NewGuid(), (short)7, 123, 456L, 1.23f, 4.56, "test", 7.89m, DateTime.Today, DBNull.Value
+                true,
+                (byte)42,
+                'A',
+                Guid.NewGuid(),
+                (short)7,
+                123,
+                456L,
+                1.23f,
+                4.56,
+                "test",
+                7.89m,
+                DateTime.Today,
+                DBNull.Value,
+                "77a1d84c-e9d1-465f-b002-76ae261859a0"
             );
             return table;
         }
@@ -375,6 +389,21 @@ namespace Hydrix.UnitTests.Orchestrator.Adapters
             var table = CreateTestTable();
             var adapter = new DataRowDataRecordAdapter(table.Rows[0]);
             Assert.True(adapter.IsDBNull(12));
+        }
+
+        /// <summary>
+        /// Verifies that the GetGuid method correctly parses a string value from a data row and returns it as a Guid.
+        /// </summary>
+        /// <remarks>This test ensures that when a string representation of a Guid is stored in a data
+        /// row, the GetGuid method retrieves and parses it accurately. It validates the method's ability to handle
+        /// string-to-Guid conversion for the specified column index.</remarks>
+        [Fact]
+        public void GetGuid_ParsesStringValue()
+        {
+            var table = CreateTestTable();
+            var guid = Guid.Parse(table.Rows[0][13].ToString());
+            var adapter = new DataRowDataRecordAdapter(table.Rows[0]);
+            Assert.Equal(guid, adapter.GetGuid(13));
         }
 
         /// <summary>

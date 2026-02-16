@@ -1,4 +1,5 @@
-﻿using Hydrix.Attributes.Parameters;
+﻿using Castle.Core.Logging;
+using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Schemas.Contract;
@@ -498,6 +499,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <summary>
         /// Creates a new instance of the SqlMaterializer class using its parameterless constructor.
         /// </summary>
+        /// <param name="timeout">The command timeout, in seconds, to use for database operations. Must be a non-negative value.</param>
+        /// <param name="parameterPrefix">The prefix to use for SQL parameters. Defaults to ":".</param>
         /// <returns>A new instance of SqlMaterializer.</returns>
         private static SqlMaterializer CreateInstance(
             int? timeout = null,
@@ -518,11 +521,39 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Creates a new instance of the SqlMaterializer class using its parameterless constructor.
+        /// </summary>
+        /// <param name="logger">The logger to use for the materializer instance. Cannot be null.</param>
+        /// <param name="timeout">The command timeout, in seconds, to use for database operations. Must be a non-negative value.</param>
+        /// <param name="parameterPrefix">The prefix to use for SQL parameters. Defaults to ":".</param>
+        /// <returns>A new instance of SqlMaterializer.</returns>
+        private static SqlMaterializer CreateInstance(
+            ILogger logger,
+            int? timeout = null,
+            string parameterPrefix = null)
+        {
+            var ctor = typeof(SqlMaterializer).GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public,
+                null,
+                new Type[] { typeof(IDbConnection), typeof(ILogger), typeof(int), typeof(string) },
+                null);
+
+            Assert.NotNull(ctor);
+            return (SqlMaterializer)ctor.Invoke(new object[] {
+                null,
+                logger,
+                timeout ?? 60,
+                parameterPrefix ?? ":"
+            });
+        }
+
+        /// <summary>
         /// Creates a new instance of the SqlMaterializer class with the specified database connection, transaction,
         /// timeout, and disposal state.
         /// </summary>
         /// <param name="dbConnection">The database connection to associate with the materializer, or null to leave uninitialized.</param>
         /// <param name="dbTransaction">The database transaction to associate with the materializer, or null if no transaction is required.</param>
+        /// <param name="logger">The logger to use for the materializer instance. Cannot be null.</param>
         /// <param name="timeout">The command timeout, in seconds, to use for database operations. Must be a non-negative value.</param>
         /// <param name="isDisposed">true if the materializer should be marked as disposed; otherwise, false.</param>
         /// <param name="isDisposing">true if the materializer should be marked as disposing; otherwise, false.</param>
@@ -531,6 +562,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         private SqlMaterializer CreateMaterializer(
             IDbConnection dbConnection = null,
             IDbTransaction dbTransaction = null,
+            ILogger logger = null,
             int timeout = 30,
             bool isDisposed = false,
             bool isDisposing = false)
@@ -544,6 +576,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
                 .SetValue(mat, dbTransaction);
             typeof(SqlMaterializer).GetField("_timeout", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(mat, timeout);
+            typeof(SqlMaterializer).GetField("_logger", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(mat, logger);
             typeof(SqlMaterializer).GetField("_lockConnection", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(mat, new object());
             typeof(SqlMaterializer).GetField("_lockTransaction", BindingFlags.Instance | BindingFlags.NonPublic)

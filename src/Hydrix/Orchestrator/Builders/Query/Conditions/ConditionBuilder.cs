@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Hydrix.Orchestrator.Builders
+namespace Hydrix.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
     /// Provides a fluent SQL builder responsible for composing the WHERE clause
@@ -12,7 +12,7 @@ namespace Hydrix.Orchestrator.Builders
     ///
     /// If no conditions are added, the Build method returns an empty string.
     /// </summary>
-    public sealed partial class SqlWhereBuilder
+    public sealed partial class ConditionBuilder
     {
         /// <summary>
         /// Tokens that make up the WHERE clause.
@@ -22,21 +22,21 @@ namespace Hydrix.Orchestrator.Builders
         /// <summary>
         /// Constructor is private to enforce the use of the Create method.
         /// </summary>
-        private SqlWhereBuilder()
+        private ConditionBuilder()
         { }
 
         /// <summary>
-        /// Creates a new instance of <see cref="SqlWhereBuilder"/>.
+        /// Creates a new instance of <see cref="ConditionBuilder"/>.
         /// </summary>
-        /// <returns>A new <see cref="SqlWhereBuilder"/> instance.</returns>
-        public static SqlWhereBuilder Create()
-            => new SqlWhereBuilder();
+        /// <returns>A new <see cref="ConditionBuilder"/> instance.</returns>
+        public static ConditionBuilder Create()
+            => new ConditionBuilder();
 
         /// <summary>
         /// Clears all SQL conditions from the builder.
         /// </summary>
-        /// <returns>A new <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder Clear()
+        /// <returns>A new <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder Clear()
         {
             _tokens.Clear();
             return this;

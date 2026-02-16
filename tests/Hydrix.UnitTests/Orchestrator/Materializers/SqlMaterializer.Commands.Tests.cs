@@ -153,6 +153,27 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that creating a command does not throw an exception when a null logger is provided.
+        /// </summary>
+        /// <remarks>This test ensures that the command creation logic is robust against a null logger,
+        /// allowing scenarios where logging is optional or not required.</remarks>
+        [Fact]
+        public void CreateCommandCore_DoesNotThrow_WhenLoggerIsNull()
+        {
+            var mat = new SqlMaterializerTestable
+            {
+                DbConnectionSet = new FakeDbConnection(),
+                EnableSqlLogging = true
+            };
+            var cmd = mat.CallCreateCommandCore(
+                CommandType.Text,
+                "SELECT 1",
+                null,
+                null);
+            Assert.NotNull(cmd);
+        }
+
+        /// <summary>
         /// Verifies that the CreateCommand method correctly binds parameters when provided with an object containing
         /// parameter values.
         /// </summary>

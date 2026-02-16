@@ -1,4 +1,5 @@
 ﻿using Hydrix.Orchestrator.Mapping;
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
 
@@ -27,6 +28,87 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             /// </summary>
             [Column]
             public int Id { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that is identified by a name.
+        /// </summary>
+        private class RefEntity
+        {
+            /// <summary>
+            /// Gets or sets the name of the entity.
+            /// </summary>
+            [Column]
+            public string Name { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that encapsulates a Boolean flag value.
+        /// </summary>
+        private class BoolEntity
+        {
+            /// <summary>
+            /// Gets or sets a value indicating whether the flag is active.
+            /// </summary>
+            /// <remarks>This property can be used to control conditional logic in the application
+            /// based on its value.</remarks>
+            [Column]
+            public bool Flag { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that contains date-related information.
+        /// </summary>
+        /// <remarks>This class is used to encapsulate date properties for various entities in the
+        /// application.</remarks>
+        private class DateEntity
+        {
+            /// <summary>
+            /// Gets or sets the date and time when the entity was created.
+            /// </summary>
+            /// <remarks>This property is typically set automatically when the entity is created and
+            /// should not be modified afterward.</remarks>
+            [Column]
+            public DateTime Created { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the status of an entity, indicating whether it is active.
+        /// </summary>
+        /// <remarks>Use this enumeration to specify or check whether an entity is currently active. The
+        /// value 'None' indicates that the entity is not active, while 'Active' indicates that it is active.</remarks>
+        private enum Status
+        {
+            /// <summary>
+            /// Represents the absence of a value or a default state.
+            /// </summary>
+            None,
+
+            /// <summary>
+            /// Gets or sets a value indicating whether the object is currently active.
+            /// </summary>
+            /// <remarks>This property is typically used to determine the state of the object in
+            /// relation to its operational context. An active state may imply that the object is ready to perform its
+            /// intended functions.</remarks>
+            Active
+        }
+
+        /// <summary>
+        /// Represents an entity that maintains a state using a predefined set of status values.
+        /// </summary>
+        /// <remarks>Use this class to encapsulate and manage the current status of an entity within the
+        /// application. The State property provides access to the entity's status, which may influence its behavior or
+        /// processing logic.</remarks>
+        private class EnumEntity
+        {
+            /// <summary>
+            /// Gets or sets the current status of the entity.
+            /// </summary>
+            /// <remarks>The State property reflects the operational status of the entity, which can
+            /// influence its behavior in the application. Ensure to validate the status before performing operations
+            /// that depend on it.</remarks>
+            [Column]
+            public Status State { get; set; }
         }
 
         /// <summary>
@@ -76,6 +158,91 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             // Assert
             Assert.Equal(42, entity.Id);
+        }
+
+        /// <summary>
+        /// Verifies that the ColumnMap constructor sets the DefaultValue property to null when mapping a reference type
+        /// property.
+        /// </summary>
+        /// <remarks>This test ensures that, for reference type properties, the ColumnMap does not assign
+        /// a default value unless explicitly specified. This behavior is important to prevent unintended default
+        /// assignments in entity mapping scenarios.</remarks>
+        [Fact]
+        public void Constructor_DefaultValue_IsNull_ForReferenceType()
+        {
+            // Arrange
+            var property = typeof(RefEntity).GetProperty(nameof(RefEntity.Name));
+            var attribute = new ColumnAttribute("name");
+            var targetType = typeof(string);
+
+            // Act
+            var map = new ColumnMap(property, attribute, targetType);
+
+            // Assert
+            Assert.Null(map.DefaultValue);
+        }
+
+        /// <summary>
+        /// Verifies that the ColumnMap constructor sets the default value of a value type property to its type's
+        /// default value.
+        /// </summary>
+        /// <remarks>This test ensures that when a ColumnMap is created for a boolean property, the
+        /// DefaultValue property is initialized to false, which is the default for the Boolean type in .NET.</remarks>
+        [Fact]
+        public void Constructor_DefaultValue_IsDefault_ForValueType()
+        {
+            // Arrange
+            var property = typeof(BoolEntity).GetProperty(nameof(BoolEntity.Flag));
+            var attribute = new ColumnAttribute("flag");
+            var targetType = typeof(bool);
+
+            // Act
+            var map = new ColumnMap(property, attribute, targetType);
+
+            // Assert
+            Assert.Equal(false, map.DefaultValue); // default(bool) == false
+        }
+
+        /// <summary>
+        /// Verifies that the ColumnMap constructor sets the default value to the default DateTime value when mapping a
+        /// DateTime property.
+        /// </summary>
+        /// <remarks>This test ensures that when a ColumnMap is created for a property of type DateTime,
+        /// the DefaultValue property is initialized to DateTime.MinValue (01/01/0001 00:00:00). This behavior is
+        /// important for scenarios where the absence of a value should be represented by the default
+        /// DateTime.</remarks>
+        [Fact]
+        public void Constructor_DefaultValue_IsDefault_ForDateTimeValueType()
+        {
+            // Arrange
+            var property = typeof(DateEntity).GetProperty(nameof(DateEntity.Created));
+            var attribute = new ColumnAttribute("created");
+            var targetType = typeof(DateTime);
+
+            // Act
+            var map = new ColumnMap(property, attribute, targetType);
+
+            // Assert
+            Assert.Equal(default(DateTime), map.DefaultValue); // default(DateTime) == 01/01/0001 00:00:00
+        }
+
+        /// <summary>
+        /// Verifies that the ColumnMap constructor sets the default value of an enum property to the default value of
+        /// the enum type.
+        /// </summary>
+        /// <remarks>This test ensures that when a ColumnMap is created for an enum property, the
+        /// DefaultValue property is initialized to the default value of the enum, which is typically the first defined
+        /// value (e.g., Status.None).</remarks>
+        [Fact]
+        public void Constructor_DefaultValue_IsDefault_ForEnumValueType()
+        {
+            var property = typeof(EnumEntity).GetProperty(nameof(EnumEntity.State));
+            var attribute = new ColumnAttribute("state");
+            var targetType = typeof(Status);
+
+            var map = new ColumnMap(property, attribute, targetType);
+
+            Assert.Equal(Status.None, map.DefaultValue);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Hydrix.Orchestrator.Builders;
+﻿using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
@@ -152,7 +152,7 @@ namespace Hydrix.Tests
             DateTime? endDate = new DateTime(1999, 12, 31);
             int[] levels = new int[] { 3, 5, 7 };
 
-            var builder = SqlWhereBuilder.Create();
+            var builder = ConditionBuilder.Create();
             var where = builder
                 .AndIf(isActive.HasValue, "c.IsActive = @IsActive")
                 .AndIf(startDate.HasValue, "c.BirthDate >= @StartDate")

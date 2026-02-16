@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Builders;
+using Hydrix.Orchestrator.Builders.Query;
+using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Metadata.Builders;
 using Hydrix.Schemas.Contract;
 using System;
@@ -10,7 +11,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Hydrix.Schemas
 {
@@ -142,24 +142,6 @@ namespace Hydrix.Schemas
         }
 
         /// <summary>
-        /// Constructs the full table name by combining the specified schema and table name, separated by a period.
-        /// </summary>
-        /// <param name="schema">The schema name to prepend to the table name. If null or consists only of white-space characters, the schema
-        /// is omitted.</param>
-        /// <param name="table">The name of the table to which the schema is applied.</param>
-        /// <returns>A string representing the full table name in the format 'schema.table'. If the schema is null or white
-        /// space, returns just the table name.</returns>
-        private static string GetFullTableName(
-            string schema,
-            string table)
-        {
-            if (string.IsNullOrWhiteSpace(schema))
-                return table;
-
-            return $"{schema}.{table}";
-        }
-
-        /// <summary>
         /// Resolves the schema name, primary key columns, and foreign key columns for a specified navigation property
         /// using the provided foreign table attributes.
         /// </summary>
@@ -180,6 +162,11 @@ namespace Hydrix.Schemas
             PropertyInfo navigationProperty,
             ForeignTableAttribute attr)
         {
+            if (navigationProperty is null)
+                throw new ArgumentNullException(
+                    nameof(navigationProperty),
+                    "Navigation property cannot be null.");
+
             var foreignType = navigationProperty.PropertyType;
 
             var mainTable = mainType.GetCustomAttribute<TableAttribute>();
@@ -215,34 +202,6 @@ namespace Hydrix.Schemas
         }
 
         /// <summary>
-        /// Generates an alias from the specified name by extracting its uppercase letters and converting them to
-        /// lowercase.
-        /// </summary>
-        /// <remarks>If the input name does not contain any uppercase letters, the method returns the
-        /// lowercase version of the first character of the name. This method is useful for generating concise,
-        /// user-friendly aliases from names that may use mixed casing.</remarks>
-        /// <param name="name">The name from which to build the alias. This value must not be null or empty.</param>
-        /// <returns>A string containing the alias derived from the uppercase letters of the name, converted to lowercase. If the
-        /// name contains no uppercase letters, returns the first character of the name in lowercase.</returns>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="name"/> is null or empty.</exception>
-        private static string BuildAliasFromName(
-            string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Name cannot be null or empty.");
-
-            var capitals = name
-                .Where(char.IsUpper)
-                .ToArray();
-
-            if (capitals.Length == 0)
-                return name.Substring(0, 1).ToLowerInvariant();
-
-            return new string(capitals)
-                .ToLowerInvariant();
-        }
-
-        /// <summary>
         /// Returns a valid alias, using the specified alias if provided, or generating a default alias from the given
         /// name if the alias is null or empty.
         /// </summary>
@@ -257,7 +216,7 @@ namespace Hydrix.Schemas
             string alias,
             string name)
             => string.IsNullOrEmpty(alias)
-                ? BuildAliasFromName(name)
+                ? AliasGenerator.FromName(name, _aliases)
                 : alias;
 
         /// <summary>
@@ -305,7 +264,7 @@ namespace Hydrix.Schemas
                     var isRequiredJoin = foreignKeys.All(fk =>
                     {
                         var fkProp = type.GetProperty(fk);
-                        return fkProp?.GetCustomAttribute<RequiredAttribute>() != null;
+                        return fkProp.GetCustomAttribute<RequiredAttribute>() != null;
                     });
 
                     var joinIndex = 0;
@@ -357,75 +316,21 @@ namespace Hydrix.Schemas
         /// and ForeignTableAttribute, if present. This method is intended for use with entity types that follow the
         /// expected attribute-based schema conventions.</remarks>
         /// <param name="alias">An optional string to use as a table alias for the main entity in the generated SQL query. If not provided, no alias is used.</param>
-        /// <param name="where">A SqlWhereBuilder instance that specifies the conditions to apply to the WHERE clause of the generated SQL
+        /// <param name="where">A ConditionBuilder instance that specifies the conditions to apply to the WHERE clause of the generated SQL
         /// query.</param>
         /// <returns>A string containing the complete SQL SELECT query, including any specified WHERE conditions and left joins
         /// for foreign tables.</returns>
         public string BuildQuery(
-            SqlWhereBuilder where = null,
+            ConditionBuilder where = null,
             string alias = "")
         {
             var metadata = GetMetadata(
                 GetType(),
                 alias);
 
-            var mainTableName = GetFullTableName(
-                metadata.Schema,
-                metadata.Table);
-
-            var columns = new List<string>();
-
-            columns.AddRange(
-                metadata.Columns.Select(c =>
-                    $"\t{metadata.Alias}.{c.ColumnName}"));
-
-            var joinSql = new StringBuilder();
-            foreach (var join in metadata.Joins)
-            {
-                columns.AddRange(
-                    join.NavigationProperty.PropertyType
-                        .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                        .Where(p =>
-                            p.GetCustomAttribute<NotMappedAttribute>() == null &&
-                            p.GetCustomAttribute<ForeignTableAttribute>() == null)
-                        .Select(p =>
-                        {
-                            var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
-                            var columnName = columnAttr?.Name ?? p.Name;
-
-                            return $"\t{join.Alias}.{columnName} AS \"{join.Table}.{columnName}\"";
-                        }));
-
-                joinSql.AppendLine();
-                joinSql.Append(join.IsRequiredJoin ? "INNER JOIN " : "LEFT JOIN ");
-                joinSql.Append(GetFullTableName(join.Schema, join.Table));
-                joinSql.Append($" {join.Alias}");
-                joinSql.Append(" ON ");
-
-                var conditions = new List<string>();
-                for (int i = 0; i < join.PrimaryKeys.Length; i++)
-                    conditions.Add($"{metadata.Alias}.{join.ForeignKeys[i]} = {join.Alias}.{join.PrimaryKeys[i]}");
-
-                joinSql.Append(string.Join(" AND ", conditions));
-            }
-
-            var finalSql = new StringBuilder();
-
-            finalSql.AppendLine("SELECT");
-            finalSql.AppendLine(string.Join($",{Environment.NewLine}", columns));
-            finalSql.Append("FROM ");
-            finalSql.Append(mainTableName);
-            finalSql.Append($" {metadata.Alias}");
-            finalSql.Append(joinSql);
-
-            var whereConditions = where?.Build();
-            if (!string.IsNullOrWhiteSpace(whereConditions))
-            {
-                finalSql.AppendLine();
-                finalSql.Append(whereConditions);
-            }
-
-            return finalSql.ToString();
+            return QueryBuilder.Build(
+                metadata,
+                where);
         }
     }
 }

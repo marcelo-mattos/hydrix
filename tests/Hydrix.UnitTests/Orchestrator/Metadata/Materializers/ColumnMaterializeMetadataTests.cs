@@ -3,12 +3,12 @@ using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
 
-namespace Hydrix.UnitTests.Orchestrator.Metadata
+namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
 {
     /// <summary>
     /// Unit tests for the <see cref="ColumnMaterializeMetadata"/> class.
     /// </summary>
-    public class ColumnMetadataTests
+    public class ColumnMaterializeMetadataTests
     {
         /// <summary>
         /// Simple test entity for property reflection.

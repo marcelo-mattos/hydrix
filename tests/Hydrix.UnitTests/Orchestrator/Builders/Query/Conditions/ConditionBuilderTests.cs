@@ -1,36 +1,36 @@
-﻿using Hydrix.Orchestrator.Builders;
+﻿using Hydrix.Orchestrator.Builders.Query.Conditions;
 using System;
 using System.Reflection;
 using Xunit;
 
-namespace Hydrix.UnitTests.Orchestrator.Builders
+namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
-    /// Contains unit tests for the SqlWhereBuilder class, verifying its construction, clearing, and SQL clause building behavior.
+    /// Contains unit tests for the ConditionBuilder class, verifying its construction, clearing, and SQL clause building behavior.
     /// </summary>
-    public partial class SqlWhereBuilderTests
+    public partial class ConditionBuilderTests
     {
         /// <summary>
-        /// Builds a SQL WHERE clause by applying the specified configuration action to a SqlWhereBuilder instance.
+        /// Builds a SQL WHERE clause by applying the specified configuration action to a ConditionBuilder instance.
         /// </summary>
-        /// <param name="builderAction">An action that configures the SqlWhereBuilder to define the conditions for the WHERE clause. Cannot be null.</param>
+        /// <param name="builderAction">An action that configures the ConditionBuilder to define the conditions for the WHERE clause. Cannot be null.</param>
         /// <returns>A string containing the generated SQL WHERE clause based on the configured conditions.</returns>
-        private static string BuildWhere(Action<SqlWhereBuilder> builderAction)
+        private static string BuildWhere(Action<ConditionBuilder> builderAction)
         {
-            var builder = SqlWhereBuilder.Create();
+            var builder = ConditionBuilder.Create();
             builderAction(builder);
             return builder.Build();
         }
 
         /// <summary>
-        /// Verifies that Create returns a new instance of SqlWhereBuilder.
+        /// Verifies that Create returns a new instance of ConditionBuilder.
         /// </summary>
         [Fact]
         public void Create_ReturnsNewInstance()
         {
-            var builder = SqlWhereBuilder.Create();
+            var builder = ConditionBuilder.Create();
             Assert.NotNull(builder);
-            Assert.IsType<SqlWhereBuilder>(builder);
+            Assert.IsType<ConditionBuilder>(builder);
         }
 
         /// <summary>
@@ -39,9 +39,9 @@ namespace Hydrix.UnitTests.Orchestrator.Builders
         [Fact]
         public void Clear_EmptiesBuilder_Chainable()
         {
-            var builder = SqlWhereBuilder.Create();
+            var builder = ConditionBuilder.Create();
             // Add a token using reflection for test purposes
-            var tokensField = typeof(SqlWhereBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tokensField = typeof(ConditionBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
             var tokens = (System.Collections.IList)tokensField.GetValue(builder);
             tokens.Add("Id = 1");
             Assert.Single(tokens);
@@ -57,7 +57,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders
         [Fact]
         public void Build_NoConditions_ReturnsEmptyString()
         {
-            var builder = SqlWhereBuilder.Create();
+            var builder = ConditionBuilder.Create();
             Assert.Equal(string.Empty, builder.Build());
         }
 
@@ -67,14 +67,14 @@ namespace Hydrix.UnitTests.Orchestrator.Builders
         [Fact]
         public void Build_WithConditions_ReturnsWhereClause()
         {
-            var builder = SqlWhereBuilder.Create();
+            var builder = ConditionBuilder.Create();
             // Add a token using reflection for test purposes
-            var tokensField = typeof(SqlWhereBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tokensField = typeof(ConditionBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
             var tokens = (System.Collections.IList)tokensField.GetValue(builder);
             tokens.Add("Id = 1");
 
             // Use reflection to invoke BuildInternal
-            var buildInternalMethod = typeof(SqlWhereBuilder).GetMethod("BuildInternal", BindingFlags.NonPublic | BindingFlags.Instance);
+            var buildInternalMethod = typeof(ConditionBuilder).GetMethod("BuildInternal", BindingFlags.NonPublic | BindingFlags.Instance);
             if (buildInternalMethod == null)
                 throw new InvalidOperationException("BuildInternal method not found.");
 

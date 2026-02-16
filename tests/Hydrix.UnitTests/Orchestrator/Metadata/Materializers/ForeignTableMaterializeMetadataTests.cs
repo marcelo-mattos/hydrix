@@ -3,12 +3,12 @@ using Hydrix.Orchestrator.Metadata.Materializers;
 using System;
 using Xunit;
 
-namespace Hydrix.UnitTests.Orchestrator.Metadata
+namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
 {
     /// <summary>
     /// Unit tests for the <see cref="ForeignTableMaterializeMetadata"/> class.
     /// </summary>
-    public class ForeignTableMetadataTests
+    public class ForeignTableMaterializeMetadataTests
     {
         /// <summary>
         /// Dummy parent class for testing nested entity property.

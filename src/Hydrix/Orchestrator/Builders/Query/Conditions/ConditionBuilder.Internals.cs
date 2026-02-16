@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Hydrix.Orchestrator.Builders
+namespace Hydrix.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
     /// Provides a fluent SQL builder responsible for composing the WHERE clause
@@ -13,7 +13,7 @@ namespace Hydrix.Orchestrator.Builders
     ///
     /// If no conditions are added, the Build method returns an empty string.
     /// </summary>
-    public sealed partial class SqlWhereBuilder
+    public sealed partial class ConditionBuilder
     {
         /// <summary>
         /// Builds the internal SQL expression without the WHERE keyword.
@@ -35,8 +35,8 @@ namespace Hydrix.Orchestrator.Builders
         /// Indicates whether the condition should be prefixed with OR.
         /// When false, AND is used.
         /// </param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        private SqlWhereBuilder Add(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        private ConditionBuilder Add(
             string condition,
             bool isNot = false,
             bool isOr = false)
@@ -80,9 +80,9 @@ namespace Hydrix.Orchestrator.Builders
         /// A collection of SQL expressions to be combined using the AND/OR operator.
         /// </param>
         /// <returns>
-        /// The current <see cref="SqlWhereBuilder"/> instance.
+        /// The current <see cref="ConditionBuilder"/> instance.
         /// </returns>
-        private SqlWhereBuilder AddGroup(
+        private ConditionBuilder AddGroup(
             bool isNot,
             bool isAndOr,
             params string[] conditions)
@@ -108,7 +108,7 @@ namespace Hydrix.Orchestrator.Builders
 
         /// <summary>
         /// Adds an internal grouped SQL expression composed by a nested
-        /// <see cref="SqlWhereBuilder"/> instance.
+        /// <see cref="ConditionBuilder"/> instance.
         ///
         /// The resulting SQL is enclosed in parentheses and may optionally be:
         /// - negated using the NOT operator;
@@ -118,7 +118,7 @@ namespace Hydrix.Orchestrator.Builders
         /// fluent methods and ensures correct logical grouping and operator placement.
         /// </summary>
         /// <param name="groupBuilder">
-        /// An action that receives a new <see cref="SqlWhereBuilder"/> instance
+        /// An action that receives a new <see cref="ConditionBuilder"/> instance
         /// used to define the grouped SQL expression.
         /// </param>
         /// <param name="isNot">
@@ -129,14 +129,14 @@ namespace Hydrix.Orchestrator.Builders
         /// — When false, the AND operator is used.
         /// </param>
         /// <returns>
-        /// The current <see cref="SqlWhereBuilder"/> instance.
+        /// The current <see cref="ConditionBuilder"/> instance.
         /// </returns>
-        private SqlWhereBuilder AddGroup(
-            Action<SqlWhereBuilder> groupBuilder,
+        private ConditionBuilder AddGroup(
+            Action<ConditionBuilder> groupBuilder,
             bool isNot = false,
             bool isOr = false)
         {
-            var group = new SqlWhereBuilder();
+            var group = new ConditionBuilder();
             groupBuilder(group);
 
             var sql = group.BuildInternal();
@@ -169,9 +169,9 @@ namespace Hydrix.Orchestrator.Builders
         /// A collection of SQL expressions to be combined using the AND operator.
         /// </param>
         /// <returns>
-        /// The current <see cref="SqlWhereBuilder"/> instance.
+        /// The current <see cref="ConditionBuilder"/> instance.
         /// </returns>
-        private SqlWhereBuilder AddAndOrGroup(
+        private ConditionBuilder AddAndOrGroup(
             bool isNot,
             params string[] conditions)
             => AddGroup(
@@ -200,9 +200,9 @@ namespace Hydrix.Orchestrator.Builders
         /// A collection of SQL expressions to be combined using the OR operator.
         /// </param>
         /// <returns>
-        /// The current <see cref="SqlWhereBuilder"/> instance.
+        /// The current <see cref="ConditionBuilder"/> instance.
         /// </returns>
-        private SqlWhereBuilder AddOrAndGroup(
+        private ConditionBuilder AddOrAndGroup(
             bool isNot,
             params string[] conditions)
             => AddGroup(

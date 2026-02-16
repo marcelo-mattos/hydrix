@@ -6,12 +6,12 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
 
-namespace Hydrix.UnitTests.Orchestrator.Metadata
+namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
 {
     /// <summary>
     /// Unit tests for <see cref="MaterializeMetadataFactory"/>.
     /// </summary>
-    public class MetadataFactoryTests
+    public class MaterializeMetadataFactoryTests
     {
         /// <summary>
         /// Represents a simple SQL entity with a string property for demonstration or placeholder purposes.

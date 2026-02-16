@@ -36,8 +36,30 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             public int Id { get; set; }
 
             /// <summary>
-            /// Gets or sets a nested entity.
+            /// Gets or sets the nested entity associated with this instance. The association is optional and may be
+            /// null if no related entity exists.
             /// </summary>
+            /// <remarks>This property represents a foreign key relationship to a 'TestNestedEntity'
+            /// in the 'Nested' schema. Because the primary key is not specified, the relationship is optional and the
+            /// property may be null to indicate no association.</remarks>
+            [ForeignTable("text", Schema = "Nested")]
+            public TestNestedEntity NestedNullPrimaryKey { get; set; }
+
+            /// <summary>
+            /// Gets or sets the nested entity associated with the primary key, which is empty in this case.
+            /// </summary>
+            /// <remarks>This property represents a foreign key relationship to the 'TestNestedEntity'
+            /// table in the 'Nested' schema. The absence of primary keys indicates that this relationship does not
+            /// enforce any constraints on the referenced table.</remarks>
+            [ForeignTable("text", Schema = "Nested", PrimaryKeys = new string[0])]
+            public TestNestedEntity NestedEmptyPrimaryKey { get; set; }
+
+            /// <summary>
+            /// Gets or sets the nested entity associated with this instance.
+            /// </summary>
+            /// <remarks>This property represents a relationship to the nested entity, allowing access
+            /// to its properties and methods. Ensure that the nested entity is properly initialized before accessing
+            /// its members.</remarks>
             [ForeignTable("text", Schema = "Nested", PrimaryKeys = new[] { "Id" })]
             public TestNestedEntity Nested { get; set; }
         }
@@ -644,6 +666,110 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             // Assert
             Assert.Equal(99, entity.Value);
+        }
+
+        /// <summary>
+        /// Verifies that the SetEntityNestedEntities method does not set nested entity properties when the primary keys
+        /// are null or empty.
+        /// </summary>
+        /// <remarks>This test ensures that no exceptions are thrown and that the nested property remains
+        /// null when primary keys are not provided. It validates that the method maintains the correct entity state
+        /// under these conditions.</remarks>
+        [Fact]
+        public void SetEntityNestedEntities_Skips_WhenPrimaryKeysIsNullOrEmpty()
+        {
+            // Arrange
+            var property = typeof(TestEntity).GetProperty(nameof(TestEntity.NestedNullPrimaryKey));
+            var attribute = new ForeignTableAttribute("text")
+            {
+                Schema = "Nested",
+                PrimaryKeys = null // ou new string[0]
+            };
+            var map = new TableMap(property, attribute);
+
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap> { map }
+            );
+
+            var entity = new TestEntity();
+            var record = new Mock<IDataRecord>();
+            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
+            var ordinals = new Dictionary<string, int>();
+
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+
+            // Act (should not throw and should not set Nested)
+            method.Invoke(
+                null,
+                new object[]
+                {
+                    entity,
+                    record.Object,
+                    metadata,
+                    new List<string>(),
+                    cache,
+                    "",
+                    ordinals
+                });
+
+            // Assert
+            Assert.Null(entity.Nested);
+        }
+
+        /// <summary>
+        /// Verifies that the SetEntityNestedEntities method does not set nested entities when the primary key value is
+        /// DBNull.
+        /// </summary>
+        /// <remarks>This test ensures that if the primary key column exists but contains a DBNull value,
+        /// the SetEntityNestedEntities method skips setting the nested entity property. This behavior helps prevent
+        /// null reference exceptions and maintains data integrity when primary key values are missing.</remarks>
+        [Fact]
+        public void SetEntityNestedEntities_Skips_WhenPrimaryKeyIsDBNull()
+        {
+            // Arrange
+            var property = typeof(TestEntity).GetProperty(nameof(TestEntity.Nested));
+            var attribute = new ForeignTableAttribute("text")
+            {
+                Schema = "Nested",
+                PrimaryKeys = new[] { "Id" }
+            };
+            var map = new TableMap(property, attribute);
+
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap> { map }
+            );
+
+            var entity = new TestEntity();
+            var record = new Mock<IDataRecord>();
+            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
+            var ordinals = new Dictionary<string, int>
+            {
+                { "Nested.Id", 0 }
+            };
+
+            // PK column exists, but value is DBNull
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+
+            // Act (should not throw and should not set Nested)
+            method.Invoke(
+                null,
+                new object[]
+                {
+                    entity,
+                    record.Object,
+                    metadata,
+                    new List<string>(),
+                    cache,
+                    "",
+                    ordinals
+                });
+
+            // Assert
+            Assert.Null(entity.Nested);
         }
     }
 

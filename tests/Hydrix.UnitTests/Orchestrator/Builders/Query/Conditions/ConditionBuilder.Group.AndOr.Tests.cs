@@ -1,12 +1,12 @@
 ﻿using Xunit;
 
-namespace Hydrix.UnitTests.Orchestrator.Builders
+namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
-    /// Contains unit tests for the SqlWhereBuilder OR/OR NOT group methods,
+    /// Contains unit tests for the ConditionBuilder OR/OR NOT group methods,
     /// verifying correct SQL clause composition and conditional logic.
     /// </summary>
-    public partial class SqlWhereBuilderTests
+    public partial class ConditionBuilderTests
     {
         /// <summary>
         /// Verifies that a single condition passed to OrAndGroup is correctly grouped in the generated SQL statement.

@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace Hydrix.Orchestrator.Builders
+namespace Hydrix.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
     /// Provides a fluent SQL builder responsible for composing the WHERE clause
@@ -12,97 +12,93 @@ namespace Hydrix.Orchestrator.Builders
     ///
     /// If no conditions are added, the Build method returns an empty string.
     /// </summary>
-    public sealed partial class SqlWhereBuilder
+    public sealed partial class ConditionBuilder
     {
         /// <summary>
-        /// Adds the first condition or an AND condition to the WHERE clause.
-        /// If this is the first condition, no logical operator is prepended.
+        /// Adds an OR condition to the WHERE clause.
         /// </summary>
         /// <param name="condition">The SQL condition to add.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder Where(
-            string condition)
-            => Add(condition);
-
-        /// <summary>
-        /// Adds an AND condition to the WHERE clause.
-        /// </summary>
-        /// <param name="condition">The SQL condition to add.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder And(
-            string condition)
-            => Add(condition);
-
-        /// <summary>
-        /// Adds an AND NOT condition to the WHERE clause.
-        /// </summary>
-        /// <param name="condition">The SQL condition to add.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndNot(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder Or(
             string condition)
             => Add(condition,
-                   isNot: true);
+                isNot: false,
+                isOr: true);
 
         /// <summary>
-        /// Conditionally adds an AND condition to the WHERE clause.
+        /// Adds an OR NOT condition to the WHERE clause.
+        /// </summary>
+        /// <param name="condition">The SQL condition to add.</param>
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrNot(
+            string condition)
+            => Add(condition,
+                isNot: true,
+                isOr: true);
+
+        /// <summary>
+        /// Conditionally adds an OR condition to the WHERE clause.
         /// The condition is added only if the predicate evaluates to true.
         /// </summary>
         /// <param name="predicate">Determines whether the condition should be added.</param>
         /// <param name="condition">The SQL condition to add.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndIf(
-            bool predicate,
-            string condition)
-        {
-            if (predicate)
-                Add(condition);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Conditionally adds an AND condition to the WHERE clause.
-        /// The condition is added only if the predicate evaluates to true.
-        /// </summary>
-        /// <param name="predicates">Determines whether the condition should be added.</param>
-        /// <param name="condition">The SQL condition to add.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndIf(
-            bool[] predicates,
-            string condition)
-            => AndIf(
-                predicates?.All(p => p) ?? false,
-                condition);
-
-        /// <summary>
-        /// Conditionally adds an AND NOT condition to the WHERE clause.
-        /// The condition is added only if the predicate evaluates to true.
-        /// </summary>
-        /// <param name="predicate">Determines whether the condition should be added.</param>
-        /// <param name="condition">The SQL condition to add.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndNotIf(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrIf(
             bool predicate,
             string condition)
         {
             if (predicate)
                 Add(condition,
-                    isNot: true);
+                    isNot: false,
+                    isOr: true);
 
             return this;
         }
 
         /// <summary>
-        /// Conditionally adds an AND NOT condition to the WHERE clause.
+        /// Conditionally adds an OR condition to the WHERE clause.
         /// The condition is added only if the predicate evaluates to true.
         /// </summary>
         /// <param name="predicates">Determines whether the condition should be added.</param>
         /// <param name="condition">The SQL condition to add.</param>
-        /// <returns>The current <see cref="SqlWhereBuilder"/> instance.</returns>
-        public SqlWhereBuilder AndNotIf(
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrIf(
             bool[] predicates,
             string condition)
-            => AndNotIf(
+            => OrIf(
+                predicates?.All(p => p) ?? false,
+                condition);
+
+        /// <summary>
+        /// Conditionally adds an OR NOT condition to the WHERE clause.
+        /// The condition is added only if the predicate evaluates to true.
+        /// </summary>
+        /// <param name="predicate">Determines whether the condition should be added.</param>
+        /// <param name="condition">The SQL condition to add.</param>
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrNotIf(
+            bool predicate,
+            string condition)
+        {
+            if (predicate)
+                Add(condition,
+                    isNot: true,
+                    isOr: true);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Conditionally adds an OR NOT condition to the WHERE clause.
+        /// The condition is added only if the predicate evaluates to true.
+        /// </summary>
+        /// <param name="predicates">Determines whether the condition should be added.</param>
+        /// <param name="condition">The SQL condition to add.</param>
+        /// <returns>The current <see cref="ConditionBuilder"/> instance.</returns>
+        public ConditionBuilder OrNotIf(
+            bool[] predicates,
+            string condition)
+            => OrNotIf(
                 predicates?.All(p => p) ?? false,
                 condition);
     }
