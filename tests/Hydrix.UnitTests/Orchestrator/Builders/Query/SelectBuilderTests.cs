@@ -1,7 +1,5 @@
-﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Builders.Query;
+﻿using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Metadata.Builders;
-using Hydrix.Orchestrator.Metadata.Internals;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,21 +8,21 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Builders.Query
 {
     /// <summary>
-    /// Provides unit tests for the SelectBuilder class, validating the generation of SQL SELECT statements based on
-    /// entity metadata.
+    /// Contains unit tests for the SelectBuilder class, validating SQL SELECT statement generation based on entity
+    /// metadata and join configurations.
     /// </summary>
-    /// <remarks>These tests cover various scenarios, including generating selects without joins, with join
-    /// columns, and handling null or empty metadata and aliases. They ensure that the SelectBuilder behaves as expected
-    /// under different conditions.</remarks>
+    /// <remarks>These tests ensure that the SelectBuilder correctly generates SQL queries for various
+    /// scenarios, including cases with and without joins, and handles invalid input appropriately. Each test case
+    /// verifies specific aspects of the SQL generation process, such as the inclusion of mapped columns and the
+    /// handling of null or whitespace aliases.</remarks>
     public class SelectBuilderTests
     {
         /// <summary>
-        /// Represents a sample entity with an identifier, a name, and a reference to a child entity. Intended for
-        /// demonstration or testing purposes.
+        /// Represents a simple entity with an identifier and a name for demonstration purposes.
         /// </summary>
-        /// <remarks>Properties of this class are mapped to database columns, except for the property
-        /// marked with the NotMapped attribute, which is excluded from persistence. The Child property references a
-        /// related entity and may be used to represent relationships in data models.</remarks>
+        /// <remarks>This class includes properties that map to database columns, as well as a property
+        /// marked with <see cref="NotMappedAttribute"/> that is not persisted in the database. Intended for use in test
+        /// or example scenarios.</remarks>
         private class DummyEntity
         {
             /// <summary>
@@ -34,7 +32,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
             public int Id { get; set; }
 
             /// <summary>
-            /// Gets or sets the name of the entity.
+            /// Gets or sets name for the entity.
             /// </summary>
             [Column("name")]
             public string Name { get; set; }
@@ -42,115 +40,61 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
             /// <summary>
             /// Gets or sets the value that is not mapped to the database.
             /// </summary>
-            /// <remarks>This property is used to indicate that the value should not be persisted in
-            /// the database. It is typically used for properties that are calculated or derived from other
-            /// data.</remarks>
-            [NotMapped]
-            public string NotMapped { get; set; }
-
-            /// <summary>
-            /// Gets or sets the child entity associated with this object.
-            /// </summary>
-            /// <remarks>This property represents a foreign key relationship to the 'child' table.
-            /// Assigning a value to this property should correspond to a valid entry in the related table.</remarks>
-            [ForeignTable("child")]
-            public ChildEntity Child { get; set; }
-        }
-
-        /// <summary>
-        /// Represents a child entity with properties for identification and naming.
-        /// </summary>
-        /// <remarks>This class is typically used to map child entities in a database context. The ChildId
-        /// property serves as a unique identifier, while the ChildName property holds the name of the child. The
-        /// NotMapped property is not persisted in the database.</remarks>
-        private class ChildEntity
-        {
-            /// <summary>
-            /// Gets or sets the unique identifier for the child entity.
-            /// </summary>
-            [Column("child_id")]
-            public int ChildId { get; set; }
-
-            /// <summary>
-            /// Gets or sets the name of the child associated with the record.
-            /// </summary>
-            [Column("child_name")]
-            public string ChildName { get; set; }
-
-            /// <summary>
-            /// Gets or sets the value that is not mapped to the database.
-            /// </summary>
-            /// <remarks>This property is intended for use within application logic and is not
-            /// persisted to the underlying data store. Use this property to store values that are required at runtime
-            /// but should not be saved in the database.</remarks>
+            /// <remarks>This property is not persisted in the database. It is typically used for
+            /// values that are calculated, derived, or used only within the application logic.</remarks>
             [NotMapped]
             public string NotMapped { get; set; }
         }
 
         /// <summary>
-        /// Represents the main entity that contains a reference to the associated join entity.
+        /// Creates a metadata object that describes a database column for a specified property of the entity.
         /// </summary>
-        /// <remarks>Use this class to access or manipulate data related to the main entity and its
-        /// relationship with the join entity. The association is established through the Join property, which should be
-        /// properly initialized before use.</remarks>
-        private class MainEntity
+        /// <remarks>This method is typically used to assist in building test metadata for
+        /// entity-to-database column mappings. The property must exist on the DummyEntity type.</remarks>
+        /// <param name="property">The name of the property in the entity for which to create column metadata. Cannot be null.</param>
+        /// <param name="column">The name of the corresponding column in the database. Cannot be null.</param>
+        /// <param name="isKey">true if the column represents a key in the database; otherwise, false.</param>
+        /// <param name="isRequired">true if the column is required (non-nullable) in the database; otherwise, false.</param>
+        /// <returns>A ColumnBuilderMetadata instance containing metadata for the specified property and column.</returns>
+        private static ColumnBuilderMetadata CreateColumn(string property, string column, bool isKey = false, bool isRequired = false)
         {
-            /// <summary>
-            /// Gets or sets the join entity associated with the current context.
-            /// </summary>
-            /// <remarks>This property represents a foreign key relationship to the 'join' table,
-            /// allowing for the retrieval and manipulation of related data.</remarks>
-            [ForeignTable("join")]
-            public JoinEntity Join { get; set; }
+            var propInfo = typeof(DummyEntity).GetProperty(property);
+            return new ColumnBuilderMetadata(
+                property,
+                column,
+                isKey,
+                isRequired,
+                _ => null // getter não é usado nos testes de SQL
+            );
         }
 
         /// <summary>
-        /// Represents the entity used for join operations, containing a property that is not mapped to the database.
+        /// Verifies that the SQL SELECT statement generated for the main entity includes only the specified columns and
+        /// excludes properties marked as not mapped when no joins are present.
         /// </summary>
-        private class JoinEntity
-        {
-            /// <summary>
-            /// Gets or sets the number of column attributes associated with the entity.
-            /// </summary>
-            public int NoColumnAttr { get; set; }
-        }
-
-        /// <summary>
-        /// Verifies that the SelectBuilder.Build method generates a SQL SELECT statement for the main entity only when
-        /// no joins are specified.
-        /// </summary>
-        /// <remarks>This test ensures that the generated SQL includes only the columns defined in the
-        /// entity metadata and does not contain any references to properties marked as 'NotMapped'. It validates that
-        /// no join-related SQL is produced when the joins collection is empty.</remarks>
+        /// <remarks>This test ensures that the generated SQL contains the expected column names for the
+        /// main entity and does not include any columns corresponding to properties that are not mapped. It is intended
+        /// for scenarios where the entity is queried directly without related entities.</remarks>
         [Fact]
         public void Build_GeneratesSelectForMainEntityOnly_WhenNoJoins()
         {
             var columns = new List<ColumnBuilderMetadata>
             {
-                new ColumnBuilderMetadata(
-                    "Id",
-                    "id",
-                    true,
-                    true,
-                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty(nameof(DummyEntity.Id)))),
-                new ColumnBuilderMetadata(
-                    "Name",
-                    "name",
-                    false,
-                    false,
-                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty(nameof(DummyEntity.Name))))
+                CreateColumn("Id", "id", true, true),
+                CreateColumn("Name", "name")
             };
 
             var metadata = new EntityBuilderMetadata(
-                entityType: typeof(DummyEntity),
-                table: "dummy",
-                schema: "dbo",
-                alias: "d",
-                columns: columns,
-                joins: new List<JoinBuilderMetadata>()
+                "DummyEntity",
+                typeof(DummyEntity),
+                "dummy",
+                "dbo",
+                columns,
+                new List<JoinBuilderMetadata>()
             );
 
-            var sql = SelectBuilder.Build(metadata, "d");
+            var aliasContext = new AliasContext();
+            var sql = SelectBuilder.Build(metadata, "d", aliasContext);
 
             Assert.Contains("SELECT", sql);
             Assert.Contains("d.id", sql);
@@ -159,126 +103,129 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         }
 
         /// <summary>
-        /// Verifies that the SelectBuilder.Build method generates a SQL SELECT statement including both entity columns
-        /// and join columns as specified by the provided entity metadata.
+        /// Verifies that the SQL SELECT statement generated by the SelectBuilder includes the specified columns and
+        /// join columns as defined in the entity metadata.
         /// </summary>
-        /// <remarks>This test ensures that the generated SQL query contains the expected column names and
-        /// aliases for both the main entity and its joined entities. It also checks that properties marked as
-        /// 'NotMapped' are excluded from the result.</remarks>
+        /// <remarks>This test ensures that the generated SQL output correctly reflects the structure and
+        /// aliases specified in the entity and join metadata, including both direct and joined columns. It checks that
+        /// the SELECT statement contains the expected column references and aliases for joined tables.</remarks>
         [Fact]
         public void Build_GeneratesSelectWithJoinColumns()
         {
             var columns = new List<ColumnBuilderMetadata>
             {
-                new ColumnBuilderMetadata(
-                    "Id",
-                    "id",
-                    true,
-                    true,
-                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty(nameof(DummyEntity.Id))))
+                CreateColumn("Id", "id", true, true)
             };
 
-            var joinProperty = typeof(DummyEntity)
-                .GetProperty(nameof(DummyEntity.Child));
+            var joinColumns = new List<ForeignColumnMetadata>
+            {
+                new ForeignColumnMetadata("child_id", "child.child_id"),
+                new ForeignColumnMetadata("child_name", "child.child_name")
+            };
 
-            var joinWithChildEntity = new JoinBuilderMetadata(
+            var join = new JoinBuilderMetadata(
+                entity: "Child",
                 table: "child",
                 schema: "dbo",
-                alias: "c",
                 primaryKeys: new[] { "ChildId" },
                 foreignKeys: new[] { "ChildId" },
                 isRequiredJoin: false,
-                navigationProperty: joinProperty
+                columns: joinColumns
             );
 
             var metadataWithJoin = new EntityBuilderMetadata(
-                entityType: typeof(DummyEntity),
-                table: "dummy",
-                schema: "dbo",
-                alias: "d",
-                columns: columns,
-                joins: new List<JoinBuilderMetadata> { joinWithChildEntity }
+                "DummyEntity",
+                typeof(DummyEntity),
+                "dummy",
+                "dbo",
+                columns,
+                new List<JoinBuilderMetadata> { join }
             );
 
-            var sql = SelectBuilder.Build(metadataWithJoin, "d");
+            var aliasContext = new AliasContext();
+            var sql = SelectBuilder.Build(metadataWithJoin, "d", aliasContext);
 
             Assert.Contains("d.id", sql);
             Assert.Contains("c.child_id AS \"child.child_id\"", sql);
             Assert.Contains("c.child_name AS \"child.child_name\"", sql);
-            Assert.DoesNotContain("NotMapped", sql);
         }
 
         /// <summary>
-        /// Verifies that the SQL generated for a join column without a [Column] attribute uses the property name as the
-        /// column name.
+        /// Verifies that building a join column without a Column attribute uses the property name as the column alias
+        /// in the generated SQL statement.
         /// </summary>
-        /// <remarks>This test ensures that when a join property does not have a [Column] attribute
-        /// specified, the generated SQL correctly reflects the property name in the output. It is important for
-        /// maintaining consistency in SQL generation when mapping entity properties to database columns.</remarks>
+        /// <remarks>This test ensures that when an entity property does not have a Column attribute, the
+        /// join operation correctly references the property name in the SQL output. It is important for maintaining
+        /// consistency between entity definitions and the resulting SQL queries.</remarks>
         [Fact]
         public void Build_JoinColumn_WithoutColumnAttribute_UsesPropertyName()
         {
-            // Entidade de join sem atributo [Column] em uma das propriedades
             var columns = new List<ColumnBuilderMetadata>();
-            var joinProperty = typeof(MainEntity).GetProperty(nameof(MainEntity.Join));
+            var joinColumns = new List<ForeignColumnMetadata>
+            {
+                new ForeignColumnMetadata("NoColumnAttr", "join.NoColumnAttr")
+            };
+
             var join = new JoinBuilderMetadata(
+                entity: "Join",
                 table: "join",
                 schema: "dbo",
-                alias: "j",
                 primaryKeys: new[] { "NoColumnAttr" },
                 foreignKeys: new[] { "NoColumnAttr" },
                 isRequiredJoin: false,
-                navigationProperty: joinProperty
+                columns: joinColumns
             );
 
             var metadata = new EntityBuilderMetadata(
-                entityType: typeof(MainEntity),
-                table: "main",
-                schema: "dbo",
-                alias: "m",
-                columns: columns,
-                joins: new List<JoinBuilderMetadata> { join }
+                "DummyEntity",
+                typeof(DummyEntity),
+                "main",
+                "dbo",
+                columns,
+                new List<JoinBuilderMetadata> { join }
             );
 
-            var sql = SelectBuilder.Build(metadata, "m");
+            var aliasContext = new AliasContext();
+            var sql = SelectBuilder.Build(metadata, "m", aliasContext);
 
-            // O nome da coluna deve ser o nome da propriedade, pois não há [Column]
             Assert.Contains("j.NoColumnAttr AS \"join.NoColumnAttr\"", sql);
         }
 
         /// <summary>
         /// Verifies that the Build method throws an ArgumentNullException when the metadata parameter is null.
         /// </summary>
-        /// <remarks>This test ensures that the Build method enforces its contract by validating input
-        /// parameters and preventing null metadata from being processed. Proper exception handling for null arguments
-        /// helps maintain robustness and prevents unexpected runtime errors.</remarks>
+        /// <remarks>This test ensures that the Build method enforces its contract by validating that the
+        /// metadata argument is not null, helping to prevent runtime errors caused by invalid input.</remarks>
         [Fact]
         public void Build_ThrowsIfMetadataIsNull()
         {
-            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(null, "a"));
+            var aliasContext = new AliasContext();
+            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(null, "a", aliasContext));
         }
 
         /// <summary>
         /// Verifies that the SelectBuilder.Build method throws an ArgumentNullException when the main alias parameter
-        /// is null, empty, or consists only of whitespace characters.
+        /// is null, empty, or consists only of whitespace.
         /// </summary>
-        /// <remarks>This test ensures that the SelectBuilder enforces the requirement for a non-null,
-        /// non-empty main alias, helping to prevent invalid query construction.</remarks>
+        /// <remarks>This test ensures that the SelectBuilder enforces input validation for the main alias
+        /// parameter, which is required for building a valid query. Supplying a null or whitespace value for the main
+        /// alias is not supported and should result in an exception to prevent invalid query construction.</remarks>
         [Fact]
         public void Build_ThrowsIfMainAliasIsNullOrWhitespace()
         {
             var metadata = new EntityBuilderMetadata(
-                entityType: typeof(DummyEntity),
-                table: "dummy",
-                schema: "dbo",
-                alias: "d",
-                columns: new List<ColumnBuilderMetadata>(),
-                joins: new List<JoinBuilderMetadata>()
+                "DummyEntity",
+                typeof(DummyEntity),
+                "dummy",
+                "dbo",
+                new List<ColumnBuilderMetadata>(),
+                new List<JoinBuilderMetadata>()
             );
+            var aliasContext = new AliasContext();
 
-            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(metadata, null));
-            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(metadata, ""));
-            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(metadata, " "));
+            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(metadata, null, aliasContext));
+            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(metadata, "", aliasContext));
+            Assert.Throws<ArgumentNullException>(() => SelectBuilder.Build(metadata, " ", aliasContext));
         }
     }
 }

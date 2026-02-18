@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Hydrix.Orchestrator.Builders.Query
@@ -19,28 +18,15 @@ namespace Hydrix.Orchestrator.Builders.Query
         /// Handles collision by appending incremental numbers.
         /// </summary>
         /// <param name="name">The PascalCase name from which to generate the alias.</param>
-        /// <param name="usedAliases">An optional set of already used aliases to ensure uniqueness. If not provided, uniqueness is not enforced.</param>
         /// <returns>A unique, lowercase alias derived from the provided name.</returns>
         public static string FromName(
-            string name,
-            HashSet<string> usedAliases = null)
+            string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name cannot be null or empty.");
 
             var baseAlias = BuildBaseAlias(name);
-
-            if (usedAliases == null)
-                return baseAlias;
-
-            var alias = baseAlias;
-            var counter = 1;
-
-            while (usedAliases.Contains(alias))
-                alias = $"{baseAlias}{counter++}";
-
-            usedAliases.Add(alias);
-            return alias;
+            return baseAlias;
         }
 
         /// <summary>

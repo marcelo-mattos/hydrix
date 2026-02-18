@@ -29,27 +29,27 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
         public void Constructor_SetsAllPropertiesCorrectly()
         {
             // Arrange
+            var entity = "DummyTable";
             var entityType = typeof(DummyEntity);
             var table = "dummy_table";
             var schema = "dbo";
-            var alias = "d";
             var columns = new List<ColumnBuilderMetadata>();
             var joins = new List<JoinBuilderMetadata>();
 
             // Act
             var metadata = new EntityBuilderMetadata(
+                entity,
                 entityType,
                 table,
                 schema,
-                alias,
                 columns,
                 joins);
 
             // Assert
-            Assert.Equal(entityType, metadata.EntityType);
+            Assert.Equal(entity, metadata.Entity);
+            Assert.Equal(entityType, metadata.Type);
             Assert.Equal(table, metadata.Table);
             Assert.Equal(schema, metadata.Schema);
-            Assert.Equal(alias, metadata.Alias);
             Assert.Same(columns, metadata.Columns);
             Assert.Same(joins, metadata.Joins);
         }
@@ -64,26 +64,26 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
         public void Properties_AreImmutable()
         {
             // Arrange
+            var entity = "DummyTable";
             var entityType = typeof(DummyEntity);
             var table = "dummy_table";
             var schema = "dbo";
-            var alias = "d";
             var columns = new List<ColumnBuilderMetadata>();
             var joins = new List<JoinBuilderMetadata>();
 
             var metadata = new EntityBuilderMetadata(
+                entity,
                 entityType,
                 table,
                 schema,
-                alias,
                 columns,
                 joins);
 
             // Act & Assert
-            Assert.IsAssignableFrom<Type>(metadata.EntityType);
+            Assert.Equal(entity, metadata.Entity);
+            Assert.IsAssignableFrom<Type>(metadata.Type);
             Assert.IsType<string>(metadata.Table);
             Assert.IsType<string>(metadata.Schema);
-            Assert.IsType<string>(metadata.Alias);
             Assert.IsAssignableFrom<IReadOnlyList<ColumnBuilderMetadata>>(metadata.Columns);
             Assert.IsAssignableFrom<IReadOnlyList<JoinBuilderMetadata>>(metadata.Joins);
         }

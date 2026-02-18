@@ -1,10 +1,7 @@
-﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Metadata.Builders;
+﻿using Hydrix.Orchestrator.Metadata.Builders;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 
 namespace Hydrix.Orchestrator.Builders.Query
@@ -16,7 +13,7 @@ namespace Hydrix.Orchestrator.Builders.Query
     /// include only properties mapped to database columns, excluding those marked with NotMappedAttribute or
     /// ForeignTableAttribute. The generated SQL includes aliases for columns from joined tables to ensure clarity in
     /// the result set.</remarks>
-    public static class SelectBuilder
+    internal static class SelectBuilder
     {
         /// <summary>
         /// Generates a SQL SELECT statement for the specified entity and its related joins using the provided metadata
@@ -27,11 +24,13 @@ namespace Hydrix.Orchestrator.Builders.Query
         /// aliases for joined table columns to distinguish them in the result set.</remarks>
         /// <param name="metadata">The metadata describing the entity, including its columns and join relationships. Must not be null.</param>
         /// <param name="mainAlias">The alias to use for the main entity table in the generated SQL statement. Cannot be null or empty.</param>
+        /// <param name="aliasContext">The context for managing table aliases in the SQL query. Must not be null.</param>
         /// <returns>A string containing the constructed SQL SELECT statement, including columns from the main entity and any
         /// joined tables.</returns>
         public static string Build(
             EntityBuilderMetadata metadata,
-            string mainAlias)
+            string mainAlias,
+            AliasContext aliasContext)
         {
             if (metadata == null)
                 throw new ArgumentNullException(nameof(metadata), "Metadata must not be null.");
@@ -45,30 +44,25 @@ namespace Hydrix.Orchestrator.Builders.Query
                 metadata.Columns
                     .Select(c => $"\t{mainAlias}.{c.ColumnName}"));
 
-            foreach (var join in metadata.Joins.Where(x => x.NavigationProperty != null))
+            foreach (var join in metadata.Joins)
             {
-                var alias = AliasGenerator.FromName(join.Table);
+                var joinAlias = aliasContext.GetAlias(join.Entity);
 
-                columns.AddRange(
-                    join.NavigationProperty.PropertyType
-                        .GetProperties(
-                            BindingFlags.Instance |
-                            BindingFlags.Public)
-                        .Where(p =>
-                            p.GetCustomAttribute<NotMappedAttribute>() == null &&
-                            p.GetCustomAttribute<ForeignTableAttribute>() == null)
-                        .Select(p =>
-                        {
-                            var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
-                            var columnName = columnAttr?.Name ?? p.Name;
-
-                            return $"\t{alias}.{columnName} AS \"{join.Table}.{columnName}\"";
-                        }));
+                foreach (var column in join.Columns)
+                    columns.Add(
+                        $"\t{joinAlias}.{column.ColumnName} AS \"{column.ProjectedName}\"");
             }
 
             var builder = new StringBuilder();
-            builder.AppendLine("SELECT");
-            builder.AppendLine(string.Join($",{Environment.NewLine}", columns));
+            if (columns.Count > 0)
+            {
+                builder.AppendLine("SELECT");
+                builder.AppendLine(string.Join($",{Environment.NewLine}", columns));
+            }
+            else
+            {
+                builder.AppendLine("SELECT *");
+            }
 
             return builder.ToString();
         }

@@ -40,14 +40,12 @@ namespace Hydrix.Schemas
         /// <remarks>This method uses an internal cache to avoid reconstructing metadata for the same
         /// type, improving performance when called multiple times with the same argument.</remarks>
         /// <param name="type">The type of the entity for which metadata is to be retrieved. Must be a valid entity type; cannot be null.</param>
-        /// <param name="alias">An optional string to use as a table alias for the main entity in the generated SQL query. If not provided, no alias is used.</param>
         /// <returns>An instance of EntityBuilderMetadata containing the metadata for the specified entity type.</returns>
         public static EntityBuilderMetadata GetMetadata(
-            Type type,
-            string alias = "")
+            Type type)
             => _cache.GetOrAdd(
                 type,
-                t => BuildMetadata(t, alias));
+                BuildMetadata);
 
         /// <summary>
         /// Validates the current object and returns a value that indicates whether the object is in a valid state.
@@ -188,27 +186,6 @@ namespace Hydrix.Schemas
         }
 
         /// <summary>
-        /// Returns a valid alias, using the specified alias if provided, or generating a default alias from the given
-        /// name if the alias is null or empty.
-        /// </summary>
-        /// <remarks>Use this method to ensure that a non-empty alias is always available, either by
-        /// accepting a user-supplied alias or by generating one from the name. This is useful for scenarios where an
-        /// alias is required but may not always be explicitly specified.</remarks>
-        /// <param name="alias">The alias to use. If this value is null or an empty string, a default alias is generated from the value of
-        /// the name parameter.</param>
-        /// <param name="name">The name from which to generate a default alias if the alias parameter is null or empty.</param>
-        /// <param name="usedAliases">An optional set of already used aliases to ensure uniqueness. If not provided, uniqueness is not enforced.</param>
-        /// <returns>A unique, lowercase alias derived from the provided name.</returns>
-        /// <returns>A string containing either the provided alias or a generated alias based on the name parameter.</returns>
-        private static string GetAlias(
-            string alias,
-            string name,
-            HashSet<string> usedAliases)
-            => string.IsNullOrEmpty(alias)
-                ? AliasGenerator.FromName(name, usedAliases)
-                : alias;
-
-        /// <summary>
         /// Builds metadata for the specified entity type, including table name, schema, columns, and joins.
         /// </summary>
         /// <remarks>This method inspects the properties of the provided type to determine which columns
@@ -216,38 +193,31 @@ namespace Hydrix.Schemas
         /// NotMappedAttribute and resolves foreign key relationships using ForeignTableAttribute.</remarks>
         /// <param name="type">The type of the entity for which metadata is being built. This type must be a class that represents a
         /// database entity.</param>
-        /// <param name="alias">An optional string to use as a table alias for the main entity in the generated SQL query. If not provided, no alias is used.</param>
         /// <returns>An instance of EntityBuilderMetadata containing the metadata for the specified entity type.</returns>
         private static EntityBuilderMetadata BuildMetadata(
-            Type type,
-            string alias)
+            Type type)
         {
-            var usedAliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var tableAttr = type.GetCustomAttribute<TableAttribute>();
 
             var table = tableAttr?.Name ?? type.Name;
             var schema = tableAttr?.Schema;
-            var mainAlias = GetAlias(
-                alias,
-                type.Name,
-                usedAliases);
 
             var validatableColumns = new List<ColumnBuilderMetadata>();
             var columns = new List<ColumnBuilderMetadata>();
             var joins = new List<JoinBuilderMetadata>();
 
-            foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
-                if (prop.GetCustomAttribute<NotMappedAttribute>() != null)
+                if (property.GetCustomAttribute<NotMappedAttribute>() != null)
                     continue;
 
-                var foreignAttr = prop.GetCustomAttribute<ForeignTableAttribute>();
+                var foreignAttr = property.GetCustomAttribute<ForeignTableAttribute>();
                 if (foreignAttr != null)
                 {
                     var (resolvedSchema, primaryKeys, foreignKeys) =
                         ResolveForeignMetadata(
                             type,
-                            prop,
+                            property,
                             foreignAttr);
 
                     var isRequiredJoin = foreignKeys.All(fk =>
@@ -256,38 +226,49 @@ namespace Hydrix.Schemas
                         return fkProp.GetCustomAttribute<RequiredAttribute>() != null;
                     });
 
-                    var foreignAlias = GetAlias(
-                        foreignAttr.Alias,
-                        foreignAttr.Name,
-                        usedAliases);
+                    var foreignSelectColumns = property.PropertyType
+                        .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                        .Where(p =>
+                            p.GetCustomAttribute<NotMappedAttribute>() == null &&
+                            p.GetCustomAttribute<ForeignTableAttribute>() == null)
+                        .Select(p =>
+                        {
+                            var colAttr = p.GetCustomAttribute<ColumnAttribute>();
+                            var colName = colAttr?.Name ?? p.Name;
+
+                            return new ForeignColumnMetadata(
+                                colName,
+                                $"{foreignAttr.Name}.{colName}");
+                        })
+                        .ToList();
 
                     joins.Add(new JoinBuilderMetadata(
+                        property.Name,
                         foreignAttr.Name,
                         resolvedSchema,
-                        foreignAlias,
                         primaryKeys,
                         foreignKeys,
                         isRequiredJoin,
-                        prop));
+                        foreignSelectColumns));
 
                     continue;
                 }
 
-                var columnAttr = prop.GetCustomAttribute<ColumnAttribute>();
+                var columnAttr = property.GetCustomAttribute<ColumnAttribute>();
 
                 columns.Add(new ColumnBuilderMetadata(
-                    prop.Name,
-                    columnAttr?.Name ?? prop.Name,
-                    prop.GetCustomAttribute<KeyAttribute>() != null,
-                    prop.GetCustomAttribute<RequiredAttribute>() != null,
-                    MetadataFactory.CreateGetter(prop)));
+                    property.Name,
+                    columnAttr?.Name ?? property.Name,
+                    property.GetCustomAttribute<KeyAttribute>() != null,
+                    property.GetCustomAttribute<RequiredAttribute>() != null,
+                    MetadataFactory.CreateGetter(property)));
             }
 
             return new EntityBuilderMetadata(
+                type.Name,
                 type,
                 table,
                 schema,
-                mainAlias,
                 columns,
                 joins);
         }
@@ -296,27 +277,19 @@ namespace Hydrix.Schemas
         /// Generates a SQL SELECT query string for the current entity type, including optional table aliases and left
         /// joins for related foreign tables.
         /// </summary>
+        /// <typeparam name="TEntity">The type of the entity for which the SQL query is being generated. Must implement <see cref="ITable"/>.</typeparam>
         /// <remarks>The generated query reflects the table and relationship structure defined by
         /// attributes on the entity type. Foreign tables referenced by properties with the ForeignTableAttribute are
         /// automatically joined using LEFT JOIN clauses. Table and schema names are determined by the TableAttribute
         /// and ForeignTableAttribute, if present. This method is intended for use with entity types that follow the
         /// expected attribute-based schema conventions.</remarks>
-        /// <param name="alias">An optional string to use as a table alias for the main entity in the generated SQL query. If not provided, no alias is used.</param>
         /// <param name="where">A WhereBuilder instance that specifies the conditions to apply to the WHERE clause of the generated SQL
         /// query.</param>
         /// <returns>A string containing the complete SQL SELECT query, including any specified WHERE conditions and left joins
         /// for foreign tables.</returns>
-        public string BuildQuery(
-            WhereBuilder where = null,
-            string alias = "")
-        {
-            var metadata = GetMetadata(
-                GetType(),
-                alias);
-
-            return QueryBuilder.Build(
-                metadata,
-                where);
-        }
+        public static string BuildQuery<TEntity>(
+            WhereBuilder where = null)
+            where TEntity : ITable
+            => QueryBuilder.Build<TEntity>(where);
     }
 }

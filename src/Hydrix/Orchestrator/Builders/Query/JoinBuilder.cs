@@ -11,7 +11,7 @@ namespace Hydrix.Orchestrator.Builders.Query
     /// JOINs. It utilizes primary and foreign key mappings defined in the provided metadata to build JOIN conditions.
     /// Use this class to automate JOIN clause creation when working with relational table structures in SQL
     /// queries.</remarks>
-    public static class JoinBuilder
+    internal static class JoinBuilder
     {
         /// <summary>
         /// Generates a SQL JOIN clause based on the provided metadata and main table alias.
@@ -23,27 +23,29 @@ namespace Hydrix.Orchestrator.Builders.Query
         /// clause. Cannot be null.</param>
         /// <param name="mainAlias">The alias for the main table in the SQL query. Used to reference its columns in the JOIN conditions. Cannot
         /// be null or empty.</param>
+        /// <param name="aliasContext">The context for managing table aliases in the SQL query. Must not be null.</param>
         /// <returns>A string representing the constructed SQL JOIN clause, including the necessary JOIN type and conditions.</returns>
         public static string Build(
             EntityBuilderMetadata metadata,
-            string mainAlias)
+            string mainAlias,
+            AliasContext aliasContext)
         {
             var sql = new StringBuilder();
 
             foreach (var join in metadata.Joins)
             {
-                var alias = AliasGenerator.FromName(join.Table);
+                var foreignAlias = aliasContext.GetAlias(join.Entity);
 
                 sql.Append(join.IsRequiredJoin ? "INNER JOIN " : "LEFT JOIN ");
                 sql.Append(FormatTable(join));
-                sql.Append($" {alias}");
+                sql.Append($" {foreignAlias}");
                 sql.Append(" ON ");
 
                 var conditions = new List<string>();
 
                 for (int i = 0; i < join.PrimaryKeys.Length; i++)
                     conditions.Add(
-                        $"{mainAlias}.{join.ForeignKeys[i]} = {alias}.{join.PrimaryKeys[i]}");
+                        $"{mainAlias}.{join.ForeignKeys[i]} = {foreignAlias}.{join.PrimaryKeys[i]}");
 
                 sql.AppendLine(string.Join(" AND ", conditions));
             }

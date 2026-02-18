@@ -1,5 +1,6 @@
 ﻿using Hydrix.Orchestrator.Metadata.Builders;
-using System.Reflection;
+using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
@@ -37,32 +38,35 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
         public void Constructor_SetsAllPropertiesCorrectly()
         {
             // Arrange
+            string entity = "Customers";
             string table = "customers";
             string schema = "sales";
-            string alias = "c";
             string[] primaryKeys = new[] { "Id" };
             string[] foreignKeys = new[] { "CustomerId" };
             bool isRequiredJoin = true;
-            PropertyInfo navigationProperty = typeof(DummyEntity).GetProperty(nameof(DummyEntity.CustomerId));
+            var columns = new List<ForeignColumnMetadata>()
+            {
+                new ForeignColumnMetadata("col", "row.col")
+            };
 
             // Act
             var metadata = new JoinBuilderMetadata(
+                entity,
                 table,
                 schema,
-                alias,
                 primaryKeys,
                 foreignKeys,
                 isRequiredJoin,
-                navigationProperty);
+                columns);
 
             // Assert
+            Assert.Equal(entity, metadata.Entity);
             Assert.Equal(table, metadata.Table);
             Assert.Equal(schema, metadata.Schema);
-            Assert.Equal(alias, metadata.Alias);
             Assert.Equal(primaryKeys, metadata.PrimaryKeys);
             Assert.Equal(foreignKeys, metadata.ForeignKeys);
             Assert.Equal(isRequiredJoin, metadata.IsRequiredJoin);
-            Assert.Equal(navigationProperty, metadata.NavigationProperty);
+            Assert.Equal(columns, metadata.Columns);
         }
 
         /// <summary>
@@ -76,32 +80,62 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
         public void Constructor_AllowsOptionalJoinAndNullNavigationProperty()
         {
             // Arrange
+            string entity = "Orders";
             string table = "orders";
             string schema = "sales";
-            string alias = "o";
             string[] primaryKeys = new[] { "OrderId" };
             string[] foreignKeys = new[] { "Id" };
             bool isRequiredJoin = false;
-            PropertyInfo navigationProperty = null;
+            var columns = new List<ForeignColumnMetadata>();
 
             // Act
             var metadata = new JoinBuilderMetadata(
+                entity,
                 table,
                 schema,
-                alias,
                 primaryKeys,
                 foreignKeys,
                 isRequiredJoin,
-                navigationProperty);
+                columns);
 
             // Assert
+            Assert.Equal(entity, metadata.Entity);
             Assert.Equal(table, metadata.Table);
             Assert.Equal(schema, metadata.Schema);
-            Assert.Equal(alias, metadata.Alias);
             Assert.Equal(primaryKeys, metadata.PrimaryKeys);
             Assert.Equal(foreignKeys, metadata.ForeignKeys);
             Assert.False(metadata.IsRequiredJoin);
-            Assert.Null(metadata.NavigationProperty);
+            Assert.Equal(columns, metadata.Columns);
+        }
+
+        /// <summary>
+        /// Verifies that the JoinBuilderMetadata constructor throws an ArgumentNullException when the columns parameter
+        /// is null.
+        /// </summary>
+        /// <remarks>This test ensures that the JoinBuilderMetadata class enforces a non-null requirement
+        /// for the columns parameter during construction. Providing a null value for columns should result in an
+        /// ArgumentNullException, helping to prevent improper initialization.</remarks>
+        [Fact]
+        public void Constructor_ThrowsIfColumnsIsNull()
+        {
+            // Arrange
+            string entity = "Orders";
+            string table = "orders";
+            string schema = "sales";
+            string[] primaryKeys = new[] { "OrderId" };
+            string[] foreignKeys = new[] { "Id" };
+            bool isRequiredJoin = false;
+            IReadOnlyList<ForeignColumnMetadata> columns = null;
+
+            // Assert
+            Assert.Throws<ArgumentNullException>(() => new JoinBuilderMetadata(
+                entity,
+                table,
+                schema,
+                primaryKeys,
+                foreignKeys,
+                isRequiredJoin,
+                columns));
         }
     }
 }

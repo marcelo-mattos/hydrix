@@ -1,6 +1,5 @@
 ﻿using Hydrix.Orchestrator.Builders.Query;
 using System;
-using System.Collections.Generic;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Builders.Query
@@ -60,28 +59,6 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         }
 
         /// <summary>
-        /// Verifies that the FromName method appends a numeric suffix to the generated alias when the base alias is
-        /// already present in the collection of used aliases.
-        /// </summary>
-        /// <remarks>This test ensures that AliasGenerator.FromName produces unique aliases by
-        /// incrementing a number when collisions occur, maintaining uniqueness within the provided usedAliases
-        /// dictionary.</remarks>
-        [Fact]
-        public void FromName_AppendsNumber_WhenAliasAlreadyUsed()
-        {
-            var usedAliases = new HashSet<string>();
-            usedAliases.Add("od"); // Simulate "od" already used
-
-            var alias = AliasGenerator.FromName("OrderDetail", usedAliases);
-            Assert.Equal("od1", alias);
-
-            // Add "od1" and test next collision
-            usedAliases.Add("od1");
-            var alias2 = AliasGenerator.FromName("OrderDetail", usedAliases);
-            Assert.Equal("od2", alias2);
-        }
-
-        /// <summary>
         /// Verifies that the FromName method generates a base alias for the specified name when the alias is not
         /// already in use.
         /// </summary>
@@ -91,10 +68,8 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         [Fact]
         public void FromName_UsesBaseAlias_WhenNotUsed()
         {
-            var usedAliases = new HashSet<string>();
-            var alias = AliasGenerator.FromName("Customer", usedAliases);
+            var alias = AliasGenerator.FromName("Customer");
             Assert.Equal("c", alias);
-            Assert.Contains("c", usedAliases);
         }
 
         /// <summary>

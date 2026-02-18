@@ -25,13 +25,13 @@ namespace Hydrix.Orchestrator.Metadata.Builders
         public string ColumnName { get; }
 
         /// <summary>
-        /// A value indicating whether the column is part of the primary key for the table. 
+        /// A value indicating whether the column is part of the primary key for the table.
         /// Set to <see langword="true"/> if the column is a key; otherwise, <see langword="false"/>.
         /// </summary>
         public bool IsKey { get; }
 
         /// <summary>
-        /// A value indicating whether the column is required in the database schema. 
+        /// A value indicating whether the column is required in the database schema.
         /// Set to <see langword="true"/> if the column cannot be null; otherwise, <see langword="false"/>.
         /// </summary>
         public bool IsRequired { get; }

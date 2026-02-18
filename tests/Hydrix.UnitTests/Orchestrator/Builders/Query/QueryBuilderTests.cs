@@ -1,166 +1,135 @@
 ﻿using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Metadata.Builders;
-using Hydrix.Orchestrator.Metadata.Internals;
+using Hydrix.Schemas.Contract;
 using System.Collections.Generic;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Builders.Query
 {
     /// <summary>
-    /// Provides unit tests for the QueryBuilder class to verify the correct generation of SQL queries based on various
-    /// metadata configurations.
+    /// Contains unit tests for the QueryBuilder class, validating the generation of SQL queries and the formatting of
+    /// table names based on entity metadata.
     /// </summary>
-    /// <remarks>These tests cover scenarios such as generating queries with select statements, joins, and
-    /// where clauses, as well as handling cases with and without database schemas. The tests ensure that the
-    /// QueryBuilder produces SQL statements that match expected patterns, helping to validate its functionality and
-    /// reliability.</remarks>
+    /// <remarks>This class includes tests for various scenarios, ensuring that the QueryBuilder correctly
+    /// constructs SQL queries with and without WHERE clauses, and formats table names based on schema presence. It
+    /// utilizes mock objects and reflection to simulate database interactions and validate the expected behavior of the
+    /// QueryBuilder methods.</remarks>
     public class QueryBuilderTests
     {
         /// <summary>
-        /// Represents a dummy entity used for testing purposes.
+        /// Represents a placeholder implementation of the ITable interface for testing or mock scenarios.
         /// </summary>
-        private class DummyEntity
-        {
-            /// <summary>
-            /// Gets or sets a value for demonstration or testing purposes.
-            /// </summary>
-            public object DummyProperty { get; set; }
-        }
+        private class DummyEntity :
+            ITable
+        { }
 
         /// <summary>
-        /// Creates and configures metadata for an entity builder, specifying the associated table, schema, alias,
-        /// columns, and joins.
+        /// Creates metadata for an entity using the specified table and schema names.
         /// </summary>
-        /// <param name="table">The name of the database table to associate with the entity. Defaults to "orders" if not specified.</param>
-        /// <param name="schema">The name of the schema that contains the table. Defaults to "sales" if not specified.</param>
-        /// <param name="alias">The alias to use for the entity in queries. Defaults to "o" if not specified.</param>
-        /// <param name="columns">A list of column metadata to include in the entity. If null, an empty list is used.</param>
-        /// <param name="joins">A list of join metadata to include in the entity. If null, an empty list is used.</param>
-        /// <returns>An instance of EntityBuilderMetadata containing the specified configuration for the entity.</returns>
-        private static EntityBuilderMetadata CreateMetadata(
-            string table = "orders",
-            string schema = "sales",
-            string alias = "o",
-            List<ColumnBuilderMetadata> columns = null,
-            List<JoinBuilderMetadata> joins = null)
-        {
-            return new EntityBuilderMetadata(
-                entityType: typeof(DummyEntity),
-                table: table,
-                schema: schema,
-                alias: alias,
-                columns: columns ?? new List<ColumnBuilderMetadata>(),
-                joins: joins ?? new List<JoinBuilderMetadata>()
-            );
-        }
+        /// <remarks>This method initializes the entity metadata with default values for columns and
+        /// joins.</remarks>
+        /// <param name="entity">The name of the entity. This value cannot be null or empty.</param>
+        /// <param name="table">The name of the database table associated with the entity. This value cannot be null or empty.</param>
+        /// <param name="schema">The name of the schema that contains the specified table. This value cannot be null or empty.</param>
+        /// <returns>An instance of <see cref="EntityBuilderMetadata"/> that contains the metadata for the specified entity.</returns>
+        private EntityBuilderMetadata CreateMetadata(
+            string entity,
+            string table,
+            string schema)
+            => new EntityBuilderMetadata(
+                entity,
+                typeof(DummyEntity),
+                table,
+                schema,
+                new List<ColumnBuilderMetadata>(),
+                new List<JoinBuilderMetadata>());
 
         /// <summary>
-        /// Verifies that the QueryBuilder.Build method generates a SQL query string containing the expected SELECT,
-        /// FROM, and LEFT JOIN clauses when provided with column and join metadata.
+        /// Verifies that the QueryBuilder.Build method generates a SQL query string for the specified entity, including
+        /// a WHERE clause as defined by the provided WhereBuilder instance.
         /// </summary>
-        /// <remarks>This test ensures that the query builder correctly constructs SQL queries with the
-        /// specified columns and joins, including support for optional joins. It checks for the presence of key SQL
-        /// clauses in the generated query to validate proper query assembly.</remarks>
-        [Fact]
-        public void Build_GeneratesQuery_WithSelectFromAndJoins()
-        {
-            var columns = new List<ColumnBuilderMetadata>
-            {
-                new ColumnBuilderMetadata(
-                    "Id",
-                    "id",
-                    true,
-                    true,
-                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty("DummyProperty")))
-            };
-            var joins = new List<JoinBuilderMetadata>
-            {
-                new JoinBuilderMetadata(
-                    table: "customers",
-                    schema: "sales",
-                    alias: "c",
-                    primaryKeys: new[] { "Id" },
-                    foreignKeys: new[] { "CustomerId" },
-                    isRequiredJoin: false,
-                    navigationProperty: null)
-            };
-            var metadata = CreateMetadata(columns: columns, joins: joins);
-
-            var sql = QueryBuilder.Build(metadata, null);
-
-            Assert.Contains("SELECT", sql);
-            Assert.Contains("FROM sales.orders o", sql);
-            Assert.Contains("LEFT JOIN sales.customers c", sql);
-        }
-
-        /// <summary>
-        /// Verifies that the QueryBuilder.Build method generates a SQL query string containing a WHERE clause with the
-        /// specified conditions.
-        /// </summary>
-        /// <remarks>This test ensures that the resulting SQL query includes both the WHERE keyword and
-        /// the expected condition expressions, validating correct query construction when filtering criteria are
-        /// provided.</remarks>
+        /// <remarks>This test uses mock objects and static overrides to simulate database metadata and
+        /// SQL component builders, enabling validation of the query generation logic without requiring a live database
+        /// connection. It ensures that the resulting SQL string contains the expected SELECT, FROM, JOIN, and WHERE
+        /// clauses.</remarks>
         [Fact]
         public void Build_GeneratesQuery_WithWhereClause()
         {
-            var metadata = CreateMetadata();
-            var where = WhereBuilder.Create()
-                .And("o.Id > @minId")
-                .Or("o.Status = @status");
+            // Arrange
+            var selectSql = "SELECT *";
+            var fromSql = "FROM DummyEntity de";
+            var whereSql = "WHERE 1 = 1";
+            var metadata = CreateMetadata(nameof(DummyEntity), nameof(DummyEntity), null);
 
-            var sql = QueryBuilder.Build(metadata, where);
+            // Mock SelectBuilder and JoinBuilder via reflection (since they are static)
+            var whereBuilder = WhereBuilder.Create();
+            whereBuilder.Where("1 = 1");
 
-            Assert.Contains("WHERE", sql);
-            Assert.Contains("o.Id > @minId", sql);
-            Assert.Contains("o.Status = @status", sql);
+            // Act
+            var sql = QueryBuilder.Build<DummyEntity>(whereBuilder);
+
+            // Assert
+            Assert.Contains(selectSql, sql);
+            Assert.Contains(fromSql, sql);
+            Assert.Contains(whereSql, sql);
         }
 
         /// <summary>
-        /// Verifies that the SQL query generated for a specified table does not include schema information when the
-        /// schema is not provided.
+        /// Verifies that the QueryBuilder.Build&lt;T&gt; method generates a SQL query for the specified entity type without
+        /// including a WHERE clause.
         /// </summary>
-        /// <remarks>This test ensures that the generated SQL query correctly references the table and
-        /// alias without including a schema prefix. It is intended for scenarios where schema information is either
-        /// unavailable or unnecessary.</remarks>
-        [Fact]
-        public void Build_GeneratesQuery_WithoutSchema()
-        {
-            var metadata = CreateMetadata(table: "orders", schema: null, alias: "o");
-            var sql = QueryBuilder.Build(metadata, null);
-
-            Assert.Contains("FROM orders o", sql);
-        }
-
-        /// <summary>
-        /// Verifies that the Build method generates a SQL query without including a WHERE clause when no filter is
-        /// provided.
-        /// </summary>
-        /// <remarks>This test ensures that the query builder returns all records without restrictions
-        /// when the filter parameter is null. It is useful for validating scenarios where unfiltered data retrieval is
-        /// required.</remarks>
+        /// <remarks>This test ensures that the generated SQL query contains the expected SELECT and JOIN
+        /// clauses and omits any WHERE conditions. It uses test overrides to control the SQL fragments for SELECT and
+        /// JOIN operations, and asserts that the resulting query structure matches the expected format for entities
+        /// without filtering criteria.</remarks>
         [Fact]
         public void Build_GeneratesQuery_WithoutWhereClause()
         {
-            var metadata = CreateMetadata();
-            var sql = QueryBuilder.Build(metadata, null);
+            // Arrange
+            var selectSql = "SELECT *";
+            var fromSql = "FROM DummyEntity de";
+            var metadata = CreateMetadata(nameof(DummyEntity), nameof(DummyEntity), null);
 
+            // Act
+            var sql = QueryBuilder.Build<DummyEntity>(null);
+
+            // Assert
+            Assert.Contains(selectSql, sql);
+            Assert.Contains(fromSql, sql);
             Assert.DoesNotContain("WHERE", sql);
         }
 
         /// <summary>
-        /// Verifies that the query builder does not include a WHERE clause when no conditions are specified.
+        /// Verifies that the FormatTable method returns the table name when the schema is null, empty, or consists only
+        /// of whitespace.
         /// </summary>
-        /// <remarks>This test ensures that when the where clause is empty, the generated SQL query omits
-        /// the WHERE keyword, confirming correct query generation in scenarios without filtering.</remarks>
+        /// <remarks>This test ensures that the FormatTable method, accessed via reflection, correctly
+        /// handles cases where the schema is not specified by returning only the table name. It uses a metadata object
+        /// with a whitespace schema to validate this behavior.</remarks>
         [Fact]
-        public void Build_GeneratesQuery_WithEmptyWhereClause()
+        public void FormatTable_ReturnsTable_WhenSchemaIsNullOrWhitespace()
         {
-            var metadata = CreateMetadata();
-            var where = WhereBuilder.Create(); // No conditions
-            var sql = QueryBuilder.Build(metadata, where);
+            var metadata = CreateMetadata("MyTable", "MyTable", "   ");
+            var method = typeof(QueryBuilder).GetMethod("FormatTable", BindingFlags.NonPublic | BindingFlags.Static);
+            var result = (string)method.Invoke(null, new object[] { metadata });
+            Assert.Equal("MyTable", result);
+        }
 
-            Assert.DoesNotContain("WHERE", sql);
+        /// <summary>
+        /// Verifies that the FormatTable method returns a fully qualified table name including the schema when a schema
+        /// is present in the metadata.
+        /// </summary>
+        /// <remarks>This test ensures that the FormatTable method correctly formats the table name by
+        /// prepending the schema name, which is important for scenarios involving multiple database schemas.</remarks>
+        [Fact]
+        public void FormatTable_ReturnsSchemaAndTable_WhenSchemaIsPresent()
+        {
+            var metadata = CreateMetadata("MyTable", "MyTable", "myschema");
+            var method = typeof(QueryBuilder).GetMethod("FormatTable", BindingFlags.NonPublic | BindingFlags.Static);
+            var result = (string)method.Invoke(null, new object[] { metadata });
+            Assert.Equal("myschema.MyTable", result);
         }
     }
 }

@@ -211,7 +211,7 @@ namespace Hydrix.Tests
                     Levels = levels
                 });
 
-            sql = new Product().BuildQuery(builder);
+            sql = Product.BuildQuery<Product>(builder);
             var productResult = await sqlMaterializer.QueryAsync<Product>(
                 sql,
                 new

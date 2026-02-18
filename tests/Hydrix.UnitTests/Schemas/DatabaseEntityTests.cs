@@ -2,6 +2,7 @@
 using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Schemas;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -43,7 +44,8 @@ namespace Hydrix.UnitTests.Schemas
         /// inherits from the base class 'DatabaseEntity', which provides common properties and methods for database
         /// entities.</remarks>
         [Table("products", Schema = "dbo")]
-        private class Product : DatabaseEntity
+        private class Product :
+            DatabaseEntity, ITable
         {
             [Key]
             [Column("id")]
@@ -63,7 +65,8 @@ namespace Hydrix.UnitTests.Schemas
         /// property serves as the primary key for the order, while CustomerId identifies the associated customer. This
         /// class is mapped to the 'orders' table in the 'sales' schema.</remarks>
         [Table("orders", Schema = "sales")]
-        private class Order : DatabaseEntity
+        private class Order :
+            DatabaseEntity, ITable
         {
             [Key]
             [Column("id")]
@@ -82,7 +85,8 @@ namespace Hydrix.UnitTests.Schemas
         /// <remarks>This class is mapped to the 'customers' table in the 'sales' schema. It inherits from
         /// the DatabaseEntity class, which provides common properties for database entities.</remarks>
         [Table("customers", Schema = "sales")]
-        private class Customer : DatabaseEntity
+        private class Customer :
+            DatabaseEntity, ITable
         {
             [Key]
             [Column("id")]
@@ -104,7 +108,8 @@ namespace Hydrix.UnitTests.Schemas
         /// <remarks>Inherits from DatabaseEntity, which may provide additional properties or methods
         /// relevant to database entities.</remarks>
         [Table("agents")]
-        class Agent : DatabaseEntity
+        private class Agent :
+            DatabaseEntity, ITable
         {
             [Key]
             [Column("id")]
@@ -124,7 +129,8 @@ namespace Hydrix.UnitTests.Schemas
         /// customer and agent. The properties provide access to related entities and their corresponding foreign keys,
         /// enabling integration with relational database operations.</remarks>
         [Table("order_with_agents")]
-        class OrderWithAgent : DatabaseEntity
+        private class OrderWithAgent :
+            DatabaseEntity, ITable
         {
             [Key]
             [Column("id")]
@@ -173,7 +179,7 @@ namespace Hydrix.UnitTests.Schemas
         private class MainNoForeignKey
         {
             /// <summary>
-            /// Gets or sets the foreign entity associated with this record.    
+            /// Gets or sets the foreign entity associated with this record.
             /// </summary>
             /// <remarks>This property establishes a relationship to another entity, enabling
             /// navigation and data integrity between related records. Ensure that the referenced entity is properly set
@@ -188,7 +194,8 @@ namespace Hydrix.UnitTests.Schemas
         /// which may impact data integrity and certain ORM operations. Use caution when performing updates or deletes,
         /// as entity tracking and retrieval may be limited.</remarks>
         [Table("foreign")]
-        private class ForeignNoKey { }
+        private class ForeignNoKey
+        { }
 
         /// <summary>
         /// Represents the primary entity that includes a foreign key relationship to a related entity.
@@ -635,8 +642,7 @@ namespace Hydrix.UnitTests.Schemas
         [Fact]
         public void BuildQuery_GeneratesBasicSelect_ForSimpleEntity()
         {
-            var entity = new Product();
-            var sql = entity.BuildQuery();
+            var sql = Product.BuildQuery<Product>();
 
             Assert.Contains("SELECT", sql);
             Assert.Contains("FROM dbo.products p", sql);
@@ -657,8 +663,7 @@ namespace Hydrix.UnitTests.Schemas
         [Fact]
         public void BuildQuery_GeneratesSelectWithAlias()
         {
-            var entity = new Product();
-            var sql = entity.BuildQuery(alias: "p");
+            var sql = Product.BuildQuery<Product>();
 
             Assert.Contains("FROM dbo.products p", sql);
             Assert.Contains("p.id", sql);
@@ -676,12 +681,11 @@ namespace Hydrix.UnitTests.Schemas
         [Fact]
         public void BuildQuery_GeneratesSelectWithWhereClause()
         {
-            var entity = new Product();
             var where = WhereBuilder.Create()
                 .And("t0.price > @minPrice")
                 .And("t0.name LIKE @name");
 
-            var sql = entity.BuildQuery(where: where);
+            var sql = Product.BuildQuery<Product>(where: where);
 
             Assert.Contains("WHERE", sql);
             Assert.Contains("t0.price > @minPrice", sql);
@@ -699,8 +703,7 @@ namespace Hydrix.UnitTests.Schemas
         [Fact]
         public void BuildQuery_GeneratesJoin_ForForeignTable()
         {
-            var entity = new Order();
-            var sql = entity.BuildQuery();
+            var sql = Order.BuildQuery<Order>();
 
             Assert.Contains("SELECT", sql);
             Assert.Contains("FROM sales.orders o", sql);
@@ -719,8 +722,7 @@ namespace Hydrix.UnitTests.Schemas
         [Fact]
         public void BuildQuery_HandlesMultipleForeignTables()
         {
-            var entity = new OrderWithAgent();
-            var sql = entity.BuildQuery();
+            var sql = OrderWithAgent.BuildQuery<OrderWithAgent>();
 
             Assert.Contains("FROM order_with_agents owa", sql);
             Assert.Contains("INNER JOIN sales.customers c ON owa.CustomerId = c.Id", sql);
@@ -928,7 +930,7 @@ namespace Hydrix.UnitTests.Schemas
             };
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-            var metadata = method.Invoke(null, new object[] { type, "m" });
+            var metadata = method.Invoke(null, new object[] { type });
             // Não lança, join não é obrigatório
             Assert.NotNull(metadata);
         }
@@ -945,7 +947,7 @@ namespace Hydrix.UnitTests.Schemas
             var type = typeof(NoAttributeColumnEntity);
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-            var metadata = method.Invoke(null, new object[] { type, "n" });
+            var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
         }
 
@@ -962,7 +964,7 @@ namespace Hydrix.UnitTests.Schemas
             var type = typeof(KeyAndRequiredEntity);
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-            var metadata = method.Invoke(null, new object[] { type, "k" });
+            var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
         }
 
@@ -985,7 +987,7 @@ namespace Hydrix.UnitTests.Schemas
             };
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-            var metadata = method.Invoke(null, new object[] { type, "m" });
+            var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
         }
 
@@ -1008,7 +1010,7 @@ namespace Hydrix.UnitTests.Schemas
             };
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-            var metadata = method.Invoke(null, new object[] { type, "m" });
+            var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
         }
 
@@ -1025,7 +1027,7 @@ namespace Hydrix.UnitTests.Schemas
             var type = typeof(MultiForeignKeyNoneRequiredEntity);
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-            var metadata = method.Invoke(null, new object[] { type, "m" });
+            var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
         }
 
@@ -1042,7 +1044,7 @@ namespace Hydrix.UnitTests.Schemas
             var type = typeof(InvalidForeignKeyEntity);
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-            var metadata = method.Invoke(null, new object[] { type, "m" });
+            var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
         }
 

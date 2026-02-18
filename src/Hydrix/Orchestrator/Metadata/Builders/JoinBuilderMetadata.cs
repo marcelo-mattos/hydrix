@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Hydrix.Orchestrator.Metadata.Builders
 {
@@ -13,6 +14,14 @@ namespace Hydrix.Orchestrator.Metadata.Builders
     public sealed class JoinBuilderMetadata
     {
         /// <summary>
+        /// Gets the identifier of the entity associated with this instance.
+        /// </summary>
+        /// <remarks>This property provides the unique identifier for the entity, which can be used for
+        /// reference in various operations. It is important to note that the value is read-only and cannot be modified
+        /// after the instance is created.</remarks>
+        public string Entity { get; }
+
+        /// <summary>
         /// The name of the table participating in the join operation.
         /// </summary>
         public string Table { get; }
@@ -21,11 +30,6 @@ namespace Hydrix.Orchestrator.Metadata.Builders
         /// The schema that identifies the location of the table within the database.
         /// </summary>
         public string Schema { get; }
-
-        /// <summary>
-        /// The alias used for the column in SQL queries, typically in the format "TableName.ColumnName". Cannot be null or empty.
-        /// </summary>
-        public string Alias { get; }
 
         /// <summary>
         /// An array containing the names of the primary key columns that uniquely identify records in the table.
@@ -43,9 +47,11 @@ namespace Hydrix.Orchestrator.Metadata.Builders
         public bool IsRequiredJoin { get; }
 
         /// <summary>
-        /// The navigation property associated with the join, represented by a PropertyInfo object.
+        /// Gets the collection of foreign column metadata associated with this entity.
         /// </summary>
-        public PropertyInfo NavigationProperty { get; }
+        /// <remarks>This property provides read-only access to the metadata of foreign columns, which can
+        /// be useful for understanding the relationships between entities in a database context.</remarks>
+        public IReadOnlyList<ForeignColumnMetadata> Columns { get; }
 
         /// <summary>
         /// Initializes a new instance of the JoinBuilderMetadata class, providing metadata for configuring a join
@@ -54,30 +60,30 @@ namespace Hydrix.Orchestrator.Metadata.Builders
         /// <remarks>Use this constructor when defining join relationships in an object-relational mapping
         /// (ORM) context. Specifying primary and foreign keys, as well as join requirements, helps ensure correct
         /// mapping and query generation.</remarks>
+        /// <param name="entity">The identifier of the entity associated with this join metadata.</param>
         /// <param name="table">The name of the table participating in the join operation.</param>
         /// <param name="schema">The schema that identifies the location of the table within the database.</param>
-        /// <param name="alias">The alias used for the column in SQL queries, typically in the format "TableName.ColumnName". Cannot be null or empty.</param>
         /// <param name="primaryKeys">An array containing the names of the primary key columns that uniquely identify records in the table.</param>
         /// <param name="foreignKeys">An array containing the names of the foreign key columns used to establish relationships with other tables.</param>
         /// <param name="isRequiredJoin">A value indicating whether the join is required (<see langword="true"/>) or optional (<see
         /// langword="false"/>).</param>
-        /// <param name="navigationProperty">The navigation property associated with the join, represented by a PropertyInfo object.</param>
+        /// <param name="columns">A collection of foreign column metadata associated with this entity. Cannot be null.</param>
         public JoinBuilderMetadata(
+            string entity,
             string table,
             string schema,
-            string alias,
             string[] primaryKeys,
             string[] foreignKeys,
             bool isRequiredJoin,
-            PropertyInfo navigationProperty)
+            IReadOnlyList<ForeignColumnMetadata> columns)
         {
+            Entity = entity;
             Table = table;
             Schema = schema;
-            Alias = alias;
             PrimaryKeys = primaryKeys;
             ForeignKeys = foreignKeys;
             IsRequiredJoin = isRequiredJoin;
-            NavigationProperty = navigationProperty;
+            Columns = columns ?? throw new ArgumentNullException(nameof(columns), "Columns must not be null.");
         }
     }
 }
