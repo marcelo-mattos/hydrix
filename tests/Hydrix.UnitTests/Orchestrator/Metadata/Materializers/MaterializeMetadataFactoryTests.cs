@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Metadata.Materializers;
+using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Schemas.Contract;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,7 +9,7 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
 {
     /// <summary>
-    /// Unit tests for <see cref="MaterializeMetadataFactory"/>.
+    /// Unit tests for <see cref="MetadataFactory"/>.
     /// </summary>
     public class MaterializeMetadataFactoryTests
     {
@@ -41,14 +41,14 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
         }
 
         /// <summary>
-        /// Tests that <see cref="MaterializeMetadataFactory.CreateField"/> creates correct metadata and the setter works.
+        /// Tests that <see cref="MetadataFactory.CreateField"/> creates correct metadata and the setter works.
         /// </summary>
         [Fact]
         public void CreateField_CreatesCorrectMetadata_AndSetterWorks()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
             var attr = new ColumnAttribute("int_prop");
-            var metadata = MaterializeMetadataFactory.CreateField(prop, attr);
+            var metadata = MetadataFactory.CreateField(prop, attr);
 
             Assert.Equal(prop, metadata.Property);
             Assert.Equal(typeof(int), metadata.TargetType);
@@ -60,14 +60,14 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
         }
 
         /// <summary>
-        /// Tests that <see cref="MaterializeMetadataFactory.CreateEntity"/> creates correct metadata.
+        /// Tests that <see cref="MetadataFactory.CreateEntity"/> creates correct metadata.
         /// </summary>
         [Fact]
         public void CreateEntity_CreatesCorrectMetadata()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
             var attr = new ColumnAttribute("int_prop");
-            var fieldMap = new ColumnMap(prop, attr, typeof(int));
+            var fieldMap = new ColumnMap(prop, attr);
 
             var entityProp = typeof(Dummy).GetProperty(nameof(Dummy.EntityProp));
             var entityAttr = new ForeignTableAttribute("dummy_entity")
@@ -80,14 +80,14 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
             var fields = new List<ColumnMap> { fieldMap };
             var entities = new List<TableMap> { entityMap };
 
-            var metadata = MaterializeMetadataFactory.CreateEntity(fields, entities);
+            var metadata = MetadataFactory.CreateEntity(fields, entities);
 
             Assert.Equal(fields, metadata.Fields);
             Assert.Equal(entities, metadata.Entities);
         }
 
         /// <summary>
-        /// Tests that <see cref="MaterializeMetadataFactory.CreateNestedEntity"/> creates correct metadata and delegates work.
+        /// Tests that <see cref="MetadataFactory.CreateNestedEntity"/> creates correct metadata and delegates work.
         /// </summary>
         [Fact]
         public void CreateNestedEntity_CreatesCorrectMetadata_AndDelegatesWork()
@@ -98,7 +98,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
                 Schema = "dummy_schema",
                 PrimaryKeys = new[] { "dummy_key" }
             };
-            var metadata = MaterializeMetadataFactory.CreateNestedEntity(prop, attr);
+            var metadata = MetadataFactory.CreateNestedEntity(prop, attr);
 
             Assert.Equal(prop, metadata.Property);
             Assert.Equal(attr, metadata.Attribute);
@@ -114,13 +114,13 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
         }
 
         /// <summary>
-        /// Tests that <see cref="MaterializeMetadataFactory.CreateSetter"/> sets property value.
+        /// Tests that <see cref="MetadataFactory.CreateSetter"/> sets property value.
         /// </summary>
         [Fact]
         public void CreateSetter_SetsPropertyValue()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
-            var setter = MaterializeMetadataFactory.CreateSetter(prop);
+            var setter = MetadataFactory.CreateSetter(prop);
 
             var dummy = new Dummy();
             setter(dummy, 99);
@@ -128,12 +128,12 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
         }
 
         /// <summary>
-        /// Tests that <see cref="MaterializeMetadataFactory.CreateFactory"/> creates a new instance.
+        /// Tests that <see cref="MetadataFactory.CreateFactory"/> creates a new instance.
         /// </summary>
         [Fact]
         public void CreateFactory_CreatesNewInstance()
         {
-            var factory = MaterializeMetadataFactory.CreateFactory(typeof(Dummy));
+            var factory = MetadataFactory.CreateFactory(typeof(Dummy));
             var instance = factory();
             Assert.IsType<Dummy>(instance);
         }

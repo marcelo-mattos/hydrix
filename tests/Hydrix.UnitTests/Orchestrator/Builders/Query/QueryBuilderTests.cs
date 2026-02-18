@@ -1,6 +1,7 @@
 ﻿using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Metadata.Builders;
+using Hydrix.Orchestrator.Metadata.Internals;
 using System.Collections.Generic;
 using Xunit;
 
@@ -20,7 +21,12 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         /// Represents a dummy entity used for testing purposes.
         /// </summary>
         private class DummyEntity
-        { }
+        {
+            /// <summary>
+            /// Gets or sets a value for demonstration or testing purposes.
+            /// </summary>
+            public object DummyProperty { get; set; }
+        }
 
         /// <summary>
         /// Creates and configures metadata for an entity builder, specifying the associated table, schema, alias,
@@ -61,7 +67,12 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         {
             var columns = new List<ColumnBuilderMetadata>
             {
-                new ColumnBuilderMetadata("Id", "id", true, true, typeof(DummyEntity).GetProperty("Equals")) // Just a dummy PropertyInfo
+                new ColumnBuilderMetadata(
+                    "Id",
+                    "id",
+                    true,
+                    true,
+                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty("DummyProperty")))
             };
             var joins = new List<JoinBuilderMetadata>
             {
@@ -94,7 +105,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         public void Build_GeneratesQuery_WithWhereClause()
         {
             var metadata = CreateMetadata();
-            var where = ConditionBuilder.Create()
+            var where = WhereBuilder.Create()
                 .And("o.Id > @minId")
                 .Or("o.Status = @status");
 
@@ -146,7 +157,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         public void Build_GeneratesQuery_WithEmptyWhereClause()
         {
             var metadata = CreateMetadata();
-            var where = ConditionBuilder.Create(); // No conditions
+            var where = WhereBuilder.Create(); // No conditions
             var sql = QueryBuilder.Build(metadata, where);
 
             Assert.DoesNotContain("WHERE", sql);

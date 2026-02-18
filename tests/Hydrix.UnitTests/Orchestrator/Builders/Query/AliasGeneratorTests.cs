@@ -1,6 +1,6 @@
 ﻿using Hydrix.Orchestrator.Builders.Query;
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Builders.Query
@@ -69,14 +69,14 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         [Fact]
         public void FromName_AppendsNumber_WhenAliasAlreadyUsed()
         {
-            var usedAliases = new ConcurrentDictionary<string, byte>();
-            usedAliases.TryAdd("od", 0); // Simulate "od" already used
+            var usedAliases = new HashSet<string>();
+            usedAliases.Add("od"); // Simulate "od" already used
 
             var alias = AliasGenerator.FromName("OrderDetail", usedAliases);
             Assert.Equal("od1", alias);
 
             // Add "od1" and test next collision
-            usedAliases.TryAdd("od1", 0);
+            usedAliases.Add("od1");
             var alias2 = AliasGenerator.FromName("OrderDetail", usedAliases);
             Assert.Equal("od2", alias2);
         }
@@ -91,10 +91,10 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         [Fact]
         public void FromName_UsesBaseAlias_WhenNotUsed()
         {
-            var usedAliases = new ConcurrentDictionary<string, byte>();
+            var usedAliases = new HashSet<string>();
             var alias = AliasGenerator.FromName("Customer", usedAliases);
             Assert.Equal("c", alias);
-            Assert.True(usedAliases.ContainsKey("c"));
+            Assert.Contains("c", usedAliases);
         }
 
         /// <summary>

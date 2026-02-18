@@ -1,6 +1,7 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Metadata.Builders;
+using Hydrix.Orchestrator.Metadata.Internals;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -126,8 +127,18 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
         {
             var columns = new List<ColumnBuilderMetadata>
             {
-                new ColumnBuilderMetadata("Id", "id", true, true, typeof(DummyEntity).GetProperty(nameof(DummyEntity.Id))),
-                new ColumnBuilderMetadata("Name", "name", false, false, typeof(DummyEntity).GetProperty(nameof(DummyEntity.Name)))
+                new ColumnBuilderMetadata(
+                    "Id",
+                    "id",
+                    true,
+                    true,
+                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty(nameof(DummyEntity.Id)))),
+                new ColumnBuilderMetadata(
+                    "Name",
+                    "name",
+                    false,
+                    false,
+                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty(nameof(DummyEntity.Name))))
             };
 
             var metadata = new EntityBuilderMetadata(
@@ -164,8 +175,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query
                     "id",
                     true,
                     true,
-                    typeof(DummyEntity)
-                        .GetProperty(nameof(DummyEntity.Id))),
+                    MetadataFactory.CreateGetter(typeof(DummyEntity).GetProperty(nameof(DummyEntity.Id))))
             };
 
             var joinProperty = typeof(DummyEntity)

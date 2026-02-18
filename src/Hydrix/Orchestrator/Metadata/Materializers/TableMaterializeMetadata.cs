@@ -1,5 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
+using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -164,16 +165,9 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
                         .GetCustomAttributes(typeof(ColumnAttribute), false)
                         .First();
 
-                    var targetType = p.PropertyType;
-
-                    if (targetType.IsGenericType &&
-                        targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                        targetType = Nullable.GetUnderlyingType(targetType);
-
                     return new ColumnMap(
                         p,
-                        attr,
-                        targetType);
+                        attr);
                 })
                 .ToList();
 
@@ -187,7 +181,7 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
                         .First()))
                 .ToList();
 
-            return MaterializeMetadataFactory.CreateEntity(
+            return MetadataFactory.CreateEntity(
                 fields,
                 entities);
         }

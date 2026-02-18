@@ -58,8 +58,8 @@ while preserving a stable and predictable public API.
 
 ### 🚀 Improved
 
-- **ConditionBuilder**  
-  Expanded the `ConditionBuilder` API with more expressive and flexible options
+- **WhereBuilder**  
+  Expanded the `WhereBuilder` API with more expressive and flexible options
   for constructing complex WHERE clauses while maintaining explicit SQL semantics.
 
 - **Entity mapping performance**  

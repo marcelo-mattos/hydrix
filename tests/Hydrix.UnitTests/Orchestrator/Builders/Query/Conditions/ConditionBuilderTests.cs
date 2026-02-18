@@ -6,31 +6,31 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
-    /// Contains unit tests for the ConditionBuilder class, verifying its construction, clearing, and SQL clause building behavior.
+    /// Contains unit tests for the WhereBuilder class, verifying its construction, clearing, and SQL clause building behavior.
     /// </summary>
-    public partial class ConditionBuilderTests
+    public partial class WhereBuilderTests
     {
         /// <summary>
-        /// Builds a SQL WHERE clause by applying the specified configuration action to a ConditionBuilder instance.
+        /// Builds a SQL WHERE clause by applying the specified configuration action to a WhereBuilder instance.
         /// </summary>
-        /// <param name="builderAction">An action that configures the ConditionBuilder to define the conditions for the WHERE clause. Cannot be null.</param>
+        /// <param name="builderAction">An action that configures the WhereBuilder to define the conditions for the WHERE clause. Cannot be null.</param>
         /// <returns>A string containing the generated SQL WHERE clause based on the configured conditions.</returns>
-        private static string BuildWhere(Action<ConditionBuilder> builderAction)
+        private static string BuildWhere(Action<WhereBuilder> builderAction)
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             builderAction(builder);
             return builder.Build();
         }
 
         /// <summary>
-        /// Verifies that Create returns a new instance of ConditionBuilder.
+        /// Verifies that Create returns a new instance of WhereBuilder.
         /// </summary>
         [Fact]
         public void Create_ReturnsNewInstance()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             Assert.NotNull(builder);
-            Assert.IsType<ConditionBuilder>(builder);
+            Assert.IsType<WhereBuilder>(builder);
         }
 
         /// <summary>
@@ -39,9 +39,9 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Clear_EmptiesBuilder_Chainable()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             // Add a token using reflection for test purposes
-            var tokensField = typeof(ConditionBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tokensField = typeof(WhereBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
             var tokens = (System.Collections.IList)tokensField.GetValue(builder);
             tokens.Add("Id = 1");
             Assert.Single(tokens);
@@ -57,7 +57,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Build_NoConditions_ReturnsEmptyString()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             Assert.Equal(string.Empty, builder.Build());
         }
 
@@ -67,14 +67,14 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Build_WithConditions_ReturnsWhereClause()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             // Add a token using reflection for test purposes
-            var tokensField = typeof(ConditionBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tokensField = typeof(WhereBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
             var tokens = (System.Collections.IList)tokensField.GetValue(builder);
             tokens.Add("Id = 1");
 
             // Use reflection to invoke BuildInternal
-            var buildInternalMethod = typeof(ConditionBuilder).GetMethod("BuildInternal", BindingFlags.NonPublic | BindingFlags.Instance);
+            var buildInternalMethod = typeof(WhereBuilder).GetMethod("BuildInternal", BindingFlags.NonPublic | BindingFlags.Instance);
             if (buildInternalMethod == null)
                 throw new InvalidOperationException("BuildInternal method not found.");
 

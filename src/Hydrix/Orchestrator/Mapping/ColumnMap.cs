@@ -1,4 +1,4 @@
-﻿using Hydrix.Orchestrator.Metadata.Materializers;
+﻿using Hydrix.Orchestrator.Metadata.Internals;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
@@ -81,29 +81,25 @@ namespace Hydrix.Orchestrator.Mapping
         /// </summary>
         /// <param name="property">The property to be mapped to a SQL field. Cannot be null.</param>
         /// <param name="attribute">The SQL field attribute that provides mapping metadata for the property. Cannot be null.</param>
-        /// <param name="targetType">The target type that the property value will be converted to when mapping to or from the SQL field. Cannot
-        /// be null.</param>
         public ColumnMap(
             PropertyInfo property,
-            ColumnAttribute attribute,
-            Type targetType)
+            ColumnAttribute attribute)
         {
             Property = property;
             Attribute = attribute;
 
+            var underlying = Nullable.GetUnderlyingType(property.PropertyType);
+
             var isNullable =
-                !property.PropertyType.IsValueType ||
-                Nullable.GetUnderlyingType(property.PropertyType) != null;
+                underlying != null ||
+                !property.PropertyType.IsValueType;
 
-            TargetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-            Setter = MaterializeMetadataFactory.CreateSetter(property);
+            TargetType = underlying ?? property.PropertyType;
+            Setter = MetadataFactory.CreateSetter(property);
 
-            if (isNullable)
-                DefaultValue = null;
-            else
-                DefaultValue = TargetType.IsValueType
-                    ? Activator.CreateInstance(TargetType)
-                    : null;
+            DefaultValue = isNullable
+                ? null
+                : DefaultValueFactoryCache.Get(TargetType)();
         }
     }
 }

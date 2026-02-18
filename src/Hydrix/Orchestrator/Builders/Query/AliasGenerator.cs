@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Hydrix.Orchestrator.Builders.Query
@@ -18,9 +18,12 @@ namespace Hydrix.Orchestrator.Builders.Query
         /// Uses uppercase letters and converts them to lowercase.
         /// Handles collision by appending incremental numbers.
         /// </summary>
+        /// <param name="name">The PascalCase name from which to generate the alias.</param>
+        /// <param name="usedAliases">An optional set of already used aliases to ensure uniqueness. If not provided, uniqueness is not enforced.</param>
+        /// <returns>A unique, lowercase alias derived from the provided name.</returns>
         public static string FromName(
             string name,
-            ConcurrentDictionary<string, byte> usedAliases = null)
+            HashSet<string> usedAliases = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name cannot be null or empty.");
@@ -33,9 +36,10 @@ namespace Hydrix.Orchestrator.Builders.Query
             var alias = baseAlias;
             var counter = 1;
 
-            while (!usedAliases.TryAdd(alias, 0))
+            while (usedAliases.Contains(alias))
                 alias = $"{baseAlias}{counter++}";
 
+            usedAliases.Add(alias);
             return alias;
         }
 

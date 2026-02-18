@@ -123,16 +123,14 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var property = typeof(TestEntity).GetProperty(nameof(TestEntity.Id));
             var attribute = new ColumnAttribute("id");
-            var targetType = typeof(int);
             var defaultValue = 0;
 
             // Act
-            var map = new ColumnMap(property, attribute, targetType);
+            var map = new ColumnMap(property, attribute);
 
             // Assert
             Assert.Equal(property, map.Property);
             Assert.Equal(attribute, map.Attribute);
-            Assert.Equal(targetType, map.TargetType);
             Assert.Equal(defaultValue, map.DefaultValue);
             Assert.NotNull(map.Setter);
         }
@@ -149,8 +147,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var property = typeof(TestEntity).GetProperty(nameof(TestEntity.Id));
             var attribute = new ColumnAttribute("id");
-            var targetType = typeof(int);
-            var map = new ColumnMap(property, attribute, targetType);
+            var map = new ColumnMap(property, attribute);
             var entity = new TestEntity();
 
             // Act
@@ -173,11 +170,9 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var property = typeof(RefEntity).GetProperty(nameof(RefEntity.Name));
             var attribute = new ColumnAttribute("name");
-            var targetType = typeof(string);
 
             // Act
-            var map = new ColumnMap(property, attribute, targetType);
-
+            var map = new ColumnMap(property, attribute);
             // Assert
             Assert.Null(map.DefaultValue);
         }
@@ -194,10 +189,9 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var property = typeof(BoolEntity).GetProperty(nameof(BoolEntity.Flag));
             var attribute = new ColumnAttribute("flag");
-            var targetType = typeof(bool);
 
             // Act
-            var map = new ColumnMap(property, attribute, targetType);
+            var map = new ColumnMap(property, attribute);
 
             // Assert
             Assert.Equal(false, map.DefaultValue); // default(bool) == false
@@ -217,10 +211,9 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var property = typeof(DateEntity).GetProperty(nameof(DateEntity.Created));
             var attribute = new ColumnAttribute("created");
-            var targetType = typeof(DateTime);
 
             // Act
-            var map = new ColumnMap(property, attribute, targetType);
+            var map = new ColumnMap(property, attribute);
 
             // Assert
             Assert.Equal(default(DateTime), map.DefaultValue); // default(DateTime) == 01/01/0001 00:00:00
@@ -238,9 +231,8 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         {
             var property = typeof(EnumEntity).GetProperty(nameof(EnumEntity.State));
             var attribute = new ColumnAttribute("state");
-            var targetType = typeof(Status);
 
-            var map = new ColumnMap(property, attribute, targetType);
+            var map = new ColumnMap(property, attribute);
 
             Assert.Equal(Status.None, map.DefaultValue);
         }

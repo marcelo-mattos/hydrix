@@ -3,6 +3,7 @@ using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Metadata.Builders;
+using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Concurrent;
@@ -33,16 +34,6 @@ namespace Hydrix.Schemas
             = new ConcurrentDictionary<Type, EntityBuilderMetadata>();
 
         /// <summary>
-        /// Gets the thread-safe dictionary that stores aliases as key-value pairs, where the key is a string and the
-        /// value is a byte.
-        /// </summary>
-        /// <remarks>This dictionary can be accessed concurrently by multiple threads without requiring
-        /// additional synchronization. It is suitable for scenarios where aliases need to be managed efficiently in a
-        /// multi-threaded environment.</remarks>
-        private static readonly ConcurrentDictionary<string, byte> _aliases
-            = new ConcurrentDictionary<string, byte>();
-
-        /// <summary>
         /// Retrieves the metadata associated with the specified entity type, utilizing caching to optimize repeated
         /// access.
         /// </summary>
@@ -53,7 +44,7 @@ namespace Hydrix.Schemas
         /// <returns>An instance of EntityBuilderMetadata containing the metadata for the specified entity type.</returns>
         public static EntityBuilderMetadata GetMetadata(
             Type type,
-            string alias)
+            string alias = "")
             => _cache.GetOrAdd(
                 type,
                 t => BuildMetadata(t, alias));
@@ -118,20 +109,15 @@ namespace Hydrix.Schemas
         private void ValidateInternal(
             List<ValidationResult> results)
         {
-            var properties = GetType()
-                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .Where(p =>
-                    p.GetCustomAttribute<NotMappedAttribute>() is null &&
-                    p.GetCustomAttribute<ForeignTableAttribute>() is null)
-                .ToArray();
+            var metadata = GetMetadata(GetType());
 
-            foreach (var property in properties)
+            foreach (var column in metadata.Columns)
             {
-                var value = property.GetValue(this);
+                var value = column.Getter(this);
 
                 var context = new ValidationContext(this)
                 {
-                    MemberName = property.Name
+                    MemberName = column.PropertyName
                 };
 
                 Validator.TryValidateProperty(
@@ -211,12 +197,15 @@ namespace Hydrix.Schemas
         /// <param name="alias">The alias to use. If this value is null or an empty string, a default alias is generated from the value of
         /// the name parameter.</param>
         /// <param name="name">The name from which to generate a default alias if the alias parameter is null or empty.</param>
+        /// <param name="usedAliases">An optional set of already used aliases to ensure uniqueness. If not provided, uniqueness is not enforced.</param>
+        /// <returns>A unique, lowercase alias derived from the provided name.</returns>
         /// <returns>A string containing either the provided alias or a generated alias based on the name parameter.</returns>
         private static string GetAlias(
             string alias,
-            string name)
+            string name,
+            HashSet<string> usedAliases)
             => string.IsNullOrEmpty(alias)
-                ? AliasGenerator.FromName(name, _aliases)
+                ? AliasGenerator.FromName(name, usedAliases)
                 : alias;
 
         /// <summary>
@@ -233,19 +222,19 @@ namespace Hydrix.Schemas
             Type type,
             string alias)
         {
+            var usedAliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var tableAttr = type.GetCustomAttribute<TableAttribute>();
 
             var table = tableAttr?.Name ?? type.Name;
             var schema = tableAttr?.Schema;
             var mainAlias = GetAlias(
                 alias,
-                type.Name);
+                type.Name,
+                usedAliases);
 
+            var validatableColumns = new List<ColumnBuilderMetadata>();
             var columns = new List<ColumnBuilderMetadata>();
             var joins = new List<JoinBuilderMetadata>();
-
-            _aliases.Clear();
-            _aliases.TryAdd(mainAlias, 0);
 
             foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
@@ -267,13 +256,10 @@ namespace Hydrix.Schemas
                         return fkProp.GetCustomAttribute<RequiredAttribute>() != null;
                     });
 
-                    var joinIndex = 0;
                     var foreignAlias = GetAlias(
                         foreignAttr.Alias,
-                        foreignAttr.Name);
-
-                    while (!_aliases.TryAdd(foreignAlias, 0))
-                        foreignAlias = $"{GetAlias(foreignAttr.Alias, foreignAttr.Name)}{++joinIndex}";
+                        foreignAttr.Name,
+                        usedAliases);
 
                     joins.Add(new JoinBuilderMetadata(
                         foreignAttr.Name,
@@ -294,7 +280,7 @@ namespace Hydrix.Schemas
                     columnAttr?.Name ?? prop.Name,
                     prop.GetCustomAttribute<KeyAttribute>() != null,
                     prop.GetCustomAttribute<RequiredAttribute>() != null,
-                    prop));
+                    MetadataFactory.CreateGetter(prop)));
             }
 
             return new EntityBuilderMetadata(
@@ -316,12 +302,12 @@ namespace Hydrix.Schemas
         /// and ForeignTableAttribute, if present. This method is intended for use with entity types that follow the
         /// expected attribute-based schema conventions.</remarks>
         /// <param name="alias">An optional string to use as a table alias for the main entity in the generated SQL query. If not provided, no alias is used.</param>
-        /// <param name="where">A ConditionBuilder instance that specifies the conditions to apply to the WHERE clause of the generated SQL
+        /// <param name="where">A WhereBuilder instance that specifies the conditions to apply to the WHERE clause of the generated SQL
         /// query.</param>
         /// <returns>A string containing the complete SQL SELECT query, including any specified WHERE conditions and left joins
         /// for foreign tables.</returns>
         public string BuildQuery(
-            ConditionBuilder where = null,
+            WhereBuilder where = null,
             string alias = "")
         {
             var metadata = GetMetadata(

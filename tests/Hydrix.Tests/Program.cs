@@ -43,7 +43,7 @@ namespace Hydrix.Tests
             ILogger logger = loggerFactory.CreateLogger("Program");
 
             var sqlMaterializer =
-                new SqlMaterializer(
+                new Materializer(
                     new SqlConnection("Data Source=localhost;Database=HydrixTest;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"),
                     logger);
 
@@ -66,7 +66,7 @@ namespace Hydrix.Tests
                 var product = new Product()
                 {
                     Id = Guid.NewGuid(),
-                    CustomerId = customerId,
+                    CustomerId = i % 3 == 0 ? (Guid?)null : customerId,
                     Name = Faker.StringFaker.AlphaNumeric(50),
                     Ean = Faker.StringFaker.Numeric(13),
                     Quantity = (decimal)Faker.NumberFaker.Number(1, 35),
@@ -152,7 +152,7 @@ namespace Hydrix.Tests
             DateTime? endDate = new DateTime(1999, 12, 31);
             int[] levels = new int[] { 3, 5, 7 };
 
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             var where = builder
                 .AndIf(isActive.HasValue, "c.IsActive = @IsActive")
                 .AndIf(startDate.HasValue, "c.BirthDate >= @StartDate")
@@ -172,7 +172,7 @@ namespace Hydrix.Tests
                         },
                         new[]
                         {
-                            "c.IsActive = @IsActive",
+                            "(c.IsActive IS NULL OR c.IsActive = @IsActive)",
                             "c.Level IN (@Levels)"
                         })
                     .OrAndGroupIf(

@@ -8,9 +8,9 @@ using Xunit;
 namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
-    /// Unit tests for the internal methods of ConditionBuilder.
+    /// Unit tests for the internal methods of WhereBuilder.
     /// </summary>
-    public partial class ConditionBuilderTests
+    public partial class WhereBuilderTests
     {
         /// <summary>
         /// Invokes a non-public instance method on the specified object using reflection.
@@ -54,16 +54,16 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         }
 
         /// <summary>
-        /// Retrieves the list of tokens used by the specified <see cref="ConditionBuilder"/> instance.
+        /// Retrieves the list of tokens used by the specified <see cref="WhereBuilder"/> instance.
         /// </summary>
-        /// <remarks>The returned list reflects the internal state of the <see cref="ConditionBuilder"/>.
+        /// <remarks>The returned list reflects the internal state of the <see cref="WhereBuilder"/>.
         /// Modifying the list may affect the builder's behavior.</remarks>
-        /// <param name="builder">The <see cref="ConditionBuilder"/> instance from which to retrieve the tokens. Cannot be null.</param>
-        /// <returns>A list of strings containing the tokens associated with the specified <see cref="ConditionBuilder"/>
+        /// <param name="builder">The <see cref="WhereBuilder"/> instance from which to retrieve the tokens. Cannot be null.</param>
+        /// <returns>A list of strings containing the tokens associated with the specified <see cref="WhereBuilder"/>
         /// instance.</returns>
-        private static List<string> GetTokens(ConditionBuilder builder)
+        private static List<string> GetTokens(WhereBuilder builder)
         {
-            var field = typeof(ConditionBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
+            var field = typeof(WhereBuilder).GetField("_tokens", BindingFlags.NonPublic | BindingFlags.Instance);
             return (List<string>)field.GetValue(builder);
         }
 
@@ -73,7 +73,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void BuildInternal_Returns_Empty_When_NoTokens()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             var result = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Equal(string.Empty, result);
         }
@@ -84,7 +84,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Add_Adds_First_Condition_Without_Operator()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "Add", "A = 1", false, false);
             var tokens = GetTokens(builder);
             Assert.Single(tokens);
@@ -97,7 +97,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Add_Adds_Second_Condition_With_And()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "Add", "A = 1", false, false);
             InvokePrivate(builder, "Add", "B = 2", false, false);
             var tokens = GetTokens(builder);
@@ -111,7 +111,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Add_Adds_Condition_With_Or()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "Add", "A = 1", false, false);
             InvokePrivate(builder, "Add", "B = 2", false, true);
             var tokens = GetTokens(builder);
@@ -124,7 +124,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Add_Adds_Condition_With_Not()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "Add", "A = 1", true, false);
             var tokens = GetTokens(builder);
             Assert.Equal("NOT A = 1", tokens[0]);
@@ -136,7 +136,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Add_Ignores_Empty_Or_Whitespace_Condition()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "Add", "   ", false, false);
             var tokens = GetTokens(builder);
             Assert.Empty(tokens);
@@ -148,7 +148,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void Add_Returns_Same_Instance()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             var result = InvokePrivate(builder, "Add", "A = 1", false, false);
             Assert.Same(builder, result);
         }
@@ -159,7 +159,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_AndOr_Adds_Group_With_Or()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, true, new[] { "A = 1", "B = 2" });
@@ -173,7 +173,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_AndOr_Adds_Group_With_Not()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 true, true, new[] { "A = 1", "B = 2" });
@@ -187,7 +187,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_OrAnd_Adds_Group_With_And()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, false, new[] { "A = 1", "B = 2" });
@@ -201,7 +201,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_Ignores_Empty_Conditions()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, true, new[] { "   ", null, "" });
@@ -215,7 +215,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_Returns_Same_Instance()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             var result = InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, true, new[] { "A = 1" });
@@ -228,11 +228,11 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_Action_Adds_Nested_Group()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "Add", "A = 1", false, false);
             InvokePrivateOverload(builder, "AddGroup",
-                new[] { typeof(Action<ConditionBuilder>), typeof(bool), typeof(bool) },
-                new Action<ConditionBuilder>(g =>
+                new[] { typeof(Action<WhereBuilder>), typeof(bool), typeof(bool) },
+                new Action<WhereBuilder>(g =>
                 {
                     InvokePrivate(g, "Add", "B = 2", false, false);
                     InvokePrivate(g, "Add", "C = 3", false, false);
@@ -247,11 +247,11 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_Action_Adds_Nested_Group_With_Not_And_Or()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "Add", "A = 1", false, false);
             InvokePrivateOverload(builder, "AddGroup",
-                new[] { typeof(Action<ConditionBuilder>), typeof(bool), typeof(bool) },
-                new Action<ConditionBuilder>(g =>
+                new[] { typeof(Action<WhereBuilder>), typeof(bool), typeof(bool) },
+                new Action<WhereBuilder>(g =>
                 {
                     InvokePrivate(g, "Add", "B = 2", false, false);
                 }), true, true);
@@ -265,16 +265,16 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_Action_Ignores_Empty_Group()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
-                new[] { typeof(Action<ConditionBuilder>), typeof(bool), typeof(bool) },
-                new Action<ConditionBuilder>(g => { }), false, false);
+                new[] { typeof(Action<WhereBuilder>), typeof(bool), typeof(bool) },
+                new Action<WhereBuilder>(g => { }), false, false);
             var sql = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Equal(string.Empty, sql);
         }
 
         /// <summary>
-        /// Verifies that the AddGroup method returns the same ConditionBuilder instance when the conditions parameter
+        /// Verifies that the AddGroup method returns the same WhereBuilder instance when the conditions parameter
         /// is null.
         /// </summary>
         /// <remarks>This test ensures that invoking AddGroup with a null conditions argument does not
@@ -283,7 +283,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_Returns_Same_Instance_When_Conditions_IsNull()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             var result = InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, false, null);
@@ -292,7 +292,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         }
 
         /// <summary>
-        /// Verifies that invoking the AddGroup method with an empty conditions array returns the same ConditionBuilder
+        /// Verifies that invoking the AddGroup method with an empty conditions array returns the same WhereBuilder
         /// instance and does not modify its state.
         /// </summary>
         /// <remarks>This test ensures that when no conditions are provided to AddGroup, the method does
@@ -301,7 +301,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_Returns_Same_Instance_When_Conditions_IsEmpty()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             var result = InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, false, new string[0]);
@@ -320,7 +320,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_AndOr_Adds_Group_With_Or_Without_Not()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, true, new[] { "A = 1", "B = 2" });
@@ -338,7 +338,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_OrAnd_Adds_Group_With_And_Without_Not()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 false, false, new[] { "A = 1", "B = 2" });
@@ -356,7 +356,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddGroup_AndOr_Adds_Group_With_And_With_Not()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 true, true, new[] { "A = 1", "B = 2" });
@@ -370,11 +370,11 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         /// </summary>
         /// <remarks>This test ensures that when AddGroup is invoked with the appropriate parameters, the
         /// resulting SQL condition includes both the AND operator and a NOT clause as expected. It validates the
-        /// correct construction of grouped conditions in the ConditionBuilder.</remarks>
+        /// correct construction of grouped conditions in the WhereBuilder.</remarks>
         [Fact]
         public void AddGroup_OrAnd_Adds_Group_With_And_With_Not()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivateOverload(builder, "AddGroup",
                 new[] { typeof(bool), typeof(bool), typeof(string[]) },
                 true, false, new[] { "A = 1", "B = 2" });
@@ -388,7 +388,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddAndOrGroup_Adds_Or_Group_With_And()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "AddAndOrGroup", false, new[] { "A = 1", "B = 2" });
             var sql = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Contains("(A = 1 OR B = 2)", sql);
@@ -400,7 +400,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddAndOrGroup_Adds_Not_Or_Group()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "AddAndOrGroup", true, new[] { "A = 1", "B = 2" });
             var sql = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Contains("NOT (A = 1 OR B = 2)", sql);
@@ -412,7 +412,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddOrAndGroup_Adds_And_Group_With_Or()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "AddOrAndGroup", false, new[] { "A = 1", "B = 2" });
             var sql = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Contains("(A = 1 AND B = 2)", sql);
@@ -424,7 +424,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddOrAndGroup_Adds_Not_And_Group()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "AddOrAndGroup", true, new[] { "A = 1", "B = 2" });
             var sql = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Contains("NOT (A = 1 AND B = 2)", sql);
@@ -436,7 +436,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddAndOrGroup_Ignores_Empty_Conditions()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "AddAndOrGroup", false, new[] { "   ", null, "" });
             var sql = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Equal(string.Empty, sql);
@@ -448,7 +448,7 @@ namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
         [Fact]
         public void AddOrAndGroup_Ignores_Empty_Conditions()
         {
-            var builder = ConditionBuilder.Create();
+            var builder = WhereBuilder.Create();
             InvokePrivate(builder, "AddOrAndGroup", false, new[] { "   ", null, "" });
             var sql = (string)InvokePrivate(builder, "BuildInternal");
             Assert.Equal(string.Empty, sql);

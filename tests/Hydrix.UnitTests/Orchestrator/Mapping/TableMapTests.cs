@@ -78,7 +78,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
-        /// Dummy implementation of ISqlEntity for testing purposes.
+        /// Dummy implementation of ITable for testing purposes.
         /// </summary>
         public class DummyEntity : ITable
         {

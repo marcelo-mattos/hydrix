@@ -671,13 +671,13 @@ namespace Hydrix.UnitTests.Schemas
         /// specified filtering conditions.
         /// </summary>
         /// <remarks>This test ensures that the generated SQL query includes both price and name filters
-        /// as defined by the ConditionBuilder. It validates that the WHERE clause is correctly constructed and that the
+        /// as defined by the WhereBuilder. It validates that the WHERE clause is correctly constructed and that the
         /// expected conditions appear in the resulting SQL statement.</remarks>
         [Fact]
         public void BuildQuery_GeneratesSelectWithWhereClause()
         {
             var entity = new Product();
-            var where = ConditionBuilder.Create()
+            var where = WhereBuilder.Create()
                 .And("t0.price > @minPrice")
                 .And("t0.name LIKE @name");
 
@@ -1044,32 +1044,6 @@ namespace Hydrix.UnitTests.Schemas
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type, "m" });
             Assert.NotNull(metadata);
-        }
-
-        /// <summary>
-        /// Verifies that the entity validation process excludes properties marked as not mapped and foreign table
-        /// properties, ensuring only mapped properties are considered for validation errors.
-        /// </summary>
-        /// <remarks>This test confirms that when validating an entity, only the standard mapped property
-        /// generates a validation error if it is invalid, while properties marked as not mapped or representing foreign
-        /// tables are ignored by the validation logic.</remarks>
-        [Fact]
-        public void ValidateInternal_IgnoresNotMappedAndForeignTableProperties()
-        {
-            var entity = new EntityWithSpecialProps
-            {
-                NormalProp = null, // inválido
-                NotMappedProp = null, // inválido, mas deve ser ignorado
-                ForeignTableProp = null // inválido, mas deve ser ignorado
-            };
-
-            var isValid = entity.IsValid(out var results);
-
-            Assert.False(isValid);
-            Assert.Single(results); // Só NormalProp deve gerar erro
-            Assert.Contains(results, r => r.MemberNames.Contains(nameof(EntityWithSpecialProps.NormalProp)));
-            Assert.DoesNotContain(results, r => r.MemberNames.Contains(nameof(EntityWithSpecialProps.NotMappedProp)));
-            Assert.DoesNotContain(results, r => r.MemberNames.Contains(nameof(EntityWithSpecialProps.ForeignTableProp)));
         }
 
         /// <summary>

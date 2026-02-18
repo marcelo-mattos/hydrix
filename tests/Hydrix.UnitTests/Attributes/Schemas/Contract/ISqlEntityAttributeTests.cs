@@ -10,15 +10,15 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
     /// attribute types.
     /// </summary>
     /// <remarks>This class contains tests to ensure that the SqlEntityAttribute type implements the
-    /// ISqlEntityAttribute interface, and that ISqlEntityAttribute inherits from ISqlSchemaAttribute. These tests help
+    /// ITableAttribute interface, and that ITableAttribute inherits from ISqlSchemaAttribute. These tests help
     /// maintain the integrity of the type hierarchy for SQL-related attributes.</remarks>
-    public class ISqlEntityAttributeTestsImpl
+    public class ITableAttributeTestsImpl
     {
         /// <summary>
-        /// Verifies that the SqlEntityAttribute type implements the ISqlEntityAttribute interface.
+        /// Verifies that the SqlEntityAttribute type implements the ITableAttribute interface.
         /// </summary>
         [Fact]
-        public void SqlEntityAttribute_Implements_ISqlEntityAttribute()
+        public void SqlEntityAttribute_Implements_ITableAttribute()
         {
             // Arrange
             var type = typeof(ForeignTableAttribute);
@@ -31,12 +31,12 @@ namespace Hydrix.UnitTests.Attributes.Schemas.Contract
         }
 
         /// <summary>
-        /// Verifies that the ISqlEntityAttribute interface inherits from ISqlSchemaAttribute.
+        /// Verifies that the ITableAttribute interface inherits from ISqlSchemaAttribute.
         /// </summary>
-        /// <remarks>This test ensures that ISqlEntityAttribute implements ISqlSchemaAttribute, which may
+        /// <remarks>This test ensures that ITableAttribute implements ISqlSchemaAttribute, which may
         /// be required for correct schema-related behavior in consuming code.</remarks>
         [Fact]
-        public void ISqlEntityAttribute_Inherits_ISqlSchemaAttribute()
+        public void ITableAttribute_Inherits_ISqlSchemaAttribute()
         {
             // Arrange
             var type = typeof(ITableAttribute);

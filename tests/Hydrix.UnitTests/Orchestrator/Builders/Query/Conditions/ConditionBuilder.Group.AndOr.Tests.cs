@@ -3,10 +3,10 @@
 namespace Hydrix.UnitTests.Orchestrator.Builders.Query.Conditions
 {
     /// <summary>
-    /// Contains unit tests for the ConditionBuilder OR/OR NOT group methods,
+    /// Contains unit tests for the WhereBuilder OR/OR NOT group methods,
     /// verifying correct SQL clause composition and conditional logic.
     /// </summary>
-    public partial class ConditionBuilderTests
+    public partial class WhereBuilderTests
     {
         /// <summary>
         /// Verifies that a single condition passed to OrAndGroup is correctly grouped in the generated SQL statement.

@@ -1,4 +1,5 @@
 ﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using System;
@@ -102,8 +103,8 @@ namespace Hydrix.Orchestrator.Mapping
         {
             this.Property = property;
             this.Attribute = attribute;
-            this.Factory = MaterializeMetadataFactory.CreateFactory(property.PropertyType);
-            this.Setter = MaterializeMetadataFactory.CreateSetter(property);
+            this.Factory = MetadataFactory.CreateFactory(property.PropertyType);
+            this.Setter = MetadataFactory.CreateSetter(property);
         }
 
         /// <summary>

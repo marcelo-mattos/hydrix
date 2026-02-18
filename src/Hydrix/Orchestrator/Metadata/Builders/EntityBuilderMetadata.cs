@@ -61,8 +61,8 @@ namespace Hydrix.Orchestrator.Metadata.Builders
             string table,
             string schema,
             string alias,
-            List<ColumnBuilderMetadata> columns,
-            List<JoinBuilderMetadata> joins)
+            IReadOnlyList<ColumnBuilderMetadata> columns,
+            IReadOnlyList<JoinBuilderMetadata> joins)
         {
             EntityType = entityType;
             Table = table;

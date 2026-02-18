@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using System;
 
 namespace Hydrix.Orchestrator.Metadata.Builders
 {
@@ -37,9 +37,12 @@ namespace Hydrix.Orchestrator.Metadata.Builders
         public bool IsRequired { get; }
 
         /// <summary>
-        /// The PropertyInfo instance that provides reflection metadata for the property being mapped. Cannot be null.
+        /// Gets a function that retrieves the value of a specified property from an object.
         /// </summary>
-        public PropertyInfo PropertyInfo { get; }
+        /// <remarks>The getter function takes an object as input and returns the corresponding property
+        /// value. This is useful for dynamically accessing properties in scenarios such as reflection or data
+        /// binding.</remarks>
+        public Func<object, object> Getter { get; }
 
         /// <summary>
         /// Initializes a new instance of the ColumnBuilderMetadata class, representing metadata for a database column.
@@ -51,19 +54,19 @@ namespace Hydrix.Orchestrator.Metadata.Builders
         /// langword="true"/> if the column is a key; otherwise, <see langword="false"/>.</param>
         /// <param name="isRequired">A value indicating whether the column is required in the database schema. Set to <see langword="true"/> if
         /// the column cannot be null; otherwise, <see langword="false"/>.</param>
-        /// <param name="propertyInfo">The PropertyInfo instance that provides reflection metadata for the property being mapped. Cannot be null.</param>
+        /// <param name="getter">A function that retrieves the value of the property from an object.</param>
         public ColumnBuilderMetadata(
             string propertyName,
             string columnName,
             bool isKey,
             bool isRequired,
-            PropertyInfo propertyInfo)
+            Func<object, object> getter)
         {
             PropertyName = propertyName;
             ColumnName = columnName;
             IsKey = isKey;
             IsRequired = isRequired;
-            PropertyInfo = propertyInfo;
+            Getter = getter;
         }
     }
 }

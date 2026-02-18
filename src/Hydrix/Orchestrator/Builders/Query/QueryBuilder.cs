@@ -26,7 +26,7 @@ namespace Hydrix.Orchestrator.Builders.Query
         /// conditions.</returns>
         public static string Build(
             EntityBuilderMetadata metadata,
-            ConditionBuilder where)
+            WhereBuilder where)
         {
             var selectSql = SelectBuilder.Build(metadata, metadata.Alias);
             var joinSql = JoinBuilder.Build(metadata, metadata.Alias);

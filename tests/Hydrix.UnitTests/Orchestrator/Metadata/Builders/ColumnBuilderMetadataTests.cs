@@ -1,4 +1,5 @@
 ﻿using Hydrix.Orchestrator.Metadata.Builders;
+using Hydrix.Orchestrator.Metadata.Internals;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
@@ -32,7 +33,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
         public void Constructor_SetsAllPropertiesCorrectly()
         {
             // Arrange
-            var propertyInfo = typeof(TestEntity).GetProperty(nameof(TestEntity.Id));
+            var getter = MetadataFactory.CreateGetter(typeof(TestEntity).GetProperty(nameof(TestEntity.Id)));
             string propertyName = "Id";
             string columnName = "id";
             bool isKey = true;
@@ -44,14 +45,14 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
                 columnName,
                 isKey,
                 isRequired,
-                propertyInfo);
+                getter);
 
             // Assert
             Assert.Equal(propertyName, metadata.PropertyName);
             Assert.Equal(columnName, metadata.ColumnName);
             Assert.Equal(isKey, metadata.IsKey);
             Assert.Equal(isRequired, metadata.IsRequired);
-            Assert.Equal(propertyInfo, metadata.PropertyInfo);
+            Assert.Equal(getter, metadata.Getter);
         }
 
         /// <summary>
@@ -65,7 +66,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
         public void Constructor_AllowsIsRequiredTrue()
         {
             // Arrange
-            var propertyInfo = typeof(TestEntity).GetProperty(nameof(TestEntity.Name));
+            var getter = MetadataFactory.CreateGetter(typeof(TestEntity).GetProperty(nameof(TestEntity.Name)));
             string propertyName = "Name";
             string columnName = "name";
             bool isKey = false;
@@ -77,14 +78,14 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Builders
                 columnName,
                 isKey,
                 isRequired,
-                propertyInfo);
+                getter);
 
             // Assert
             Assert.Equal(propertyName, metadata.PropertyName);
             Assert.Equal(columnName, metadata.ColumnName);
             Assert.Equal(isKey, metadata.IsKey);
             Assert.Equal(isRequired, metadata.IsRequired);
-            Assert.Equal(propertyInfo, metadata.PropertyInfo);
+            Assert.Equal(getter, metadata.Getter);
         }
     }
 }
