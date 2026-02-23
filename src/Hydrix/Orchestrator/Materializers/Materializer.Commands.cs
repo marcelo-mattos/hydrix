@@ -387,7 +387,7 @@ namespace Hydrix.Orchestrator.Materializers
                 .GetCustomAttributes(typeof(ProcedureAttribute), false)
                 .Cast<ProcedureAttribute>()
                 .FirstOrDefault() ?? throw new MissingMemberException(
-                    "The SqlProcedure does not have a SqlProcedureAttribute decorating itself.");
+                    "The SqlProcedure does not have a ProcedureAttribute decorating itself.");
 
             IDbCommand command;
 

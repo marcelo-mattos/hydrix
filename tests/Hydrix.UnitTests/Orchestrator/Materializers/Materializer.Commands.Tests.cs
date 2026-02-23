@@ -214,12 +214,12 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
         /// <summary>
         /// Verifies that the CreateCommand&lt;T&gt; method throws a MissingMemberException when the specified procedure type
-        /// does not have a SqlProcedureAttribute.
+        /// does not have a ProcedureAttribute.
         /// </summary>
         /// <remarks>This test ensures that attempting to create a command for a procedure type lacking
-        /// the required SqlProcedureAttribute results in an exception, enforcing correct usage of the API.</remarks>
+        /// the required ProcedureAttribute results in an exception, enforcing correct usage of the API.</remarks>
         [Fact]
-        public void CreateCommand_Generic_Throws_If_No_SqlProcedureAttribute()
+        public void CreateCommand_Generic_Throws_If_No_ProcedureAttribute()
         {
             var mat = new MaterializerTestable
             {

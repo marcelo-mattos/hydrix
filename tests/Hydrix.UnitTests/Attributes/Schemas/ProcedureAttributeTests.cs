@@ -7,18 +7,18 @@ using Xunit;
 namespace Hydrix.UnitTests.Attributes.Schemas
 {
     /// <summary>
-    /// Contains unit tests for the SqlProcedureAttribute class, verifying its construction and attribute usage
+    /// Contains unit tests for the ProcedureAttribute class, verifying its construction and attribute usage
     /// behavior.
     /// </summary>
-    /// <remarks>These tests ensure that SqlProcedureAttribute correctly sets its properties and enforces its
+    /// <remarks>These tests ensure that ProcedureAttribute correctly sets its properties and enforces its
     /// intended usage constraints. The class is intended for use with a unit testing framework such as xUnit.</remarks>
-    public class SqlProcedureAttributeTests
+    public class ProcedureAttributeTests
     {
         /// <summary>
-        /// Verifies that the SqlProcedureAttribute constructor correctly sets the Schema and Name properties based on
+        /// Verifies that the ProcedureAttribute constructor correctly sets the Schema and Name properties based on
         /// the provided arguments.
         /// </summary>
-        /// <remarks>This unit test ensures that when a SqlProcedureAttribute is instantiated with
+        /// <remarks>This unit test ensures that when a ProcedureAttribute is instantiated with
         /// specific schema and name values, the corresponding properties reflect those values. This helps validate the
         /// attribute's initialization behavior.</remarks>
         [Fact]
@@ -40,10 +40,10 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         }
 
         /// <summary>
-        /// Verifies that the constructor of SqlProcedureAttribute sets the CommandType to StoredProcedure and
+        /// Verifies that the constructor of ProcedureAttribute sets the CommandType to StoredProcedure and
         /// initializes the CommandText with the specified schema and procedure name.
         /// </summary>
-        /// <remarks>This test ensures that when a SqlProcedureAttribute is instantiated with a schema and
+        /// <remarks>This test ensures that when a ProcedureAttribute is instantiated with a schema and
         /// procedure name, its CommandType property is set to CommandType.StoredProcedure and its CommandText property
         /// is formatted as "{schema}.{name}".</remarks>
         [Fact]
@@ -65,10 +65,10 @@ namespace Hydrix.UnitTests.Attributes.Schemas
         }
 
         /// <summary>
-        /// Verifies that the SqlProcedureAttribute can only be applied to classes and does not allow multiple instances
+        /// Verifies that the ProcedureAttribute can only be applied to classes and does not allow multiple instances
         /// on the same class.
         /// </summary>
-        /// <remarks>This test ensures that the AttributeUsageAttribute applied to SqlProcedureAttribute
+        /// <remarks>This test ensures that the AttributeUsageAttribute applied to ProcedureAttribute
         /// restricts its usage to class declarations and prevents multiple applications to a single class. This helps
         /// enforce correct attribute usage patterns in consuming code.</remarks>
         [Fact]

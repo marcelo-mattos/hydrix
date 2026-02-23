@@ -9,7 +9,7 @@ namespace Hydrix.Attributes.Schemas
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property, AllowMultiple = false)]
     public sealed class ForeignTableAttribute :
-        TableAttribute, Contract.ITableAttribute
+        TableAttribute
     {
         /// <summary>
         /// Initializes a new instance of the ForeignTableAttribute class with the specified table name.

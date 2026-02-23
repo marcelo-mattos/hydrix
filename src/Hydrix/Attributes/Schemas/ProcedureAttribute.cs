@@ -9,7 +9,7 @@ namespace Hydrix.Attributes.Schemas
     /// </summary>
     [System.AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public sealed class ProcedureAttribute :
-        Commands.CommandAttribute, Contract.IProcedureAttribute
+        Commands.CommandAttribute
     {
         /// <summary>
         /// The procedure schema.

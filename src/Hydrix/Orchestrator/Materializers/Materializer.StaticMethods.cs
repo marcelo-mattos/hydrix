@@ -110,7 +110,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
         /// <param name="entities">ITable list with data to convert.</param>
         /// <returns>An System.Data.DataTable object.</returns>
-        public static DataTable ConvertEntityToDataTable<TEntity>(IList<TEntity> entities)
+        internal static DataTable ConvertEntityToDataTable<TEntity>(IList<TEntity> entities)
             where TEntity : ITable, new()
         {
             var dataTable = new DataTable();
@@ -179,8 +179,8 @@ namespace Hydrix.Orchestrator.Materializers
             for (var i = 0; i < reader.FieldCount; i++)
             {
                 var name = reader.GetName(i);
-                if (!string.IsNullOrWhiteSpace(name) && !ordinals.ContainsKey(name))
-                    ordinals.Add(name, i);
+                if (!string.IsNullOrWhiteSpace(name))
+                    ordinals.TryAdd(name, i);
             }
 
             return ordinals;

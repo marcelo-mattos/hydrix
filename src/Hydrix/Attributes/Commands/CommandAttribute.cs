@@ -8,7 +8,7 @@ namespace Hydrix.Attributes.Commands
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public abstract class CommandAttribute :
-        Attribute, Contract.ICommandAttribute
+        Attribute
     {
         /// <summary>
         /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.

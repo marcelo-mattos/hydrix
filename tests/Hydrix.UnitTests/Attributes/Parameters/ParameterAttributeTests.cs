@@ -5,15 +5,15 @@ using Xunit;
 namespace Hydrix.UnitTests.Attributes.Parameters
 {
     /// <summary>
-    /// Contains unit tests for the SqlParameterAttribute class, verifying its constructors and property assignments.
+    /// Contains unit tests for the ParameterAttribute class, verifying its constructors and property assignments.
     /// </summary>
-    /// <remarks>These tests ensure that SqlParameterAttribute correctly sets its properties for various
+    /// <remarks>These tests ensure that ParameterAttribute correctly sets its properties for various
     /// constructor inputs, including edge cases such as empty parameter names and undefined enum values. The tests are
-    /// intended to validate the public API contract of SqlParameterAttribute.</remarks>
-    public class SqlParameterAttributeTests
+    /// intended to validate the public API contract of ParameterAttribute.</remarks>
+    public class ParameterAttributeTests
     {
         /// <summary>
-        /// Verifies that the SqlParameterAttribute constructor correctly sets the ParameterName, DbType, and Direction
+        /// Verifies that the ParameterAttribute constructor correctly sets the ParameterName, DbType, and Direction
         /// properties.
         /// </summary>
         [Fact]
@@ -27,7 +27,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         }
 
         /// <summary>
-        /// Verifies that the SqlParameterAttribute constructor correctly sets the ParameterName, DbType, and Direction
+        /// Verifies that the ParameterAttribute constructor correctly sets the ParameterName, DbType, and Direction
         /// properties when a direction is specified.
         /// </summary>
         [Fact]
@@ -44,11 +44,11 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         }
 
         /// <summary>
-        /// Verifies that the SqlParameterAttribute constructor allows an empty parameter name without throwing an
+        /// Verifies that the ParameterAttribute constructor allows an empty parameter name without throwing an
         /// exception.
         /// </summary>
         /// <remarks>This test ensures that an empty string can be used as the parameter name when
-        /// creating a SqlParameterAttribute, and that the resulting attribute correctly reflects the provided
+        /// creating a ParameterAttribute, and that the resulting attribute correctly reflects the provided
         /// values.</remarks>
         [Fact]
         public void Constructor_Allows_EmptyParameterName()
@@ -64,7 +64,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         }
 
         /// <summary>
-        /// Verifies that the SqlParameterAttribute constructor accepts any value of the DbType enumeration, including
+        /// Verifies that the ParameterAttribute constructor accepts any value of the DbType enumeration, including
         /// values outside the defined range.
         /// </summary>
         /// <remarks>This test ensures that the constructor does not restrict DbType to only known or
@@ -81,7 +81,7 @@ namespace Hydrix.UnitTests.Attributes.Parameters
         }
 
         /// <summary>
-        /// Verifies that the constructor of SqlParameterAttribute accepts any value of the ParameterDirection
+        /// Verifies that the constructor of ParameterAttribute accepts any value of the ParameterDirection
         /// enumeration, including values outside the defined range.
         /// </summary>
         /// <remarks>This test ensures that the Direction property can be set to undefined or custom

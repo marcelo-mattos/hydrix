@@ -9,7 +9,7 @@ namespace Hydrix.Attributes.Parameters
     /// </summary>
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public sealed class ParameterAttribute :
-        Attribute, Contract.IParameterAttribute
+        Attribute
     {
         /// <summary>
         /// Gets or sets the name of the System.Data.IDataParameter.

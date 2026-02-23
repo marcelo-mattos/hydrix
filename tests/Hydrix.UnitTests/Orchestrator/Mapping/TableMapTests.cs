@@ -158,6 +158,25 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Dummy enum for testing type conversion.
+        /// </summary>
+        private enum TestStatus
+        {
+            /// <summary>
+            /// Gets or sets a value indicating whether the object is currently active.
+            /// </summary>
+            /// <remarks>This property is typically used to determine the state of the object in
+            /// relation to its lifecycle. An active state may affect how the object interacts with other components or
+            /// services.</remarks>
+            Active,
+
+            /// <summary>
+            /// Represents the inactive state of an entity.
+            /// </summary>
+            Inactive
+        }
+
+        /// <summary>
         /// Verifies that the TableMap constructor correctly initializes its properties and delegates.
         /// </summary>
         /// <remarks>This test ensures that the Property and Attribute properties are set to the provided
@@ -770,6 +789,28 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             // Assert
             Assert.Null(entity.Nested);
+        }
+
+        /// <summary>
+        /// Verifies that the ConvertValue method correctly parses a string representation of an enum value and returns
+        /// the corresponding enum type.
+        /// </summary>
+        /// <remarks>This test ensures that when a string matching a defined enum value is provided to the
+        /// ConvertValue method, the method returns the expected enum value. It validates the method's ability to handle
+        /// string-to-enum conversion for the TestStatus type.</remarks>
+        [Fact]
+        public void ConvertValue_EnumFromString_ReturnsParsedEnum()
+        {
+            // Arrange
+            var method = typeof(TableMap).GetMethod("ConvertValue", BindingFlags.NonPublic | BindingFlags.Static);
+            var value = "Active";
+            var targetType = typeof(TestStatus);
+
+            // Act
+            var result = method.Invoke(null, new object[] { value, targetType });
+
+            // Assert
+            Assert.Equal(TestStatus.Active, result);
         }
     }
 

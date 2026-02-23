@@ -293,7 +293,9 @@ namespace Hydrix.Orchestrator.Mapping
         private static object ConvertValue(object value, Type targetType)
         {
             if (targetType.IsEnum)
-                return Enum.ToObject(targetType, value);
+                return value is string s
+                    ? Enum.Parse(targetType, s, ignoreCase: true)
+                    : Enum.ToObject(targetType, value);
 
             if (targetType == typeof(Guid))
                 return value is Guid g ? g : Guid.Parse(value.ToString());
