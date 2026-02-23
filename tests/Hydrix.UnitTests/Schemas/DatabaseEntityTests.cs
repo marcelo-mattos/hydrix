@@ -546,6 +546,68 @@ namespace Hydrix.UnitTests.Schemas
         }
 
         /// <summary>
+        /// Represents an entity with a foreign table reference that lacks defined primary keys.
+        /// </summary>
+        /// <remarks>This class illustrates a scenario where the foreign table relationship is not
+        /// properly established due to missing primary keys in the foreign table attribute. Attempting to use this
+        /// entity in operations that require valid foreign key relationships may result in errors or undefined
+        /// behavior.</remarks>
+        private class EntityWithInvalidForeignTable : DatabaseEntity
+        {
+            /// <summary>
+            /// Gets or sets the child entity associated with this object.
+            /// </summary>
+            /// <remarks>This property represents a foreign key relationship to a child entity. The
+            /// actual type of the child object may vary depending on the context in which it is used.</remarks>
+            [ForeignTable("child", PrimaryKeys = new string[0])]
+            public object Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an example data model with properties demonstrating the use of explicit and default column
+        /// mapping in a database context.
+        /// </summary>
+        /// <remarks>The WithColumn property is explicitly mapped to the "with_column" database column
+        /// using the Column attribute, while WithoutColumn relies on default mapping conventions. This class can be
+        /// used to illustrate or test how column attributes affect database schema generation or data access.</remarks>
+        private class ForeignWithAndWithoutColumnAttr
+        {
+            /// <summary>
+            /// Gets or sets the value associated with the 'with_column' database column.
+            /// </summary>
+            [Column("with_column")]
+            public int WithColumn { get; set; }
+
+            /// <summary>
+            /// Gets or sets the number of columns to exclude from the data representation.
+            /// </summary>
+            /// <remarks>This property is useful for scenarios where certain columns should not be
+            /// included in data processing or display. Ensure that the value is non-negative, as negative values may
+            /// lead to unexpected behavior.</remarks>
+            public int WithoutColumn { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that includes a foreign key reference to another entity, allowing for relationships
+        /// between database tables.
+        /// </summary>
+        /// <remarks>This class is used to define a relationship with the
+        /// 'ForeignWithAndWithoutColumnAttr' entity, which is specified by the 'ForeignTable' attribute. It is
+        /// important to ensure that the foreign entity is properly configured in the database schema to maintain
+        /// referential integrity.</remarks>
+        private class EntityWithForeignWithAndWithoutColumn : DatabaseEntity
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity associated with this instance.
+            /// </summary>
+            /// <remarks>This property establishes a relationship with a foreign table, as indicated
+            /// by the ForeignTable attribute. Ensure that the referenced foreign entity is properly configured to
+            /// maintain referential integrity.</remarks>
+            [ForeignTable("foreign")]
+            public ForeignWithAndWithoutColumnAttr Foreign { get; set; }
+        }
+
+        /// <summary>
         /// Provides validation rules for instances of the TestEntity class using FluentValidation.
         /// </summary>
         /// <remarks>This validator ensures that the Name property is not empty and that the Value
@@ -931,7 +993,6 @@ namespace Hydrix.UnitTests.Schemas
             var method = typeof(DatabaseEntity)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
-            // Não lança, join não é obrigatório
             Assert.NotNull(metadata);
         }
 
@@ -1078,6 +1139,24 @@ namespace Hydrix.UnitTests.Schemas
             var result = entity.IsValid<DatabaseEntityTests.Product>(out var errors, validator);
             Assert.True(result);
             Assert.Empty(errors);
+        }
+
+        /// <summary>
+        /// Verifies that the BuildMetadata method throws an InvalidOperationException when a foreign table does not
+        /// define any primary keys.
+        /// </summary>
+        /// <remarks>This test ensures that the BuildMetadata method enforces the requirement for foreign
+        /// tables to have at least one primary key defined. The exception message is validated to confirm that it
+        /// clearly indicates the missing primary key constraint.</remarks>
+        [Fact]
+        public void BuildMetadata_Throws_WhenForeignTableHasNoPrimaryKeys()
+        {
+            var type = typeof(EntityWithInvalidForeignTable);
+            var method = typeof(DatabaseEntity).GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
+
+            var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { type }));
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            Assert.Contains("must define at least one PrimaryKey", ex.InnerException.Message);
         }
     }
 }

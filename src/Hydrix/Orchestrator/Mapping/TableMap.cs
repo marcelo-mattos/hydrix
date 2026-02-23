@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Linq;
 using System.Reflection;
 
 namespace Hydrix.Orchestrator.Mapping
@@ -217,18 +218,20 @@ namespace Hydrix.Orchestrator.Mapping
         {
             foreach (var nested in metadata.Entities)
             {
-                var keyColumn = nested.Attribute.PrimaryKeys == null || nested.Attribute.PrimaryKeys.Length == 0
-                    ? null
-                    : $"{prefix}{nested.Property.Name}.{nested.Attribute.PrimaryKeys[0]}";
+                var nestedPrefix = string.Concat(prefix, nested.Property.Name, ".");
+                var shouldInstantiate = false;
+                var primaryKey = nested.Attribute.PrimaryKeys?.FirstOrDefault();
 
-                if (keyColumn != null)
+                if (!string.IsNullOrWhiteSpace(primaryKey))
                 {
-                    if (!ordinals.TryGetValue(keyColumn, out var pkOrdinal))
-                        continue;
+                    var keyColumn = string.Concat(nestedPrefix, primaryKey);
 
-                    if (record.IsDBNull(pkOrdinal))
-                        continue;
+                    shouldInstantiate = (ordinals.TryGetValue(keyColumn, out var ordinal) &&
+                        !record.IsDBNull(ordinal));
                 }
+
+                if (!shouldInstantiate)
+                    continue;
 
                 var nestedEntity = (ITable)nested.Factory();
                 nested.Setter(entity, nestedEntity);

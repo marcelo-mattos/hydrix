@@ -214,6 +214,10 @@ namespace Hydrix.Schemas
                 var foreignAttr = property.GetCustomAttribute<ForeignTableAttribute>();
                 if (foreignAttr != null)
                 {
+                    if (foreignAttr.PrimaryKeys?.Length == 0)
+                        throw new InvalidOperationException(
+                            $"NestedTable '{property.Name}' must define at least one PrimaryKey.");
+
                     var (resolvedSchema, primaryKeys, foreignKeys) =
                         ResolveForeignMetadata(
                             type,

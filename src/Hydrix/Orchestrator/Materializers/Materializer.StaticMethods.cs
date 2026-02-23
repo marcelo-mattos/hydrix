@@ -217,8 +217,9 @@ namespace Hydrix.Orchestrator.Materializers
         private static bool ValidateEntityRequest<TEntity>()
             where TEntity : ITable, new()
         {
-            var tableAttribute = (typeof(TEntity)
-                .GetCustomAttributes(typeof(TableAttribute), false) as TableAttribute[])
+            var tableAttribute = typeof(TEntity)
+                .GetCustomAttributes(typeof(TableAttribute), false)
+                .Cast<TableAttribute>()
                 .FirstOrDefault();
 
             if (null == tableAttribute)
