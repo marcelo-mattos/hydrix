@@ -74,7 +74,7 @@ namespace Hydrix.Orchestrator.Materializers
                     entity,
                     dataReader,
                     metadata,
-                    Array.Empty<string>(),
+                    string.Empty,
                     EntityMetadataCache,
                     ordinals
                 );

@@ -229,7 +229,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 entity,
                 reader,
                 metadata,
-                new List<string>(),
+                string.Empty,
                 cache,
                 new Dictionary<string, int>());
 
@@ -275,7 +275,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 entity,
                 record.Object,
                 metadata,
-                new List<string>(),
+                string.Empty,
                 cache,
                 ordinals);
 
@@ -371,9 +371,8 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                     entity,
                     record.Object,
                     metadata,
-                    new List<string>(),
+                    string.Empty,
                     cache,
-                    "",
                     new Dictionary<string, int>()
                 });
 
@@ -393,9 +392,8 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                     entity,
                     record.Object,
                     metadata,
-                    new List<string>(),
+                    string.Empty,
                     cache,
-                    "",
                     ordinals
                 });
 
@@ -726,9 +724,8 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                     entity,
                     record.Object,
                     metadata,
-                    new List<string>(),
+                    string.Empty,
                     cache,
-                    "",
                     ordinals
                 });
 
@@ -781,9 +778,8 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                     entity,
                     record.Object,
                     metadata,
-                    new List<string>(),
+                    string.Empty,
                     cache,
-                    "",
                     ordinals
                 });
 

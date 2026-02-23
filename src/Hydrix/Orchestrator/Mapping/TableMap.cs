@@ -118,8 +118,8 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="entity">The SQL entity instance to populate with values from the data record. Cannot be null.</param>
         /// <param name="record">The data record containing the values to assign to the entity's fields and nested entities. Cannot be null.</param>
         /// <param name="metadata">The metadata describing the structure and mapping of the SQL entity. Cannot be null.</param>
-        /// <param name="path">The hierarchical path representing the nesting context of the current entity within the overall object
-        /// graph. Used to resolve field prefixes for nested entities. Cannot be null.</param>
+        /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record, used for nested entities. 
+        /// Can be an empty string if no prefix is required.</param>
         /// <param name="entityMetadataCache">A thread-safe cache of entity metadata, keyed by entity type, used to optimize metadata lookups for nested
         /// entities. Cannot be null.</param>
         /// <param name="ordinals">A mapping from field names to their corresponding ordinal positions in the data record. Cannot be null.</param>
@@ -127,14 +127,10 @@ namespace Hydrix.Orchestrator.Mapping
             ITable entity,
             IDataRecord record,
             TableMaterializeMetadata metadata,
-            IReadOnlyList<string> path,
+            string prefix,
             ConcurrentDictionary<Type, TableMaterializeMetadata> entityMetadataCache,
             IReadOnlyDictionary<string, int> ordinals)
         {
-            string prefix = path.Count > 0
-                ? $"{string.Join(".", path)}."
-                : string.Empty;
-
             SetEntityFields(
                 entity,
                 record,
@@ -146,9 +142,8 @@ namespace Hydrix.Orchestrator.Mapping
                 entity,
                 record,
                 metadata,
-                path,
-                entityMetadataCache,
                 prefix,
+                entityMetadataCache,
                 ordinals);
         }
 
@@ -201,7 +196,6 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="entity">The entity whose nested entity properties are to be set. Must not be null.</param>
         /// <param name="record">The data record containing the values to populate the nested entities. Must not be null.</param>
         /// <param name="metadata">The metadata describing the structure and nested entities of the entity. Must not be null.</param>
-        /// <param name="path">The current property path used to track the nesting hierarchy. Must not be null.</param>
         /// <param name="entityMetadataCache">A cache of entity metadata, keyed by entity type, used to avoid redundant metadata construction. Must not be
         /// null.</param>
         /// <param name="prefix">The prefix to apply to column names when accessing nested entity values in the data record. Can be an empty
@@ -211,9 +205,8 @@ namespace Hydrix.Orchestrator.Mapping
             ITable entity,
             IDataRecord record,
             TableMaterializeMetadata metadata,
-            IReadOnlyList<string> path,
-            ConcurrentDictionary<Type, TableMaterializeMetadata> entityMetadataCache,
             string prefix,
+            ConcurrentDictionary<Type, TableMaterializeMetadata> entityMetadataCache,
             IReadOnlyDictionary<string, int> ordinals)
         {
             foreach (var nested in metadata.Entities)
@@ -245,7 +238,7 @@ namespace Hydrix.Orchestrator.Mapping
                     nestedEntity,
                     record,
                     nestedMetadata,
-                    new List<string>(path) { nested.Property.Name },
+                    nestedPrefix,
                     entityMetadataCache,
                     ordinals
                 );
