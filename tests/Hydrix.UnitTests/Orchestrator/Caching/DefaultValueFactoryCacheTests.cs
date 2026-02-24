@@ -1,8 +1,8 @@
-﻿using Hydrix.Orchestrator.Metadata.Internals;
+﻿using Hydrix.Orchestrator.Caching;
 using System;
 using Xunit;
 
-namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
+namespace Hydrix.UnitTests.Orchestrator.Caching
 {
     /// <summary>
     /// Contains unit tests for the DefaultValueFactoryCache class to verify that it returns correct default value

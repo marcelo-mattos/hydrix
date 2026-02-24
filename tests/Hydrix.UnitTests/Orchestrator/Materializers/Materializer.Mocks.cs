@@ -1254,46 +1254,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             }
 
             /// <summary>
-            /// Determines whether the specified value is considered an enumerable parameter for SQL materialization
-            /// purposes.
-            /// </summary>
-            /// <remarks>This method is intended for advanced scenarios where it is necessary to check
-            /// if a value will be treated as an enumerable parameter by the SQL materializer. The criteria for what
-            /// constitutes an enumerable parameter are defined internally and may change in future versions.</remarks>
-            /// <param name="value">The value to evaluate as a potential enumerable parameter. Can be any object, including null.</param>
-            /// <returns>true if the value is recognized as an enumerable parameter; otherwise, false.</returns>
-            public static bool CallIsEnumerableParameter(object value) =>
-                typeof(Materializer)
-                    .GetMethod("IsEnumerableParameter", BindingFlags.Static | BindingFlags.NonPublic)
-                    .Invoke(null, new[] { value }) is bool b && b;
-
-            /// <summary>
-            /// Adds a scalar parameter with the specified name and value to the given database command.
-            /// </summary>
-            /// <param name="cmd">The database command to which the parameter will be added. Must not be null.</param>
-            /// <param name="name">The name of the parameter to add. Cannot be null or empty.</param>
-            /// <param name="value">The value to assign to the parameter. May be null to represent a database null value.</param>
-            public void CallAddScalarParameter(IDbCommand cmd, string name, object value) =>
-                typeof(Materializer)
-                    .GetMethod("AddScalarParameter", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .Invoke(this, new object[] { cmd, name, value });
-
-            /// <summary>
-            /// Expands an enumerable parameter for use in a database command, enabling the command to handle a
-            /// collection of values as a single parameter.
-            /// </summary>
-            /// <remarks>This method is typically used to support SQL 'IN' clauses or similar
-            /// scenarios where a parameterized query needs to accept multiple values. The command object is modified to
-            /// include the expanded parameters as required by the underlying database provider.</remarks>
-            /// <param name="cmd">The database command to which the enumerable parameter will be added. Must not be null.</param>
-            /// <param name="name">The name of the parameter to expand within the command. Cannot be null or empty.</param>
-            /// <param name="values">The collection of values to be expanded into the parameter. Can be any enumerable; must not be null.</param>
-            public void CallExpandEnumerableParameter(IDbCommand cmd, string name, IEnumerable values) =>
-                typeof(Materializer)
-                    .GetMethod("ExpandEnumerableParameter", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .Invoke(this, new object[] { cmd, name, values });
-
-            /// <summary>
             /// Adds a parameter with the specified name and value to the given database command.
             /// </summary>
             /// <param name="cmd">The database command to which the parameter will be added. Cannot be null.</param>

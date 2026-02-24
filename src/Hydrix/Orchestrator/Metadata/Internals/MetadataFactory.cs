@@ -151,8 +151,13 @@ namespace Hydrix.Orchestrator.Metadata.Internals
             if (!type.IsValueType)
                 return () => null;
 
-            var body = Expression.Convert(Expression.Default(type), typeof(object));
-            return Expression.Lambda<Func<object>>(body).Compile();
+            var body = Expression.Convert(
+                Expression.Default(type),
+                typeof(object));
+
+            return Expression
+                .Lambda<Func<object>>(body)
+                .Compile();
         }
     }
 }

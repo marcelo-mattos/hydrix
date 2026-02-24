@@ -1,6 +1,6 @@
 ﻿using Hydrix.Orchestrator.Builders.Query.Conditions;
+using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Metadata.Builders;
-using Hydrix.Schemas;
 using Hydrix.Schemas.Contract;
 using System.Text;
 
@@ -32,7 +32,7 @@ namespace Hydrix.Orchestrator.Builders.Query
         {
             var aliasContext = new AliasContext();
 
-            var metadata = DatabaseEntity.GetMetadata(typeof(TEntity));
+            var metadata = EntityBuilderMetadataCache.GetMetadata(typeof(TEntity));
             var mainAlias = aliasContext.GetAlias(metadata.Entity);
 
             var selectSql = SelectBuilder.Build(

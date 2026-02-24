@@ -28,35 +28,13 @@ namespace Hydrix.Orchestrator.Materializers
         Contract.IMaterializer
     {
         /// <summary>
-        /// Writes a human-readable representation of the SQL command being executed to the console,
-        /// including its text and bound parameters.
-        ///
-        /// This method is designed exclusively for **diagnostic and debugging** purposes, providing
-        /// visibility into the final SQL command and its parameter values exactly as they will be
-        /// sent to the database provider.
-        ///
-        /// The output includes:
-        /// <list type="bullet">
-        /// <item>
-        /// <description>The raw SQL command text ( <see cref="IDbCommand.CommandText"/>).</description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// A list of parameters with their names, formatted values and corresponding <see cref="System.Data.DbType"/>.
-        /// </description>
-        /// </item>
-        /// </list>
-        /// Parameter values are formatted using <see cref="FormatParameterValue(object)"/> to
-        /// improve readability and consistency with common SQL literal conventions.
-        /// <para>
-        /// <b>Important:</b> This logging mechanism should never be used to build executable SQL
-        /// statements and must not be enabled in production environments that handle sensitive data
-        /// unless properly controlled.
-        /// </para>
+        /// Logs the details of the specified database command, including its SQL statement and parameters, for
+        /// diagnostic purposes.
         /// </summary>
-        /// <param name="command">
-        /// The <see cref="IDbCommand"/> instance representing the SQL operation about to be executed.
-        /// </param>
+        /// <remarks>Logging occurs only if a logger is initialized. The logged information includes the
+        /// command text and all associated parameters, which can assist in debugging and monitoring database
+        /// operations.</remarks>
+        /// <param name="command">The database command whose execution details are to be logged. Must not be null.</param>
         private void LogCommand(IDbCommand command)
         {
             if (_logger is null)
@@ -81,61 +59,17 @@ namespace Hydrix.Orchestrator.Materializers
         }
 
         /// <summary>
-        /// Creates and configures a fully initialized <see cref="IDbCommand"/> instance associated
-        /// with the current database connection, applying all common command settings and optional
-        /// parameter binding logic.
-        ///
-        /// This method acts as the core command factory used by all public <c>CreateCommand</c>
-        /// overloads, centralizing shared responsibilities such as:
-        /// <list type="bullet">
-        /// <item>
-        /// <description>Validation of the handler lifecycle and connection state.</description>
-        /// </item>
-        /// <item>
-        /// <description>Creation of the underlying provider-specific command instance.</description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// Configuration of command metadata, including command type, command text, timeout and
-        /// active transaction association.
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// Delegation of parameter materialization through the supplied <paramref
-        /// name="parameterBinder"/> callback.
-        /// </description>
-        /// </item>
-        /// </list>
-        /// The optional <paramref name="parameterBinder"/> allows callers to inject custom
-        /// parameter binding strategies (e.g. object-based, attribute-based or provider-specific
-        /// parameters) without duplicating command creation logic.
-        ///
-        /// This design promotes code reuse, consistency and extensibility, making it easy to
-        /// introduce cross-cutting concerns such as logging, tracing or metrics in a single,
-        /// centralized location.
+        /// Creates and configures a database command with the specified command type, SQL statement, parameter binding
+        /// action, and transaction context.
         /// </summary>
-        /// <param name="commandType">
-        /// Indicates how the <see cref="IDbCommand.CommandText"/> property should be interpreted
-        /// (e.g. <see cref="CommandType.Text"/>, <see cref="CommandType.StoredProcedure"/>).
-        /// </param>
-        /// <param name="sql">
-        /// The SQL statement or stored procedure name to be executed by the command.
-        /// </param>
-        /// <param name="transaction">
-        /// Represents the transaction to be used for the command.
-        /// </param>
-        /// <param name="parameterBinder">
-        /// An optional delegate responsible for binding parameters to the command. When
-        /// <c>null</c>, the command is created without parameters.
-        /// </param>
-        /// <returns>A fully configured <see cref="IDbCommand"/> instance ready for execution.</returns>
-        /// <exception cref="ObjectDisposedException">
-        /// Thrown when the data handler has already been disposed.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown when the database connection is not open.
-        /// </exception>
+        /// <param name="commandType">The type of command to execute, such as text, stored procedure, or table direct.</param>
+        /// <param name="sql">The SQL statement or stored procedure name to execute against the database.</param>
+        /// <param name="parameterBinder">An action that binds parameters to the command. This allows for dynamic parameterization of the command
+        /// before execution. May be null if no parameters are required.</param>
+        /// <param name="transaction">An optional database transaction within which the command will be executed. If null, the current active
+        /// transaction is used if available.</param>
+        /// <returns>An IDbCommand instance configured with the specified command type, SQL, parameters, and transaction context.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the database connection is not open when attempting to create the command.</exception>
         protected IDbCommand CreateCommandCore(
             CommandType commandType,
             string sql,

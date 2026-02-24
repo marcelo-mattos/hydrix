@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Linq;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers
@@ -16,35 +15,17 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
     public partial class MaterializerTests
     {
         /// <summary>
-        /// Verifies that the IsEnumerableParameter method correctly determines whether the specified value is
-        /// considered an enumerable parameter.
+        /// Verifies that the CallAddParameter method adds a parameter with the correct name and value to the command.
         /// </summary>
-        /// <param name="value">The value to test for enumerable parameter status. Can be null or any object.</param>
-        /// <param name="expected">The expected result indicating whether the value should be recognized as an enumerable parameter.</param>
-        [Theory]
-        [InlineData(null, false)]
-        [InlineData("string", false)]
-        [InlineData(new byte[] { 1, 2 }, false)]
-        [InlineData(new int[] { 1, 2 }, true)]
-        [InlineData(new string[] { "a", "b" }, true)]
-        [InlineData(42, false)]
-        public void IsEnumerableParameter_Works(object value, bool expected)
-        {
-            Assert.Equal(expected, TestMaterializerParameter.CallIsEnumerableParameter(value));
-        }
-
-        /// <summary>
-        /// Verifies that the AddScalarParameter method adds a parameter with the correct name and value to the command.
-        /// </summary>
-        /// <remarks>This unit test ensures that when AddScalarParameter is called, the resulting
+        /// <remarks>This unit test ensures that when CallAddParameter is called, the resulting
         /// parameter in the command has the expected name and value. It is intended to validate correct parameter
         /// handling in the TestMaterializerParameter class.</remarks>
         [Fact]
-        public void AddScalarParameter_AddsParameterWithCorrectNameAndValue()
+        public void AddParameter_AddsParameterWithCorrectNameAndValue()
         {
             var mat = new TestMaterializerParameter("@");
             var cmd = new MockDbCommand();
-            mat.CallAddScalarParameter(cmd, "foo", 123);
+            mat.CallAddParameter(cmd, "@foo", 123);
             var param = cmd.Parameters[0] as IDbDataParameter;
             Assert.Equal("@foo", param.ParameterName);
             Assert.Equal(123, param.Value);
@@ -54,39 +35,17 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Verifies that adding a scalar parameter with a null value results in the parameter's value being set to
         /// DBNull.Value.
         /// </summary>
-        /// <remarks>This test ensures that the AddScalarParameter method correctly handles null values by
+        /// <remarks>This test ensures that the CallAddParameter method correctly handles null values by
         /// converting them to DBNull.Value when adding parameters to a database command. This behavior is important for
         /// compatibility with ADO.NET, which requires DBNull.Value to represent database nulls.</remarks>
         [Fact]
-        public void AddScalarParameter_NullValue_UsesDBNull()
+        public void AddParameter_NullValue_UsesDBNull()
         {
             var mat = new TestMaterializerParameter("@");
             var cmd = new MockDbCommand();
-            mat.CallAddScalarParameter(cmd, "bar", null);
+            mat.CallAddParameter(cmd, "@bar", null);
             var param = cmd.Parameters[0] as IDbDataParameter;
             Assert.Equal(DBNull.Value, param.Value);
-        }
-
-        /// <summary>
-        /// Verifies that expanding an enumerable parameter in a SQL command adds individual parameters for each value
-        /// and updates the command text accordingly.
-        /// </summary>
-        /// <remarks>This test ensures that when an enumerable parameter is expanded, the command text
-        /// replaces the original parameter placeholder with unique parameter names for each value in the collection,
-        /// and that the corresponding parameters are added to the command. This behavior is important for supporting
-        /// SQL 'IN' clauses with parameterized queries.</remarks>
-        [Fact]
-        public void ExpandEnumerableParameter_AddsParametersAndUpdatesCommandText()
-        {
-            var mat = new TestMaterializerParameter("@");
-            var cmd = new MockDbCommand { CommandText = "SELECT * FROM T WHERE id IN (@ids)" };
-            mat.CallExpandEnumerableParameter(cmd, "ids", new[] { 1, 2, 3 });
-            Assert.Equal(3, cmd.Parameters.Count);
-            Assert.All(cmd.Parameters.Cast<IDbDataParameter>(), p => Assert.StartsWith("@ids_", p.ParameterName));
-            Assert.Contains("@ids_0", cmd.CommandText);
-            Assert.Contains("@ids_1", cmd.CommandText);
-            Assert.Contains("@ids_2", cmd.CommandText);
-            Assert.DoesNotContain("@ids)", cmd.CommandText);
         }
 
         /// <summary>
@@ -101,7 +60,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var mat = new TestMaterializerParameter("@");
             var cmd = new MockDbCommand();
-            mat.CallAddParameter(cmd, "foo", 42);
+            mat.CallAddParameter(cmd, "@foo", 42);
             Assert.Single(cmd.Parameters);
             Assert.Equal("@foo", ((IDbDataParameter)cmd.Parameters[0]).ParameterName);
             Assert.Equal(42, ((IDbDataParameter)cmd.Parameters[0]).Value);
@@ -119,28 +78,11 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var mat = new TestMaterializerParameter("@");
             var cmd = new MockDbCommand { CommandText = "WHERE x IN (@x)" };
-            mat.CallAddParameter(cmd, "x", new[] { 7, 8 });
+            var obj = new { x = new[] { 7, 8 } };
+            mat.CallBindParametersFromObject(cmd, obj);
             Assert.Equal(2, cmd.Parameters.Count);
             Assert.Contains("@x_0", cmd.CommandText);
             Assert.Contains("@x_1", cmd.CommandText);
-        }
-
-        /// <summary>
-        /// Verifies that all public properties of an object are correctly bound as parameters to a database command.
-        /// </summary>
-        /// <remarks>This test ensures that each property of the provided object results in a
-        /// corresponding parameter on the command, with the correct parameter name and value. It validates the behavior
-        /// of the parameter binding logic when handling objects with multiple properties.</remarks>
-        [Fact]
-        public void BindParametersFromObject_BindsAllProperties()
-        {
-            var mat = new TestMaterializerParameter("@");
-            var cmd = new MockDbCommand();
-            var obj = new { A = 1, B = "b" };
-            mat.CallBindParametersFromObject(cmd, obj);
-            Assert.Equal(2, cmd.Parameters.Count);
-            Assert.Contains(cmd.Parameters.Cast<IDbDataParameter>(), p => p.ParameterName == "@A" && (int)p.Value == 1);
-            Assert.Contains(cmd.Parameters.Cast<IDbDataParameter>(), p => p.ParameterName == "@B" && (string)p.Value == "b");
         }
 
         /// <summary>

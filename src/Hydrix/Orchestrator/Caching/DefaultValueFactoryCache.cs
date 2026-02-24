@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 
-namespace Hydrix.Orchestrator.Metadata.Internals
+namespace Hydrix.Orchestrator.Caching
 {
     /// <summary>
     /// Provides a thread-safe cache for factory functions that generate default values for specified types.

@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
+using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas;
 using Hydrix.Schemas.Contract;
 using System;
@@ -163,7 +164,7 @@ namespace Hydrix.UnitTests.Schemas
         /// <remarks>This property is intended for internal use when accessing metadata related to foreign
         /// key relationships within the database schema. It should not be used directly by external code.</remarks>
         private static MethodInfo ResolveForeignMetadataMethod =>
-            typeof(Hydrix.Schemas.DatabaseEntity)
+            typeof(EntityBuilderMetadataCache)
                 .GetMethod(
                     "ResolveForeignMetadata",
                     BindingFlags.NonPublic |
@@ -990,7 +991,7 @@ namespace Hydrix.UnitTests.Schemas
                 PrimaryKeys = new[] { "Id" },
                 ForeignKeys = new[] { "Foreign2Id" }
             };
-            var method = typeof(DatabaseEntity)
+            var method = typeof(EntityBuilderMetadataCache)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
@@ -1006,7 +1007,7 @@ namespace Hydrix.UnitTests.Schemas
         public void BuildMetadata_ColumnWithoutColumnAttribute()
         {
             var type = typeof(NoAttributeColumnEntity);
-            var method = typeof(DatabaseEntity)
+            var method = typeof(EntityBuilderMetadataCache)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
@@ -1023,7 +1024,7 @@ namespace Hydrix.UnitTests.Schemas
         public void BuildMetadata_ColumnWithKeyAndRequired()
         {
             var type = typeof(KeyAndRequiredEntity);
-            var method = typeof(DatabaseEntity)
+            var method = typeof(EntityBuilderMetadataCache)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
@@ -1046,7 +1047,7 @@ namespace Hydrix.UnitTests.Schemas
                 PrimaryKeys = new[] { "Id" },
                 ForeignKeys = new[] { "ForeignId" }
             };
-            var method = typeof(DatabaseEntity)
+            var method = typeof(EntityBuilderMetadataCache)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
@@ -1069,7 +1070,7 @@ namespace Hydrix.UnitTests.Schemas
                 PrimaryKeys = new[] { "Id" },
                 ForeignKeys = new[] { "Foreign1Id", "Foreign2Id" }
             };
-            var method = typeof(DatabaseEntity)
+            var method = typeof(EntityBuilderMetadataCache)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
@@ -1086,7 +1087,7 @@ namespace Hydrix.UnitTests.Schemas
         public void BuildMetadata_JoinIsNotRequired_IfNoForeignKeyIsRequired()
         {
             var type = typeof(MultiForeignKeyNoneRequiredEntity);
-            var method = typeof(DatabaseEntity)
+            var method = typeof(EntityBuilderMetadataCache)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
@@ -1103,7 +1104,7 @@ namespace Hydrix.UnitTests.Schemas
         public void BuildMetadata_Handles_NonExistentForeignKeyProperty()
         {
             var type = typeof(InvalidForeignKeyEntity);
-            var method = typeof(DatabaseEntity)
+            var method = typeof(EntityBuilderMetadataCache)
                 .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
             var metadata = method.Invoke(null, new object[] { type });
             Assert.NotNull(metadata);
@@ -1152,7 +1153,8 @@ namespace Hydrix.UnitTests.Schemas
         public void BuildMetadata_Throws_WhenForeignTableHasNoPrimaryKeys()
         {
             var type = typeof(EntityWithInvalidForeignTable);
-            var method = typeof(DatabaseEntity).GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
+            var method = typeof(EntityBuilderMetadataCache)
+                .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
 
             var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { type }));
             Assert.IsType<InvalidOperationException>(ex.InnerException);

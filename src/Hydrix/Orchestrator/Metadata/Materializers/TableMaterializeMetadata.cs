@@ -158,7 +158,9 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
         {
             var fields = type
                 .GetProperties()
-                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(ColumnAttribute)))
+                .Where(p =>
+                    p.CanWrite &&
+                    Attribute.IsDefined(p, typeof(ColumnAttribute)))
                 .Select(p =>
                 {
                     var attr = (ColumnAttribute)p
@@ -173,7 +175,9 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
 
             var entities = type
                 .GetProperties()
-                .Where(p => p.CanWrite && Attribute.IsDefined(p, typeof(ForeignTableAttribute)))
+                .Where(p =>
+                    p.CanWrite &&
+                    Attribute.IsDefined(p, typeof(ForeignTableAttribute)))
                 .Select(p => new TableMap(
                     p,
                     (ForeignTableAttribute)p
