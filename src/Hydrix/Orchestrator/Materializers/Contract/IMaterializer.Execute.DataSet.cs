@@ -414,7 +414,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
         /// access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <returns>An System.Data.DataSet object.</returns>
@@ -424,13 +424,13 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         DataSet ExecuteDataSet<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> procedure)
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -442,7 +442,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
         /// access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
@@ -453,13 +453,13 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         DataSet ExecuteDataSet<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction)
             where TDataParameterDriver : IDataParameter, new();
 
@@ -472,7 +472,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
         /// access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
@@ -483,14 +483,14 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<DataSet> ExecuteDataSetAsync<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new();
 
@@ -503,7 +503,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
         /// access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
@@ -515,14 +515,14 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<DataSet> ExecuteDataSetAsync<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new();

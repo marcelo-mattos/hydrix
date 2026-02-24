@@ -231,10 +231,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// Verifies that ExecuteReader returns a data reader when called with a generic SQL procedure.
         /// </summary>
         [Fact]
-        public void ExecuteReader_GenericSqlProcedure_ReturnsDataReader()
+        public void ExecuteReader_GenericProcedure_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteReader(proc)).Returns(reader);
             var result = _materializerMock.Object.ExecuteReader(proc);
             Assert.Same(reader, result);
@@ -244,10 +244,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// Verifies that ExecuteReader returns a data reader when called with a generic SQL procedure and transaction.
         /// </summary>
         [Fact]
-        public void ExecuteReader_GenericSqlProcedureWithTransaction_ReturnsDataReader()
+        public void ExecuteReader_GenericProcedureWithTransaction_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteReader(proc, transaction)).Returns(reader);
             var result = _materializerMock.Object.ExecuteReader(proc, transaction);
@@ -258,10 +258,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// Verifies that ExecuteReaderAsync returns a data reader when called with a generic SQL procedure.
         /// </summary>
         [Fact]
-        public async Task ExecuteReaderAsync_GenericSqlProcedure_ReturnsDataReader()
+        public async Task ExecuteReaderAsync_GenericProcedure_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteReaderAsync(proc, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
             var result = await _materializerMock.Object.ExecuteReaderAsync(proc);
             Assert.Same(reader, result);
@@ -271,10 +271,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// Verifies that ExecuteReaderAsync returns a data reader when called with a generic SQL procedure and transaction.
         /// </summary>
         [Fact]
-        public async Task ExecuteReaderAsync_GenericSqlProcedureWithTransaction_ReturnsDataReader()
+        public async Task ExecuteReaderAsync_GenericProcedureWithTransaction_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteReaderAsync(proc, transaction, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
             var result = await _materializerMock.Object.ExecuteReaderAsync(proc, transaction);

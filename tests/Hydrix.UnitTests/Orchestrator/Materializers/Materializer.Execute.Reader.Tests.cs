@@ -388,14 +388,14 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// correctly invokes the underlying command and returns the data reader provided by the command's ExecuteReader
         /// method. It uses a mock SQL procedure and parameter type to validate the behavior.</remarks>
         [Fact]
-        public void ExecuteReader_Generic_WithSqlProcedure_ReturnsDataReader()
+        public void ExecuteReader_Generic_WithProcedure_ReturnsDataReader()
         {
             var readerMock = new Mock<IDataReader>();
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var procedure = new TestSqlProcedure();
+            var procedure = new TestProcedure();
             var result = (materializer as IMaterializer).ExecuteReader<FakeDataParameter>(procedure);
 
             Assert.Same(readerMock.Object, result);
@@ -409,14 +409,14 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// and returns the data reader as expected when provided with a SQL procedure and transaction. It uses mocks to
         /// simulate the command and data reader behavior.</remarks>
         [Fact]
-        public void ExecuteReader_Generic_WithSqlProcedureAndTransaction_ReturnsDataReader()
+        public void ExecuteReader_Generic_WithProcedureAndTransaction_ReturnsDataReader()
         {
             var readerMock = new Mock<IDataReader>();
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var procedure = new TestSqlProcedure();
+            var procedure = new TestProcedure();
             var transaction = new FakeDbTransaction();
             var result = (materializer as IMaterializer).ExecuteReader<FakeDataParameter>(procedure, transaction);
 
@@ -432,14 +432,14 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// It uses a mock SQL procedure and a mock data reader to validate the behavior.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteReaderAsync_Generic_WithSqlProcedure_ReturnsDataReader()
+        public async Task ExecuteReaderAsync_Generic_WithProcedure_ReturnsDataReader()
         {
             var readerMock = new Mock<IDataReader>();
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var procedure = new TestSqlProcedure();
+            var procedure = new TestProcedure();
             var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(procedure, CancellationToken.None);
 
             Assert.Same(readerMock.Object, result);
@@ -452,14 +452,14 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <returns>A task that represents the asynchronous operation. The task result contains the data reader returned by the
         /// materializer.</returns>
         [Fact]
-        public async Task ExecuteReaderAsync_Generic_WithSqlProcedureAndTransaction_ReturnsDataReader()
+        public async Task ExecuteReaderAsync_Generic_WithProcedureAndTransaction_ReturnsDataReader()
         {
             var readerMock = new Mock<IDataReader>();
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var procedure = new TestSqlProcedure();
+            var procedure = new TestProcedure();
             var transaction = new FakeDbTransaction();
             var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(procedure, transaction, CancellationToken.None);
 

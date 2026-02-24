@@ -109,7 +109,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// <summary>
         /// Represents a SQL stored procedure with a predefined set of parameters for demonstration or testing purposes.
         /// </summary>
-        public class DummySqlProcedure : IProcedure<DummyParameter>
+        public class DummyProcedure : IProcedure<DummyParameter>
         {
             /// <summary>
             /// Gets the collection of parameters associated with the current instance.

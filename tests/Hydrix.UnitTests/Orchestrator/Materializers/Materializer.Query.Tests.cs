@@ -352,13 +352,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// materializes the resulting data into entity objects. It checks that the returned collection contains the
         /// expected number of entities with the correct property values.</remarks>
         [Fact]
-        public void Query_WithSqlProcedure_ReturnsEntities()
+        public void Query_WithProcedure_ReturnsEntities()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.Query<TestEntity, FakeDataParameter>(new TestSqlProcedure());
+            var result = materializer.Query<TestEntity, FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
@@ -374,13 +374,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// method does not return any entities. It is intended to confirm correct handling of invalid requests in the
         /// data materialization process.</remarks>
         [Fact]
-        public void Query_WithSqlProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        public void Query_WithProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure());
+            var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Empty(result);
@@ -393,13 +393,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// context of a provided database transaction and returns the expected list of entities. It validates both the
         /// count and the content of the returned entities.</remarks>
         [Fact]
-        public void Query_WithSqlProcedureAndTransaction_ReturnsEntities()
+        public void Query_WithProcedureAndTransaction_ReturnsEntities()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.Query<TestEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = materializer.Query<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
@@ -414,13 +414,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>This test ensures that when the entity validation fails, the Query method does not
         /// return any results, confirming correct handling of validation failures in the data access layer.</remarks>
         [Fact]
-        public void Query_WithSqlProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        public void Query_WithProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Empty(result);
@@ -779,13 +779,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// to entity objects. It validates both the count and the property values of the returned entities.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_WithSqlProcedure_ReturnsEntities()
+        public async Task QueryAsync_WithProcedure_ReturnsEntities()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.QueryAsync<TestEntity, FakeDataParameter>(new TestSqlProcedure());
+            var result = await materializer.QueryAsync<TestEntity, FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
@@ -803,13 +803,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// layer.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_WithSqlProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        public async Task QueryAsync_WithProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure());
+            var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Empty(result);
@@ -824,13 +824,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// collection contains the expected number of entities with the correct property values.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_WithSqlProcedureAndTransaction_ReturnsEntities()
+        public async Task QueryAsync_WithProcedureAndTransaction_ReturnsEntities()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.QueryAsync<TestEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = await materializer.QueryAsync<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
@@ -847,13 +847,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// transaction.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_WithSqlProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
+        public async Task QueryAsync_WithProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Empty(result);

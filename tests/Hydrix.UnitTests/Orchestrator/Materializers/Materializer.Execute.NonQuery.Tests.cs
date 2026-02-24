@@ -359,13 +359,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// command and returns the expected result when provided with a SQL procedure. It uses mocks to simulate the
         /// database command and procedure behavior.</remarks>
         [Fact]
-        public void ExecuteNonQuery_WithSqlProcedure_ReturnsRowsAffected()
+        public void ExecuteNonQuery_WithProcedure_ReturnsRowsAffected()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteNonQuery()).Returns(18);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.ExecuteNonQuery<FakeDataParameter>(new TestSqlProcedure());
+            var result = materializer.ExecuteNonQuery<FakeDataParameter>(new TestProcedure());
 
             Assert.Equal(18, result);
         }
@@ -377,13 +377,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <remarks>This test ensures that the ExecuteNonQuery method correctly invokes the underlying
         /// command and returns the number of rows affected when used with a SQL procedure and transaction.</remarks>
         [Fact]
-        public void ExecuteNonQuery_WithSqlProcedureAndTransaction_ReturnsRowsAffected()
+        public void ExecuteNonQuery_WithProcedureAndTransaction_ReturnsRowsAffected()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteNonQuery()).Returns(19);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.ExecuteNonQuery<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = materializer.ExecuteNonQuery<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.Equal(19, result);
         }
@@ -396,13 +396,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// the correct number of affected rows is returned by the materializer.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteNonQueryAsync_WithSqlProcedure_ReturnsRowsAffected()
+        public async Task ExecuteNonQueryAsync_WithProcedure_ReturnsRowsAffected()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteNonQuery()).Returns(20);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteNonQueryAsync<FakeDataParameter>(new TestSqlProcedure());
+            var result = await materializer.ExecuteNonQueryAsync<FakeDataParameter>(new TestProcedure());
 
             Assert.Equal(20, result);
         }
@@ -413,13 +413,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// </summary>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteNonQueryAsync_WithSqlProcedureAndTransaction_ReturnsRowsAffected()
+        public async Task ExecuteNonQueryAsync_WithProcedureAndTransaction_ReturnsRowsAffected()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteNonQuery()).Returns(21);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteNonQueryAsync<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = await materializer.ExecuteNonQueryAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.Equal(21, result);
         }

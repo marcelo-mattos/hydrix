@@ -82,14 +82,14 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         }
 
         /// <summary>
-        /// Verifies that the generic CreateCommand method of IMaterializer is called with a valid ISqlProcedure
+        /// Verifies that the generic CreateCommand method of IMaterializer is called with a valid IProcedure
         /// implementation using a concrete data parameter type and returns a non-null IDbCommand instance.
         /// </summary>
         /// <remarks>
         /// This test uses SqlParameter as the concrete type for TDataParameterDriver to satisfy the generic constraint.
         /// </remarks>
         [Fact]
-        public void CreateCommand_Generic_WithSqlProcedure_CallsMethod()
+        public void CreateCommand_Generic_WithProcedure_CallsMethod()
         {
             var proc = Mock.Of<IProcedure<SqlParameter>>();
             _materializerMock.Setup(m => m.CreateCommand<SqlParameter>(proc))
@@ -107,7 +107,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// intended to validate the integration between the materializer and procedure interfaces in scenarios
         /// involving SQL commands.</remarks>
         [Fact]
-        public void CreateCommand_Generic_WithSqlProcedureAndTransaction_CallsMethod()
+        public void CreateCommand_Generic_WithProcedureAndTransaction_CallsMethod()
         {
             var proc = Mock.Of<IProcedure<SqlParameter>>();
             _materializerMock.Setup(m => m.CreateCommand<SqlParameter>(proc, null))

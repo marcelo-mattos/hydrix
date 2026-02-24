@@ -437,21 +437,21 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <returns>An System.Data.DataTable object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         DataTable Contract.IMaterializer.ExecuteTable<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> procedure)
         {
             DataTable dataTable = null;
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
-                    sqlProcedure);
+                    procedure);
 
             dataTable = new DataTable(nameof(Materializer));
             dataTable.Load(dataReader);
@@ -466,23 +466,23 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
         /// <returns>An System.Data.DataTable object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         DataTable Contract.IMaterializer.ExecuteTable<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction)
         {
             DataTable dataTable = null;
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
-                    sqlProcedure,
+                    procedure,
                     transaction);
 
             dataTable = new DataTable(nameof(Materializer));
@@ -498,22 +498,22 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.DataTable object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<DataTable> Contract.IMaterializer.ExecuteTableAsync<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             CancellationToken cancellationToken)
         {
             using var dataReader = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
-                    sqlProcedure,
+                    procedure,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -530,24 +530,24 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="transaction">The database transaction to use.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.DataTable object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<DataTable> Contract.IMaterializer.ExecuteTableAsync<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken)
         {
             using var dataReader = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
-                    sqlProcedure,
+                    procedure,
                     transaction,
                     cancellationToken)
                 .ConfigureAwait(false);

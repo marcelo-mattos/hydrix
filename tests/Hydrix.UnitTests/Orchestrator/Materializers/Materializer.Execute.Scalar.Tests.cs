@@ -338,13 +338,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// the underlying command and returns the result as expected. It uses a mock command to simulate the database
         /// interaction.</remarks>
         [Fact]
-        public void ExecuteScalar_WithSqlProcedure_ReturnsExpectedValue()
+        public void ExecuteScalar_WithProcedure_ReturnsExpectedValue()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteScalar()).Returns(18);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.ExecuteScalar<FakeDataParameter>(new TestSqlProcedure());
+            var result = materializer.ExecuteScalar<FakeDataParameter>(new TestProcedure());
 
             Assert.Equal(18, result);
         }
@@ -357,13 +357,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// within the context of a transaction and returns the expected scalar result. It uses a mocked command to
         /// simulate the database operation.</remarks>
         [Fact]
-        public void ExecuteScalar_WithSqlProcedureAndTransaction_ReturnsExpectedValue()
+        public void ExecuteScalar_WithProcedureAndTransaction_ReturnsExpectedValue()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteScalar()).Returns(19);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.ExecuteScalar<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = materializer.ExecuteScalar<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.Equal(19, result);
         }
@@ -376,13 +376,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// expected result.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteScalarAsync_WithSqlProcedure_ReturnsExpectedValue()
+        public async Task ExecuteScalarAsync_WithProcedure_ReturnsExpectedValue()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteScalar()).Returns(20);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteScalarAsync<FakeDataParameter>(new TestSqlProcedure());
+            var result = await materializer.ExecuteScalarAsync<FakeDataParameter>(new TestProcedure());
 
             Assert.Equal(20, result);
         }
@@ -395,13 +395,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// procedure within the context of a transaction and returns the scalar result as expected.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteScalarAsync_WithSqlProcedureAndTransaction_ReturnsExpectedValue()
+        public async Task ExecuteScalarAsync_WithProcedureAndTransaction_ReturnsExpectedValue()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteScalar()).Returns(21);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteScalarAsync<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = await materializer.ExecuteScalarAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.Equal(21, result);
         }

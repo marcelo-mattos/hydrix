@@ -284,9 +284,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// parameter type, correctly returns the number of rows affected as reported by the underlying data access
         /// implementation.</remarks>
         [Fact]
-        public void ExecuteNonQuery_GenericSqlProcedure_ReturnsRowsAffected()
+        public void ExecuteNonQuery_GenericProcedure_ReturnsRowsAffected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteNonQuery<DummyParameter>(proc)).Returns(17);
             var result = _materializerMock.Object.ExecuteNonQuery<DummyParameter>(proc);
             Assert.Equal(17, result);
@@ -300,9 +300,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// rows affected when called with a generic parameter and an explicit transaction. It uses a mock
         /// implementation to simulate the database operation.</remarks>
         [Fact]
-        public void ExecuteNonQuery_GenericSqlProcedureWithTransaction_ReturnsRowsAffected()
+        public void ExecuteNonQuery_GenericProcedureWithTransaction_ReturnsRowsAffected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteNonQuery<DummyParameter>(proc, transaction)).Returns(18);
             var result = _materializerMock.Object.ExecuteNonQuery<DummyParameter>(proc, transaction);
@@ -318,9 +318,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// simulate the database operation.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteNonQueryAsync_GenericSqlProcedure_ReturnsRowsAffected()
+        public async Task ExecuteNonQueryAsync_GenericProcedure_ReturnsRowsAffected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteNonQueryAsync<DummyParameter>(proc, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(19);
             var result = await _materializerMock.Object.ExecuteNonQueryAsync<DummyParameter>(proc);
@@ -336,9 +336,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// materializer to simulate the database operation.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteNonQueryAsync_GenericSqlProcedureWithTransaction_ReturnsRowsAffected()
+        public async Task ExecuteNonQueryAsync_GenericProcedureWithTransaction_ReturnsRowsAffected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteNonQueryAsync<DummyParameter>(proc, transaction, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(20);

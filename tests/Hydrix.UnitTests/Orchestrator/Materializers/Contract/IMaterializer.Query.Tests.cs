@@ -152,9 +152,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// and parameter types, returns the correct set of entities. It uses a mock materializer to simulate the
         /// database interaction.</remarks>
         [Fact]
-        public void Query_GenericSqlProcedure_ReturnsEntities()
+        public void Query_GenericProcedure_ReturnsEntities()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.Query<DummyEntity, DummyParameter>(proc))
                 .Returns(_entityList);
             var result = _materializerMock.Object.Query<DummyEntity, DummyParameter>(proc);
@@ -168,9 +168,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// procedure and transaction, returns the correct set of entities. The test uses mocks to simulate the database
         /// interaction and asserts that the result contains the expected number of entities.</remarks>
         [Fact]
-        public void Query_GenericSqlProcedureWithTransaction_ReturnsEntities()
+        public void Query_GenericProcedureWithTransaction_ReturnsEntities()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.Query<DummyEntity, DummyParameter>(proc, transaction))
                 .Returns(_entityList);
@@ -325,9 +325,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// simulate the database interaction.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_GenericSqlProcedure_ReturnsEntities()
+        public async Task QueryAsync_GenericProcedure_ReturnsEntities()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.QueryAsync<DummyEntity, DummyParameter>(proc, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
             var result = await _materializerMock.Object.QueryAsync<DummyEntity, DummyParameter>(proc);
@@ -343,9 +343,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// operation.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_GenericSqlProcedureWithTransaction_ReturnsEntities()
+        public async Task QueryAsync_GenericProcedureWithTransaction_ReturnsEntities()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.QueryAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);

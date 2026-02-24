@@ -281,9 +281,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// DataSet when invoked with a generic SQL procedure. It uses a mock materializer to simulate the expected
         /// behavior.</remarks>
         [Fact]
-        public void ExecuteDataSet_GenericSqlProcedure_ReturnsDataSet()
+        public void ExecuteDataSet_GenericProcedure_ReturnsDataSet()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteDataSet<DummyParameter>(proc)).Returns(new DataSet());
             var result = _materializerMock.Object.ExecuteDataSet<DummyParameter>(proc);
             Assert.NotNull(result);
@@ -296,9 +296,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// procedure and a transaction, produces a valid DataSet result. The test uses a mock implementation to
         /// simulate the expected behavior.</remarks>
         [Fact]
-        public void ExecuteDataSet_GenericSqlProcedureWithTransaction_ReturnsDataSet()
+        public void ExecuteDataSet_GenericProcedureWithTransaction_ReturnsDataSet()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteDataSet<DummyParameter>(proc, transaction)).Returns(new DataSet());
             var result = _materializerMock.Object.ExecuteDataSet<DummyParameter>(proc, transaction);
@@ -314,9 +314,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// database operation.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteDataSetAsync_GenericSqlProcedure_ReturnsDataSet()
+        public async Task ExecuteDataSetAsync_GenericProcedure_ReturnsDataSet()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteDataSetAsync<DummyParameter>(proc, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
             var result = await _materializerMock.Object.ExecuteDataSetAsync<DummyParameter>(proc);
@@ -332,9 +332,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// implementation to simulate the database operation.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteDataSetAsync_GenericSqlProcedureWithTransaction_ReturnsDataSet()
+        public async Task ExecuteDataSetAsync_GenericProcedureWithTransaction_ReturnsDataSet()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteDataSetAsync<DummyParameter>(proc, transaction, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());

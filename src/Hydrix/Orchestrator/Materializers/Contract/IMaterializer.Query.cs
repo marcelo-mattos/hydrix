@@ -41,7 +41,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -75,7 +75,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -105,7 +105,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -134,7 +134,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -170,7 +170,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -208,7 +208,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -242,7 +242,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -275,7 +275,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -310,7 +310,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -347,7 +347,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -380,7 +380,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -412,7 +412,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -451,7 +451,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -492,7 +492,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -529,7 +529,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -565,7 +565,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -594,7 +594,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <typeparam name="TEntity">
         /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <returns>An ITable array filled with the DataSet result.</returns>
@@ -604,13 +604,13 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlProcedureAttibute decorating itself.
+        /// The SqlEntity does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> procedure)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new();
 
@@ -627,7 +627,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <typeparam name="TEntity">
         /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
@@ -638,13 +638,13 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a SqlProcedureAttibute decorating itself.
+        /// The SqlEntity does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new();
@@ -662,7 +662,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <typeparam name="TEntity">
         /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
@@ -673,7 +673,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -683,7 +683,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new();
@@ -701,7 +701,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <typeparam name="TEntity">
         /// Represents a Sql Table that holds the data to be parsed from the DataSet result.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
@@ -713,7 +713,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         /// <exception cref="MissingMemberException">
         /// The entity does not have a TableAttibute decorating itself.
@@ -723,7 +723,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()

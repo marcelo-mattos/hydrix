@@ -276,12 +276,12 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// and parameter type.
         /// </summary>
         /// <remarks>This test ensures that the ExecuteScalar&lt;TParameter&gt; method correctly returns the
-        /// value provided by the mock implementation when called with a DummySqlProcedure instance. It validates the
+        /// value provided by the mock implementation when called with a DummyProcedure instance. It validates the
         /// integration between the procedure and the materializer mock.</remarks>
         [Fact]
-        public void ExecuteScalar_GenericSqlProcedure_ReturnsExpected()
+        public void ExecuteScalar_GenericProcedure_ReturnsExpected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteScalar<DummyParameter>(proc)).Returns(17);
             var result = _materializerMock.Object.ExecuteScalar<DummyParameter>(proc);
             Assert.Equal(17, result);
@@ -294,9 +294,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// when called with a specific procedure and transaction. It uses a mock implementation to simulate the
         /// database interaction.</remarks>
         [Fact]
-        public void ExecuteScalar_GenericSqlProcedureWithTransaction_ReturnsExpected()
+        public void ExecuteScalar_GenericProcedureWithTransaction_ReturnsExpected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteScalar<DummyParameter>(proc, transaction)).Returns(18);
             var result = _materializerMock.Object.ExecuteScalar<DummyParameter>(proc, transaction);
@@ -311,9 +311,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// value produced by the specified SQL procedure when called with a generic parameter type.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteScalarAsync_GenericSqlProcedure_ReturnsExpected()
+        public async Task ExecuteScalarAsync_GenericProcedure_ReturnsExpected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.ExecuteScalarAsync<DummyParameter>(proc, It.IsAny<CancellationToken>())).ReturnsAsync(19);
             var result = await _materializerMock.Object.ExecuteScalarAsync<DummyParameter>(proc);
             Assert.Equal(19, result);
@@ -328,9 +328,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// database operation.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task ExecuteScalarAsync_GenericSqlProcedureWithTransaction_ReturnsExpected()
+        public async Task ExecuteScalarAsync_GenericProcedureWithTransaction_ReturnsExpected()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteScalarAsync<DummyParameter>(proc, transaction, It.IsAny<CancellationToken>())).ReturnsAsync(20);
             var result = await _materializerMock.Object.ExecuteScalarAsync<DummyParameter>(proc, transaction);

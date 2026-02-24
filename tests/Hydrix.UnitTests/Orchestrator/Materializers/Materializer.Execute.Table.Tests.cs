@@ -292,13 +292,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Verifies that ExecuteTable returns a DataTable for a SQL procedure.
         /// </summary>
         [Fact]
-        public void ExecuteTable_WithSqlProcedure_ReturnsDataTable()
+        public void ExecuteTable_WithProcedure_ReturnsDataTable()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = (materializer as IMaterializer).ExecuteTable<FakeDataParameter>(new TestSqlProcedure());
+            var result = (materializer as IMaterializer).ExecuteTable<FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Rows.Count);
@@ -308,13 +308,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Verifies that ExecuteTable returns a DataTable for a SQL procedure and transaction.
         /// </summary>
         [Fact]
-        public void ExecuteTable_WithSqlProcedureAndTransaction_ReturnsDataTable()
+        public void ExecuteTable_WithProcedureAndTransaction_ReturnsDataTable()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = (materializer as IMaterializer).ExecuteTable<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = (materializer as IMaterializer).ExecuteTable<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Rows.Count);
@@ -324,13 +324,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Verifies that ExecuteTableAsync returns a DataTable for a SQL procedure and cancellation token.
         /// </summary>
         [Fact]
-        public async Task ExecuteTableAsync_WithSqlProcedure_ReturnsDataTable()
+        public async Task ExecuteTableAsync_WithProcedure_ReturnsDataTable()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await (materializer as IMaterializer).ExecuteTableAsync<FakeDataParameter>(new TestSqlProcedure(), CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteTableAsync<FakeDataParameter>(new TestProcedure(), CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Rows.Count);
@@ -340,13 +340,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Verifies that ExecuteTableAsync returns a DataTable for a SQL procedure, transaction, and cancellation token.
         /// </summary>
         [Fact]
-        public async Task ExecuteTableAsync_WithSqlProcedureAndTransaction_ReturnsDataTable()
+        public async Task ExecuteTableAsync_WithProcedureAndTransaction_ReturnsDataTable()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await (materializer as IMaterializer).ExecuteTableAsync<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction(), CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteTableAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction(), CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Equal(2, result.Rows.Count);

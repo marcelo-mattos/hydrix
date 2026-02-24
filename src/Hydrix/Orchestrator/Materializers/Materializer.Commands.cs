@@ -245,7 +245,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
         /// access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <returns>A Command object associated with the connection.</returns>
@@ -255,10 +255,10 @@ namespace Hydrix.Orchestrator.Materializers
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         IDbCommand Contract.IMaterializer.CreateCommand<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> procedure)
         {
             IDbTransaction transaction = null;
 
@@ -266,7 +266,7 @@ namespace Hydrix.Orchestrator.Materializers
                 transaction = this.DbTransaction;
 
             return (this as Contract.IMaterializer).CreateCommand(
-                sqlProcedure,
+                procedure,
                 transaction);
         }
 
@@ -278,7 +278,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// System.Data.DataSet columns; and is implemented by .NET Framework data providers that
         /// access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">
+        /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="transaction">
@@ -291,10 +291,10 @@ namespace Hydrix.Orchestrator.Materializers
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlProcedure does not have a SqlProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttibute decorating itself.
         /// </exception>
         IDbCommand Contract.IMaterializer.CreateCommand<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction)
         {
 #if NET8_0_OR_GREATER
@@ -303,41 +303,45 @@ namespace Hydrix.Orchestrator.Materializers
                 "The connection has been disposed.");
 
             ArgumentNullException.ThrowIfNull(
-                sqlProcedure);
+                procedure);
 #else
             if (this.IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
-            if (sqlProcedure == null)
-                throw new ArgumentNullException(nameof(sqlProcedure));
+            if (procedure == null)
+                throw new ArgumentNullException(nameof(procedure));
 #endif
 
             if (DbConnection.State != ConnectionState.Open)
                 throw new InvalidOperationException("Database connection is not open.");
 
-            var procedureType = sqlProcedure.GetType();
+            var procedureType = procedure.GetType();
 
-            var sqlProcedureAttribute = procedureType
+            var procedureAttribute = procedureType
                 .GetCustomAttributes(typeof(ProcedureAttribute), false)
                 .Cast<ProcedureAttribute>()
                 .FirstOrDefault() ?? throw new MissingMemberException(
-                    "The SqlProcedure does not have a ProcedureAttribute decorating itself.");
+                    "The Procedure does not have a ProcedureAttribute decorating itself.");
 
             IDbCommand command;
 
             lock (this._lockConnection)
                 command = this.DbConnection.CreateCommand();
 
-            command.CommandType = sqlProcedureAttribute.CommandType;
-            command.CommandText = sqlProcedureAttribute.CommandText;
+            command.CommandType = procedureAttribute.CommandType;
+            command.CommandText = procedureAttribute.CommandText;
             command.CommandTimeout = this.Timeout;
 
             if (transaction != null)
                 command.Transaction = transaction;
 
             var properties = procedureType
-                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .Where(p => p.CanRead);
+                .GetProperties(
+                    BindingFlags.Instance |
+                    BindingFlags.Public)
+                .Where(p =>
+                    p.CanRead &&
+                    p.GetIndexParameters().Length == 0);
 
             foreach (var property in properties)
             {
@@ -351,7 +355,7 @@ namespace Hydrix.Orchestrator.Materializers
                     {
                         ParameterName = parameterAttribute.Name,
                         Direction = parameterAttribute.Direction,
-                        Value = property.GetValue(sqlProcedure) ?? DBNull.Value
+                        Value = property.GetValue(procedure) ?? DBNull.Value
                     };
 
                     if (Enum.IsDefined(typeof(DbType), (int)parameterAttribute.DbType))
@@ -362,7 +366,10 @@ namespace Hydrix.Orchestrator.Materializers
                     {
                         var sqlDbTypeProperty = dataParameter
                             .GetType()
-                            .GetProperty(nameof(SqlDbType), BindingFlags.Instance | BindingFlags.Public);
+                            .GetProperty(
+                                nameof(SqlDbType),
+                                BindingFlags.Instance |
+                                BindingFlags.Public);
 
                         if (sqlDbTypeProperty != null &&
                             Enum.IsDefined(typeof(SqlDbType), (int)parameterAttribute.DbType))

@@ -156,9 +156,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// when SingleOrDefault is called with specific generic type arguments. It validates the behavior of the data
         /// access layer when executing a SQL procedure expected to return a single entity or null.</remarks>
         [Fact]
-        public void SingleOrDefault_GenericSqlProcedure_ReturnsEntity()
+        public void SingleOrDefault_GenericProcedure_ReturnsEntity()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity, DummyParameter>(proc))
                 .Returns(_entity);
             var result = _materializerMock.Object.SingleOrDefault<DummyEntity, DummyParameter>(proc);
@@ -173,9 +173,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// provided with a SQL procedure and a transaction. It uses a mock materializer to simulate the expected
         /// behavior.</remarks>
         [Fact]
-        public void SingleOrDefault_GenericSqlProcedureWithTransaction_ReturnsEntity()
+        public void SingleOrDefault_GenericProcedureWithTransaction_ReturnsEntity()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity, DummyParameter>(proc, transaction))
                 .Returns(_entity);
@@ -330,9 +330,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// procedure and asserts that the returned entity matches the expected result.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task SingleOrDefaultAsync_GenericSqlProcedure_ReturnsEntity()
+        public async Task SingleOrDefaultAsync_GenericProcedure_ReturnsEntity()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
             var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc);
@@ -347,9 +347,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         /// null when executing a generic SQL procedure within a transaction context.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task SingleOrDefaultAsync_GenericSqlProcedureWithTransaction_ReturnsEntity()
+        public async Task SingleOrDefaultAsync_GenericProcedureWithTransaction_ReturnsEntity()
         {
-            var proc = new DummySqlProcedure();
+            var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);

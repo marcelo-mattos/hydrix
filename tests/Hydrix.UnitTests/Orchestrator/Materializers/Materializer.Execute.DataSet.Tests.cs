@@ -178,7 +178,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.ExecuteDataSet<FakeDataParameter>(new TestSqlProcedure());
+            var result = materializer.ExecuteDataSet<FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -196,7 +196,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.ExecuteDataSet<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = materializer.ExecuteDataSet<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -364,7 +364,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestSqlProcedure(), CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestProcedure(), CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -382,7 +382,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction(), CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction(), CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);

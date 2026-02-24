@@ -30,7 +30,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -58,7 +58,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -86,7 +86,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -107,7 +107,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -131,7 +131,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -162,7 +162,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -193,7 +193,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -217,7 +217,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity>(
@@ -243,7 +243,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -277,7 +277,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -311,7 +311,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -338,7 +338,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -368,7 +368,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -405,7 +405,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -442,7 +442,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -472,7 +472,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
@@ -500,20 +500,20 @@ namespace Hydrix.Orchestrator.Materializers
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
         /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <returns>An ITable array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The SqlEntity does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> procedure)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
             var result = this.Query<TEntity, TDataParameterDriver>(
-                sqlProcedure);
+                procedure);
 
             return result
                 .FirstOrDefault();
@@ -528,22 +528,22 @@ namespace Hydrix.Orchestrator.Materializers
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
         /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
         /// <returns>An ITable array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlEntity does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The SqlEntity does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public TEntity SingleOrDefault<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
             var result = this.Query<TEntity, TDataParameterDriver>(
-                sqlProcedure,
+                procedure,
                 transaction);
 
             return result
@@ -559,25 +559,25 @@ namespace Hydrix.Orchestrator.Materializers
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
         /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An ITable array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<TEntity> SingleOrDefaultAsync<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
             var result = await this
                 .QueryAsync<TEntity, TDataParameterDriver>(
-                    sqlProcedure,
+                    procedure,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -594,19 +594,19 @@ namespace Hydrix.Orchestrator.Materializers
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
         /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An ITable array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="MissingMemberException">The entity does not have a TableAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<TEntity> SingleOrDefaultAsync<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
@@ -614,7 +614,7 @@ namespace Hydrix.Orchestrator.Materializers
         {
             var result = await this
                 .QueryAsync<TEntity, TDataParameterDriver>(
-                    sqlProcedure,
+                    procedure,
                     transaction,
                     cancellationToken)
                 .ConfigureAwait(false);

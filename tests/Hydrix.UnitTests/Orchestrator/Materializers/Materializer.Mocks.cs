@@ -675,14 +675,14 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
-        /// Represents a test SQL stored procedure definition for use with the ISqlProcedure interface and
+        /// Represents a test SQL stored procedure definition for use with the IProcedure interface and
         /// FakeDataParameter parameters.
         /// </summary>
         /// <remarks>This class is intended for testing scenarios and provides metadata for the
         /// 'dbo.TestProc' stored procedure, including its parameter definitions. It is not intended for production
         /// use.</remarks>
         [Procedure("TestProc", Schema = "dbo")]
-        private class TestSqlProcedure :
+        private class TestProcedure :
             IProcedure<FakeDataParameter>
         {
             /// <summary>

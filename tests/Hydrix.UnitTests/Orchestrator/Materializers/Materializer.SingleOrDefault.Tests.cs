@@ -209,13 +209,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// to a TestEntity instance. It checks that the returned entity is not null and that its properties match the
         /// expected values.</remarks>
         [Fact]
-        public void SingleOrDefault_WithSqlProcedure_ReturnsEntity()
+        public void SingleOrDefault_WithProcedure_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestSqlProcedure());
+            var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
@@ -230,13 +230,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// database when provided with a SQL procedure and an active transaction. It validates that the returned entity
         /// has the expected property values.</remarks>
         [Fact]
-        public void SingleOrDefault_WithSqlProcedureAndTransaction_ReturnsEntity()
+        public void SingleOrDefault_WithProcedureAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
@@ -445,13 +445,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// </summary>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task SingleOrDefaultAsync_WithSqlProcedure_ReturnsEntity()
+        public async Task SingleOrDefaultAsync_WithProcedure_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestSqlProcedure());
+            var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestProcedure());
 
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
@@ -467,13 +467,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// entity is not null and that its properties match the expected values.</remarks>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task SingleOrDefaultAsync_WithSqlProcedureAndTransaction_ReturnsEntity()
+        public async Task SingleOrDefaultAsync_WithProcedureAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestSqlProcedure(), new FakeDbTransaction());
+            var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);

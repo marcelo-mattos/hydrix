@@ -436,20 +436,20 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <returns>The first column of the first row in the resultset.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public object ExecuteScalar<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure)
+            IProcedure<TDataParameterDriver> procedure)
             where TDataParameterDriver : IDataParameter, new()
         {
             using var command = (this as Contract.IMaterializer)
                 .CreateCommand(
-                    sqlProcedure);
+                    procedure);
 
             return command.ExecuteScalar();
         }
@@ -461,22 +461,22 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
         /// <returns>The first column of the first row in the resultset.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         public object ExecuteScalar<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction)
             where TDataParameterDriver : IDataParameter, new()
         {
             using var command = (this as Contract.IMaterializer)
                 .CreateCommand(
-                    sqlProcedure,
+                    procedure,
                     transaction);
 
             return command.ExecuteScalar();
@@ -489,23 +489,23 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The first column of the first row in the resultset.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<object> ExecuteScalarAsync<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
             using var command = (this as Contract.IMaterializer)
                 .CreateCommand(
-                    sqlProcedure);
+                    procedure);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -525,25 +525,25 @@ namespace Hydrix.Orchestrator.Materializers
         /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
-        /// <param name="sqlProcedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="transaction">The database transaction to use.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The first column of the first row in the resultset.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The SqlProcedure does not have a SqlProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         public async Task<object> ExecuteScalarAsync<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> sqlProcedure,
+            IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
             using var command = (this as Contract.IMaterializer)
                 .CreateCommand(
-                    sqlProcedure,
+                    procedure,
                     transaction);
 
             if (command is DbCommand dbCommand)
