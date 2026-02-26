@@ -1,193 +1,50 @@
-﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Metadata.Internals;
-using Hydrix.Schemas.Contract;
-using System;
+﻿using Hydrix.Orchestrator.Mapping;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 
 namespace Hydrix.Orchestrator.Metadata.Materializers
 {
     /// <summary>
-    /// Represents the cached metadata of a SQL-mapped entity type.
+    /// Provides metadata describing how to materialize an entity from a data source, including mappings for scalar
+    /// fields and nested entities.
     /// </summary>
-    /// <remarks>
-    /// This class centralizes all reflection-derived information required to map a <see
-    /// cref="System.Data.DataTable"/> or <see cref="System.Data.DataRow"/> into an <see
-    /// cref="ITable"/> instance.
-    ///
-    /// The metadata is built once per entity type and reused through an internal cache,
-    /// significantly reducing reflection overhead during large result set processing.
-    ///
-    /// It contains:
-    /// <list type="bullet">
-    /// <item>
-    /// <description>
-    /// A collection of mapped scalar fields decorated with <see cref="ColumnAttribute"/>,
-    /// including their resolved target types and property accessors.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <description>
-    /// A collection of nested entity mappings decorated with <see cref="ForeignTableAttribute"/>,
-    /// enabling recursive object graph construction from flattened SQL projections.
-    /// </description>
-    /// </item>
-    /// </list>
-    /// This structure is intentionally immutable after construction to ensure thread safety and
-    /// predictable behavior during concurrent mapping operations.
-    /// </remarks>
+    /// <remarks>This class is used to facilitate the mapping of data from a data source to entity properties,
+    /// supporting both simple scalar fields and complex nested entities. It enables efficient and accurate
+    /// materialization of object graphs by defining how each property should be populated. Instances of this class are
+    /// typically constructed by a metadata builder using reflection and are intended to be reused across multiple
+    /// mapping operations for performance and consistency.</remarks>
     internal sealed class TableMaterializeMetadata
     {
         /// <summary>
-        /// Gets the collection of scalar field mappings for the entity.
+        /// Gets the collection of column mappings that define the structure of the data.
         /// </summary>
-        /// <remarks>
-        /// Each item in this collection represents a writable property decorated with <see
-        /// cref="ColumnAttribute"/>, including:
-        /// <list type="bullet">
-        /// <item>
-        /// <description>The reflected <see cref="System.Reflection.PropertyInfo"/>.</description>
-        /// </item>
-        /// <item>
-        /// <description>The associated <see cref="ColumnAttribute"/> instance.</description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// The resolved target CLR type used for value conversion, with <see cref="Nullable{T}"/>
-        /// already unwrapped when applicable.
-        /// </description>
-        /// </item>
-        /// </list>
-        /// These mappings are used to assign column values from a <see cref="System.Data.DataRow"/>
-        /// to the corresponding entity properties in a safe and performant manner.
-        /// </remarks>
+        /// <remarks>The returned collection is read-only and reflects the mapping between data fields and
+        /// their corresponding database columns. The collection is initialized when the object is constructed and
+        /// cannot be modified directly.</remarks>
         public IReadOnlyList<ColumnMap> Fields { get; private set; }
 
         /// <summary>
-        /// Gets the collection of nested entity mappings for the entity.
+        /// Gets the collection of table mappings that represent the entities managed by the context.
         /// </summary>
-        /// <remarks>
-        /// Each item in this collection represents a writable property decorated with <see
-        /// cref="ForeignTableAttribute"/>, defining a composition relationship between the current
-        /// entity and another <see cref="ITable"/>.
-        ///
-        /// These mappings allow the data handler to:
-        /// <list type="bullet">
-        /// <item>
-        /// <description>
-        /// Conditionally instantiate nested entities based on primary key presence, preventing the
-        /// creation of empty objects when LEFT JOINs return null values.
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// Recursively populate object graphs using flattened column aliases (e.g. <c>Parent.Child.Property</c>).
-        /// </description>
-        /// </item>
-        /// </list>
-        /// This mechanism enables complex projections without requiring an ORM or provider-specific features.
-        /// </remarks>
+        /// <remarks>Each table mapping defines how an entity is associated with a database table,
+        /// including schema and relationship information. The collection is read-only and reflects the entities
+        /// currently tracked by the context.</remarks>
         public IReadOnlyList<TableMap> Entities { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TableMaterializeMetadata"/> class.
+        /// Initializes a new instance of the TableMaterializeMetadata class using the specified fields and entities.
         /// </summary>
-        /// <param name="fields">
-        /// The collection of scalar field mappings associated with the entity type, typically
-        /// derived from properties decorated with <see cref="ColumnAttribute"/>.
-        /// </param>
-        /// <param name="entities">
-        /// The collection of nested entity mappings associated with the entity type, typically
-        /// derived from properties decorated with <see cref="ForeignTableAttribute"/>.
-        /// </param>
-        /// <remarks>
-        /// This constructor is intended to be invoked exclusively by the metadata builder
-        /// responsible for analyzing entity types via reflection.
-        ///
-        /// Once created, the metadata instance should be treated as read-only and reused across
-        /// multiple mapping operations to ensure optimal performance and consistency.
-        /// </remarks>
+        /// <remarks>Both fields and entities are required to accurately describe the structure and
+        /// context for table materialization. Supplying null for either parameter will result in an error.</remarks>
+        /// <param name="fields">A read-only list of ColumnMap objects that defines the fields to be materialized. This parameter cannot be
+        /// null.</param>
+        /// <param name="entities">A read-only list of TableMap objects that specifies the entities associated with the materialization
+        /// process. This parameter cannot be null.</param>
         public TableMaterializeMetadata(
             IReadOnlyList<ColumnMap> fields,
             IReadOnlyList<TableMap> entities)
         {
             this.Fields = fields;
             this.Entities = entities;
-        }
-
-        /// <summary>
-        /// Builds and returns the metadata definition for a SQL-mapped entity type.
-        /// </summary>
-        /// <param name="type">
-        /// The CLR type representing an entity that implements <see cref="ITable"/> and is
-        /// decorated with SQL mapping attributes.
-        /// </param>
-        /// <returns>
-        /// A fully populated <see cref="TableMaterializeMetadata"/> instance containing all scalar field
-        /// and nested entity mappings associated with the specified type.
-        /// </returns>
-        /// <remarks>
-        /// This method performs a one-time reflection analysis over the specified entity type to
-        /// discover all properties participating in SQL-to-entity mapping.
-        ///
-        /// The resulting metadata includes:
-        /// <list type="bullet">
-        /// <item>
-        /// <description>
-        /// Scalar field mappings for properties decorated with <see cref="ColumnAttribute"/>,
-        /// including resolved target types for safe value conversion.
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// Nested entity mappings for properties decorated with <see cref="ForeignTableAttribute"/>,
-        /// enabling recursive object graph materialization from flattened SQL projections.
-        /// </description>
-        /// </item>
-        /// </list>
-        /// The metadata produced by this method is intended to be cached and reused across multiple
-        /// mapping operations, eliminating repetitive reflection overhead and significantly
-        /// improving performance when processing large result sets.
-        ///
-        /// Nullable property types are normalized by unwrapping their underlying CLR type, ensuring
-        /// compatibility with <see cref="System.Convert"/> during runtime value conversion.
-        /// </remarks>
-        internal static TableMaterializeMetadata BuildEntityMetadata(Type type)
-        {
-            var fields = type
-                .GetProperties()
-                .Where(p =>
-                    p.CanWrite &&
-                    Attribute.IsDefined(p, typeof(ColumnAttribute)))
-                .Select(p =>
-                {
-                    var attr = (ColumnAttribute)p
-                        .GetCustomAttributes(typeof(ColumnAttribute), false)
-                        .First();
-
-                    return new ColumnMap(
-                        p,
-                        attr);
-                })
-                .ToList();
-
-            var entities = type
-                .GetProperties()
-                .Where(p =>
-                    p.CanWrite &&
-                    Attribute.IsDefined(p, typeof(ForeignTableAttribute)))
-                .Select(p => new TableMap(
-                    p,
-                    (ForeignTableAttribute)p
-                        .GetCustomAttributes(typeof(ForeignTableAttribute), false)
-                        .First()))
-                .ToList();
-
-            return MetadataFactory.CreateEntity(
-                fields,
-                entities);
         }
     }
 }

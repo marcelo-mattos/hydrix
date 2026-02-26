@@ -17,6 +17,15 @@ namespace Hydrix.Orchestrator.Caching
     internal static class ProviderDbTypeSetterCache
     {
         /// <summary>
+        /// Represents a no-operation action that accepts an IDataParameter and an integer as parameters and performs no
+        /// work.
+        /// </summary>
+        /// <remarks>This delegate can be used as a placeholder where an Action&lt;IDataParameter, int&gt; is
+        /// required but no operation is needed. It is useful for avoiding null checks or conditional logic when an
+        /// action is optional.</remarks>
+        private static readonly Action<IDataParameter, int> _noop = (_, __) => { };
+
+        /// <summary>
         /// Provides a thread-safe cache that stores actions for setting parameter values of a specific type in a data
         /// command.
         /// </summary>
@@ -71,7 +80,7 @@ namespace Hydrix.Orchestrator.Caching
                         StringComparison.Ordinal));
 
             if (property == null)
-                return null;
+                return _noop;
 
             var paramExp = Expression.Parameter(typeof(IDataParameter), "param");
             var valueExp = Expression.Parameter(typeof(int), "value");

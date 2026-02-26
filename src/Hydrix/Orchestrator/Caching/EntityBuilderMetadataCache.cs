@@ -152,17 +152,17 @@ namespace Hydrix.Orchestrator.Caching
                         .GetProperties(
                             BindingFlags.Instance |
                             BindingFlags.Public)
-                        .Where(p =>
-                            p.GetCustomAttribute<NotMappedAttribute>() == null &&
-                            p.GetCustomAttribute<ForeignTableAttribute>() == null)
-                        .Select(p =>
+                        .Where(property =>
+                            property.GetCustomAttribute<NotMappedAttribute>() == null &&
+                            property.GetCustomAttribute<ForeignTableAttribute>() == null)
+                        .Select(property =>
                         {
-                            var colAttr = p.GetCustomAttribute<ColumnAttribute>();
-                            var colName = colAttr?.Name ?? p.Name;
+                            var columnAttribute = property.GetCustomAttribute<ColumnAttribute>();
+                            var columnName = columnAttribute?.Name ?? property.Name;
 
                             return new ForeignColumnMetadata(
-                                colName,
-                                $"{foreignAttr.Name}.{colName}");
+                                columnName,
+                                $"{foreignAttr.Name}.{columnName}");
                         })
                         .ToList();
 

@@ -161,7 +161,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             var columnAttr = new ColumnAttribute("int_prop");
             var foreignAttr = new ForeignTableAttribute("int_prop");
 
-            var fields = new[] { new ColumnMap(typeof(TestClass).GetProperty(nameof(TestClass.IntProp)), columnAttr) };
+            var fields = new[] { new ColumnMap(typeof(TestClass).GetProperty(nameof(TestClass.IntProp)), columnAttr.Name) };
             var entities = new[] { new TableMap(typeof(TestClass).GetProperty(nameof(TestClass.NoDefaultCtor)), foreignAttr) };
             var meta = MetadataFactory.CreateEntity(fields, entities);
             Assert.Equal(fields, meta.Fields);

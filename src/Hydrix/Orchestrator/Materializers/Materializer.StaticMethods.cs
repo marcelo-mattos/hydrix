@@ -1,7 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -59,11 +58,8 @@ namespace Hydrix.Orchestrator.Materializers
 #endif
 
             var entities = new List<TEntity>();
-
-            var metadata = EntityMetadataCache.GetOrAdd(
-                typeof(TEntity),
-                TableMaterializeMetadata.BuildEntityMetadata
-            );
+            var type = typeof(TEntity);
+            var metadata = EntityMetadataCache.GetOrAdd(type);
 
             var ordinals = BuildOrdinals(dataReader);
 
@@ -76,7 +72,6 @@ namespace Hydrix.Orchestrator.Materializers
                     dataReader,
                     metadata,
                     string.Empty,
-                    EntityMetadataCache,
                     ordinals
                 );
 

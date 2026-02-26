@@ -56,10 +56,10 @@ namespace Hydrix.Orchestrator.Caching
                 .GetProperties(
                     BindingFlags.Instance |
                     BindingFlags.Public)
-                .Where(p =>
-                    p.CanRead &&
-                    p.GetIndexParameters().Length == 0 &&
-                    !p.IsDefined(typeof(NotMappedAttribute), inherit: true))
+                .Where(property =>
+                    property.CanRead &&
+                    property.GetIndexParameters().Length == 0 &&
+                    !property.IsDefined(typeof(NotMappedAttribute), inherit: true))
                 .ToArray();
 
             var columns = new List<DataColumnBinding<TEntity>>(properties.Length);

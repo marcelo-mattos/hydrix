@@ -1,7 +1,6 @@
 ﻿using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Metadata.Internals;
 using System;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 
 namespace Hydrix.Orchestrator.Mapping
@@ -23,9 +22,9 @@ namespace Hydrix.Orchestrator.Mapping
         public PropertyInfo Property { get; }
 
         /// <summary>
-        /// Gets the SQL field mapping attribute.
+        /// Gets the SQL field name.
         /// </summary>
-        public ColumnAttribute Attribute { get; }
+        public string Name { get; }
 
         /// <summary>
         /// Gets the normalized target CLR type for value conversion.
@@ -48,13 +47,13 @@ namespace Hydrix.Orchestrator.Mapping
         /// target type.
         /// </summary>
         /// <param name="property">The property to be mapped to a SQL field. Cannot be null.</param>
-        /// <param name="attribute">The SQL field attribute that provides mapping metadata for the property. Cannot be null.</param>
+        /// <param name="name">The name of the SQL field to which the property is mapped. This should be a valid column name in the database.</param>
         public ColumnMap(
             PropertyInfo property,
-            ColumnAttribute attribute)
+            string name)
         {
             Property = property;
-            Attribute = attribute;
+            Name = name;
 
             var underlying = Nullable.GetUnderlyingType(property.PropertyType);
 

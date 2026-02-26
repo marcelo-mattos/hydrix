@@ -1,7 +1,4 @@
 ﻿using Hydrix.Orchestrator.Materializers;
-using Hydrix.Orchestrator.Metadata.Materializers;
-using System;
-using System.Collections.Concurrent;
 using System.Reflection;
 using Xunit;
 
@@ -113,24 +110,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var expected = (string)defaultPrefixField.GetValue(null);
             var actual = (string)prefixField.GetValue(materializer);
             Assert.Equal(expected, actual);
-        }
-
-        /// <summary>
-        /// Verifies that the _entityMetadataCache field in the Materializer class is a ConcurrentDictionary and is
-        /// initially empty.
-        /// </summary>
-        /// <remarks>This test ensures that the entity metadata cache is properly initialized and does not
-        /// contain any entries before use. It helps confirm that the cache is thread-safe and starts in a clean
-        /// state.</remarks>
-        [Fact]
-        public void EntityMetadataCache_IsConcurrentDictionary_AndEmpty()
-        {
-            var cacheField = typeof(Materializer).GetField("EntityMetadataCache", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(cacheField);
-            var cache = cacheField.GetValue(null) as ConcurrentDictionary<Type, TableMaterializeMetadata>;
-            Assert.NotNull(cache);
-            cache.Clear();
-            Assert.Empty(cache);
         }
     }
 }

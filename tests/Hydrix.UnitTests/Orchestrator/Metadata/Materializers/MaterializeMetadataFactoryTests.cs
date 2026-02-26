@@ -67,7 +67,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
             var attr = new ColumnAttribute("int_prop");
-            var fieldMap = new ColumnMap(prop, attr);
+            var fieldMap = new ColumnMap(prop, attr.Name);
 
             var entityProp = typeof(Dummy).GetProperty(nameof(Dummy.EntityProp));
             var entityAttr = new ForeignTableAttribute("dummy_entity")

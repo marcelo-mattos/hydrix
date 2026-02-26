@@ -1,9 +1,9 @@
 ﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
@@ -120,15 +120,12 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="metadata">The metadata describing the structure and mapping of the SQL entity. Cannot be null.</param>
         /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record, used for nested entities.
         /// Can be an empty string if no prefix is required.</param>
-        /// <param name="entityMetadataCache">A thread-safe cache of entity metadata, keyed by entity type, used to optimize metadata lookups for nested
-        /// entities. Cannot be null.</param>
         /// <param name="ordinals">A mapping from field names to their corresponding ordinal positions in the data record. Cannot be null.</param>
         internal static void SetEntity(
             ITable entity,
             IDataRecord record,
             TableMaterializeMetadata metadata,
             string prefix,
-            ConcurrentDictionary<Type, TableMaterializeMetadata> entityMetadataCache,
             IReadOnlyDictionary<string, int> ordinals)
         {
             SetEntityFields(
@@ -143,7 +140,6 @@ namespace Hydrix.Orchestrator.Mapping
                 record,
                 metadata,
                 prefix,
-                entityMetadataCache,
                 ordinals);
         }
 
@@ -168,11 +164,7 @@ namespace Hydrix.Orchestrator.Mapping
         {
             foreach (var field in metadata.Fields)
             {
-                string columnName = string.IsNullOrWhiteSpace(field.Attribute.Name)
-                        ? $"{prefix}{field.Property.Name}"
-                        : $"{prefix}{field.Attribute.Name}";
-
-                if (!ordinals.TryGetValue(columnName, out var ordinal))
+                if (!ordinals.TryGetValue(field.Name, out var ordinal))
                     continue;
 
                 if (record.IsDBNull(ordinal))
@@ -196,8 +188,6 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="entity">The entity whose nested entity properties are to be set. Must not be null.</param>
         /// <param name="record">The data record containing the values to populate the nested entities. Must not be null.</param>
         /// <param name="metadata">The metadata describing the structure and nested entities of the entity. Must not be null.</param>
-        /// <param name="entityMetadataCache">A cache of entity metadata, keyed by entity type, used to avoid redundant metadata construction. Must not be
-        /// null.</param>
         /// <param name="prefix">The prefix to apply to column names when accessing nested entity values in the data record. Can be an empty
         /// string.</param>
         /// <param name="ordinals">A dictionary containing the column ordinals for efficient lookup.</param>
@@ -206,7 +196,6 @@ namespace Hydrix.Orchestrator.Mapping
             IDataRecord record,
             TableMaterializeMetadata metadata,
             string prefix,
-            ConcurrentDictionary<Type, TableMaterializeMetadata> entityMetadataCache,
             IReadOnlyDictionary<string, int> ordinals)
         {
             foreach (var nested in metadata.Entities)
@@ -229,17 +218,14 @@ namespace Hydrix.Orchestrator.Mapping
                 var nestedEntity = (ITable)nested.Factory();
                 nested.Setter(entity, nestedEntity);
 
-                var nestedMetadata = entityMetadataCache.GetOrAdd(
-                    nested.Property.PropertyType,
-                    TableMaterializeMetadata.BuildEntityMetadata
-                );
+                var nestedMetadata = EntityMetadataCache.GetOrAdd(
+                    nested.Property.PropertyType);
 
                 SetEntity(
                     nestedEntity,
                     record,
                     nestedMetadata,
                     nestedPrefix,
-                    entityMetadataCache,
                     ordinals
                 );
             }

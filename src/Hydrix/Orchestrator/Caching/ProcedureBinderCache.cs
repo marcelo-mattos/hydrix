@@ -74,9 +74,9 @@ namespace Hydrix.Orchestrator.Caching
                 .GetProperties(
                     BindingFlags.Instance |
                     BindingFlags.Public)
-                .Where(p =>
-                    p.CanRead &&
-                    p.GetIndexParameters().Length == 0)
+                .Where(property =>
+                    property.CanRead &&
+                    property.GetIndexParameters().Length == 0)
                 .ToArray();
 
             var bindings = new List<ProcedureParameterBinding>(properties.Length);

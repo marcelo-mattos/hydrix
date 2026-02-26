@@ -15,6 +15,31 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
     public class ColumnMapTests
     {
         /// <summary>
+        /// Represents a test class that provides sample properties for demonstration or testing purposes.
+        /// </summary>
+        /// <remarks>This class includes properties of various types, such as integer, nullable integer,
+        /// and string, to facilitate testing scenarios that require diverse data types.</remarks>
+        private class TestClass
+        {
+            /// <summary>
+            /// Gets or sets the integer value associated with the property.
+            /// </summary>
+            public int IntValue { get; set; }
+
+            /// <summary>
+            /// Gets or sets a nullable integer value.
+            /// </summary>
+            /// <remarks>Use this property to represent an integer that may not have a value. A null
+            /// value indicates that no value has been assigned.</remarks>
+            public int? NullableInt { get; set; }
+
+            /// <summary>
+            /// Gets or sets the string value associated with the object.
+            /// </summary>
+            public string StringValue { get; set; }
+        }
+
+        /// <summary>
         /// Represents a test entity mapped to a database table for use with SQL-based data access.
         /// </summary>
         /// <remarks>This class is typically used in scenarios where entities are mapped to database
@@ -126,11 +151,11 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var defaultValue = 0;
 
             // Act
-            var map = new ColumnMap(property, attribute);
+            var map = new ColumnMap(property, attribute.Name);
 
             // Assert
             Assert.Equal(property, map.Property);
-            Assert.Equal(attribute, map.Attribute);
+            Assert.Equal(attribute.Name, map.Name);
             Assert.Equal(defaultValue, map.DefaultValue);
             Assert.NotNull(map.Setter);
         }
@@ -147,7 +172,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Arrange
             var property = typeof(TestEntity).GetProperty(nameof(TestEntity.Id));
             var attribute = new ColumnAttribute("id");
-            var map = new ColumnMap(property, attribute);
+            var map = new ColumnMap(property, attribute.Name);
             var entity = new TestEntity();
 
             // Act
@@ -172,7 +197,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var attribute = new ColumnAttribute("name");
 
             // Act
-            var map = new ColumnMap(property, attribute);
+            var map = new ColumnMap(property, attribute.Name);
             // Assert
             Assert.Null(map.DefaultValue);
         }
@@ -191,7 +216,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var attribute = new ColumnAttribute("flag");
 
             // Act
-            var map = new ColumnMap(property, attribute);
+            var map = new ColumnMap(property, attribute.Name);
 
             // Assert
             Assert.Equal(false, map.DefaultValue); // default(bool) == false
@@ -213,7 +238,7 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var attribute = new ColumnAttribute("created");
 
             // Act
-            var map = new ColumnMap(property, attribute);
+            var map = new ColumnMap(property, attribute.Name);
 
             // Assert
             Assert.Equal(default(DateTime), map.DefaultValue); // default(DateTime) == 01/01/0001 00:00:00
@@ -232,9 +257,67 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             var property = typeof(EnumEntity).GetProperty(nameof(EnumEntity.State));
             var attribute = new ColumnAttribute("state");
 
-            var map = new ColumnMap(property, attribute);
+            var map = new ColumnMap(property, attribute.Name);
 
             Assert.Equal(Status.None, map.DefaultValue);
+        }
+
+        /// <summary>
+        /// Verifies that the ColumnMap correctly initializes the default value for a value type property mapping.
+        /// </summary>
+        /// <remarks>This test ensures that when mapping a value type property, such as an integer, the
+        /// ColumnMap assigns the expected default value (for example, zero for int) and properly sets related mapping
+        /// properties.</remarks>
+        [Fact]
+        public void ColumnMap_ForValueType_SetsDefaultValue()
+        {
+            var prop = typeof(TestClass).GetProperty(nameof(TestClass.IntValue));
+            var map = new ColumnMap(prop, "IntValue");
+
+            Assert.Equal(prop, map.Property);
+            Assert.Equal("IntValue", map.Name);
+            Assert.Equal(typeof(int), map.TargetType);
+            Assert.Equal(0, map.DefaultValue);
+            Assert.NotNull(map.Setter);
+        }
+
+        /// <summary>
+        /// Verifies that mapping a nullable value type property to a column sets the default value to null.
+        /// </summary>
+        /// <remarks>This test ensures that the column mapping correctly identifies the property, its
+        /// name, and its underlying type, and that the default value for a nullable type is null. It also confirms that
+        /// a setter is generated for the property.</remarks>
+        [Fact]
+        public void ColumnMap_ForNullableValueType_SetsDefaultValueNull()
+        {
+            var prop = typeof(TestClass).GetProperty(nameof(TestClass.NullableInt));
+            var map = new ColumnMap(prop, "NullableInt");
+
+            Assert.Equal(prop, map.Property);
+            Assert.Equal("NullableInt", map.Name);
+            Assert.Equal(typeof(int), map.TargetType);
+            Assert.Null(map.DefaultValue);
+            Assert.NotNull(map.Setter);
+        }
+
+        /// <summary>
+        /// Verifies that the default value for a reference type property in a ColumnMap is set to null and that the
+        /// property, name, and target type are correctly assigned.
+        /// </summary>
+        /// <remarks>This test ensures that when mapping a reference type property using ColumnMap, the
+        /// DefaultValue is initialized to null as expected. It also confirms that the Property, Name, and TargetType
+        /// properties are set appropriately, and that the setter delegate is not null.</remarks>
+        [Fact]
+        public void ColumnMap_ForReferenceType_SetsDefaultValueNull()
+        {
+            var prop = typeof(TestClass).GetProperty(nameof(TestClass.StringValue));
+            var map = new ColumnMap(prop, "StringValue");
+
+            Assert.Equal(prop, map.Property);
+            Assert.Equal("StringValue", map.Name);
+            Assert.Equal(typeof(string), map.TargetType);
+            Assert.Null(map.DefaultValue);
+            Assert.NotNull(map.Setter);
         }
     }
 }

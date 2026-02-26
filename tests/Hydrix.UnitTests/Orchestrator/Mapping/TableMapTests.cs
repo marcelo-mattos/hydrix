@@ -4,7 +4,6 @@ using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using Moq;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
@@ -23,6 +22,48 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
     /// isolation from external dependencies.</remarks>
     public class TableMapTests
     {
+        /// <summary>
+        /// Specifies the possible test values for demonstration or internal logic purposes.
+        /// </summary>
+        private enum TestEnum
+        {
+            /// <summary>
+            /// Value 0.
+            /// </summary>
+            Value0 = 0,
+
+            /// <summary>
+            /// Value 1.
+            /// </summary>
+            Value1 = 1
+        }
+
+        /// <summary>
+        /// Specifies a parent entity that can have an associated child entity, demonstrating a simple hierarchical
+        /// relationship.
+        /// </summary>
+        private class Parent : ITable
+        {
+            /// <summary>
+            /// Gets or sets the child element associated with this parent.
+            /// </summary>
+            /// <remarks>This property enables a hierarchical relationship between parent and child
+            /// elements. The value can be null if no child is assigned.</remarks>
+            public Child Child { get; set; }
+        }
+
+        /// <summary>
+        /// Specifies a child entity that can be associated with a parent entity, demonstrating a simple hierarchical
+        /// relationship.
+        /// </summary>
+        private class Child : ITable
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            public int Id { get; set; }
+        }
+
         /// <summary>
         /// Dummy implementation of <see cref="ITable"/> for testing.
         /// </summary>
@@ -220,7 +261,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 new List<TableMap>()
             );
             var row = new DataTable().NewRow();
-            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
             var reader = row.Table.CreateDataReader();
 
             // Act
@@ -230,175 +270,10 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                 reader,
                 metadata,
                 string.Empty,
-                cache,
                 new Dictionary<string, int>());
 
             // Assert
             Assert.NotNull(entity);
-        }
-
-        /// <summary>
-        /// Verifies that the SetEntity method correctly assigns field values and initializes nested entities when
-        /// provided with an IDataRecord and corresponding metadata.
-        /// </summary>
-        /// <remarks>This test ensures that both simple fields and nested entity properties are populated
-        /// as expected from the data record, validating the mapping logic for complex entity structures.</remarks>
-        [Fact]
-        public void SetEntity_IDataRecord_SetsFieldsAndNestedEntities()
-        {
-            // Arrange
-            var entity = new TestEntity();
-            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
-
-            var record = new Mock<IDataRecord>();
-            record.Setup(r => r.GetOrdinal("Id")).Returns(0);
-            record.Setup(r => r.IsDBNull(0)).Returns(false);
-            record.Setup(r => r.GetValue(0)).Returns(42);
-
-            record.Setup(r => r.GetOrdinal("Nested.Id")).Returns(1);
-            record.Setup(r => r.IsDBNull(1)).Returns(false);
-            record.Setup(r => r.GetValue(1)).Returns(7);
-
-            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>
-            {
-                [typeof(TestEntity)] = metadata
-            };
-
-            var ordinals = new Dictionary<string, int>
-            {
-                ["Id"] = 0,
-                ["Nested.Id"] = 1
-            };
-
-            // Act
-            TableMap.SetEntity(
-                entity,
-                record.Object,
-                metadata,
-                string.Empty,
-                cache,
-                ordinals);
-
-            // Assert
-            Assert.Equal(42, entity.Id);
-            Assert.NotNull(entity.Nested);
-        }
-
-        /// <summary>
-        /// Verifies that the SetEntityFields method skips missing columns and sets property values only for columns
-        /// present in the data record.
-        /// </summary>
-        /// <remarks>This test ensures that when a column is not found in the data record, SetEntityFields
-        /// does not throw an exception and does not attempt to set the corresponding property. It also verifies that
-        /// when a column is present, the property value is set correctly.</remarks>
-        [Fact]
-        public void SetEntityFields_SkipsMissingColumnsAndSetsValues()
-        {
-            // Arrange
-            var entity = new TestEntity();
-            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
-
-            var record = new Mock<IDataRecord>();
-            record.Setup(r => r.GetOrdinal("Id")).Throws<IndexOutOfRangeException>();
-
-            // Act (should not throw)
-            var method = typeof(TableMap).GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static);
-            method.Invoke(
-                null,
-                new object[]
-                {
-                    entity,
-                    record.Object,
-                    metadata,
-                    "",
-                    new Dictionary<string, int>()
-                });
-
-            var ordinals = new Dictionary<string, int>
-            {
-                ["Id"] = 0
-            };
-
-            // Now test with a valid column
-            record.Setup(r => r.GetOrdinal("Id")).Returns(0);
-            record.Setup(r => r.IsDBNull(0)).Returns(false);
-            record.Setup(r => r.GetValue(0)).Returns(123);
-
-            method.Invoke(
-                null,
-                new object[]
-                {
-                    entity,
-                    record.Object,
-                    metadata,
-                    "",
-                    ordinals
-                });
-
-            // Assert
-            Assert.Equal(123, entity.Id);
-        }
-
-        /// <summary>
-        /// Verifies that the method for setting nested entities on an entity skips assignment when the primary key is
-        /// missing or null in the data record.
-        /// </summary>
-        /// <remarks>This test ensures that nested entity properties are not set if the corresponding
-        /// primary key column is absent from the data record or contains a null value. This behavior prevents the
-        /// creation of incomplete or invalid nested entities during data mapping.</remarks>
-        [Fact]
-        public void SetEntityNestedEntities_SkipsWhenKeyMissingOrNull()
-        {
-            // Arrange
-            var entity = new TestEntity();
-            var metadata = TableMaterializeMetadata.BuildEntityMetadata(typeof(TestEntity));
-
-            var record = new Mock<IDataRecord>();
-            record.Setup(r => r.GetOrdinal("Nested.Id")).Throws<IndexOutOfRangeException>();
-
-            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>
-            {
-                [typeof(TestEntity)] = metadata
-            };
-
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
-
-            // Act (should not throw)
-            method.Invoke(
-                null,
-                new object[]
-                {
-                    entity,
-                    record.Object,
-                    metadata,
-                    string.Empty,
-                    cache,
-                    new Dictionary<string, int>()
-                });
-
-            var ordinals = new Dictionary<string, int>
-            {
-                ["Id"] = 0
-            };
-
-            // Now test with PK column present but null
-            record.Setup(r => r.GetOrdinal("Nested.Id")).Returns(0);
-            record.Setup(r => r.IsDBNull(0)).Returns(true);
-
-            method.Invoke(
-                null,
-                new object[]
-                {
-                    entity,
-                    record.Object,
-                    metadata,
-                    string.Empty,
-                    cache,
-                    ordinals
-                });
-
-            // Assert
-            Assert.Null(entity.Nested);
         }
 
         /// <summary>
@@ -430,22 +305,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             // Int
             var intValue = method.Invoke(null, new object[] { "42", typeof(int) });
             Assert.Equal(42, intValue);
-        }
-
-        /// <summary>
-        /// Specifies the possible test values for demonstration or internal logic purposes.
-        /// </summary>
-        private enum TestEnum
-        {
-            /// <summary>
-            /// Value 0.
-            /// </summary>
-            Value0 = 0,
-
-            /// <summary>
-            /// Value 1.
-            /// </summary>
-            Value1 = 1
         }
 
         /// <summary>
@@ -711,7 +570,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             var entity = new TestEntity();
             var record = new Mock<IDataRecord>();
-            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
             var ordinals = new Dictionary<string, int>();
 
             var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
@@ -725,7 +583,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                     record.Object,
                     metadata,
                     string.Empty,
-                    cache,
                     ordinals
                 });
 
@@ -759,7 +616,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             var entity = new TestEntity();
             var record = new Mock<IDataRecord>();
-            var cache = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
             var ordinals = new Dictionary<string, int>
             {
                 { "Nested.Id", 0 }
@@ -779,7 +635,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
                     record.Object,
                     metadata,
                     string.Empty,
-                    cache,
                     ordinals
                 });
 
@@ -807,6 +662,155 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             // Assert
             Assert.Equal(TestStatus.Active, result);
+        }
+
+        /// <summary>
+        /// Verifies that no child entities are set on the parent when the provided entity list is empty.
+        /// </summary>
+        /// <remarks>This test ensures that the method behaves correctly when there are no entities to
+        /// process, confirming that the parent remains unchanged.</remarks>
+        [Fact]
+        public void DoesNothing_WhenEntitiesEmpty()
+        {
+            // Arrange
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            var metadata = new TableMaterializeMetadata(
+                fields: new List<ColumnMap>(),
+                entities: new List<TableMap>()
+            );
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+
+            // Act
+            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>() });
+
+            // Assert
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that no action is taken when the primary key is null or empty during entity mapping.
+        /// </summary>
+        /// <remarks>This test ensures that the child entity remains null when the primary key is not
+        /// provided, confirming that the method handles null or empty primary keys gracefully.</remarks>
+        [Fact]
+        public void DoesNothing_WhenPrimaryKeyIsNullOrEmpty()
+        {
+            // Arrange
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            var tableMap = new TableMap(typeof(Parent).GetProperty(nameof(Parent.Child)),
+                new ForeignTableAttribute(nameof(Parent.Child)) { PrimaryKeys = null });
+            var metadata = new TableMaterializeMetadata(
+                fields: new List<ColumnMap>(),
+                entities: new List<TableMap> { tableMap }
+            );
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+
+            // Act
+            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>() });
+
+            // Assert
+            Assert.Null(parent.Child);
+
+            // Arrange
+            tableMap = new TableMap(typeof(Parent).GetProperty(nameof(Parent.Child)),
+                new ForeignTableAttribute(nameof(Parent.Child)) { PrimaryKeys = new string[0] });
+            metadata = new TableMaterializeMetadata(
+                fields: new List<ColumnMap>(),
+                entities: new List<TableMap> { tableMap }
+            );
+
+            // Act
+            result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>() });
+
+            // Assert
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that no action is taken when the primary key is not present in the ordinals of the data record.
+        /// </summary>
+        /// <remarks>This test ensures that the method behaves correctly by not modifying the parent
+        /// entity when the expected primary key is absent from the provided data record.</remarks>
+        [Fact]
+        public void DoesNothing_WhenPrimaryKeyNotInOrdinals()
+        {
+            // Arrange
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            var tableMap = new TableMap(typeof(Parent).GetProperty(nameof(Parent.Child)),
+                new ForeignTableAttribute(nameof(Parent.Child)) { PrimaryKeys = new[] { "Id" } });
+            var metadata = new TableMaterializeMetadata(
+                fields: new List<ColumnMap>(),
+                entities: new List<TableMap> { tableMap }
+            );
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+
+            // Act
+            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>() });
+
+            // Assert
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that no action is taken when the primary key of a child entity is DBNull.
+        /// </summary>
+        /// <remarks>This test ensures that when the primary key of a child entity is DBNull, the parent
+        /// entity's child property remains null. This confirms that the absence of a valid primary key does not result
+        /// in any unintended side effects or object instantiation.</remarks>
+        [Fact]
+        public void DoesNothing_WhenPrimaryKeyIsDBNull()
+        {
+            // Arrange
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(It.IsAny<int>())).Returns(true);
+            var tableMap = new TableMap(typeof(Parent).GetProperty(nameof(Parent.Child)),
+                new ForeignTableAttribute(nameof(Parent.Child)) { PrimaryKeys = new[] { "Id" } });
+            var metadata = new TableMaterializeMetadata(
+                fields: new List<ColumnMap>(),
+                entities: new List<TableMap> { tableMap }
+            );
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+
+            // Act
+            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            // Assert
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that a nested entity is instantiated when the primary key is present and not DBNull in the data
+        /// record.
+        /// </summary>
+        /// <remarks>This test ensures that related entities are properly materialized during data mapping
+        /// when the corresponding primary key value exists in the data source. It is important for validating the
+        /// correct population of navigation properties in entity mapping scenarios.</remarks>
+        [Fact]
+        public void InstantiatesNestedEntity_WhenPrimaryKeyIsPresentAndNotDBNull()
+        {
+            // Arrange
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(It.IsAny<int>())).Returns(false);
+            var tableMap = new TableMap(typeof(Parent).GetProperty(nameof(Parent.Child)),
+                new ForeignTableAttribute(nameof(Parent.Child)) { PrimaryKeys = new[] { "Id" } });
+            var metadata = new TableMaterializeMetadata(
+                fields: new List<ColumnMap>(),
+                entities: new List<TableMap> { tableMap }
+            );
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
+            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
+
+            // Act
+            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            // Assert
+            Assert.NotNull(parent.Child);
         }
     }
 
