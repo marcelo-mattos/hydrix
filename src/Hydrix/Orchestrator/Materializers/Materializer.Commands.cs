@@ -1,12 +1,9 @@
-﻿using Hydrix.Attributes.Parameters;
-using Hydrix.Attributes.Schemas;
+﻿using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Reflection;
 
 namespace Hydrix.Orchestrator.Materializers
 {
@@ -316,73 +313,39 @@ namespace Hydrix.Orchestrator.Materializers
                 throw new InvalidOperationException("Database connection is not open.");
 
             var procedureType = procedure.GetType();
-
-            var procedureAttribute = procedureType
-                .GetCustomAttributes(typeof(ProcedureAttribute), false)
-                .Cast<ProcedureAttribute>()
-                .FirstOrDefault() ?? throw new MissingMemberException(
-                    "The Procedure does not have a ProcedureAttribute decorating itself.");
+            var binder = ProcedureBinderCache.GetOrAdd(procedureType);
 
             IDbCommand command;
 
             lock (this._lockConnection)
                 command = this.DbConnection.CreateCommand();
 
-            command.CommandType = procedureAttribute.CommandType;
-            command.CommandText = procedureAttribute.CommandText;
+            binder.ApplyCommand(command);
             command.CommandTimeout = this.Timeout;
 
             if (transaction != null)
                 command.Transaction = transaction;
 
-            var properties = procedureType
-                .GetProperties(
-                    BindingFlags.Instance |
-                    BindingFlags.Public)
-                .Where(p =>
-                    p.CanRead &&
-                    p.GetIndexParameters().Length == 0);
-
-            foreach (var property in properties)
-            {
-                var parameterAttributes = property
-                    .GetCustomAttributes(typeof(ParameterAttribute), false)
-                    .Cast<ParameterAttribute>();
-
-                foreach (var parameterAttribute in parameterAttributes)
+            binder.BindParameters(
+                command,
+                procedure,
+                _parameterPrefix,
+                (cmd, name, value, direction, dbType) =>
                 {
                     var dataParameter = new TDataParameterDriver
                     {
-                        ParameterName = parameterAttribute.Name,
-                        Direction = parameterAttribute.Direction,
-                        Value = property.GetValue(procedure) ?? DBNull.Value
+                        ParameterName = name,
+                        Direction = direction,
+                        Value = value ?? DBNull.Value
                     };
 
-                    if (Enum.IsDefined(typeof(DbType), (int)parameterAttribute.DbType))
-                    {
-                        dataParameter.DbType = parameterAttribute.DbType;
-                    }
-                    else
-                    {
-                        var sqlDbTypeProperty = dataParameter
-                            .GetType()
-                            .GetProperty(
-                                nameof(SqlDbType),
-                                BindingFlags.Instance |
-                                BindingFlags.Public);
+                    var setter = ProviderDbTypeSetterCache.GetOrAdd(dataParameter.GetType());
+                    setter?.Invoke(
+                        dataParameter,
+                        dbType);
 
-                        if (sqlDbTypeProperty != null &&
-                            Enum.IsDefined(typeof(SqlDbType), (int)parameterAttribute.DbType))
-                        {
-                            sqlDbTypeProperty.SetValue(
-                                dataParameter,
-                                parameterAttribute.DbType);
-                        }
-                    }
-
-                    command.Parameters.Add(dataParameter);
-                }
-            }
+                    cmd.Parameters.Add(dataParameter);
+                });
 
             if (EnableSqlLogging)
                 LogCommand(command);

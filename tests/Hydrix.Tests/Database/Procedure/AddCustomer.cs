@@ -18,37 +18,37 @@ namespace Hydrix.Tests.Database.Procedure
         /// <summary>
         /// Id parameter
         /// </summary>
-        [Parameter("@p_Id", DbType.Guid)]
+        [Parameter("p_Id", DbType.Guid)]
         public Guid Id { get; set; }
 
         /// <summary>
         /// Name parameter
         /// </summary>
-        [Parameter("@p_Name", DbType.String)]
+        [Parameter("p_Name", DbType.String)]
         public String Name { get; set; }
 
         /// <summary>
         /// Birthdate parameter
         /// </summary>
-        [Parameter("@p_Birthdate", DbType.DateTime)]
+        [Parameter("p_Birthdate", DbType.DateTime)]
         public DateTime? Birthdate { get; set; }
 
         /// <summary>
         /// Level parameter
         /// </summary>
-        [Parameter("@p_Level", DbType.Int32)]
+        [Parameter("p_Level", DbType.Int32)]
         public Int32 Level { get; set; }
 
         /// <summary>
         /// Salary parameter
         /// </summary>
-        [Parameter("@p_Salary", DbType.Decimal)]
+        [Parameter("p_Salary", DbType.Decimal)]
         public Decimal? Salary { get; set; }
 
         /// <summary>
         /// IsActive parameter
         /// </summary>
-        [Parameter("@p_IsActive", DbType.Boolean)]
+        [Parameter("p_IsActive", DbType.Boolean)]
         public Boolean? IsActive { get; set; }
     }
 }

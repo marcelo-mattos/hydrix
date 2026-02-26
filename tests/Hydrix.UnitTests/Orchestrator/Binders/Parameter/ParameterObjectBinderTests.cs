@@ -89,7 +89,8 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
             /// <remarks>This method can be called to halt any ongoing processes initiated by the
             /// associated class. It is important to note that calling this method may not guarantee immediate
             /// termination of the operation, depending on its current state.</remarks>
-            public void Cancel() { }
+            public void Cancel()
+            { }
 
             /// <summary>
             /// Creates a new database parameter instance for use in command execution.
@@ -103,7 +104,8 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
             /// <remarks>Call this method when the object is no longer needed to ensure that any
             /// unmanaged resources are properly released. After calling Dispose, the object should not be used
             /// further.</remarks>
-            public void Dispose() { }
+            public void Dispose()
+            { }
 
             /// <summary>
             /// Executes a command against the database and returns the number of rows affected.
@@ -149,7 +151,8 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
             /// </summary>
             /// <remarks>This method should be called before any operations are performed to ensure
             /// that all required resources are set up correctly.</remarks>
-            public void Prepare() { }
+            public void Prepare()
+            { }
         }
 
         /// <summary>

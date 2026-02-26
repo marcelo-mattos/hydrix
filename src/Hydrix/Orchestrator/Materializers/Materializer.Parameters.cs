@@ -69,7 +69,6 @@ namespace Hydrix.Orchestrator.Materializers
                 AddParameter);
         }
 
-
         /// <summary>
         /// Formats a parameter value for safe inclusion in a database query string.
         /// </summary>

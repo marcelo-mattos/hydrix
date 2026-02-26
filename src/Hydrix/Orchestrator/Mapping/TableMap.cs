@@ -118,7 +118,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="entity">The SQL entity instance to populate with values from the data record. Cannot be null.</param>
         /// <param name="record">The data record containing the values to assign to the entity's fields and nested entities. Cannot be null.</param>
         /// <param name="metadata">The metadata describing the structure and mapping of the SQL entity. Cannot be null.</param>
-        /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record, used for nested entities. 
+        /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record, used for nested entities.
         /// Can be an empty string if no prefix is required.</param>
         /// <param name="entityMetadataCache">A thread-safe cache of entity metadata, keyed by entity type, used to optimize metadata lookups for nested
         /// entities. Cannot be null.</param>

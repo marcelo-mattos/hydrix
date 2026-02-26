@@ -751,13 +751,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
             /// </summary>
-            [Parameter("@Id", DbType.Int32)]
+            [Parameter("Id", DbType.Int32)]
             public int Id { get; set; }
 
             /// <summary>
             /// Gets or sets the name associated with this entity.
             /// </summary>
-            [Parameter("@Name", DbType.String)]
+            [Parameter("Name", DbType.String)]
             public string Name { get; set; }
         }
 
