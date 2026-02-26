@@ -1,12 +1,9 @@
-﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Caching;
+﻿using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
-using System.Linq;
 
 namespace Hydrix.Orchestrator.Materializers
 {
@@ -152,63 +149,27 @@ namespace Hydrix.Orchestrator.Materializers
         {
             var ordinals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-            for (var i = 0; i < reader.FieldCount; i++)
+            for (var index = 0; index < reader.FieldCount; index++)
             {
-                var name = reader.GetName(i);
+                var name = reader.GetName(index);
                 if (!string.IsNullOrWhiteSpace(name))
-                    ordinals.TryAdd(name, i);
+                    ordinals.TryAdd(name, index);
             }
 
             return ordinals;
         }
 
         /// <summary>
-        /// Validates whether the specified <typeparamref name="TEntity"/> type is properly
-        /// configured to be used in an ExecuteEntity operation.
-        ///
-        /// The method ensures that:
-        /// <list type="bullet">
-        /// <item>
-        /// The entity type is decorated with <see cref="ForeignTableAttribute"/>.
-        /// </item>
-        /// <item>
-        /// The entity exposes at least one readable property decorated with
-        /// <see cref="ColumnAttribute"/>.
-        /// </item>
-        /// </list>
-        ///
-        /// If the entity does not declare <see cref="ForeignTableAttribute"/>, a
-        /// <see cref="MissingMemberException"/> is thrown.
-        ///
-        /// The return value indicates whether the entity contains mappable SQL fields,
-        /// allowing the execution flow to short-circuit when no valid fields are defined.
+        /// Determines whether the entity request for the specified entity type is valid.
         /// </summary>
-        /// <typeparam name="TEntity">
-        /// Represents a SQL-mapped entity type that implements <see cref="ITable"/>.
-        /// </typeparam>
-        /// <returns>
-        /// <c>true</c> if the entity contains at least one property mapped with
-        /// <see cref="ColumnAttribute"/>; otherwise, <c>false</c>.
-        /// </returns>
+        /// <remarks>This method uses a validation cache to assess whether the request for the given
+        /// entity type meets the required criteria. It is typically used to ensure that entity requests conform to
+        /// expected validation rules before processing.</remarks>
+        /// <typeparam name="TEntity">The type of entity to validate. Must implement the ITable interface and have a parameterless constructor.</typeparam>
+        /// <returns>true if the entity request is valid; otherwise, false.</returns>
         private static bool ValidateEntityRequest<TEntity>()
             where TEntity : ITable, new()
-        {
-            var tableAttribute = typeof(TEntity)
-                .GetCustomAttributes(typeof(TableAttribute), false)
-                .Cast<TableAttribute>()
-                .FirstOrDefault();
-
-            if (null == tableAttribute)
-                throw new MissingMemberException("The entity does not have a TableAttibute decorating itself.");
-
-            var properties = typeof(TEntity)
-                .GetProperties()
-                .Where(property => property
-                    .GetCustomAttributes(typeof(ColumnAttribute), false)
-                    .Length != 0)
-                .ToArray();
-
-            return properties.Length > 0;
-        }
+            => EntityRequestValidationCache
+                .Validate(typeof(TEntity));
     }
 }
