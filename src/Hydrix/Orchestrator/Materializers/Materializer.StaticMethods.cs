@@ -1,4 +1,5 @@
 ﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
@@ -113,48 +114,28 @@ namespace Hydrix.Orchestrator.Materializers
         internal static DataTable ConvertEntityToDataTable<TEntity>(IList<TEntity> entities)
             where TEntity : ITable, new()
         {
+            var map = DataColumnMapCache<TEntity>.GetOrCreate();
             var dataTable = new DataTable();
 
-            var properties = typeof(TEntity)
-                .GetProperties()
-                .Where(p => p.CanRead && Attribute.IsDefined(p, typeof(ColumnAttribute)))
-                .Select(p => new
-                {
-                    Property = p,
-                    Attribute = (ColumnAttribute)p
-                        .GetCustomAttributes(typeof(ColumnAttribute), false)
-                        .First()
-                })
-                .ToList();
-
-            foreach (var property in properties)
+            for (var index = 0; index < map.Columns.Length; index++)
             {
-                var type = property.Property.PropertyType;
-
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                    type = Nullable.GetUnderlyingType(type);
-
-                var columnName = string.IsNullOrWhiteSpace(property.Attribute.Name)
-                    ? property.Property.Name
-                    : property.Attribute.Name;
-
-                dataTable.Columns.Add(columnName, type);
+                var column = map.Columns[index];
+                dataTable.Columns.Add(
+                    column.ColumnName,
+                    column.DataType);
             }
 
-            if (entities == null || entities.Count == 0)
+            if (entities == null)
                 return dataTable;
 
             foreach (var entity in entities)
             {
                 var row = dataTable.NewRow();
 
-                foreach (var item in properties)
+                for (var index = 0; index < map.Columns.Length; index++)
                 {
-                    var columnName = string.IsNullOrWhiteSpace(item.Attribute.Name)
-                        ? item.Property.Name
-                        : item.Attribute.Name;
-
-                    row[columnName] = item.Property.GetValue(entity) ?? DBNull.Value;
+                    var column = map.Columns[index];
+                    row[index] = column.Getter(entity) ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);

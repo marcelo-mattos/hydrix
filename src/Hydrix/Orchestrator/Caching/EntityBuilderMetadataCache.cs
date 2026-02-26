@@ -149,7 +149,9 @@ namespace Hydrix.Orchestrator.Caching
                     });
 
                     var foreignSelectColumns = property.PropertyType
-                        .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                        .GetProperties(
+                            BindingFlags.Instance |
+                            BindingFlags.Public)
                         .Where(p =>
                             p.GetCustomAttribute<NotMappedAttribute>() == null &&
                             p.GetCustomAttribute<ForeignTableAttribute>() == null)

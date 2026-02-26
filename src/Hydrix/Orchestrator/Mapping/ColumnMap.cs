@@ -7,46 +7,13 @@ using System.Reflection;
 namespace Hydrix.Orchestrator.Mapping
 {
     /// <summary>
-    /// Represents the cached metadata for a scalar SQL-mapped field.
+    /// Represents the mapping between a CLR property and a SQL field, encapsulating metadata and value conversion
+    /// information for use during entity metadata construction.
     /// </summary>
-    /// <remarks>
-    /// This class encapsulates all reflection-derived information required to map
-    /// a single database column to an entity property during materialization.
-    ///
-    /// The metadata is built once per entity type and reused across multiple
-    /// mapping operations, eliminating repeated reflection and improving
-    /// performance when processing large result sets.
-    ///
-    /// It contains:
-    /// <list type="bullet">
-    /// <item>
-    /// <description>
-    /// The reflected <see cref="PropertyInfo"/> associated with the entity property,
-    /// used only during metadata construction.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <description>
-    /// The <see cref="ColumnAttribute"/> that defines the column mapping metadata.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <description>
-    /// The normalized target CLR type used for safe value conversion, with nullable
-    /// types already unwrapped when applicable.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <description>
-    /// A compiled setter delegate that assigns values to the entity property
-    /// without using reflection during runtime execution.
-    /// </description>
-    /// </item>
-    /// </list>
-    /// This design ensures predictable behavior, thread safety, and high-performance
-    /// entity materialization by moving all reflection costs to the metadata
-    /// initialization phase.
-    /// </remarks>
+    /// <remarks>ColumnMap is used internally to facilitate the association of entity properties with their
+    /// corresponding SQL fields. It provides access to mapping attributes, type normalization for value conversion,
+    /// default value handling, and a compiled setter for efficient property assignment. This class is intended for
+    /// internal metadata infrastructure and is not designed for direct use in application code.</remarks>
     internal sealed class ColumnMap
     {
         /// <summary>

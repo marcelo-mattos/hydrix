@@ -339,10 +339,17 @@ namespace Hydrix.Orchestrator.Materializers
                         Value = value ?? DBNull.Value
                     };
 
-                    var setter = ProviderDbTypeSetterCache.GetOrAdd(dataParameter.GetType());
-                    setter?.Invoke(
-                        dataParameter,
-                        dbType);
+                    if (Enum.IsDefined(typeof(DbType), dbType))
+                    {
+                        dataParameter.DbType = (DbType)dbType;
+                    }
+                    else
+                    {
+                        var setter = ProviderDbTypeSetterCache.GetOrAdd(dataParameter.GetType());
+                        setter?.Invoke(
+                            dataParameter,
+                            dbType);
+                    }
 
                     cmd.Parameters.Add(dataParameter);
                 });

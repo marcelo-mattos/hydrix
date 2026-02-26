@@ -64,6 +64,10 @@ namespace Hydrix.Orchestrator.Caching
                     p.PropertyType.IsEnum &&
                     p.Name.EndsWith(
                         "DbType",
+                        StringComparison.Ordinal) &&
+                    !string.Equals(
+                        p.Name,
+                        nameof(IDataParameter.DbType),
                         StringComparison.Ordinal));
 
             if (property == null)

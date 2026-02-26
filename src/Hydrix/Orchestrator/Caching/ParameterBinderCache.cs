@@ -1,6 +1,7 @@
 ﻿using Hydrix.Orchestrator.Binders.Parameter;
 using System;
 using System.Collections.Concurrent;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
@@ -57,7 +58,8 @@ namespace Hydrix.Orchestrator.Caching
                     BindingFlags.Public)
                 .Where(p =>
                     p.CanRead &&
-                    p.GetIndexParameters().Length == 0)
+                    p.GetIndexParameters().Length == 0 &&
+                    !p.IsDefined(typeof(NotMappedAttribute), inherit: true))
                 .ToArray();
 
             var bindings = new ParameterObjectBinding[properties.Length];

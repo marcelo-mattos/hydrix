@@ -1,8 +1,13 @@
+using Hydrix.Attributes.Parameters;
+using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Binders.Parameter;
+using Hydrix.Orchestrator.Caching;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
@@ -353,6 +358,83 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
         }
 
         /// <summary>
+        /// Represents a stored procedure that accepts an input parameter and provides a write-only property for input
+        /// values.
+        /// </summary>
+        /// <remarks>The write-only property is intended for scenarios where a value must be supplied to
+        /// the procedure without allowing retrieval of that value. This can be useful for sensitive data or when only
+        /// input is required.</remarks>
+        [Procedure("sp_test")]
+        private class ProcedureWithWriteOnlyProperty
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            /// <remarks>This property is used to uniquely identify an instance of the entity in the
+            /// database. It is required for operations that involve data retrieval or manipulation.</remarks>
+            [Parameter("Id", DbType.Int32, Direction = ParameterDirection.Input)]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Sets the value for the WriteOnly property. This property does not provide a getter, making it
+            /// write-only.
+            /// </summary>
+            /// <remarks>This property is intended for scenarios where only setting a value is
+            /// required, and reading the value is not necessary.</remarks>
+            public int WriteOnly
+            { set { } }
+        }
+
+        /// <summary>
+        /// Represents a stored procedure that exposes an indexer for retrieving values based on an integer index.
+        /// </summary>
+        /// <remarks>This class encapsulates the parameters and behavior for the 'sp_test' stored
+        /// procedure. The indexer allows callers to access a value associated with a specified index, which may be
+        /// useful for scenarios where multiple result values are exposed in an indexed manner.</remarks>
+        [Procedure("sp_test")]
+        private class ProcedureWithIndexer
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            /// <remarks>This property is used to uniquely identify an instance of the entity in the
+            /// database. It is required for operations that involve data retrieval or manipulation.</remarks>
+            [Parameter("Id", DbType.Int32, Direction = ParameterDirection.Input)]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets the value associated with the specified index.
+            /// </summary>
+            /// <param name="i">The zero-based index of the value to retrieve. Must be a non-negative integer.</param>
+            /// <returns>The integer value associated with the specified index, which is always 42.</returns>
+            public int this[int i] => 42;
+        }
+
+        /// <summary>
+        /// Represents a stored procedure mapping for 'sp_test' that does not require any parameters for execution.
+        /// </summary>
+        /// <remarks>This class is decorated with the <see langword="Procedure"/> attribute, indicating
+        /// its association with a stored procedure named 'sp_test'. The class contains a property 'Id' which is marked
+        /// as a parameter, while 'NotAParameter' is a regular property and does not participate in the procedure's
+        /// execution.</remarks>
+        [Procedure("sp_test")]
+        private class ProcedureWithNoParameterAttribute
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            /// <remarks>This property is used to uniquely identify an instance of the entity in the
+            /// database. It is required for operations that involve data retrieval or manipulation.</remarks>
+            [Parameter("Id", DbType.Int32, Direction = ParameterDirection.Input)]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the value associated with the NotAParameter property.
+            /// </summary>
+            public string NotAParameter { get; set; }
+        }
+
+        /// <summary>
         /// Verifies that binding simple parameters to a command adds them with the specified prefix to their names.
         /// </summary>
         /// <remarks>This test ensures that the ParameterObjectBinder correctly applies the given prefix
@@ -472,6 +554,631 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
             var added = new List<(string, object)>();
             binder.Bind(command, parameters, "@", (cmd, name, value) => added.Add((name, value)));
             Assert.Contains(added, x => x.Item1 == "@NullObj" && x.Item2 == null);
+        }
+
+        /// <summary>
+        /// Verifies that the binder excludes write-only properties when binding parameters to a command.
+        /// </summary>
+        /// <remarks>This test ensures that only properties with accessible getters are included as
+        /// parameters during the binding process. Write-only properties are intentionally omitted to prevent unintended
+        /// or unsupported parameter bindings.</remarks>
+        [Fact]
+        public void Binder_DoesNotIncludeWriteOnlyProperty()
+        {
+            var binder = ProcedureBinderCache.GetOrAdd(typeof(ProcedureWithWriteOnlyProperty));
+            var command = new DummyCommand();
+            var proc = new ProcedureWithWriteOnlyProperty { Id = 42 };
+            var added = new List<string>();
+            binder.BindParameters(command, proc, "@", (cmd, name, value, dir, dbType) => added.Add(name));
+            Assert.Contains("@Id", added);
+            Assert.DoesNotContain("@WriteOnly", added);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter binder excludes indexer properties when binding parameters for a procedure
+        /// object.
+        /// </summary>
+        /// <remarks>This test ensures that only explicitly defined properties, and not indexers, are
+        /// included in the parameter binding process. This helps prevent unintended parameters from being bound when
+        /// objects with indexer properties are used.</remarks>
+        [Fact]
+        public void Binder_DoesNotIncludeIndexerProperty()
+        {
+            var binder = ProcedureBinderCache.GetOrAdd(typeof(ProcedureWithIndexer));
+            var command = new DummyCommand();
+            var proc = new ProcedureWithIndexer { Id = 42 };
+            var added = new List<string>();
+            binder.BindParameters(command, proc, "@", (cmd, name, value, dir, dbType) => added.Add(name));
+            Assert.Contains("@Id", added);
+            Assert.True(added.Count == 1);
+        }
+
+        /// <summary>
+        /// Verifies that properties without the ParameterAttribute are not included in the binding process.
+        /// </summary>
+        /// <remarks>This test ensures that only properties marked with the ParameterAttribute are
+        /// considered for parameter binding, preventing unintended properties from being included.</remarks>
+        [Fact]
+        public void Binder_DoesNotIncludePropertyWithoutParameterAttribute()
+        {
+            var binder = ProcedureBinderCache.GetOrAdd(typeof(ProcedureWithNoParameterAttribute));
+            var command = new DummyCommand();
+            var proc = new ProcedureWithNoParameterAttribute { Id = 42, NotAParameter = "ignore" };
+            var added = new List<string>();
+            binder.BindParameters(command, proc, "@", (cmd, name, value, dir, dbType) => added.Add(name));
+            Assert.Contains("@Id", added);
+            Assert.DoesNotContain("@NotAParameter", added);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token replacement logic in SQL query strings behaves correctly across a variety
+        /// of scenarios.
+        /// </summary>
+        /// <remarks>This test method covers multiple edge cases, including parameter tokens within string
+        /// literals, comments, and as substrings of other identifiers, to ensure that only valid occurrences are
+        /// replaced and SQL syntax is preserved.</remarks>
+        /// <param name="sql">The SQL query string in which the parameter token is to be replaced.</param>
+        /// <param name="token">The parameter token to search for and replace within the SQL query string.</param>
+        /// <param name="replacement">The new token that will replace the specified parameter token in the SQL query string.</param>
+        /// <param name="expected">The expected SQL query string result after the parameter token has been replaced.</param>
+        [Theory]
+        [InlineData("SELECT * FROM t WHERE @X", "@X", "@Y", "SELECT * FROM t WHERE @Y")]
+        [InlineData("SELECT '@X' -- @X\nWHERE @X", "@X", "@Y", "SELECT '@X' -- @X\nWHERE @Y")]
+        [InlineData("SELECT '@X''@X' WHERE @X", "@X", "@Y", "SELECT '@X''@X' WHERE @Y")]
+        [InlineData("SELECT \"@X\" /* @X */ WHERE @X", "@X", "@Y", "SELECT \"@X\" /* @X */ WHERE @Y")]
+        [InlineData("SELECT * FROM t WHERE a_@X = 1", "@X", "@Y", "SELECT * FROM t WHERE a_@X = 1")]
+        [InlineData("SELECT * FROM t WHERE @X1 = 1", "@X", "@Y", "SELECT * FROM t WHERE @X1 = 1")]
+        [InlineData("SELECT * FROM t WHERE @X = 1", "", "@Y", "SELECT * FROM t WHERE @X = 1")]
+        [InlineData("", "@X", "@Y", "")]
+        [InlineData("@X", "@X", "@Y", "@Y")]
+        [InlineData("@X @X", "@X", "@Y", "@Y @Y")]
+        [InlineData("SELECT * FROM t WHERE @X", "@Z", "@Y", "SELECT * FROM t WHERE @X")]
+        [InlineData("SELECT * FROM t WHERE @X", "@X", "", "SELECT * FROM t WHERE ")]
+        [InlineData("SELECT * FROM t WHERE @X AND @X", "@X", "@Y", "SELECT * FROM t WHERE @Y AND @Y")]
+        public void ReplaceParameterToken_CoversAllBranches(
+            string sql,
+            string token,
+            string replacement,
+            string expected)
+        {
+            var result = InvokeReplaceParameterToken(sql, token, replacement);
+            Assert.Equal(expected, result);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token is not replaced when it appears inside a block comment in the SQL query.
+        /// </summary>
+        /// <remarks>This test ensures that the replacement logic correctly ignores tokens within
+        /// comments, preserving the original comment content while replacing tokens outside of comments.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_DoesNotReplaceInsideBlockComment()
+        {
+            var sql = "SELECT /* @X */ @X";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("SELECT /* @X */ @Y", result);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token is not replaced when it appears inside a line comment in the SQL query.
+        /// </summary>
+        /// <remarks>This test ensures that the replacement logic correctly ignores tokens that are
+        /// commented out, preserving the original comment content.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_DoesNotReplaceInsideLineComment()
+        {
+            var sql = "SELECT -- @X\n@X";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("SELECT -- @X\n@Y", result);
+        }
+
+        /// <summary>
+        /// Verifies that an InvalidOperationException is thrown when an empty enumerable parameter is passed to the
+        /// command.
+        /// </summary>
+        /// <remarks>This test ensures that the command correctly handles the case where the enumerable
+        /// parameter is empty, providing a clear error message to the user.</remarks>
+        [Fact]
+        public void ExpandEnumerableParameter_ThrowsIfEmpty()
+        {
+            var command = new DummyCommand { CommandText = "WHERE @X" };
+            var ex = Assert.Throws<TargetInvocationException>(() =>
+                InvokeExpandEnumerableParameter(
+                    command,
+                    "X",
+                    "@",
+                    new List<object>()
+                )
+            );
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            Assert.Contains("Enumerable parameter 'X' is empty.", ex.InnerException.Message);
+        }
+
+        /// <summary>
+        /// Verifies that parameter tokens within single quotes are not replaced when escaped in the SQL query.
+        /// </summary>
+        /// <remarks>This test ensures that the parameter replacement logic preserves parameter tokens
+        /// inside single-quoted strings, even when escape sequences are present. Maintaining the original token format
+        /// within quoted sections is important for SQL statement integrity.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_DoesNotReplaceInsideSingleQuoteWithEscape()
+        {
+            var sql = "SELECT '@X''@X' @X";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("SELECT '@X''@X' @Y", result);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token replacement method does not alter tokens enclosed within double quotes in
+        /// a SQL string.
+        /// </summary>
+        /// <remarks>This test ensures that the parameter token '@X' is only replaced when it is outside
+        /// of double quotes, preserving quoted SQL syntax. Use this test to confirm correct handling of parameter
+        /// tokens in scenarios where quoted identifiers or literals are present.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_DoesNotReplaceInsideDoubleQuote()
+        {
+            var sql = "SELECT \"@X\" @X";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("SELECT \"@X\" @Y", result);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token is not replaced when it is part of an identifier in the SQL query.
+        /// </summary>
+        /// <remarks>This test ensures that the replacement logic correctly identifies tokens that are
+        /// part of identifiers and does not alter them, maintaining the integrity of the SQL statement.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_DoesNotReplaceIfTokenIsPartOfIdentifier()
+        {
+            var sql = "SELECT * FROM t WHERE a_@X = 1";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("SELECT * FROM t WHERE a_@X = 1", result);
+        }
+
+        /// <summary>
+        /// Verifies that the SQL query remains unchanged when attempting to replace a parameter token that does not
+        /// exist in the query.
+        /// </summary>
+        /// <remarks>This test ensures that the method correctly handles cases where the specified token
+        /// is not present, maintaining the integrity of the original SQL query.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_DoesNotReplaceIfTokenDoesNotExist()
+        {
+            var sql = "SELECT * FROM t WHERE @Z = 1";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("SELECT * FROM t WHERE @Z = 1", result);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token replacement method correctly substitutes all occurrences of a specified
+        /// token at both the start and end of a SQL string.
+        /// </summary>
+        /// <remarks>This test ensures that the replacement logic handles tokens appearing at the
+        /// boundaries of the input string, confirming comprehensive coverage for parameter token updates in SQL
+        /// queries.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_ReplacesTokenAtStartAndEnd()
+        {
+            var sql = "@X something @X";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("@Y something @Y", result);
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token replacement logic correctly handles tokens containing special characters
+        /// in a SQL query string.
+        /// </summary>
+        /// <remarks>This test ensures that the method responsible for replacing parameter tokens can
+        /// accommodate tokens with special characters, maintaining the integrity of the SQL syntax during
+        /// replacement.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_ReplacesTokenWithSpecialCharacters()
+        {
+            var sql = "SELECT * FROM t WHERE @X$ = 1";
+            var result = InvokeReplaceParameterToken(sql, "@X$", "@Y$");
+            Assert.Equal("SELECT * FROM t WHERE @Y$ = 1", result);
+        }
+
+        /// <summary>
+        /// Verifies that the ReplaceParameterToken method replaces all occurrences of a specified parameter token in a
+        /// SQL string with a new token.
+        /// </summary>
+        /// <remarks>This test ensures that when multiple instances of the original token are present in
+        /// the input SQL string, each is correctly replaced by the new token. It is useful for validating scenarios
+        /// where parameterized SQL queries require dynamic token substitution.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_ReplacesMultipleTokens()
+        {
+            var sql = "@X @X @X";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+            Assert.Equal("@Y @Y @Y", result);
+        }
+
+        /// <summary>
+        /// Verifies that a SQL line comment ending with a newline character is correctly processed and that the parser
+        /// transitions to the expected state.
+        /// </summary>
+        /// <remarks>This test ensures that when a line comment in SQL ends with a newline, the comment is
+        /// recognized and the parsing state returns to normal. It also checks that the output begins with a hyphen,
+        /// indicating correct comment handling.</remarks>
+        [Fact]
+        public void LineComment_EndsWithNewline()
+        {
+            var sql = "-- comment\n";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "LineComment");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("-", builder.ToString()[0].ToString());
+            Assert.Equal("LineComment", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that a SQL line comment without a terminating newline is correctly recognized and processed by the
+        /// comment handler.
+        /// </summary>
+        /// <remarks>This test ensures that the handler transitions to the 'LineComment' state and that
+        /// the output begins with a hyphen, indicating the start of a line comment. It validates correct state
+        /// management and output for SQL comments that do not end with a newline character.</remarks>
+        [Fact]
+        public void LineComment_WithoutNewline()
+        {
+            var sql = "-- comment";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "LineComment");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("-", builder.ToString()[0].ToString());
+            Assert.Equal("LineComment", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that a block comment ending with a star and a slash ("*/") is correctly handled by the parser.
+        /// </summary>
+        /// <remarks>This test ensures that the parser transitions from the block comment state to the
+        /// normal state after processing a comment that ends with "*/". It also checks that the comment content is
+        /// accurately captured.</remarks>
+        [Fact]
+        public void BlockComment_EndsWithStarSlash()
+        {
+            var sql = "* /".Replace(" ", "/"); // "*/"
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "BlockComment");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("*/", builder.ToString());
+            Assert.Equal("Normal", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that a block comment without a closing star-slash sequence is correctly identified and processed by
+        /// the comment handling logic.
+        /// </summary>
+        /// <remarks>This test ensures that the method under test recognizes the start of a block comment
+        /// and updates the parsing state accordingly, even when the comment is not properly terminated. It also checks
+        /// that the output matches the expected result and that the state reflects the block comment type after
+        /// processing.</remarks>
+        [Fact]
+        public void BlockComment_WithoutStarSlash()
+        {
+            var sql = "*abc";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "BlockComment");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("*", builder.ToString());
+            Assert.Equal("BlockComment", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that a single quote character at the end of a string is handled correctly without requiring escape
+        /// characters.
+        /// </summary>
+        /// <remarks>This test ensures that the method under test processes a string containing only a
+        /// single quote, produces the expected output, and transitions the internal state to 'Normal'. It validates
+        /// correct handling of edge cases involving single quotes in SQL-like parsing scenarios.</remarks>
+        [Fact]
+        public void SingleQuote_EndsWithSingleQuote_NoEscape()
+        {
+            var sql = "'";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "SingleQuote");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("'", builder.ToString());
+            Assert.Equal("Normal", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that single quotes within SQL strings are correctly escaped and that the parameter object binder
+        /// transitions to the expected 'SingleQuote' state.
+        /// </summary>
+        /// <remarks>This test ensures that when processing a SQL string containing escaped single quotes,
+        /// the output matches the expected format and the internal state reflects the correct parsing state. It is
+        /// useful for validating the handling of SQL string literals that require escaping.</remarks>
+        [Fact]
+        public void SingleQuote_WithEscape()
+        {
+            var sql = "''";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "SingleQuote");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("''", builder.ToString());
+            Assert.Equal("SingleQuote", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that the SQL parameter binder correctly processes a string input containing no single quotes when
+        /// in the SingleQuote state.
+        /// </summary>
+        /// <remarks>This test ensures that the input string is handled without introducing additional
+        /// single quotes and that the binder's state remains unchanged after processing. It is intended to validate the
+        /// correct behavior of the parameter binder when handling simple string values within single-quoted SQL
+        /// contexts.</remarks>
+        [Fact]
+        public void SingleQuote_WithoutSingleQuote()
+        {
+            var sql = "a";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "SingleQuote");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("a", builder.ToString());
+            Assert.Equal("SingleQuote", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that a string consisting of a single double quote character is correctly handled by the parameter
+        /// object binder, ensuring the double quote is retained and the state transitions as expected.
+        /// </summary>
+        /// <remarks>This test confirms that when the input is a single double quote, the binder processes
+        /// it without removing the quote and updates the internal state to 'Normal'. This scenario helps ensure correct
+        /// handling of edge cases involving quoted strings.</remarks>
+        [Fact]
+        public void DoubleQuote_EndsWithDoubleQuote()
+        {
+            var sql = "\"";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "DoubleQuote");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("\"", builder.ToString());
+            Assert.Equal("Normal", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that the method correctly processes a string without double quotes when handling SQL string parsing
+        /// in double-quote mode.
+        /// </summary>
+        /// <remarks>This test ensures that the input string is appended to the builder as expected and
+        /// that the parsing state remains in double-quote mode. It confirms that the method can handle simple, unquoted
+        /// strings without introducing additional quotes or altering the parsing state.</remarks>
+        [Fact]
+        public void DoubleQuote_WithoutDoubleQuote()
+        {
+            var sql = "a";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "DoubleQuote");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("a", builder.ToString());
+            Assert.Equal("DoubleQuote", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that a line comment in SQL syntax is correctly identified and processed by the comment or string
+        /// handler.
+        /// </summary>
+        /// <remarks>This test ensures that when a line comment is encountered, it is properly recognized,
+        /// appended to the builder, and the parser state transitions to indicate a line comment. It validates the
+        /// expected behavior of the comment handling logic in the parameter object binder.</remarks>
+        [Fact]
+        public void Normal_EntersLineComment()
+        {
+            var sql = "--";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "Normal");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("--", builder.ToString());
+            Assert.Equal("LineComment", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that the parser correctly enters the block comment state when encountering the start of a SQL block
+        /// comment.
+        /// </summary>
+        /// <remarks>This test ensures that when the input SQL string contains the opening block comment
+        /// sequence ("/*"), the parser updates its state to indicate a block comment and appends the sequence to the
+        /// output builder. This behavior is essential for accurate parsing of SQL statements that include
+        /// comments.</remarks>
+        [Fact]
+        public void Normal_EntersBlockComment()
+        {
+            var sql = "/*";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "Normal");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("/*", builder.ToString());
+            Assert.Equal("BlockComment", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that entering a single quote character in a SQL context transitions the state to 'SingleQuote' and
+        /// appends the character to the output.
+        /// </summary>
+        /// <remarks>This test ensures that the method under test correctly processes a single quote
+        /// character by updating the parsing state and output as expected. It is intended to validate proper handling
+        /// of string delimiters in SQL parsing scenarios.</remarks>
+        [Fact]
+        public void Normal_EntersSingleQuote()
+        {
+            var sql = "'";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "Normal");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("'", builder.ToString());
+            Assert.Equal("SingleQuote", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that entering a double quote character in a SQL string is correctly handled by the SQL parser.
+        /// </summary>
+        /// <remarks>This test ensures that the parser transitions to the expected 'DoubleQuote' state and
+        /// that the double quote character is properly appended to the output. It validates correct handling of quoted
+        /// strings in SQL parsing scenarios.</remarks>
+        [Fact]
+        public void Normal_EntersDoubleQuote()
+        {
+            var sql = "\"";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "Normal");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.True(result);
+            Assert.Equal("\"", builder.ToString());
+            Assert.Equal("DoubleQuote", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that the method under test returns false when provided with characters that are not valid SQL
+        /// parameters and does not alter the output builder or state.
+        /// </summary>
+        /// <remarks>This test ensures that non-SQL parameter characters are correctly identified and
+        /// ignored, maintaining the integrity of the builder and state. It is useful for confirming that the method
+        /// does not produce side effects when encountering irrelevant input.</remarks>
+        [Fact]
+        public void Normal_ReturnsFalseForOtherChars()
+        {
+            var sql = "a";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "Normal");
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.False(result);
+            Assert.Equal("", builder.ToString());
+            Assert.Equal("Normal", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that the method returns false when the input string contains characters other than valid SQL
+        /// comment or string delimiters.
+        /// </summary>
+        /// <remarks>This test ensures that the method correctly identifies unsupported input and does not
+        /// modify the output builder or the scan state when encountering invalid characters. It is useful for
+        /// confirming that only recognized SQL comment or string delimiters are processed.</remarks>
+        [Fact]
+        public void Unknown_ReturnsFalseForOtherChars()
+        {
+            var sql = "a";
+            var builder = new StringBuilder();
+            var enumType = typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic);
+            object state = Enum.ToObject(enumType, -1);
+            int index = 0;
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+            Assert.False(result);
+            Assert.Equal("", builder.ToString());
+            Assert.Equal("-1", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that the parameter token replacement method correctly handles an unknown enum state by leaving the
+        /// output unchanged and preserving the original state value.
+        /// </summary>
+        /// <remarks>This test ensures that when an invalid enum value is provided to the method, the
+        /// output builder remains unmodified and the state is retained as its string representation. This behavior is
+        /// important for maintaining predictable results when encountering unexpected enum values.</remarks>
+        [Fact]
+        public void ReplaceParameterToken_HandlesUnknownEnumState()
+        {
+            var sql = "abcdefghijklmnopqrstuvwxyz";
+            var token = "abcdefghijklmnopqrstuvwxyz";
+            var replacement = "@Y";
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "Normal");
+            var builder = new StringBuilder();
+
+            var method = typeof(ParameterObjectBinder).GetMethod("ReplaceParameterToken", BindingFlags.NonPublic | BindingFlags.Static);
+            method.Invoke(null, new object[] { sql, token, replacement });
+
+            Assert.Equal("", builder.ToString());
+            Assert.Equal("Normal", state.ToString());
+        }
+
+        /// <summary>
+        /// Invokes a non-public method to process a SQL string for comments or string literals, updating the provided
+        /// state and index as needed.
+        /// </summary>
+        /// <remarks>This method uses reflection to invoke a non-public static method, which may have
+        /// performance implications. Ensure that the parameters are properly initialized before calling this
+        /// method.</remarks>
+        /// <param name="sql">The SQL string to be analyzed for comments or string literals.</param>
+        /// <param name="builder">A StringBuilder instance used to accumulate the processed output.</param>
+        /// <param name="state">A reference to an object representing the current parsing state. This value may be modified by the method.</param>
+        /// <param name="index">A reference to the current position within the SQL string. This value will be updated to reflect the new
+        /// position after processing.</param>
+        /// <returns>true if a comment or string literal was successfully handled; otherwise, false.</returns>
+        private static bool InvokeTryHandleCommentOrString(
+            string sql,
+            StringBuilder builder,
+            ref object state,
+            ref int index)
+        {
+            var method = typeof(ParameterObjectBinder).GetMethod("TryHandleCommentOrString", BindingFlags.NonPublic | BindingFlags.Static);
+            object[] parameters = new object[] { sql, builder, state, index };
+            var result = (bool)method.Invoke(null, parameters);
+            state = parameters[2];
+            index = (int)parameters[3];
+            return result;
+        }
+
+        /// <summary>
+        /// Replaces the specified parameter token in the provided SQL string with the given replacement value.
+        /// </summary>
+        /// <remarks>This method uses reflection to invoke a non-public static method for parameter token
+        /// replacement. It is intended for scenarios where direct access to the underlying method is not
+        /// available.</remarks>
+        /// <param name="sql">The SQL string in which to replace the parameter token.</param>
+        /// <param name="token">The parameter token to be replaced within the SQL string.</param>
+        /// <param name="replacement">The value to substitute for the specified parameter token.</param>
+        /// <returns>A new SQL string with the specified parameter token replaced by the provided replacement value.</returns>
+        private static string InvokeReplaceParameterToken(
+            string sql,
+            string token,
+            string replacement)
+        {
+            var method = typeof(ParameterObjectBinder).GetMethod("ReplaceParameterToken", BindingFlags.NonPublic | BindingFlags.Static);
+            return (string)method.Invoke(null, new object[] { sql, token, replacement });
+        }
+
+        /// <summary>
+        /// Invokes the non-public static ExpandEnumerableParameter method to bind a collection of values to a parameter
+        /// in the specified database command.
+        /// </summary>
+        /// <remarks>This method uses reflection to invoke a non-public method, which may have performance
+        /// implications. Ensure that the values collection is not null before calling this method.</remarks>
+        /// <param name="command">The database command to which the enumerable parameter values will be bound. Cannot be null.</param>
+        /// <param name="name">The name of the parameter in the command that will receive the enumerable values. Cannot be null or empty.</param>
+        /// <param name="prefix">A prefix to apply to the parameter names when binding the values.</param>
+        /// <param name="values">An enumerable collection of values to bind to the command parameter. Cannot be null.</param>
+        private static void InvokeExpandEnumerableParameter(IDbCommand command, string name, string prefix, System.Collections.IEnumerable values)
+        {
+            var method = typeof(ParameterObjectBinder).GetMethod("ExpandEnumerableParameter", BindingFlags.NonPublic | BindingFlags.Static);
+            method.Invoke(null, new object[] { command, name, prefix, values });
         }
     }
 }
