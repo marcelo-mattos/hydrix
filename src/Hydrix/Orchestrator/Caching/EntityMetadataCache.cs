@@ -68,9 +68,13 @@ namespace Hydrix.Orchestrator.Caching
                     var columnAttribute = property.GetCustomAttribute<ColumnAttribute>();
                     var columnName = columnAttribute?.Name ?? property.Name;
 
+                    var setter = MetadataFactory.CreateSetter(property);
+                    var reader = FieldReaderFactory.Create(property.PropertyType);
+
                     return new ColumnMap(
-                        property,
-                        columnName);
+                        columnName,
+                        setter,
+                        reader);
                 })
                 .ToList();
 

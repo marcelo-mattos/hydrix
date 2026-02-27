@@ -2,6 +2,7 @@
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Schemas.Contract;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
@@ -66,8 +67,10 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
         public void CreateEntity_CreatesCorrectMetadata()
         {
             var prop = typeof(Dummy).GetProperty(nameof(Dummy.IntProp));
-            var attr = new ColumnAttribute("int_prop");
-            var fieldMap = new ColumnMap(prop, attr.Name);
+            var fieldName = "int_prop";
+            Action<object, object> setter = (obj, val) => prop.SetValue(obj, val);
+            FieldReader reader = (record, ordinal) => 42; // Dummy reader
+            var fieldMap = new ColumnMap(fieldName, setter, reader);
 
             var entityProp = typeof(Dummy).GetProperty(nameof(Dummy.EntityProp));
             var entityAttr = new ForeignTableAttribute("dummy_entity")

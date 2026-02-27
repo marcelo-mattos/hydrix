@@ -1731,6 +1731,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
                   return table.Columns.Count;
               });
             reader.Setup(r => r.Dispose());
+            reader.Setup(r => r.GetInt32(It.IsAny<int>())).Returns((int i) => Convert.ToInt32(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetInt64(It.IsAny<int>())).Returns((int i) => Convert.ToInt64(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetInt16(It.IsAny<int>())).Returns((int i) => Convert.ToInt16(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetByte(It.IsAny<int>())).Returns((int i) => Convert.ToByte(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetBoolean(It.IsAny<int>())).Returns((int i) => Convert.ToBoolean(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetDecimal(It.IsAny<int>())).Returns((int i) => Convert.ToDecimal(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetDouble(It.IsAny<int>())).Returns((int i) => Convert.ToDouble(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetFloat(It.IsAny<int>())).Returns((int i) => Convert.ToSingle(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetGuid(It.IsAny<int>())).Returns((int i) =>
+            {
+                var val = table.Rows[rowIndex][i];
+                return val is Guid g ? g : Guid.Parse(val.ToString());
+            });
+            reader.Setup(r => r.GetDateTime(It.IsAny<int>())).Returns((int i) => Convert.ToDateTime(table.Rows[rowIndex][i]));
+            reader.Setup(r => r.GetString(It.IsAny<int>())).Returns((int i) => Convert.ToString(table.Rows[rowIndex][i]));
 
             return reader;
         }

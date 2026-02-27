@@ -1,5 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
+using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using Moq;
@@ -186,6 +187,22 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Dummy entity implementation for testing purposes.
+        /// </summary>
+        public class DummyRecordEntity : ITable
+        {
+            /// <summary>
+            /// Gets or sets the identifier of the entity.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name of the entity.
+            /// </summary>
+            public string Name { get; set; }
+        }
+
+        /// <summary>
         /// Gets or sets the collection of fields that define the metadata structure.
         /// </summary>
         /// <remarks>Use this property to access or modify the set of fields associated with the metadata.
@@ -274,37 +291,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             // Assert
             Assert.NotNull(entity);
-        }
-
-        /// <summary>
-        /// Verifies that the ConvertValue method correctly handles conversion of values to enum, Guid, and other
-        /// supported types.
-        /// </summary>
-        /// <remarks>This test ensures that ConvertValue can convert integer values to enum types, parse
-        /// Guid values from both Guid instances and their string representations, and convert string representations of
-        /// integers to int. It covers typical scenarios for type conversion in the TableMap class.</remarks>
-        [Fact]
-        public void ConvertValue_HandlesEnumsGuidsAndOtherTypes()
-        {
-            // Arrange
-            var method = typeof(TableMap).GetMethod("ConvertValue", BindingFlags.NonPublic | BindingFlags.Static);
-
-            // Enum
-            var enumValue = method.Invoke(null, new object[] { 1, typeof(TestEnum) });
-            Assert.Equal(TestEnum.Value1, enumValue);
-
-            // Guid
-            var guid = Guid.NewGuid();
-            var guidValue = method.Invoke(null, new object[] { guid, typeof(Guid) });
-            Assert.Equal(guid, guidValue);
-
-            var guidStr = guid.ToString();
-            var guidValueFromString = method.Invoke(null, new object[] { guidStr, typeof(Guid) });
-            Assert.Equal(guid, guidValueFromString);
-
-            // Int
-            var intValue = method.Invoke(null, new object[] { "42", typeof(int) });
-            Assert.Equal(42, intValue);
         }
 
         /// <summary>
@@ -643,28 +629,6 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
-        /// Verifies that the ConvertValue method correctly parses a string representation of an enum value and returns
-        /// the corresponding enum type.
-        /// </summary>
-        /// <remarks>This test ensures that when a string matching a defined enum value is provided to the
-        /// ConvertValue method, the method returns the expected enum value. It validates the method's ability to handle
-        /// string-to-enum conversion for the TestStatus type.</remarks>
-        [Fact]
-        public void ConvertValue_EnumFromString_ReturnsParsedEnum()
-        {
-            // Arrange
-            var method = typeof(TableMap).GetMethod("ConvertValue", BindingFlags.NonPublic | BindingFlags.Static);
-            var value = "Active";
-            var targetType = typeof(TestStatus);
-
-            // Act
-            var result = method.Invoke(null, new object[] { value, targetType });
-
-            // Assert
-            Assert.Equal(TestStatus.Active, result);
-        }
-
-        /// <summary>
         /// Verifies that no child entities are set on the parent when the provided entity list is empty.
         /// </summary>
         /// <remarks>This test ensures that the method behaves correctly when there are no entities to
@@ -811,6 +775,77 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             // Assert
             Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that invoking the SetEntityFields method does not modify the entity when the specified field is not
+        /// present in the provided ordinals dictionary.
+        /// </summary>
+        /// <remarks>This test ensures that the method completes without throwing an exception and that
+        /// the entity's properties remain unchanged when the ordinals dictionary does not contain the field. It is
+        /// useful for confirming that the method safely handles cases where expected fields are missing from the data
+        /// source.</remarks>
+        [Fact]
+        public void SetEntityFields_FieldNotInOrdinals_DoesNothing()
+        {
+            var entity = new DummyRecordEntity();
+            var record = new Mock<IDataRecord>().Object;
+            var field = new ColumnMap("Id", (obj, val) => ((DummyRecordEntity)obj).Id = (int)val, (r, i) => 42);
+            var metadata = MetadataFactory.CreateEntity(new[] { field }, new TableMap[0]);
+            var ordinals = new Dictionary<string, int>(); // Empty, so field not found
+
+            // Should not throw or set anything
+            typeof(TableMap)
+                .GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { entity, record, metadata, "", ordinals });
+
+            Assert.Equal(0, entity.Id); // Not set
+        }
+
+        /// <summary>
+        /// Verifies that the SetEntityFields method correctly sets the value of an entity field when the field is found
+        /// without a prefix in the ordinals dictionary.
+        /// </summary>
+        /// <remarks>This test ensures that the mapping logic assigns the expected value to the entity
+        /// property when the field name matches directly, without requiring a prefix. It uses a mock data record and a
+        /// custom column mapping to validate the behavior.</remarks>
+        [Fact]
+        public void SetEntityFields_FieldFoundWithoutPrefix_SetsValue()
+        {
+            var entity = new DummyRecordEntity();
+            var record = new Mock<IDataRecord>().Object;
+            var field = new ColumnMap("Id", (obj, val) => ((DummyRecordEntity)obj).Id = (int)val, (r, i) => 99);
+            var metadata = MetadataFactory.CreateEntity(new[] { field }, new TableMap[0]);
+            var ordinals = new Dictionary<string, int> { { "Id", 0 } };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { entity, record, metadata, "", ordinals });
+
+            Assert.Equal(99, entity.Id);
+        }
+
+        /// <summary>
+        /// Verifies that the SetEntityFields method correctly sets the value of an entity field when a matching prefix
+        /// is found in the data record.
+        /// </summary>
+        /// <remarks>This test ensures that when the data record contains a field with the expected
+        /// prefix, the SetEntityFields method assigns the corresponding value to the entity's property. It uses a mock
+        /// data record and a custom column mapping to validate the behavior.</remarks>
+        [Fact]
+        public void SetEntityFields_FieldFoundWithPrefix_SetsValue()
+        {
+            var entity = new DummyRecordEntity();
+            var record = new Mock<IDataRecord>().Object;
+            var field = new ColumnMap("Name", (obj, val) => ((DummyRecordEntity)obj).Name = (string)val, (r, i) => "Hydrix");
+            var metadata = MetadataFactory.CreateEntity(new[] { field }, new TableMap[0]);
+            var ordinals = new Dictionary<string, int> { { "prefixName", 1 } };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { entity, record, metadata, "prefix", ordinals });
+
+            Assert.Equal("Hydrix", entity.Name);
         }
     }
 

@@ -24,10 +24,12 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             mockReader.Setup(r => r.Read()).Returns(() => callCount++ < 2);
             mockReader.Setup(r => r.FieldCount).Returns(2);
             mockReader.Setup(r => r.GetOrdinal("Id")).Returns(0);
+            mockReader.Setup(r => r.GetInt32(0)).Returns(0);
             mockReader.Setup(r => r.IsDBNull(0)).Returns(true);
             mockReader.Setup(r => r.GetValue(0)).Returns(DBNull.Value);
             mockReader.Setup(r => r.GetName(0)).Returns("Id");
             mockReader.Setup(r => r.GetOrdinal("Name")).Returns(1);
+            mockReader.Setup(r => r.GetString(1)).Returns("Test");
             mockReader.Setup(r => r.GetValue(1)).Returns("Test");
             mockReader.Setup(r => r.GetName(1)).Returns("Name");
 

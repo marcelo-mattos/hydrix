@@ -164,17 +164,15 @@ namespace Hydrix.Orchestrator.Mapping
         {
             foreach (var field in metadata.Fields)
             {
-                if (!ordinals.TryGetValue(field.Name, out var ordinal))
+                var columnName = prefix.Length == 0
+                    ? field.Name
+                    : string.Concat(prefix, field.Name);
+
+                if (!ordinals.TryGetValue(columnName, out var ordinal))
                     continue;
 
-                if (record.IsDBNull(ordinal))
-                {
-                    field.Setter(entity, field.DefaultValue);
-                    continue;
-                }
-
-                var value = record.GetValue(ordinal);
-                field.Setter(entity, ConvertValue(value, field.TargetType));
+                var value = field.Reader(record, ordinal);
+                field.Setter(entity, value);
             }
         }
 
@@ -229,60 +227,6 @@ namespace Hydrix.Orchestrator.Mapping
                     ordinals
                 );
             }
-        }
-
-        /// <summary>
-        /// Converts a raw SQL value to the specified CLR target type in a safe and
-        /// provider-agnostic manner.
-        /// </summary>
-        /// <param name="value">
-        /// The value extracted from a <see cref="DataRow"/> column. This value is guaranteed to be
-        /// non-null and not <see cref="DBNull"/> when passed to this method.
-        /// </param>
-        /// <param name="targetType">
-        /// The resolved destination CLR type used for conversion, with nullable wrappers already
-        /// removed when applicable.
-        /// </param>
-        /// <returns>The converted value compatible with the specified <paramref name="targetType"/>.</returns>
-        /// <remarks>
-        /// This method centralizes all value conversion logic required during SQL-to-entity
-        /// materialization, providing explicit handling for common edge cases not reliably
-        /// supported by <see cref="Convert.ChangeType(object, Type)"/>.
-        ///
-        /// The conversion rules are applied in the following order:
-        /// <list type="number">
-        /// <item>
-        /// <description>
-        /// Enumeration types are converted using <see cref="Enum.ToObject(Type, object)"/>,
-        /// allowing both numeric and database-backed enum representations.
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// <see cref="Guid"/> values are handled explicitly to support providers that return GUIDs
-        /// as either native types or string representations.
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// All other types are converted using <see cref="Convert.ChangeType(object, Type)"/>.
-        /// </description>
-        /// </item>
-        /// </list>
-        /// Centralizing this logic ensures consistent behavior across the entire mapping pipeline
-        /// and simplifies future extension to support additional CLR types or custom conversion rules.
-        /// </remarks>
-        private static object ConvertValue(object value, Type targetType)
-        {
-            if (targetType.IsEnum)
-                return value is string s
-                    ? Enum.Parse(targetType, s, ignoreCase: true)
-                    : Enum.ToObject(targetType, value);
-
-            if (targetType == typeof(Guid))
-                return value is Guid g ? g : Guid.Parse(value.ToString());
-
-            return Convert.ChangeType(value, targetType);
         }
     }
 }

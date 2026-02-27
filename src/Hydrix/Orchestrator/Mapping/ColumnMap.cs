@@ -1,7 +1,4 @@
-﻿using Hydrix.Orchestrator.Caching;
-using Hydrix.Orchestrator.Metadata.Internals;
-using System;
-using System.Reflection;
+﻿using System;
 
 namespace Hydrix.Orchestrator.Mapping
 {
@@ -16,25 +13,14 @@ namespace Hydrix.Orchestrator.Mapping
     internal sealed class ColumnMap
     {
         /// <summary>
-        /// Gets the reflected property associated with this field.
-        /// Used only during metadata construction.
-        /// </summary>
-        public PropertyInfo Property { get; }
-
-        /// <summary>
         /// Gets the SQL field name.
         /// </summary>
         public string Name { get; }
 
         /// <summary>
-        /// Gets the normalized target CLR type for value conversion.
+        /// Gets the field reader associated with this instance, which provides access to the underlying data fields.
         /// </summary>
-        public Type TargetType { get; }
-
-        /// <summary>
-        /// Gets the default value associated with this member.
-        /// </summary>
-        public object DefaultValue { get; }
+        public FieldReader Reader { get; }
 
         /// <summary>
         /// Gets the compiled setter delegate used to assign values
@@ -46,27 +32,17 @@ namespace Hydrix.Orchestrator.Mapping
         /// Initializes a new instance of the SqlFieldMap class using the specified property, SQL field attribute, and
         /// target type.
         /// </summary>
-        /// <param name="property">The property to be mapped to a SQL field. Cannot be null.</param>
         /// <param name="name">The name of the SQL field to which the property is mapped. This should be a valid column name in the database.</param>
+        /// <param name="setter">The compiled setter delegate used to assign values to the entity property without reflection.</param>
+        /// <param name="reader">The field reader delegate used to read values from the data record.</param>
         public ColumnMap(
-            PropertyInfo property,
-            string name)
+            string name,
+            Action<object, object> setter,
+            FieldReader reader)
         {
-            Property = property;
             Name = name;
-
-            var underlying = Nullable.GetUnderlyingType(property.PropertyType);
-
-            var isNullable =
-                underlying != null ||
-                !property.PropertyType.IsValueType;
-
-            TargetType = underlying ?? property.PropertyType;
-            Setter = MetadataFactory.CreateSetter(property);
-
-            DefaultValue = isNullable
-                ? null
-                : DefaultValueFactoryCache.Get(TargetType)();
+            Setter = setter;
+            Reader = reader;
         }
     }
 }

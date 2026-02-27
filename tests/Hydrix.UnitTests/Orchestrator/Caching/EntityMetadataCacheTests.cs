@@ -123,11 +123,11 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
             Assert.NotNull(meta);
 
             // Verifica se os campos foram mapeados corretamente
-            Assert.Contains(meta.Fields, f => f.Property.Name == "Id");
-            Assert.Contains(meta.Fields, f => f.Property.Name == "Name");
-            Assert.Contains(meta.Fields, f => f.Property.Name == "WithoutColumnAttribute");
-            Assert.DoesNotContain(meta.Fields, f => f.Property.Name == "Ignored");
-            Assert.DoesNotContain(meta.Fields, f => f.Property.Name == "NotMapped");
+            Assert.Contains(meta.Fields, f => f.Name == "Id");
+            Assert.Contains(meta.Fields, f => f.Name == "Name");
+            Assert.Contains(meta.Fields, f => f.Name == "WithoutColumnAttribute");
+            Assert.DoesNotContain(meta.Fields, f => f.Name == "Ignored");
+            Assert.DoesNotContain(meta.Fields, f => f.Name == "NotMapped");
 
             // Verifica se o relacionamento foi mapeado corretamente
             Assert.Contains(meta.Entities, e => e.Property.Name == "Related");
