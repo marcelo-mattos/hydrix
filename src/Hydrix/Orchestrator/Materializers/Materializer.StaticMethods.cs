@@ -151,7 +151,7 @@ namespace Hydrix.Orchestrator.Materializers
 
                     hash = (hash * 31) + index;
                     hash = (hash * 31) + name.Length;
-                    hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(name);
+                    hash = (hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(name);
                 }
                 hash = (hash * 31) + reader.FieldCount;
 

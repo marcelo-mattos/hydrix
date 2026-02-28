@@ -210,7 +210,7 @@ namespace Hydrix.Orchestrator.Mapping
                 var list = new List<int>(8);
                 foreach (var ordinal in ordinals)
                 {
-                    if (ordinal.Key.StartsWith(fullPrefix, StringComparison.Ordinal))
+                    if (ordinal.Key.StartsWith(fullPrefix, StringComparison.OrdinalIgnoreCase))
                         list.Add(ordinal.Value);
                 }
 
