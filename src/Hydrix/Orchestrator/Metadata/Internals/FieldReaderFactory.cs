@@ -63,6 +63,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
             if (type.IsEnum)
             {
                 var enumUnderlying = Enum.GetUnderlyingType(type);
+                var converter = EnumConverterCache.GetOrAdd(type);
 
                 if (!_baseReaders.TryGetValue(enumUnderlying, out var enumReader))
                     enumReader = (record, ordinal) => record.GetValue(ordinal);
@@ -73,7 +74,10 @@ namespace Hydrix.Orchestrator.Metadata.Internals
                         return isNullable ? null : defaultValue;
 
                     var raw = enumReader(record, ordinal);
-                    return Enum.ToObject(type, raw);
+
+                    return raw == null
+                        ? null
+                        : converter(raw);
                 };
             }
 
