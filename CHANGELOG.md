@@ -7,6 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.0.0] - 2026-02-28
+
+Hydrix 2.0 introduces significant internal architectural improvements focused on:
+
+- Runtime performance
+- Deterministic behavior
+- Strict metadata validation
+- Elimination of reflection in hot paths
+
+This version establishes a stable and performance-oriented foundation for long-term evolution.
+
+### ✨ Added
+
+#### Performance & Architecture
+
+- Compiled property setters using expression trees
+- Compiled entity factory delegates
+- Compiled enum converters (eliminated `Enum.ToObject` from hot path)
+- Removal of reflection during row materialization
+- Improved metadata caching architecture
+- Reduced memory allocations in nested entity resolution
+
+#### Validation & Safety
+
+- Fail-fast validation for conflicting attributes (`[Column]` + `[ForeignTable]`)
+- Stricter metadata separation between column mappings and nested entities
+- Earlier detection of invalid entity configurations
+- Improved default value handling for non-nullable types
+
+#### Internal Improvements
+
+- Thread-safe cache refinements
+- Cleaner separation between metadata building and materialization
+- Improved enum handling pipeline
+- Reduced delegate recompilation
+- Improved internal structure of `FieldReaderFactory`
+
+### 🔄 Changed
+
+#### Enum Conversion
+
+- Replaced `Enum.ToObject` with compiled converters
+- Enum conversion now uses cached delegates per enum type
+- Improved performance in enum-heavy scenarios
+
+#### Nested Entity Materialization
+
+- Nested properties marked with `[ForeignTable]` are no longer treated as column fields
+- Metadata now guarantees mutual exclusivity between fields and nested entities
+- More predictable behavior in LEFT JOIN scenarios
+
+#### Default Value Handling
+
+- Non-nullable value types now use cached default value factories
+- Improved consistency across providers when handling `DBNull`
+
+#### Metadata Building
+
+- Metadata generation logic refactored for clarity and correctness
+- Reduced repeated reflection calls during metadata creation
+
+### ❗ Breaking Changes
+
+- Consumers must migrate entities, procedures, and
+parameters to the new DataAnnotations-based attribute model.
+
+### 🛠 Fixed
+
+- Resolved incorrect materialization when nested properties were treated as fields
+- Eliminated reflection usage in materialization hot path
+- Reduced unnecessary allocations during enum conversion
+- Improved null handling consistency for nested entities
+
+### 📊 Performance Improvements
+
+- Removed reflection from row materialization
+- Removed Enum.ToObject from hot path
+- Reduced delegate creation frequency
+- Reduced allocations during nested resolution
+- Improved internal caching efficiency
+
+Hydrix 2.0 is optimized for high-throughput and performance-critical scenarios.
+
+---
+
 ## [1.1.1] - 2026-01-03
 
 This release focuses on correctness and performance improvements in the
@@ -58,8 +143,8 @@ while preserving a stable and predictable public API.
 
 ### 🚀 Improved
 
-- **SqlWhereBuilder**  
-  Expanded the `SqlWhereBuilder` API with more expressive and flexible options
+- **WhereBuilder**  
+  Expanded the `WhereBuilder` API with more expressive and flexible options
   for constructing complex WHERE clauses while maintaining explicit SQL semantics.
 
 - **Entity mapping performance**  
