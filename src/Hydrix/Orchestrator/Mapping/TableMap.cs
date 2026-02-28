@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 namespace Hydrix.Orchestrator.Mapping
 {
@@ -71,17 +72,11 @@ namespace Hydrix.Orchestrator.Mapping
         public string KeyColumnSuffix { get; }
 
         /// <summary>
-        /// Gets or sets the metadata used for materializing nested table structures.
+        /// Provides lazy initialization for the metadata required to materialize table data.
         /// </summary>
-        /// <remarks>This property provides the necessary metadata to correctly process and materialize
-        /// nested tables during data operations. It should be set when working with table mappings that include nested
-        /// table relationships.</remarks>
-        private TableMaterializeMetadata _nestedMetadata;
-
-        /// <summary>
-        /// Gets a value indicating whether the nested metadata has been initialized.
-        /// </summary>
-        private bool _nestedMetadataInitialized;
+        /// <remarks>The metadata is created only when it is first accessed, which can improve performance
+        /// by avoiding unnecessary computation if the metadata is not needed.</remarks>
+        private readonly Lazy<TableMaterializeMetadata> _nestedMetadata;
 
         /// <summary>
         /// Gets or sets the array of candidate ordinals used for processing.
@@ -90,6 +85,16 @@ namespace Hydrix.Orchestrator.Mapping
         /// specific context. It is important to ensure that the array is initialized before use to avoid null reference
         /// exceptions.</remarks>
         private int[] _candidateOrdinals;
+
+        /// <summary>
+        /// Stores the hash value that represents the schema of candidate ordinals.
+        /// </summary>
+        private int _candidateOrdinalsSchemaHash;
+
+        /// <summary>
+        /// Gets the lock object used for synchronizing access to the candidate.
+        /// </summary>
+        private readonly object _candidateLock = new object();
 
         /// <summary>
         /// Indicates whether the candidate ordinals have been initialized.
@@ -120,6 +125,10 @@ namespace Hydrix.Orchestrator.Mapping
             KeyColumnSuffix = !string.IsNullOrWhiteSpace(PrimaryKey)
                 ? string.Concat(PrefixSuffix, PrimaryKey)
                 : null;
+
+            _nestedMetadata = new Lazy<TableMaterializeMetadata>(
+                () => EntityMetadataCache.GetOrAdd(Property.PropertyType),
+                LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         /// <summary>
@@ -137,12 +146,15 @@ namespace Hydrix.Orchestrator.Mapping
         /// no prefix is required.</param>
         /// <param name="ordinals">A read-only dictionary mapping field names to their corresponding ordinal positions in the data record. Must
         /// not be null.</param>
+        /// <param name="schemaHash">A hash value representing the schema of the data record. This is used to detect changes in the schema
+        /// and optimize mapping operations.</param>
         internal static void SetEntity(
             ITable entity,
             IDataRecord record,
             TableMaterializeMetadata metadata,
             string prefix,
-            IReadOnlyDictionary<string, int> ordinals)
+            IReadOnlyDictionary<string, int> ordinals,
+            int schemaHash)
         {
             SetEntityFields(
                 entity,
@@ -156,7 +168,8 @@ namespace Hydrix.Orchestrator.Mapping
                 record,
                 metadata,
                 prefix,
-                ordinals);
+                ordinals,
+                schemaHash);
         }
 
         /// <summary>
@@ -168,16 +181,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// <returns>The metadata for the nested entity type. The same instance is returned on subsequent calls for performance
         /// optimization.</returns>
         private TableMaterializeMetadata GetNestedMetadata()
-        {
-            if (_nestedMetadataInitialized)
-                return _nestedMetadata;
-
-            var metadata = EntityMetadataCache.GetOrAdd(Property.PropertyType);
-            _nestedMetadata = metadata;
-            _nestedMetadataInitialized = true;
-
-            return metadata;
-        }
+            => _nestedMetadata.Value;
 
         /// <summary>
         /// Retrieves an array of ordinal values whose keys in the specified dictionary begin with the given prefix.
@@ -186,29 +190,38 @@ namespace Hydrix.Orchestrator.Mapping
         /// is fully populated before calling this method, as subsequent calls will return the cached result.</remarks>
         /// <param name="ordinals">A read-only dictionary that maps string keys to integer ordinal values to be filtered.</param>
         /// <param name="fullPrefix">The prefix used to filter dictionary keys. Only keys that start with this value are considered.</param>
+        /// <param name="schemaHash">A hash value representing the schema of the data record. This is used to detect changes in the schema
+        /// and optimize mapping operations.</param>
         /// <returns>An array of integers containing the ordinals that match the specified prefix. Returns an empty array if no
         /// matches are found.</returns>
         private int[] GetCandidateOrdinals(
             IReadOnlyDictionary<string, int> ordinals,
-            string fullPrefix)
+            string fullPrefix,
+            int schemaHash)
         {
-            if (_candidateOrdinalsInitialized)
+            if (_candidateOrdinalsInitialized && _candidateOrdinalsSchemaHash == schemaHash)
                 return _candidateOrdinals;
 
-            var list = new List<int>(8);
-            foreach (var ordinal in ordinals)
+            lock (_candidateLock)
             {
-                if (ordinal.Key.StartsWith(fullPrefix, StringComparison.Ordinal))
-                    list.Add(ordinal.Value);
+                if (_candidateOrdinalsInitialized && _candidateOrdinalsSchemaHash == schemaHash)
+                    return _candidateOrdinals;
+
+                var list = new List<int>(8);
+                foreach (var ordinal in ordinals)
+                {
+                    if (ordinal.Key.StartsWith(fullPrefix, StringComparison.Ordinal))
+                        list.Add(ordinal.Value);
+                }
+
+                _candidateOrdinals = list.Count == 0
+                    ? Array.Empty<int>()
+                    : list.ToArray();
+                _candidateOrdinalsSchemaHash = schemaHash;
+                _candidateOrdinalsInitialized = true;
+
+                return _candidateOrdinals;
             }
-
-            _candidateOrdinals = list.Count == 0
-                ? Array.Empty<int>()
-                : list.ToArray();
-
-            _candidateOrdinalsInitialized = true;
-
-            return _candidateOrdinals;
         }
 
         /// <summary>
@@ -257,12 +270,15 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="prefix">The prefix to apply to column names when accessing nested entity values in the data record. Can be an empty
         /// string.</param>
         /// <param name="ordinals">A dictionary containing the column ordinals for efficient lookup.</param>
+        /// <param name="schemaHash">A hash value representing the schema of the data record. This is used to detect changes in the schema
+        /// and optimize mapping operations.</param>
         private static void SetEntityNestedEntities(
             ITable entity,
             IDataRecord record,
             TableMaterializeMetadata metadata,
             string prefix,
-            IReadOnlyDictionary<string, int> ordinals)
+            IReadOnlyDictionary<string, int> ordinals,
+            int schemaHash)
         {
             foreach (var nested in metadata.Entities)
             {
@@ -284,7 +300,11 @@ namespace Hydrix.Orchestrator.Mapping
                 }
                 else
                 {
-                    var candidates = nested.GetCandidateOrdinals(ordinals, nestedPrefix);
+                    var candidates = nested.GetCandidateOrdinals(
+                        ordinals,
+                        nestedPrefix,
+                        schemaHash);
+
                     if (candidates.Length != 0)
                     {
                         for (var index = 0; index < candidates.Length; index++)
@@ -311,7 +331,8 @@ namespace Hydrix.Orchestrator.Mapping
                     record,
                     nestedMetadata,
                     nestedPrefix,
-                    ordinals
+                    ordinals,
+                    schemaHash
                 );
             }
         }

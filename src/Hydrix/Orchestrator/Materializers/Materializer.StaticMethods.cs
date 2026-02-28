@@ -46,7 +46,9 @@ namespace Hydrix.Orchestrator.Materializers
             var type = typeof(TEntity);
             var metadata = EntityMetadataCache.GetOrAdd(type);
 
-            var ordinals = BuildOrdinals(dataReader);
+            var ordinalMap = BuildOrdinals(dataReader);
+            var ordinals = ordinalMap.Ordinals;
+            var schemaHash = ordinalMap.SchemaHash;
 
             while (dataReader.Read())
             {
@@ -57,7 +59,8 @@ namespace Hydrix.Orchestrator.Materializers
                     dataReader,
                     metadata,
                     string.Empty,
-                    ordinals
+                    ordinals,
+                    schemaHash
                 );
 
                 entities.Add(entity);
@@ -132,19 +135,30 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="reader">The data reader from which to retrieve column names and their ordinal positions. Must not be null.</param>
         /// <returns>A dictionary containing column names as keys and their corresponding zero-based ordinal positions as values.
         /// The dictionary is case-insensitive with respect to column names.</returns>
-        private static Dictionary<string, int> BuildOrdinals(
+        private static OrdinalMap BuildOrdinals(
             IDataReader reader)
         {
             var ordinals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-            for (var index = 0; index < reader.FieldCount; index++)
+            unchecked
             {
-                var name = reader.GetName(index);
-                if (!string.IsNullOrWhiteSpace(name))
-                    ordinals.TryAdd(name, index);
-            }
+                int hash = 17;
+                for (int index = 0; index < reader.FieldCount; index++)
+                {
+                    var name = reader.GetName(index) ?? string.Empty;
 
-            return ordinals;
+                    ordinals[name] = index;
+
+                    hash = (hash * 31) + index;
+                    hash = (hash * 31) + name.Length;
+                    hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(name);
+                }
+                hash = (hash * 31) + reader.FieldCount;
+
+                return new OrdinalMap(
+                    ordinals,
+                    hash);
+            }
         }
 
         /// <summary>
