@@ -847,6 +847,307 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             Assert.Equal("Hydrix", entity.Name);
         }
+
+        /// <summary>
+        /// Verifies that the child entity is not instantiated when the primary key is absent from the ordinals
+        /// dictionary during entity mapping.
+        /// </summary>
+        /// <remarks>This test ensures that the mapping logic does not create a child entity if the
+        /// required primary key is not found in the provided ordinals. This behavior is important to prevent unintended
+        /// instantiation of related entities when mapping data records to objects.</remarks>
+        [Fact]
+        public void WithPrimaryKey_KeyNotInOrdinals_DoesNotInstantiate()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            var child = CreateTableMapWithPrimaryKey();
+            var metadata = CreateMetadata(child);
+            var ordinals = new Dictionary<string, int>(); // key not present
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that when the primary key value is DBNull, the child entity is not instantiated in the parent
+        /// object.
+        /// </summary>
+        /// <remarks>This test ensures that the mapping logic correctly handles cases where the primary
+        /// key is null, preventing the creation of a child entity when no valid key is present.</remarks>
+        [Fact]
+        public void WithPrimaryKey_KeyIsDBNull_DoesNotInstantiate()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            var child = CreateTableMapWithPrimaryKey();
+            var metadata = CreateMetadata(child);
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that a child entity is instantiated and assigned to the parent when the primary key value in the
+        /// data record is not DBNull.
+        /// </summary>
+        /// <remarks>This test ensures that the method responsible for setting nested entities correctly
+        /// creates and assigns a child entity when a valid primary key is present in the data record. It uses a mock
+        /// data record to simulate the presence of a primary key and asserts that the parent entity's child property is
+        /// not null after invocation.</remarks>
+        [Fact]
+        public void WithPrimaryKey_KeyIsNotDBNull_Instantiates()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            var child = CreateTableMapWithPrimaryKey();
+            var metadata = CreateMetadata(child);
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that a child entity is not instantiated when the parent entity is created without a primary key and
+        /// there is no matching prefix in the data record.
+        /// </summary>
+        /// <remarks>This test ensures that the entity mapping logic correctly leaves the child property
+        /// null when neither a primary key nor a matching prefix is present. This behavior is important to prevent
+        /// unintended instantiation of nested entities during mapping operations.</remarks>
+        [Fact]
+        public void WithoutPrimaryKey_NoMatchingPrefix_DoesNotInstantiate()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            var child = CreateTableMapWithoutPrimaryKey();
+            var metadata = CreateMetadata(child);
+            var ordinals = new Dictionary<string, int> { { "Other.Id", 0 } };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that when a parent entity is processed without a primary key and all matching prefixes are DBNull,
+        /// no child entity is instantiated.
+        /// </summary>
+        /// <remarks>This test ensures that the absence of a primary key and DBNull values in the data
+        /// record do not lead to the creation of child entities, maintaining the integrity of the parent-child
+        /// relationship.</remarks>
+        [Fact]
+        public void WithoutPrimaryKey_AllMatchingPrefixAreDBNull_DoesNotInstantiate()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            var child = CreateTableMapWithoutPrimaryKey();
+            var metadata = CreateMetadata(child);
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that a child entity is instantiated when at least one matching prefix in the data record is not
+        /// DBNull and no primary key is defined.
+        /// </summary>
+        /// <remarks>This test ensures that the mapping logic correctly creates a child entity even in the
+        /// absence of a primary key, provided that the data record contains at least one non-null value for the
+        /// relevant prefix. This scenario is important for supporting entity relationships where the child does not
+        /// have a primary key but should still be materialized based on available data.</remarks>
+        [Fact]
+        public void WithoutPrimaryKey_AtLeastOneMatchingPrefixIsNotDBNull_Instantiates()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            var child = CreateTableMapWithoutPrimaryKey();
+            var metadata = CreateMetadata(child);
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals });
+
+            Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that the GetNestedMetadata method initializes and caches metadata on the first call, and returns
+        /// the cached result on subsequent calls.
+        /// </summary>
+        /// <remarks>This test ensures that the caching behavior of the GetNestedMetadata method is
+        /// functioning as expected, preventing unnecessary re-initialization of metadata.</remarks>
+        [Fact]
+        public void GetNestedMetadata_CachesResult()
+        {
+            var tableMap = CreateTableMapWithPrimaryKey();
+            var method = typeof(TableMap).GetMethod("GetNestedMetadata", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            // First call: initializes and caches
+            var meta1 = method.Invoke(tableMap, null);
+            Assert.NotNull(meta1);
+
+            // Second call: returns cached
+            var meta2 = method.Invoke(tableMap, null);
+            Assert.Same(meta1, meta2);
+        }
+
+        /// <summary>
+        /// Verifies that the GetCandidateOrdinals method returns an empty array when no matching ordinals are found and
+        /// that the empty array result is cached for subsequent calls with the same parameters.
+        /// </summary>
+        /// <remarks>This test ensures that repeated invocations of GetCandidateOrdinals with identical
+        /// arguments return the same empty array reference, confirming the method's caching behavior for empty
+        /// results.</remarks>
+        [Fact]
+        public void GetCandidateOrdinals_ReturnsEmptyArray_AndCaches()
+        {
+            var tableMap = CreateTableMapWithPrimaryKey();
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var ordinals = new Dictionary<string, int> { { "Other.Id", 0 } };
+            var prefix = "Child.";
+
+            // First call: no matches, returns empty array
+            var result1 = (int[])method.Invoke(tableMap, new object[] { ordinals, prefix });
+            Assert.Empty(result1);
+
+            // Second call: returns cached empty array (should be same reference)
+            var result2 = (int[])method.Invoke(tableMap, new object[] { ordinals, prefix });
+            Assert.Same(result1, result2);
+        }
+
+        /// <summary>
+        /// Verifies that the GetCandidateOrdinals method returns the correct matching ordinals based on the specified
+        /// prefix and that it caches the results for subsequent calls with the same parameters.
+        /// </summary>
+        /// <remarks>This test ensures that GetCandidateOrdinals identifies and returns only those
+        /// ordinals whose keys match the provided prefix. It also confirms that repeated calls with identical arguments
+        /// return the same cached array instance, validating the method's caching behavior.</remarks>
+        [Fact]
+        public void GetCandidateOrdinals_ReturnsMatches_AndCaches()
+        {
+            var tableMap = CreateTableMapWithPrimaryKey();
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var ordinals = new Dictionary<string, int>
+            {
+                { "Child.Id", 1 },
+                { "Child.Name", 2 },
+                { "Other.Id", 3 }
+            };
+            var prefix = "Child.";
+
+            // First call: finds matches
+            var result1 = (int[])method.Invoke(tableMap, new object[] { ordinals, prefix });
+            Assert.Contains(1, result1);
+            Assert.Contains(2, result1);
+            Assert.DoesNotContain(3, result1);
+
+            // Second call: returns cached array (should be same reference)
+            var result2 = (int[])method.Invoke(tableMap, new object[] { ordinals, prefix });
+            Assert.Same(result1, result2);
+        }
+
+        /// <summary>
+        /// Verifies that the SetEntityNestedEntities method correctly instantiates a nested entity when provided with a
+        /// prefix for foreign key properties.
+        /// </summary>
+        /// <remarks>This test ensures that the SetEntityNestedEntities method can populate a nested
+        /// entity on the parent object when the foreign key property names are prefixed, as is common in database
+        /// mapping scenarios. It checks that the method uses the prefix to locate and instantiate the appropriate
+        /// nested entity, confirming correct mapping behavior.</remarks>
+        [Fact]
+        public void SetEntityNestedEntities_WithPrefix_InstantiatesNestedEntity()
+        {
+            // Arrange
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(It.IsAny<int>())).Returns(false);
+
+            var prop = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var attr = new ForeignTableAttribute("Child")
+            {
+                PrimaryKeys = new[] { "Id" }
+            };
+            var nested = new TableMap(prop, attr);
+            var metadata = MetadataFactory.CreateEntity(new ColumnMap[0], new[] { nested });
+
+            string prefix = "pre.";
+            var ordinals = new Dictionary<string, int> { { "pre.Child.Id", 0 } };
+
+            // Act
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, metadata, prefix, ordinals });
+
+            // Assert
+            Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
+        /// Creates a table mapping configuration for the 'Child' property of the 'Parent' class, specifying 'Id' as the
+        /// primary key for the associated child entity.
+        /// </summary>
+        /// <returns>A TableMap instance that defines the mapping for the 'Child' property, including the primary key
+        /// configuration.</returns>
+        private static TableMap CreateTableMapWithPrimaryKey()
+        {
+            var prop = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var attr = new ForeignTableAttribute("Child")
+            {
+                PrimaryKeys = new[] { "Id" }
+            };
+            return new TableMap(prop, attr);
+        }
+
+        /// <summary>
+        /// Creates a mapping for a table that does not define a primary key, using the specified foreign table
+        /// attribute.
+        /// </summary>
+        /// <remarks>This method is intended for scenarios where the related table does not have a primary
+        /// key defined. The resulting TableMap will reflect this by omitting primary key information in the
+        /// mapping.</remarks>
+        /// <returns>A TableMap instance that represents the mapping of the Parent.Child property to a foreign table without
+        /// primary keys.</returns>
+        private static TableMap CreateTableMapWithoutPrimaryKey()
+        {
+            var prop = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var attr = new ForeignTableAttribute("Child")
+            {
+                PrimaryKeys = null
+            };
+            return new TableMap(prop, attr);
+        }
+
+        /// <summary>
+        /// Creates metadata for a table based on the specified nested table map.
+        /// </summary>
+        /// <param name="nested">The nested table map that defines the structure and columns of the table for which metadata is to be
+        /// created. Cannot be null.</param>
+        /// <returns>A TableMaterializeMetadata object that describes the metadata for the specified table.</returns>
+        private static TableMaterializeMetadata CreateMetadata(TableMap nested)
+            => MetadataFactory.CreateEntity(new ColumnMap[0], new[] { nested });
     }
 
     /// <summary>

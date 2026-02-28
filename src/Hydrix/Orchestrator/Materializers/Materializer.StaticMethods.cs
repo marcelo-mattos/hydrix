@@ -20,28 +20,16 @@ namespace Hydrix.Orchestrator.Materializers
         Contract.IMaterializer
     {
         /// <summary>
-        /// Converts a <see cref="IDataReader"/> result set into a list of
-        /// <see cref="ITable"/> instances using streaming access.
-        ///
-        /// This method iterates through the <see cref="IDataReader"/> sequentially,
-        /// materializing each row into a new entity instance based on precomputed
-        /// SQL entity metadata.
-        ///
-        /// It is optimized for performance and low memory consumption, avoiding
-        /// intermediate structures such as <see cref="DataTable"/>.
+        /// Converts the data from the specified IDataReader into a list of entities of type TEntity.
         /// </summary>
-        /// <typeparam name="TEntity">
-        /// Represents a SQL-mapped entity type that implements <see cref="ITable"/>.
-        /// </typeparam>
-        /// <param name="dataReader">
-        /// The <see cref="IDataReader"/> containing the result set to be mapped.
-        /// </param>
-        /// <returns>
-        /// A list of entities populated from the data reader result set.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// Thrown when <paramref name="dataReader"/> is <c>null</c>.
-        /// </exception>
+        /// <remarks>Each record in the dataReader is mapped to a new instance of TEntity using entity
+        /// metadata. Ensure that the dataReader is positioned before the first record and is open before calling this
+        /// method.</remarks>
+        /// <typeparam name="TEntity">The type of entity to create for each record. TEntity must implement the ITable interface and have a
+        /// parameterless constructor.</typeparam>
+        /// <param name="dataReader">The IDataReader instance that provides the data to be converted. This parameter cannot be null.</param>
+        /// <returns>A list of TEntity instances populated with data from the IDataReader. The list will be empty if the
+        /// dataReader contains no records.</returns>
         public static IList<TEntity> ConvertDataReaderToEntities<TEntity>(
             IDataReader dataReader)
             where TEntity : ITable, new()

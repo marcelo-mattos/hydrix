@@ -5,7 +5,6 @@ using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Linq;
 using System.Reflection;
@@ -13,63 +12,30 @@ using System.Reflection;
 namespace Hydrix.Orchestrator.Mapping
 {
     /// <summary>
-    /// Represents the mapping definition of a nested SQL entity within a parent entity.
+    /// Provides mapping metadata and utilities for associating nested SQL entities with their corresponding properties
+    /// and attributes in a parent entity type.
     /// </summary>
-    /// <remarks>
-    /// This class encapsulates the metadata required to map a composed or nested <see
-    /// cref="ITable"/> from a flattened SQL result set.
-    ///
-    /// It is used to describe relationships where an entity contains another entity as a property,
-    /// typically populated from JOINed tables using aliased column names (e.g. <c>Parent.Child.Property</c>).
-    ///
-    /// The mapping behavior is driven by the presence of the <see cref="TableAttribute"/>,
-    /// which defines how and when the nested entity should be instantiated during data materialization.
-    /// </remarks>
+    /// <remarks>The TableMap class is used internally to facilitate the mapping of nested entities when
+    /// materializing object graphs from SQL data records. It encapsulates the property reflection, attribute metadata,
+    /// and compiled delegates required to instantiate and assign nested entities efficiently. Instances of this class
+    /// are typically created during metadata discovery and cached for reuse, ensuring thread safety and performance
+    /// during concurrent mapping operations.</remarks>
     internal sealed class TableMap
     {
         /// <summary>
-        /// Gets the reflected property that represents the nested entity.
+        /// Gets the metadata for the property represented by this instance.
         /// </summary>
-        /// <remarks>
-        /// This property represents a writable CLR property whose type implements <see
-        /// cref="ITable"/> and is decorated with <see cref="TableAttribute"/>.
-        ///
-        /// The underlying <see cref="PropertyInfo"/> is used to:
-        /// <list type="bullet">
-        /// <item>
-        /// <description>Instantiate the nested entity dynamically.</description>
-        /// </item>
-        /// <item>
-        /// <description>Assign the created instance to the parent entity.</description>
-        /// </item>
-        /// </list>
-        /// Only properties explicitly marked as SQL entities are included in this mapping, ensuring
-        /// that object composition is intentional and explicit.
-        /// </remarks>
+        /// <remarks>This property provides access to reflection information about the associated
+        /// property, such as its name, type, and custom attributes. The value is initialized during construction and is
+        /// read-only.</remarks>
         public PropertyInfo Property { get; private set; }
 
         /// <summary>
-        /// Gets the SQL entity attribute that defines the nested mapping behavior.
+        /// Gets the metadata that describes the characteristics of the associated foreign table.
         /// </summary>
-        /// <remarks>
-        /// The <see cref="TableAttribute"/> provides metadata used to control:
-        /// <list type="bullet">
-        /// <item>
-        /// <description>
-        /// The primary key column used to determine whether the nested entity should be
-        /// instantiated (particularly important for LEFT JOIN scenarios).
-        /// </description>
-        /// </item>
-        /// <item>
-        /// <description>
-        /// How column name prefixes are resolved when mapping flattened SQL projections into
-        /// hierarchical object graphs.
-        /// </description>
-        /// </item>
-        /// </list>
-        /// This attribute allows the mapper to avoid creating empty or invalid nested entities when
-        /// the corresponding SQL data is absent.
-        /// </remarks>
+        /// <remarks>This property provides access to the <see cref="ForeignTableAttribute"/> instance
+        /// that contains information about the foreign table mapping. The value is set internally and cannot be
+        /// modified directly.</remarks>
         public ForeignTableAttribute Attribute { get; private set; }
 
         /// <summary>
@@ -83,44 +49,94 @@ namespace Hydrix.Orchestrator.Mapping
         public Action<object, object> Setter { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TableMap"/> class.
+        /// Gets the prefix and suffix used for formatting string values.
         /// </summary>
-        /// <param name="property">
-        /// The reflected property that represents the nested entity on the parent type.
-        /// </param>
-        /// <param name="attribute">
-        /// The <see cref="TableAttribute"/> instance associated with the property, defining how
-        /// the nested entity should be resolved and instantiated.
-        /// </param>
-        /// <remarks>
-        /// This constructor is intended to be invoked during metadata discovery and cached for reuse.
-        ///
-        /// Once created, the mapping definition should be treated as immutable and safely reused
-        /// across concurrent mapping operations.
-        /// </remarks>
+        /// <remarks>Use this property to retrieve the formatting characters that are prepended and
+        /// appended to string representations. This ensures consistent formatting across different contexts where
+        /// string values are displayed or processed.</remarks>
+        public string PrefixSuffix { get; }
+
+        /// <summary>
+        /// Gets the primary key value associated with the entity.
+        /// </summary>
+        /// <remarks>The primary key is used to uniquely identify the entity within the database. It is
+        /// essential for operations such as retrieval and updates.</remarks>
+        public string PrimaryKey { get; }
+
+        /// <summary>
+        /// Gets the suffix that is appended to key column names.
+        /// </summary>
+        /// <remarks>This property is useful for identifying key columns in a database schema,
+        /// particularly when dealing with multiple tables that may have similar column names.</remarks>
+        public string KeyColumnSuffix { get; }
+
+        /// <summary>
+        /// Gets or sets the metadata used for materializing nested table structures.
+        /// </summary>
+        /// <remarks>This property provides the necessary metadata to correctly process and materialize
+        /// nested tables during data operations. It should be set when working with table mappings that include nested
+        /// table relationships.</remarks>
+        private TableMaterializeMetadata _nestedMetadata;
+
+        /// <summary>
+        /// Gets a value indicating whether the nested metadata has been initialized.
+        /// </summary>
+        private bool _nestedMetadataInitialized;
+
+        /// <summary>
+        /// Gets or sets the array of candidate ordinals used for processing.
+        /// </summary>
+        /// <remarks>This field holds the ordinals that represent the positions of candidates in a
+        /// specific context. It is important to ensure that the array is initialized before use to avoid null reference
+        /// exceptions.</remarks>
+        private int[] _candidateOrdinals;
+
+        /// <summary>
+        /// Indicates whether the candidate ordinals have been initialized.
+        /// </summary>
+        /// <remarks>This field is used internally to track the initialization state of candidate
+        /// ordinals. Its value may affect subsequent operations that depend on the availability of candidate
+        /// ordinals.</remarks>
+        private bool _candidateOrdinalsInitialized;
+
+        /// <summary>
+        /// Initializes a new instance of the TableMap class, mapping the specified property to a foreign table using
+        /// the provided attribute.
+        /// </summary>
+        /// <remarks>This constructor sets up dynamic mapping by creating a factory for the property's
+        /// type and a setter for the property, enabling runtime assignment and retrieval of mapped values.</remarks>
+        /// <param name="property">The property to be mapped to the foreign table. Cannot be null.</param>
+        /// <param name="attribute">The attribute that provides metadata for the foreign table mapping. Cannot be null.</param>
         public TableMap(
             PropertyInfo property,
             ForeignTableAttribute attribute)
         {
-            this.Property = property;
-            this.Attribute = attribute;
-            this.Factory = MetadataFactory.CreateFactory(property.PropertyType);
-            this.Setter = MetadataFactory.CreateSetter(property);
+            Property = property;
+            Attribute = attribute;
+            Factory = MetadataFactory.CreateFactory(property.PropertyType);
+            Setter = MetadataFactory.CreateSetter(property);
+            PrefixSuffix = string.Concat(property.Name, ".");
+            PrimaryKey = attribute.PrimaryKeys?.FirstOrDefault();
+            KeyColumnSuffix = !string.IsNullOrWhiteSpace(PrimaryKey)
+                ? string.Concat(PrefixSuffix, PrimaryKey)
+                : null;
         }
 
         /// <summary>
-        /// Populates the specified SQL entity with data from the provided data record, including nested entities as
-        /// defined by the metadata.
+        /// Populates the specified entity with values from the provided data record, including both direct fields and
+        /// nested entities.
         /// </summary>
         /// <remarks>This method is intended for internal use when materializing entities from data
-        /// records, such as during data access operations. It supports recursive population of nested entities based on
-        /// the provided metadata and path.</remarks>
-        /// <param name="entity">The SQL entity instance to populate with values from the data record. Cannot be null.</param>
-        /// <param name="record">The data record containing the values to assign to the entity's fields and nested entities. Cannot be null.</param>
-        /// <param name="metadata">The metadata describing the structure and mapping of the SQL entity. Cannot be null.</param>
-        /// <param name="prefix">An optional prefix to prepend to column names when retrieving values from the data record, used for nested entities.
-        /// Can be an empty string if no prefix is required.</param>
-        /// <param name="ordinals">A mapping from field names to their corresponding ordinal positions in the data record. Cannot be null.</param>
+        /// records, such as during database mapping operations. It sets both the direct fields and any nested entities
+        /// defined in the metadata.</remarks>
+        /// <param name="entity">The entity instance to be populated with data from the record. Must not be null.</param>
+        /// <param name="record">The data record containing the values to assign to the entity's fields and nested entities. Must not be
+        /// null.</param>
+        /// <param name="metadata">Metadata describing the structure and mapping of the entity's fields and nested entities. Must not be null.</param>
+        /// <param name="prefix">A prefix to apply to field names when mapping values from the record to the entity. May be empty or null if
+        /// no prefix is required.</param>
+        /// <param name="ordinals">A read-only dictionary mapping field names to their corresponding ordinal positions in the data record. Must
+        /// not be null.</param>
         internal static void SetEntity(
             ITable entity,
             IDataRecord record,
@@ -141,6 +157,58 @@ namespace Hydrix.Orchestrator.Mapping
                 metadata,
                 prefix,
                 ordinals);
+        }
+
+        /// <summary>
+        /// Retrieves the metadata for the nested entity type associated with the current property.
+        /// </summary>
+        /// <remarks>The metadata is initialized and cached on the first invocation to improve efficiency.
+        /// This method ensures that repeated access to the nested entity metadata does not incur additional
+        /// overhead.</remarks>
+        /// <returns>The metadata for the nested entity type. The same instance is returned on subsequent calls for performance
+        /// optimization.</returns>
+        private TableMaterializeMetadata GetNestedMetadata()
+        {
+            if (_nestedMetadataInitialized)
+                return _nestedMetadata;
+
+            var metadata = EntityMetadataCache.GetOrAdd(Property.PropertyType);
+            _nestedMetadata = metadata;
+            _nestedMetadataInitialized = true;
+
+            return metadata;
+        }
+
+        /// <summary>
+        /// Retrieves an array of ordinal values whose keys in the specified dictionary begin with the given prefix.
+        /// </summary>
+        /// <remarks>The result is cached after the first invocation. Ensure that the ordinals dictionary
+        /// is fully populated before calling this method, as subsequent calls will return the cached result.</remarks>
+        /// <param name="ordinals">A read-only dictionary that maps string keys to integer ordinal values to be filtered.</param>
+        /// <param name="fullPrefix">The prefix used to filter dictionary keys. Only keys that start with this value are considered.</param>
+        /// <returns>An array of integers containing the ordinals that match the specified prefix. Returns an empty array if no
+        /// matches are found.</returns>
+        private int[] GetCandidateOrdinals(
+            IReadOnlyDictionary<string, int> ordinals,
+            string fullPrefix)
+        {
+            if (_candidateOrdinalsInitialized)
+                return _candidateOrdinals;
+
+            var list = new List<int>(8);
+            foreach (var ordinal in ordinals)
+            {
+                if (ordinal.Key.StartsWith(fullPrefix, StringComparison.Ordinal))
+                    list.Add(ordinal.Value);
+            }
+
+            _candidateOrdinals = list.Count == 0
+                ? Array.Empty<int>()
+                : list.ToArray();
+
+            _candidateOrdinalsInitialized = true;
+
+            return _candidateOrdinals;
         }
 
         /// <summary>
@@ -198,16 +266,36 @@ namespace Hydrix.Orchestrator.Mapping
         {
             foreach (var nested in metadata.Entities)
             {
-                var nestedPrefix = string.Concat(prefix, nested.Property.Name, ".");
+                var nestedPrefix = prefix.Length == 0
+                    ? nested.PrefixSuffix
+                    : string.Concat(prefix, nested.PrefixSuffix);
+
                 var shouldInstantiate = false;
-                var primaryKey = nested.Attribute.PrimaryKeys?.FirstOrDefault();
 
-                if (!string.IsNullOrWhiteSpace(primaryKey))
+                if (!string.IsNullOrWhiteSpace(nested.PrimaryKey))
                 {
-                    var keyColumn = string.Concat(nestedPrefix, primaryKey);
+                    var keyColumn = prefix.Length == 0
+                        ? nested.KeyColumnSuffix
+                        : string.Concat(prefix, nested.KeyColumnSuffix);
 
-                    shouldInstantiate = (ordinals.TryGetValue(keyColumn, out var ordinal) &&
-                        !record.IsDBNull(ordinal));
+                    shouldInstantiate =
+                        ordinals.TryGetValue(keyColumn, out var pkOrdinal) &&
+                        !record.IsDBNull(pkOrdinal);
+                }
+                else
+                {
+                    var candidates = nested.GetCandidateOrdinals(ordinals, nestedPrefix);
+                    if (candidates.Length != 0)
+                    {
+                        for (var index = 0; index < candidates.Length; index++)
+                        {
+                            if (!record.IsDBNull(candidates[index]))
+                            {
+                                shouldInstantiate = true;
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 if (!shouldInstantiate)
@@ -216,8 +304,7 @@ namespace Hydrix.Orchestrator.Mapping
                 var nestedEntity = (ITable)nested.Factory();
                 nested.Setter(entity, nestedEntity);
 
-                var nestedMetadata = EntityMetadataCache.GetOrAdd(
-                    nested.Property.PropertyType);
+                var nestedMetadata = nested.GetNestedMetadata();
 
                 SetEntity(
                     nestedEntity,

@@ -1,8 +1,8 @@
-﻿using Castle.Core.Logging;
-using Hydrix.Attributes.Parameters;
+﻿using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Schemas.Contract;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections;
@@ -420,6 +420,49 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Represents a custom procedure with specific parameters for use in database operations.
+        /// </summary>
+        /// <remarks>This class implements the IProcedure interface with typed parameters, enabling the
+        /// definition of procedures that can be executed within the Hydrix framework. Use this type to encapsulate
+        /// procedure parameters when interacting with database-related APIs.</remarks>
+        [Procedure("CustomProcedure")]
+        private class CustomProcedure : IProcedure<CustomDataParameter>
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            /// <remarks>This property is typically used to reference the entity in database
+            /// operations or business logic. Ensure that the Id is set to a valid value before performing operations
+            /// that require identification of the entity.</remarks>
+            [Parameter("Id", DbType.Int32)]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name associated with the entity.
+            /// </summary>
+            /// <remarks>This property is used to identify the entity by a human-readable name. It is
+            /// important to ensure that the name is unique within the context of its usage.</remarks>
+            [Parameter("Name", DbType.String)]
+            public string Name { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a custom data parameter that provides additional attributes for parameter handling.
+        /// </summary>
+        /// <remarks>This class extends AttributeParameter to allow specifying whether a custom setting is
+        /// applied. Use the CustomSet property to indicate if the custom configuration is active.</remarks>
+        private class CustomDataParameter : AttributeParameter
+        {
+            /// <summary>
+            /// Gets or sets a value indicating whether the custom setting is enabled.
+            /// </summary>
+            /// <remarks>Set this property to <see langword="true"/> to activate the custom behavior,
+            /// or to <see langword="false"/> to deactivate it. The effect of enabling this setting depends on the
+            /// specific context in which it is used.</remarks>
+            public bool CustomSet { get; set; }
+        }
+
+        /// <summary>
         /// Represents a non-functional, placeholder implementation of the IDbConnection interface for testing or
         /// design-time scenarios.
         /// </summary>
@@ -598,8 +641,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// <param name="timeout">The command timeout, in seconds, to use for database operations. Must be a non-negative value.</param>
         /// <param name="parameterPrefix">The prefix to use for SQL parameters. Defaults to ":".</param>
         /// <returns>A new instance of Materializer.</returns>
-        private static Materializer CreateInstance(
-            ILogger logger,
+        private static Materializer CreateInstanceWithLogger(
+            ILogger logger = null,
             int? timeout = null,
             string parameterPrefix = null)
         {
