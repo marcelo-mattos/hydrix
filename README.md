@@ -5,22 +5,34 @@
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=marcelo-mattos_hydrix&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=marcelo-mattos_hydrix)
 
-**A lightweight, explicit, and provider-agnostic SQL materialization framework for .NET.**
+⚡**A high-performance, lightweight, provider-agnostic SQL materializer for .NET.**
 
-Hydrix is a **micro-ORM** designed for developers who require **full control over SQL execution**, **predictable behavior**, and **efficient entity materialization**, without introducing hidden abstractions or proprietary query languages.
+Hydrix is a **micro-ORM** built for developers who demand:
 
-The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and heavyweight ORMs such as Entity Framework, offering a Dapper-like experience enhanced with **hierarchical entity materialization**, **metadata caching**, and **native support for nested entities**.
+- Full control over SQL execution
+- Explicit and predictable behavior
+- High performance without hidden abstractions
+- Efficient hierarchical entity materialization
+
+It intentionally sits between **raw [ADO.NET](https://learn.microsoft.com/pt-br/dotnet/framework/data/adonet/ado-net-overview)** and heavyweight ORMs such as Entity Framework, offering a Dapper-like experience enhanced with:
+
+- Nested entity materialization
+- Intelligent metadata caching
+- Optimized enum handling
+- Zero reflection in the hot path
 
 ---
 
 ## 🧭 Why Hydrix?
 
-* You want full control over your SQL
-* You work with complex or performance-critical queries
-* You prefer explicit behavior over hidden abstractions
-* You need a lightweight alternative to full ORMs
+Hydrix is designed for performance-sensitive systems where:
 
-> Hydrix is designed for developers who want **full control** over their SQL while keeping object hydration explicit, safe, and predictable.
+* * SQL must remain explicit and visible
+* Developers retain full control over execution
+* Behavior must be predictable and transparent
+* Object graphs must be materialized efficiently from flat JOINs
+
+Hydrix does not attempt to abstract SQL away from you.
 
 ---
 
@@ -44,18 +56,29 @@ The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and h
 ## ✨ Key Features
 
 * Explicit SQL execution (Text and Stored Procedures)
-* Entity materialization using **standard .NET DataAnnotations**
-* Support for **nested entities** (flat JOINs → object graphs)
-* Thread-safe metadata caching with optimized reflection
-* Native support for SQL `IN` clauses with safe parameter expansion
-* SQL command logging similar to Entity Framework
-* Fully provider-agnostic ([ADO.NET](http://ADO.NET) based)
-* Compatible with **.NET Core 3.1 and later**
+* Entity materialization via standard .NET DataAnnotations
+* Nested entity support (flat JOIN → object graph)
+* Thread-safe metadata caching
+* Zero reflection in the materialization hot path
+* Compiled enum converters (no `Enum.ToObject` per row)
+* Native SQL `IN` clause expansion
+* SQL command logging
+* Fully provider-agnostic ([ADO.NET](https://learn.microsoft.com/pt-br/dotnet/framework/data/adonet/ado-net-overview))
 * Zero external dependencies
-* Distributed under the Apache-2.0 License
+* Apache 2.0 licensed
 
-> ⚠️ Note
-> SQL builders in Hydrix are stateful by design and should not be reused across multiple queries.
+## ⚡ Performance Design (Hydrix 2.0)
+
+* Hydrix 2.0 introduces architectural improvements focused on runtime efficiency:
+* Metadata is built once per type and cached
+* Property setters are compiled into delegates
+* Enum conversions use compiled converters
+* No reflection during row materialization
+* No `Activator.CreateInstance` in hot paths
+* No `Enum.ToObject` in hot paths
+* Minimal allocations during nested resolution
+
+Hydrix is engineered for predictable runtime behavior and low GC pressure.
 
 ---
 
@@ -64,7 +87,6 @@ The framework intentionally sits between **raw [ADO.NET](http://ADO.NET)** and h
 ```bash
 dotnet add package Hydrix
 ```
-
 
 ---
 
@@ -83,7 +105,6 @@ hydrix.ExecuteNonQuery(
 );
 ```
 
-
 ---
 
 ### Querying Entities
@@ -94,7 +115,6 @@ var orders = hydrix.Query<Order>(
     new { min = 100 }
 );
 ```
-
 
 ---
 
@@ -110,14 +130,13 @@ var orders = hydrix.Query<Order>(
 );
 ```
 
-The framework automatically expands the query into:
+Hydrix automatically expands:
 
 ```sql
 WHERE id IN (@ids_0, @ids_1, @ids_2)
 ```
 
-Each value is bound as an individual parameter, ensuring safety and compatibility across providers.
-
+Each value is safely parameterized.
 
 ---
 
@@ -128,9 +147,11 @@ Each value is bound as an individual parameter, ensuring safety and compatibilit
 ```csharp
 using System.ComponentModel.DataAnnotations.Schema;
 
-[Table("orders")]
-public class Order
+[Table("orders", Schema = "pos")]
+public class Order :
+    DatabaseEntity, ITable
 {
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     [Column("id")]
     public Guid Id { get; set; }
 
@@ -139,37 +160,43 @@ public class Order
 }
 ```
 
-
 ---
 
 ### Nested Entities (Flat JOINs)
 
 ```csharp
-[Table("orders")]
-public class Order
+[Table("orders", Schema = "pos")]
+public class Order :
+    DatabaseEntity, ITable
 {
+    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     [Column("id")]
     public Guid Id { get; set; }
 
-    [ForeignTable(Key = "Id")]
+    [ForeignKey("CustomerId")]
+    [Column("customerId")]
+    public Guid? CustomerId { get; set; }
+
+    [ForeignTable("customer", Schema = "pos", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
     public Customer Customer { get; set; }
 }
 ```
 
-Hydrix automatically builds the object graph only when related data is present, preventing empty nested objects when LEFT JOINs return NULL.
+Hydrix only materializes nested entities when related data is present, preventing empty object creation in LEFT JOIN scenarios.
 
 ---
 
 ### Stored Procedures
 
 ```csharp
-[Procedure("sp_create_order")]
-public class CreateOrder : IProcedure<int>
+[Procedure("sp_create_order", Schema = "pos")]
+public class CreateOrder : 
+    DatabaseEntity, IProcedure<SqlParameter>
 {
-    [Parameter("@id")]
+    [Parameter("p_id", DbType.Guid)]
     public Guid Id { get; set; }
 
-    [Parameter("@total")]
+    [Parameter("p_total", DbType.Decimal)]
     public decimal Total { get; set; }
 }
 ```
@@ -202,17 +229,24 @@ catch
 ## 📝 SQL Command Logging
 
 ```
---------------------------------------------------
 Executing DbCommand
-
 SELECT * FROM orders WHERE id IN (@ids_0, @ids_1)
-
 Parameters:
   @ids_0 = 'a3f9...' (Guid)
   @ids_1 = 'b4c1...' (Guid)
---------------------------------------------------
 ```
 
+---
+
+## 🧩 Provider Compatibility
+
+Hydrix works with any ADO.NET-compatible provider:
+
+* SQL Server
+* PostgreSQL
+* MySQL
+* Oracle
+* Others
 
 ---
 
@@ -220,23 +254,11 @@ Parameters:
 
 Hydrix is built around the following principles:
 
-* SQL must remain explicit and visible
-* Developers retain full control over execution
-* No hidden behaviors or implicit query generation
-* Performance, predictability, and transparency over convenience
-* [ADO.NET](http://ADO.NET) as a solid and proven foundation
-
-
----
-
-## 🧩 Provider Compatibility
-
-* Microsoft SQL Server
-* PostgreSQL
-* MySQL
-* Oracle
-* Any ADO.NET-compatible data provider
-
+* Explicit SQL
+* Deterministic behavior
+* Performance first
+* No hidden abstractions
+* [ADO.NET](https://learn.microsoft.com/pt-br/dotnet/framework/data/adonet/ado-net-overview) as a solid foundation
 
 ---
 
@@ -266,4 +288,5 @@ See the LICENSE and NOTICE files for details.
 ## 👨‍💻 Author
 
 **Marcelo Matos dos Santos**  
-Software Engineer • Open Source Maintainer.
+Software Engineer • Open Source Maintainer.  
+Engineering clarity. Delivering transformation.
