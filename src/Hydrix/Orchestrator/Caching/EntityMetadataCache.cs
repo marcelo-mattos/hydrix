@@ -4,8 +4,8 @@ using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 using System.Reflection;
 
 namespace Hydrix.Orchestrator.Caching
@@ -57,38 +57,57 @@ namespace Hydrix.Orchestrator.Caching
         internal static TableMaterializeMetadata BuildMetadata(
             Type type)
         {
-            var fields = type
-                .GetProperties()
-                .Where(property =>
-                    property.CanWrite &&
-                    property.GetIndexParameters().Length == 0 &&
-                    !property.IsDefined(typeof(NotMappedAttribute), inherit: true))
-                .Select(property =>
+            var properties = type
+                .GetProperties(
+                    BindingFlags.Instance |
+                    BindingFlags.Public);
+
+            var fields = new List<ColumnMap>(properties.Length);
+            var entities = new List<TableMap>();
+
+            foreach (var property in properties)
+            {
+                var isForeign = property.IsDefined(typeof(ForeignTableAttribute), true);
+                var isColumn  = property.IsDefined(typeof(ColumnAttribute), true);
+                var isNotMapped = property.IsDefined(typeof(NotMappedAttribute), true);
+
+                if (isForeign && isColumn)
                 {
-                    var columnAttribute = property.GetCustomAttribute<ColumnAttribute>();
-                    var columnName = columnAttribute?.Name ?? property.Name;
+                    throw new InvalidOperationException(
+                        $"Property '{property.Name}' in '{type.Name}' cannot have both [Column] and [ForeignTable].");
+                }
 
-                    var setter = MetadataFactory.CreateSetter(property);
-                    var reader = FieldReaderFactory.Create(property.PropertyType);
+                if (!property.CanWrite ||
+                    property.GetIndexParameters().Length > 0 ||
+                    isNotMapped)
+                {
+                    continue;
+                }
 
-                    return new ColumnMap(
-                        columnName,
-                        setter,
-                        reader);
-                })
-                .ToList();
+                if (isForeign)
+                {
+                    var foreignAttribute = property
+                        .GetCustomAttribute<ForeignTableAttribute>(true);
 
-            var entities = type
-                .GetProperties()
-                .Where(property =>
-                    property.CanWrite &&
-                    Attribute.IsDefined(property, typeof(ForeignTableAttribute)))
-                .Select(property => new TableMap(
-                    property,
-                    (ForeignTableAttribute)property
-                        .GetCustomAttributes(typeof(ForeignTableAttribute), false)
-                        .First()))
-                .ToList();
+                    entities.Add(new TableMap(
+                        property,
+                        foreignAttribute));
+
+                    continue;
+                }
+
+                var columnName = property
+                    .GetCustomAttribute<ColumnAttribute>(true)?.Name
+                    ?? property.Name;
+
+                var setter = MetadataFactory.CreateSetter(property);
+                var reader = FieldReaderFactory.Create(property.PropertyType);
+
+                fields.Add(new ColumnMap(
+                    columnName,
+                    setter,
+                    reader));
+            }
 
             return MetadataFactory.CreateEntity(
                 fields,

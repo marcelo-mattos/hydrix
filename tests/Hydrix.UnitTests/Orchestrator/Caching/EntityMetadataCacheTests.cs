@@ -1,5 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Caching;
+using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
 
@@ -96,6 +97,24 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
+        /// Represents an entity that is considered invalid within the context of the application.
+        /// </summary>
+        /// <remarks>This class is used to encapsulate properties that do not meet the required validation
+        /// criteria. It may be utilized in scenarios where entities need to be validated before processing.</remarks>
+        private class InvalidEntity
+        {
+            /// <summary>
+            /// Gets or sets the value associated with the foreign key in 'SomeTable'.
+            /// </summary>
+            /// <remarks>This property establishes a relationship with the 'SomeTable' entity. The
+            /// assigned value should correspond to a valid entry in the referenced table to maintain referential
+            /// integrity.</remarks>
+            [Column]
+            [ForeignTable("SomeTable")]
+            public string InvalidProperty { get; set; }
+        }
+
+        /// <summary>
         /// Verifies that the EntityMetadataCache.GetOrAdd method returns the same metadata instance for repeated
         /// requests with the same entity type.
         /// </summary>
@@ -145,6 +164,25 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
             var meta = EntityMetadataCache.BuildMetadata(typeof(NoAttributes));
             Assert.Empty(meta.Fields);
             Assert.Empty(meta.Entities);
+        }
+
+        /// <summary>
+        /// Verifies that the BuildMetadata method throws an InvalidOperationException when an entity property is
+        /// decorated with both [Column] and [ForeignTable] attributes.
+        /// </summary>
+        /// <remarks>This test ensures that the entity metadata validation logic correctly identifies and
+        /// rejects properties with conflicting attributes, providing a clear exception message that includes the
+        /// property and entity names.</remarks>
+        [Fact]
+        public void BuildMetadata_Throws_WhenPropertyHasBothColumnAndForeignTable()
+        {
+            // Act & Assert
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                EntityMetadataCache.BuildMetadata(typeof(InvalidEntity)));
+
+            Assert.Contains("InvalidProperty", ex.Message);
+            Assert.Contains("InvalidEntity", ex.Message);
+            Assert.Contains("[Column] and [ForeignTable]", ex.Message);
         }
     }
 }
