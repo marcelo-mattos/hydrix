@@ -1,4 +1,5 @@
-﻿using Hydrix.Orchestrator.Materializers;
+﻿using Hydrix.Configuration;
+using Hydrix.Orchestrator.Materializers;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Reflection;
@@ -77,8 +78,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Constructor_Uses_Default_Timeout_And_Prefix()
         {
             var connection = new DummyDbConnection();
-            var defaultTimeoutField = typeof(Materializer).GetField("DefaultTimeout", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            var defaultPrefixField = typeof(Materializer).GetField("DefaultParameterPrefix", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            var defaultTimeoutField = typeof(HydrixOptions).GetField("DefaultTimeout", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            var defaultPrefixField = typeof(HydrixOptions).GetField("DefaultParameterPrefix", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 
             int defaultTimeout = (int)defaultTimeoutField.GetValue(null);
             string defaultPrefix = (string)defaultPrefixField.GetValue(null);

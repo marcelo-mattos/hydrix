@@ -9,13 +9,15 @@
         Contract.IMaterializer
     {
         /// <summary>
-        /// The default wait time (in seconds) before terminating the attempt to execute a command and generating an error.
+        /// Represent the maximum number of records that can be processed when only the first record is needed, 
+        /// such as in scenarios where a single record is expected or sufficient.
         /// </summary>
-        private const int DefaultTimeout = 30;
+        internal const int FirstRecordLimit = 1;
 
         /// <summary>
-        /// The default prefix used for SQL parameters.
+        /// Represents the maximum number of records that can be processed when a single record is expected, 
+        /// allowing for a small buffer to accommodate scenarios where multiple records may be returned but only one is needed.
         /// </summary>
-        private const string DefaultParameterPrefix = "@";
+        internal const int SingleRecordLimit = 2;
     }
 }

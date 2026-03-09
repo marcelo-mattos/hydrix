@@ -29,7 +29,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithSqlAndParameters_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>("SELECT 1", new { Id = 1 });
@@ -68,7 +68,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithSqlParametersAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
@@ -87,7 +87,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithSqlOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>("SELECT 1");
@@ -108,7 +108,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithSqlAndTransactionOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>("SELECT 1", Mock.Of<IDbTransaction>());
@@ -129,7 +129,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithCommandTypeSqlAndParameters_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
@@ -150,7 +150,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithCommandTypeSqlParametersAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
@@ -171,7 +171,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithCommandTypeAndSqlOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1");
@@ -192,7 +192,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithCommandTypeSqlAndTransactionOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
@@ -212,7 +212,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithProcedure_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestProcedure());
@@ -233,7 +233,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void SingleOrDefault_WithProcedureAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
@@ -255,7 +255,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithSqlAndParameters_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1", new { Id = 1 });
@@ -296,7 +296,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithSqlParametersAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
@@ -318,7 +318,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithSqlOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1");
@@ -340,7 +340,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithSqlAndTransactionOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1", Mock.Of<IDbTransaction>());
@@ -362,7 +362,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithCommandTypeSqlAndParameters_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
@@ -385,7 +385,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithCommandTypeSqlParametersAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
@@ -407,7 +407,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithCommandTypeAndSqlOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1");
@@ -429,7 +429,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithCommandTypeSqlAndTransactionOnly_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
@@ -448,7 +448,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithProcedure_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestProcedure());
@@ -470,7 +470,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task SingleOrDefaultAsync_WithProcedureAndTransaction_ReturnsEntity()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(limit: 1).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());

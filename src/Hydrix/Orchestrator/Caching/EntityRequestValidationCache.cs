@@ -54,15 +54,9 @@ namespace Hydrix.Orchestrator.Caching
                 .FirstOrDefault();
 
             if (tableAttribute == null)
-                throw new MissingMemberException("The entity does not have a TableAttibute decorating itself.");
+                throw new MissingMemberException("The entity does not have a TableAttribute decorating itself.");
 
-            var hasAnyColumn = type
-                .GetProperties()
-                .Any(property => property
-                    .GetCustomAttributes(typeof(ColumnAttribute), false)
-                    .Length != 0);
-
-            return hasAnyColumn;
+            return true;
         }
     }
 }

@@ -1162,7 +1162,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// intended for use in test environments only.</remarks>
             public TestMaterializerDispose() : base(null)
             {
-                typeof(Materializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, new TestDbConnection());
+                typeof(Materializer).GetProperty("DbConnection", BindingFlags.Public | BindingFlags.Instance)?.SetValue(this, new TestDbConnection());
                 typeof(Materializer).GetField("_lockConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, new object());
                 typeof(Materializer).GetProperty("IsDisposed", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, false);
                 typeof(Materializer).GetProperty("IsDisposing", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, false);
@@ -1207,7 +1207,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// operations.</remarks>
             /// <param name="conn">The database connection to associate with this instance. Cannot be null.</param>
             public void SetDbConnection(IDbConnection conn)
-                => typeof(Materializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, conn);
+                => typeof(Materializer).GetProperty("DbConnection", BindingFlags.Public | BindingFlags.Instance)?.SetValue(this, conn);
 
             /// <summary>
             /// Associates the specified database transaction with the current materializer instance.
@@ -1716,7 +1716,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Creates a sample DataTable containing predefined columns and rows for demonstration or testing purposes.
         /// </summary>
         /// <returns>A DataTable with two columns, "Id" and "Name", and two rows of sample data.</returns>
-        private static DataTable CreateSampleTable(bool empty = false)
+        private static DataTable CreateSampleTable(bool empty = false, int limit = 2)
         {
             var table = new DataTable(nameof(Materializer));
 
@@ -1725,8 +1725,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             if (empty)
                 return table;
 
-            table.Rows.Add(1, "Alice");
-            table.Rows.Add(2, "Bob");
+            for (int i = 0; i < limit; i++)
+                table.Rows.Add(i + 1, i == 0 ? "Alice" : "Bob");
+
             return table;
         }
 
@@ -1737,9 +1738,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// GetValue, GetName, and IsDBNull, based on a predefined in-memory data table. This method is intended for
         /// testing scenarios where a real database connection is not required.</remarks>
         /// <returns>A Mock&lt;IDataReader&gt; instance configured to simulate reading from a sample data table.</returns>
-        private static Mock<IDataReader> CreateMockReader(bool empty = false)
+        private static Mock<IDataReader> CreateMockReader(bool empty = false, int limit = 2)
         {
-            var table = CreateSampleTable(empty);
+            var table = CreateSampleTable(empty, limit);
             var reader = new Mock<IDataReader>();
             int rowIndex = -1;
 

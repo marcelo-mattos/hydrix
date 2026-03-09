@@ -28,10 +28,12 @@ namespace Hydrix.Orchestrator.Materializers
         /// <typeparam name="TEntity">The type of entity to create for each record. TEntity must implement the ITable interface and have a
         /// parameterless constructor.</typeparam>
         /// <param name="dataReader">The IDataReader instance that provides the data to be converted. This parameter cannot be null.</param>
+        /// <param name="limit">The maximum number of entities to create. If zero or negative, all records are converted.</param>
         /// <returns>A list of TEntity instances populated with data from the IDataReader. The list will be empty if the
         /// dataReader contains no records.</returns>
         public static IList<TEntity> ConvertDataReaderToEntities<TEntity>(
-            IDataReader dataReader)
+            IDataReader dataReader,
+            int limit = 0)
             where TEntity : ITable, new()
         {
 #if NET8_0_OR_GREATER
@@ -50,8 +52,12 @@ namespace Hydrix.Orchestrator.Materializers
             var ordinals = ordinalMap.Ordinals;
             var schemaHash = ordinalMap.SchemaHash;
 
+            var count = 0;
             while (dataReader.Read())
             {
+                if (limit > 0 && count >= limit)
+                    break;
+
                 var entity = new TEntity();
 
                 TableMap.SetEntity(
@@ -64,6 +70,7 @@ namespace Hydrix.Orchestrator.Materializers
                 );
 
                 entities.Add(entity);
+                count++;
             }
 
             return entities;

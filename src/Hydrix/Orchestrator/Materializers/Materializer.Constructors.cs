@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Hydrix.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Data;
 
 namespace Hydrix.Orchestrator.Materializers
@@ -26,8 +27,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// </param>
         public Materializer(
             IDbConnection connection,
-            int timeout = DefaultTimeout,
-            string parameterPrefix = DefaultParameterPrefix) : this(
+            int timeout = HydrixOptions.DefaultTimeout,
+            string parameterPrefix = HydrixOptions.DefaultParameterPrefix) : this(
                 connection,
                 null,
                 timeout,
@@ -49,8 +50,8 @@ namespace Hydrix.Orchestrator.Materializers
         public Materializer(
             IDbConnection connection,
             ILogger logger,
-            int timeout = DefaultTimeout,
-            string parameterPrefix = DefaultParameterPrefix)
+            int timeout = HydrixOptions.DefaultTimeout,
+            string parameterPrefix = HydrixOptions.DefaultParameterPrefix)
         {
             this._logger = logger;
 

@@ -69,18 +69,6 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
-        /// Verifies that the Validate method returns false when the specified entity type does not define any columns.
-        /// </summary>
-        /// <remarks>This test ensures that entity validation correctly identifies and rejects entity
-        /// types lacking column definitions. It helps prevent operations on invalid entities by confirming that the
-        /// validation logic enforces the presence of at least one column.</remarks>
-        [Fact]
-        public void Validate_ReturnsFalse_WhenNoColumnPresent()
-        {
-            Assert.False(EntityRequestValidationCache.Validate(typeof(NoColumnEntity)));
-        }
-
-        /// <summary>
         /// Validates that an exception is thrown when the specified entity type lacks a TableAttribute.
         /// </summary>
         /// <remarks>This test verifies that the EntityRequestValidationCache.Validate method throws a
@@ -92,7 +80,7 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         {
             var ex = Assert.Throws<MissingMemberException>(() =>
                 EntityRequestValidationCache.Validate(typeof(NoTableEntity)));
-            Assert.Contains("TableAttibute", ex.Message);
+            Assert.Contains("TableAttribute", ex.Message);
         }
 
         /// <summary>

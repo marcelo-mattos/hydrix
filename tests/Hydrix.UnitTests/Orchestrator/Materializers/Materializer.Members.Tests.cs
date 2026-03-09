@@ -1,4 +1,5 @@
-﻿using Hydrix.Orchestrator.Materializers;
+﻿using Hydrix.Configuration;
+using Hydrix.Orchestrator.Materializers;
 using System.Reflection;
 using Xunit;
 
@@ -25,7 +26,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var materializer = CreateInstance(timeout: 30);
             var timeoutField = typeof(Materializer).GetField("_timeout", BindingFlags.NonPublic | BindingFlags.Instance);
-            var defaultTimeoutField = typeof(Materializer).GetField("DefaultTimeout", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
+            var defaultTimeoutField = typeof(HydrixOptions).GetField("DefaultTimeout", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
             Assert.NotNull(timeoutField);
             Assert.NotNull(defaultTimeoutField);
             var expected = (int)defaultTimeoutField.GetValue(null);
@@ -104,7 +105,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var materializer = CreateInstance(parameterPrefix: "@");
             var prefixField = typeof(Materializer).GetField("_parameterPrefix", BindingFlags.NonPublic | BindingFlags.Instance);
-            var defaultPrefixField = typeof(Materializer).GetField("DefaultParameterPrefix", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
+            var defaultPrefixField = typeof(HydrixOptions).GetField("DefaultParameterPrefix", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
             Assert.NotNull(prefixField);
             Assert.NotNull(defaultPrefixField);
             var expected = (string)defaultPrefixField.GetValue(null);

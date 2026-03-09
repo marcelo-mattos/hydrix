@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7BBBE559-27C9-4B34-BA50-989EF3964026}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hydrix.Benchmarks", "tests\Hydrix.Benchmarks\Hydrix.Benchmarks.csproj", "{7694A1ED-1790-EBD2-45AC-3854F4C74B01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7694A1ED-1790-EBD2-45AC-3854F4C74B01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7694A1ED-1790-EBD2-45AC-3854F4C74B01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7694A1ED-1790-EBD2-45AC-3854F4C74B01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7694A1ED-1790-EBD2-45AC-3854F4C74B01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +66,7 @@ Global
 		{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48} = {7BBBE559-27C9-4B34-BA50-989EF3964026}
 		{5FAA0D47-F8B6-474F-8D7E-C77E2303B3AD} = {33CFA06F-E3E5-4B3E-8E08-D125E67E4F8D}
 		{1DF43F7A-639A-4D5D-9F42-7CE2421F7B0F} = {5FAA0D47-F8B6-474F-8D7E-C77E2303B3AD}
+		{7694A1ED-1790-EBD2-45AC-3854F4C74B01} = {7BBBE559-27C9-4B34-BA50-989EF3964026}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {60B79B60-7A7A-431E-8479-B5BC8CB1C551}

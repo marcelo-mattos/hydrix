@@ -252,7 +252,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The Procedure does not have a ProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttribute decorating itself.
         /// </exception>
         IDbCommand Contract.IMaterializer.CreateCommand<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure)
@@ -288,7 +288,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The Procedure does not have a ProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttribute decorating itself.
         /// </exception>
         IDbCommand Contract.IMaterializer.CreateCommand<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,

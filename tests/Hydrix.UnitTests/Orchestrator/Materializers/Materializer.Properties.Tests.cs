@@ -28,7 +28,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var mockConn = new Mock<IDbConnection>().Object;
             var mat = CreateMaterializer(dbConnection: mockConn);
             Assert.Same(mockConn, typeof(Materializer)
-                .GetProperty("DbConnection", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetProperty("DbConnection", BindingFlags.Instance | BindingFlags.Public)
                 .GetValue(mat));
         }
 

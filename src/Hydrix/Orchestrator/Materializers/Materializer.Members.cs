@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Hydrix.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Data;
 
 namespace Hydrix.Orchestrator.Materializers
@@ -22,7 +23,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// The wait time (in seconds) before terminating the attempt to execute a command and generating an error.
         /// </summary>
-        private int _timeout = DefaultTimeout;
+        private int _timeout = HydrixOptions.DefaultTimeout;
 
         /// <summary>
         /// The database connection.
@@ -47,6 +48,6 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// The prefix used for SQL parameters.
         /// </summary>
-        private readonly string _parameterPrefix = DefaultParameterPrefix;
+        private readonly string _parameterPrefix = HydrixOptions.DefaultParameterPrefix;
     }
 }

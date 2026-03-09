@@ -442,7 +442,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         DataTable Contract.IMaterializer.ExecuteTable<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure)
@@ -472,7 +472,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         DataTable Contract.IMaterializer.ExecuteTable<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
@@ -504,7 +504,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<DataTable> Contract.IMaterializer.ExecuteTableAsync<TDataParameterDriver>(
@@ -537,7 +537,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<DataTable> Contract.IMaterializer.ExecuteTableAsync<TDataParameterDriver>(

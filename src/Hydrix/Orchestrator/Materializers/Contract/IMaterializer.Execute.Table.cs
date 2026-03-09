@@ -425,7 +425,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a ProcedureAttibute decorating itself.
+        /// The SqlEntity does not have a ProcedureAttribute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -454,7 +454,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a ProcedureAttibute decorating itself.
+        /// The SqlEntity does not have a ProcedureAttribute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -484,7 +484,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The Procedure does not have a ProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttribute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.
@@ -516,7 +516,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The Procedure does not have a ProcedureAttibute decorating itself.
+        /// The Procedure does not have a ProcedureAttribute decorating itself.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The connection does not exist. -or- The connection is not open.

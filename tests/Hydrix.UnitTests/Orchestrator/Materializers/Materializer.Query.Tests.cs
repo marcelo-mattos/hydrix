@@ -50,7 +50,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>("SELECT 1", new { Id = 1 });
@@ -92,7 +92,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
@@ -132,7 +132,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>("SELECT 1");
@@ -172,7 +172,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>("SELECT 1", Mock.Of<IDbTransaction>());
@@ -212,7 +212,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithCommandTypeSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
@@ -254,7 +254,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithCommandTypeSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
@@ -294,7 +294,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithCommandTypeAndSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1");
@@ -336,7 +336,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithCommandTypeSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
@@ -377,7 +377,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestProcedure());
@@ -417,7 +417,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Query_WithProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = materializer.Query<NoFieldEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
@@ -460,7 +460,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1", new { Id = 1 });
@@ -503,7 +503,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
@@ -546,7 +546,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1");
@@ -590,7 +590,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>("SELECT 1", Mock.Of<IDbTransaction>());
@@ -632,7 +632,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithCommandTypeSqlAndParameters_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
@@ -676,7 +676,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithCommandTypeSqlParametersAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
@@ -720,7 +720,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithCommandTypeAndSqlOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1");
@@ -763,7 +763,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithCommandTypeSqlAndTransactionOnly_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
@@ -806,7 +806,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithProcedure_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestProcedure());
@@ -850,7 +850,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public async Task QueryAsync_WithProcedureAndTransaction_ReturnsEmpty_When_ValidateEntityRequest_Fails()
         {
             var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var result = await materializer.QueryAsync<NoFieldEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
@@ -954,7 +954,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             await Assert.ThrowsAsync<TaskCanceledException>(() =>
-                materializer.QueryAsync<TestEntity>("SELECT 1", new { }, new CancellationToken(true)));
+                materializer.QueryAsync<TestEntity>("SELECT 1", new { }, 0, new CancellationToken(true)));
         }
     }
 }

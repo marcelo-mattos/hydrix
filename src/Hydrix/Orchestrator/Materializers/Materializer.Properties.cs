@@ -18,7 +18,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Gets the database connection.
         /// </summary>
-        internal IDbConnection DbConnection
+        public IDbConnection DbConnection
         {
             get
             {

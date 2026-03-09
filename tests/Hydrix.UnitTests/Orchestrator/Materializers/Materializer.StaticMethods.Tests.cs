@@ -220,24 +220,5 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, null));
             Assert.IsType<MissingMemberException>(ex.InnerException);
         }
-
-        /// <summary>
-        /// Verifies that the ValidateEntityRequest method returns false when invoked with an entity type that has no
-        /// fields.
-        /// </summary>
-        /// <remarks>This test ensures that the ValidateEntityRequest method correctly identifies entity
-        /// types lacking fields and returns false as expected. It uses reflection to access and invoke the non-public
-        /// static method.</remarks>
-        [Fact]
-        public void ValidateEntityRequest_NoField_ReturnsFalse()
-        {
-            var method = typeof(Materializer)
-                .GetMethod("ValidateEntityRequest", BindingFlags.NonPublic | BindingFlags.Static)
-                .MakeGenericMethod(typeof(NoFieldEntity));
-
-            var result = (bool)method.Invoke(null, null);
-
-            Assert.False(result);
-        }
     }
 }

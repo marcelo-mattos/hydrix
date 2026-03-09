@@ -16,6 +16,11 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IDisposable
     {
         /// <summary>
+        /// Gets the database connection.
+        /// </summary>
+        IDbConnection DbConnection { get; }
+
+        /// <summary>
         /// Gets a value that determines if a transaction exists and it is active on database.
         /// </summary>
         Boolean IsTransactionActive { get; }
