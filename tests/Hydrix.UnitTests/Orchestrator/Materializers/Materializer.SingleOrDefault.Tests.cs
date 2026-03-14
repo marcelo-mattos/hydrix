@@ -495,7 +495,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             await Assert.ThrowsAsync<TaskCanceledException>(() =>
-                materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1", new { }, new CancellationToken(true)));
+                materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1", new { }, It.IsAny<int>(), new CancellationToken(true)));
         }
     }
 }

@@ -28,9 +28,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_WithSqlAndParameters_ReturnsEntities()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>("SELECT", new { Id = 1 });
+            var result = _materializerMock.Object.Query<DummyEntity>("SELECT", new { Id = 1 }, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -43,9 +43,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void Query_WithSqlParametersAndTransaction_ReturnsEntities()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>("SELECT", new { Id = 2 }, transaction);
+            var result = _materializerMock.Object.Query<DummyEntity>("SELECT", new { Id = 2 }, transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -57,9 +57,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_WithSqlOnly_ReturnsEntities()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>("SELECT");
+            var result = _materializerMock.Object.Query<DummyEntity>("SELECT", It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -73,9 +73,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void Query_WithSqlAndTransaction_ReturnsEntities()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", transaction, It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", transaction, It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>("SELECT", transaction);
+            var result = _materializerMock.Object.Query<DummyEntity>("SELECT", transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -90,9 +90,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void Query_WithCommandTypeSqlAndParameters_ReturnsEntities()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT", parameters);
+            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -108,9 +108,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction);
+            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -124,9 +124,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_WithCommandTypeAndSql_ReturnsEntities()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT");
+            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -139,9 +139,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void Query_WithCommandTypeSqlAndTransaction_ReturnsEntities()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT", transaction);
+            var result = _materializerMock.Object.Query<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -155,9 +155,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void Query_GenericProcedure_ReturnsEntities()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.Query<DummyEntity, DummyParameter>(proc, It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity, DummyParameter>(proc, It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity, DummyParameter>(proc);
+            var result = _materializerMock.Object.Query<DummyEntity, DummyParameter>(proc, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -172,9 +172,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.Query<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<int>()))
                 .Returns(_entityList);
-            var result = _materializerMock.Object.Query<DummyEntity, DummyParameter>(proc, transaction);
+            var result = _materializerMock.Object.Query<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -188,9 +188,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task QueryAsync_WithSqlParameters_ReturnsEntities()
         {
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", new { Id = 1 });
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", new { Id = 1 }, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -206,9 +206,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task QueryAsync_WithSqlParametersAndTransaction_ReturnsEntities()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", new { Id = 2 }, transaction);
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", new { Id = 2 }, transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -221,9 +221,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task QueryAsync_WithSqlOnly_ReturnsEntities()
         {
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT");
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.Single(result);
         }
 
@@ -239,9 +239,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task QueryAsync_WithSqlAndTransaction_ReturnsEntities()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", transaction, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", transaction);
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -257,9 +257,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task QueryAsync_WithCommandTypeSqlParameters_ReturnsEntities()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters);
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -276,9 +276,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction);
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -293,9 +293,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task QueryAsync_WithCommandTypeAndSql_ReturnsEntities()
         {
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT");
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -311,9 +311,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task QueryAsync_WithCommandTypeSqlAndTransaction_ReturnsEntities()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", transaction);
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -328,9 +328,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task QueryAsync_GenericProcedure_ReturnsEntities()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity, DummyParameter>(proc, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity, DummyParameter>(proc, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity, DummyParameter>(proc);
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity, DummyParameter>(proc, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -347,9 +347,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entityList);
-            var result = await _materializerMock.Object.QueryAsync<DummyEntity, DummyParameter>(proc, transaction);
+            var result = await _materializerMock.Object.QueryAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<int>());
             Assert.Single(result);
         }
 
@@ -363,9 +363,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_ObjectDisposed_ThrowsObjectDisposedException()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>()))
                 .Throws(new ObjectDisposedException(nameof(IMaterializer)));
-            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }));
+            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }, It.IsAny<int>(), It.IsAny<int>()));
         }
 
         /// <summary>
@@ -377,9 +377,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_ArgumentException_ThrowsArgumentException()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>()))
                 .Throws<ArgumentException>();
-            Assert.Throws<ArgumentException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }));
+            Assert.Throws<ArgumentException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }, It.IsAny<int>(), It.IsAny<int>()));
         }
 
         /// <summary>
@@ -391,9 +391,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_NotSupportedException_ThrowsNotSupportedException()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>()))
                 .Throws<NotSupportedException>();
-            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }));
+            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }, It.IsAny<int>(), It.IsAny<int>()));
         }
 
         /// <summary>
@@ -405,9 +405,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_MissingMemberException_ThrowsMissingMemberException()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>()))
                 .Throws<MissingMemberException>();
-            Assert.Throws<MissingMemberException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }));
+            Assert.Throws<MissingMemberException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }, It.IsAny<int>(), It.IsAny<int>()));
         }
 
         /// <summary>
@@ -420,9 +420,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void Query_InvalidOperationException_ThrowsInvalidOperationException()
         {
-            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
+            _materializerMock.Setup(m => m.Query<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>()))
                 .Throws<InvalidOperationException>();
-            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }));
+            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.Query<DummyEntity>("SELECT", new { }, It.IsAny<int>(), It.IsAny<int>()));
         }
 
         /// <summary>
@@ -432,10 +432,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task QueryAsync_OperationCanceled_ThrowsOperationCanceledException()
         {
-            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.QueryAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", new { }, 0, CancellationToken.None));
+                await _materializerMock.Object.QueryAsync<DummyEntity>("SELECT", new { }, 0, It.IsAny<int>(), CancellationToken.None));
         }
     }
 }

@@ -30,29 +30,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
-        /// <returns>The number of rows affected.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">
-        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The connection does not exist. -or- The connection is not open.
-        /// </exception>
-        int ExecuteNonQuery(
-            string sql,
-            object parameters);
-
-        /// <summary>
-        /// Executes an SQL statement against the Connection object data provider, and returns the
-        /// number of rows affected.
-        /// </summary>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="parameters">
-        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
-        /// or stored procedure.
-        /// </param>
-        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -65,31 +44,20 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         int ExecuteNonQuery(
             string sql,
             object parameters,
-            IDbTransaction transaction);
+            int? timeout = null);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the
         /// number of rows affected.
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <returns>The number of rows affected.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">
-        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The connection does not exist. -or- The connection is not open.
-        /// </exception>
-        int ExecuteNonQuery(
-            string sql);
-
-        /// <summary>
-        /// Executes an SQL statement against the Connection object data provider, and returns the
-        /// number of rows affected.
-        /// </summary>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
+        /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -101,7 +69,51 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </exception>
         int ExecuteNonQuery(
             string sql,
-            IDbTransaction transaction);
+            object parameters,
+            IDbTransaction transaction,
+            int? timeout = null);
+
+        /// <summary>
+        /// Executes an SQL statement against the Connection object data provider, and returns the
+        /// number of rows affected.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        int ExecuteNonQuery(
+            string sql,
+            int? timeout = null);
+
+        /// <summary>
+        /// Executes an SQL statement against the Connection object data provider, and returns the
+        /// number of rows affected.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        int ExecuteNonQuery(
+            string sql,
+            IDbTransaction transaction,
+            int? timeout = null);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the
@@ -115,33 +127,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
-        /// <returns>The number of rows affected.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">
-        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The connection does not exist. -or- The connection is not open.
-        /// </exception>
-        int ExecuteNonQuery(
-            CommandType commandType,
-            string sql,
-            IEnumerable<IDataParameter> parameters);
-
-        /// <summary>
-        /// Executes an SQL statement against the Connection object data provider, and returns the
-        /// number of rows affected.
-        /// </summary>
-        /// <param name="commandType">
-        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
-        /// </param>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="parameters">
-        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
-        /// or stored procedure.
-        /// </param>
-        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -155,7 +142,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters,
-            IDbTransaction transaction);
+            int? timeout = null);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the
@@ -165,28 +152,13 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
         /// </param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <returns>The number of rows affected.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">
-        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// The connection does not exist. -or- The connection is not open.
-        /// </exception>
-        int ExecuteNonQuery(
-            CommandType commandType,
-            string sql);
-
-        /// <summary>
-        /// Executes an SQL statement against the Connection object data provider, and returns the
-        /// number of rows affected.
-        /// </summary>
-        /// <param name="commandType">
-        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// <param name="parameters">
+        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
+        /// or stored procedure.
         /// </param>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -199,7 +171,59 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         int ExecuteNonQuery(
             CommandType commandType,
             string sql,
-            IDbTransaction transaction);
+            IEnumerable<IDataParameter> parameters,
+            IDbTransaction transaction,
+            int? timeout = null);
+
+        /// <summary>
+        /// Executes an SQL statement against the Connection object data provider, and returns the
+        /// number of rows affected.
+        /// </summary>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        int ExecuteNonQuery(
+            CommandType commandType,
+            string sql,
+            int? timeout = null);
+
+        /// <summary>
+        /// Executes an SQL statement against the Connection object data provider, and returns the
+        /// number of rows affected.
+        /// </summary>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>The number of rows affected.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">
+        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// The connection does not exist. -or- The connection is not open.
+        /// </exception>
+        int ExecuteNonQuery(
+            CommandType commandType,
+            string sql,
+            IDbTransaction transaction,
+            int? timeout = null);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the
@@ -210,6 +234,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -224,6 +250,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         Task<int> ExecuteNonQueryAsync(
             string sql,
             object parameters,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -236,6 +263,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// or stored procedure.
         /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -251,6 +280,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             object parameters,
             IDbTransaction transaction,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -258,6 +288,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// number of rows affected.
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -271,6 +303,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<int> ExecuteNonQueryAsync(
             string sql,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -279,6 +312,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -293,6 +328,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         Task<int> ExecuteNonQueryAsync(
             string sql,
             IDbTransaction transaction,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -307,6 +343,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -322,6 +360,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -337,6 +376,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// or stored procedure.
         /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -353,6 +394,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             string sql,
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -363,6 +405,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
         /// </param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -377,6 +421,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         Task<int> ExecuteNonQueryAsync(
             CommandType commandType,
             string sql,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -388,6 +433,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -403,6 +450,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             CommandType commandType,
             string sql,
             IDbTransaction transaction,
+            int? timeout = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -417,6 +465,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
+        /// <param name="timeout">The wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -430,7 +480,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The connection does not exist. -or- The connection is not open.
         /// </exception>
         int ExecuteNonQuery<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> procedure)
+            IProcedure<TDataParameterDriver> procedure,
+            int? timeout = null)
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -445,6 +496,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
+        /// <param name="timeout">The wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -460,7 +513,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </exception>
         int ExecuteNonQuery<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction)
+            IDbTransaction transaction,
+            int? timeout = null)
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -475,6 +529,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
+        /// <param name="timeout">The wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -491,6 +547,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         Task<int> ExecuteNonQueryAsync<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
+            int? timeout = null,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new();
 
@@ -507,6 +564,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">The wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The number of rows affected.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -524,6 +583,7 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         Task<int> ExecuteNonQueryAsync<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
+            int? timeout = null,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new();
     }

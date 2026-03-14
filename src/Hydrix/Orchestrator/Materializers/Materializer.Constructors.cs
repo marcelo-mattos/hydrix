@@ -61,13 +61,5 @@ namespace Hydrix.Orchestrator.Materializers
             this.Timeout = timeout;
             this._parameterPrefix = parameterPrefix;
         }
-
-        /// <summary>
-        /// Destructor.
-        /// </summary>
-        ~Materializer()
-        {
-            this.Dispose(false);
-        }
     }
 }

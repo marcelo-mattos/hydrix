@@ -31,8 +31,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteNonQuery_WithSqlAndParameters_ReturnsRowsAffected()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>())).Returns(1);
-            var result = _materializerMock.Object.ExecuteNonQuery("UPDATE", new { Id = 1 });
+            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>(), It.IsAny<int>())).Returns(1);
+            var result = _materializerMock.Object.ExecuteNonQuery("UPDATE", new { Id = 1 }, It.IsAny<int>());
             Assert.Equal(1, result);
         }
 
@@ -47,8 +47,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteNonQuery_WithSqlParametersAndTransaction_ReturnsRowsAffected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>(), transaction)).Returns(2);
-            var result = _materializerMock.Object.ExecuteNonQuery("UPDATE", new { Id = 2 }, transaction);
+            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>(), transaction, It.IsAny<int>())).Returns(2);
+            var result = _materializerMock.Object.ExecuteNonQuery("UPDATE", new { Id = 2 }, transaction, It.IsAny<int>());
             Assert.Equal(2, result);
         }
 
@@ -61,8 +61,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteNonQuery_WithSqlOnly_ReturnsRowsAffected()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQuery("DELETE")).Returns(3);
-            var result = _materializerMock.Object.ExecuteNonQuery("DELETE");
+            _materializerMock.Setup(m => m.ExecuteNonQuery("DELETE", It.IsAny<int>())).Returns(3);
+            var result = _materializerMock.Object.ExecuteNonQuery("DELETE", It.IsAny<int>());
             Assert.Equal(3, result);
         }
 
@@ -77,8 +77,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteNonQuery_WithSqlAndTransaction_ReturnsRowsAffected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQuery("DELETE", transaction)).Returns(4);
-            var result = _materializerMock.Object.ExecuteNonQuery("DELETE", transaction);
+            _materializerMock.Setup(m => m.ExecuteNonQuery("DELETE", transaction, It.IsAny<int>())).Returns(4);
+            var result = _materializerMock.Object.ExecuteNonQuery("DELETE", transaction, It.IsAny<int>());
             Assert.Equal(4, result);
         }
 
@@ -92,8 +92,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteNonQuery_WithCommandTypeSqlAndParameters_ReturnsRowsAffected()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.Text, "INSERT", parameters)).Returns(5);
-            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.Text, "INSERT", parameters);
+            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.Text, "INSERT", parameters, It.IsAny<int>())).Returns(5);
+            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.Text, "INSERT", parameters, It.IsAny<int>());
             Assert.Equal(5, result);
         }
 
@@ -109,8 +109,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.StoredProcedure, "PROC", parameters, transaction)).Returns(6);
-            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.StoredProcedure, "PROC", parameters, transaction);
+            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>())).Returns(6);
+            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>());
             Assert.Equal(6, result);
         }
 
@@ -124,8 +124,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteNonQuery_WithCommandTypeAndSql_ReturnsRowsAffected()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.Text, "SELECT")).Returns(7);
-            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.Text, "SELECT");
+            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.Text, "SELECT", It.IsAny<int>())).Returns(7);
+            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Equal(7, result);
         }
 
@@ -140,8 +140,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteNonQuery_WithCommandTypeSqlAndTransaction_ReturnsRowsAffected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.Text, "SELECT", transaction)).Returns(8);
-            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.Text, "SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteNonQuery(CommandType.Text, "SELECT", transaction, It.IsAny<int>())).Returns(8);
+            var result = _materializerMock.Object.ExecuteNonQuery(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Equal(8, result);
         }
 
@@ -155,9 +155,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteNonQueryAsync_WithSqlParameters_ReturnsRowsAffected()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("UPDATE", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("UPDATE", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(9);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync("UPDATE", new { Id = 9 });
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync("UPDATE", new { Id = 9 }, It.IsAny<int>());
             Assert.Equal(9, result);
         }
 
@@ -170,9 +170,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteNonQueryAsync_WithSqlParametersAndTransaction_ReturnsRowsAffected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("UPDATE", It.IsAny<object>(), transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("UPDATE", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(10);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync("UPDATE", new { Id = 10 }, transaction);
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync("UPDATE", new { Id = 10 }, transaction, It.IsAny<int>());
             Assert.Equal(10, result);
         }
 
@@ -186,9 +186,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteNonQueryAsync_WithSqlOnly_ReturnsRowsAffected()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("DELETE", It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("DELETE", It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(11);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync("DELETE");
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync("DELETE", It.IsAny<int>());
             Assert.Equal(11, result);
         }
 
@@ -204,9 +204,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteNonQueryAsync_WithSqlAndTransaction_ReturnsRowsAffected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("DELETE", transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("DELETE", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(12);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync("DELETE", transaction);
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync("DELETE", transaction, It.IsAny<int>());
             Assert.Equal(12, result);
         }
 
@@ -222,9 +222,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteNonQueryAsync_WithCommandTypeSqlParameters_ReturnsRowsAffected()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.Text, "INSERT", parameters, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.Text, "INSERT", parameters, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(13);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.Text, "INSERT", parameters);
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.Text, "INSERT", parameters, It.IsAny<int>());
             Assert.Equal(13, result);
         }
 
@@ -238,9 +238,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(14);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.StoredProcedure, "PROC", parameters, transaction);
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>());
             Assert.Equal(14, result);
         }
 
@@ -255,9 +255,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteNonQueryAsync_WithCommandTypeAndSql_ReturnsRowsAffected()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.Text, "SELECT", It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(15);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.Text, "SELECT");
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Equal(15, result);
         }
 
@@ -270,9 +270,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteNonQueryAsync_WithCommandTypeSqlAndTransaction_ReturnsRowsAffected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.Text, "SELECT", transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(16);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.Text, "SELECT", transaction);
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Equal(16, result);
         }
 
@@ -287,8 +287,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteNonQuery_GenericProcedure_ReturnsRowsAffected()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteNonQuery<DummyParameter>(proc)).Returns(17);
-            var result = _materializerMock.Object.ExecuteNonQuery<DummyParameter>(proc);
+            _materializerMock.Setup(m => m.ExecuteNonQuery<DummyParameter>(proc, It.IsAny<int>())).Returns(17);
+            var result = _materializerMock.Object.ExecuteNonQuery<DummyParameter>(proc, It.IsAny<int>());
             Assert.Equal(17, result);
         }
 
@@ -304,8 +304,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQuery<DummyParameter>(proc, transaction)).Returns(18);
-            var result = _materializerMock.Object.ExecuteNonQuery<DummyParameter>(proc, transaction);
+            _materializerMock.Setup(m => m.ExecuteNonQuery<DummyParameter>(proc, transaction, It.IsAny<int>())).Returns(18);
+            var result = _materializerMock.Object.ExecuteNonQuery<DummyParameter>(proc, transaction, It.IsAny<int>());
             Assert.Equal(18, result);
         }
 
@@ -321,9 +321,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteNonQueryAsync_GenericProcedure_ReturnsRowsAffected()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync<DummyParameter>(proc, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync<DummyParameter>(proc, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(19);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync<DummyParameter>(proc);
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync<DummyParameter>(proc, It.IsAny<int>());
             Assert.Equal(19, result);
         }
 
@@ -340,9 +340,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync<DummyParameter>(proc, transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync<DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(20);
-            var result = await _materializerMock.Object.ExecuteNonQueryAsync<DummyParameter>(proc, transaction);
+            var result = await _materializerMock.Object.ExecuteNonQueryAsync<DummyParameter>(proc, transaction, It.IsAny<int>());
             Assert.Equal(20, result);
         }
 
@@ -355,9 +355,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteNonQuery_Disposed_ThrowsObjectDisposedException()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws(new ObjectDisposedException(nameof(IMaterializer))); ;
-            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }));
+            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -368,9 +368,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteNonQuery_InvalidArgument_ThrowsArgumentException()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<ArgumentException>();
-            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }));
+            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -383,9 +383,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteNonQuery_NotSupported_ThrowsNotSupportedException()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<NotSupportedException>();
-            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }));
+            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -397,9 +397,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteNonQuery_InvalidOperation_ThrowsInvalidOperationException()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteNonQuery("UPDATE", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<InvalidOperationException>();
-            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }));
+            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteNonQuery("UPDATE", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -412,10 +412,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteNonQueryAsync_OperationCanceled_ThrowsOperationCanceledException()
         {
-            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("UPDATE", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteNonQueryAsync("UPDATE", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await _materializerMock.Object.ExecuteNonQueryAsync("UPDATE", new { }, CancellationToken.None));
+                await _materializerMock.Object.ExecuteNonQueryAsync("UPDATE", new { }, It.IsAny<int>(), CancellationToken.None));
         }
     }
 }

@@ -440,7 +440,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             await Assert.ThrowsAsync<TaskCanceledException>(() =>
-                materializer.ExecuteNonQueryAsync("UPDATE", new { Id = 1 }, new CancellationToken(true)));
+                materializer.ExecuteNonQueryAsync("UPDATE", new { Id = 1 }, It.IsAny<int>(), new CancellationToken(true)));
         }
     }
 }

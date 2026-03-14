@@ -113,7 +113,7 @@ namespace Hydrix.Benchmarks.Benchmarks
                   u.Name,
                   u.Age,
                   u.Status,
-                  o.Id   AS ""Order.Id\"",
+                  o.Id   AS ""Order.Id"",
                   o.Total AS ""Order.Total""
                 FROM Users u
                 LEFT JOIN Orders o ON o.UserId = u.Id
