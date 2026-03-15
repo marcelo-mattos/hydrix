@@ -1,8 +1,5 @@
 ﻿using Hydrix.Orchestrator.Caching;
-using Hydrix.Orchestrator.Materializers;
 using Hydrix.Orchestrator.Materializers.Contract;
-using Microsoft.Extensions.Logging;
-using Moq;
 using System;
 using System.Collections;
 using System.Data;
@@ -23,162 +20,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
     /// connection.</remarks>
     public partial class MaterializerTests
     {
-        /// <summary>
-        /// Verifies that calling CreateCommandCore on a disposed MaterializerTestable instance throws an
-        /// ObjectDisposedException.
-        /// </summary>
-        /// <remarks>This test ensures that the CreateCommandCore method enforces correct disposal
-        /// semantics by throwing an ObjectDisposedException when invoked after the object has been disposed. This
-        /// behavior helps prevent usage of resources that have already been released.</remarks>
-        [Fact]
-        public void CreateCommandCore_Throws_ObjectDisposedException_WhenDisposed()
-        {
-            var mat = new MaterializerTestable
-            {
-                IsDisposedSet = true,
-                DbConnectionSet = new FakeDbConnection()
-            };
-            Assert.Throws<ObjectDisposedException>(() =>
-                mat.CallCreateCommandCore(CommandType.Text, "SELECT 1", null, null));
-        }
-
-        /// <summary>
-        /// Verifies that calling CreateCommandCore throws an InvalidOperationException when the database connection is
-        /// not open.
-        /// </summary>
-        /// <remarks>This test ensures that CreateCommandCore enforces the requirement for an open
-        /// connection before executing a command. The method simulates a closed connection and asserts that the
-        /// expected exception is thrown, validating correct error handling in this scenario.</remarks>
-        [Fact]
-        public void CreateCommandCore_Throws_InvalidOperationException_WhenConnectionNotOpen()
-        {
-            var mat = new MaterializerTestable
-            {
-                DbConnectionSet = new FakeDbConnection { State = ConnectionState.Closed }
-            };
-            Assert.Throws<InvalidOperationException>(() =>
-                mat.CallCreateCommandCore(CommandType.Text, "SELECT 1", null, null));
-        }
-
-        /// <summary>
-        /// Verifies that the CreateCommandCore method correctly sets command properties and binds parameters as
-        /// expected.
-        /// </summary>
-        /// <remarks>This test ensures that the command type, command text, and command timeout are
-        /// properly assigned, and that the parameter binder delegate is invoked when creating a command using
-        /// CreateCommandCore. It also checks that the command is associated with the specified transaction.</remarks>
-        [Fact]
-        public void CreateCommandCore_Sets_Command_Properties_And_Binds_Parameters()
-        {
-            var mat = new MaterializerTestable
-            {
-                DbConnectionSet = new FakeDbConnection()
-            };
-            bool binderCalled = false;
-            var cmd = mat.CallCreateCommandCore(
-                CommandType.StoredProcedure,
-                "spTest",
-                c => { binderCalled = true; },
-                new FakeDbTransaction());
-            Assert.Equal(CommandType.StoredProcedure, cmd.CommandType);
-            Assert.Equal("spTest", cmd.CommandText);
-            Assert.Equal(mat.Timeout, cmd.CommandTimeout);
-            Assert.True(binderCalled);
-        }
-
-        /// <summary>
-        /// Verifies that the CreateCommandCore method assigns the specified transaction to the created command when a
-        /// transaction parameter is provided.
-        /// </summary>
-        /// <remarks>This test ensures that passing a transaction to CreateCommandCore results in the
-        /// command's Transaction property being set to the same instance. It validates correct transaction propagation
-        /// for command creation scenarios.</remarks>
-        [Fact]
-        public void CreateCommandCore_Sets_Transaction_From_Parameter()
-        {
-            var mat = new MaterializerTestable
-            {
-                DbConnectionSet = new FakeDbConnection(),
-                DbTransactionSet = new FakeDbTransaction(),
-                IsTransactionActiveSet = true
-            };
-            var transaction = new FakeDbTransaction();
-            var cmd = mat.CallCreateCommandCore(
-                CommandType.Text,
-                "SELECT 1",
-                null,
-                transaction);
-            Assert.Equal(transaction, cmd.Transaction);
-        }
-
-        /// <summary>
-        /// Verifies that the CreateCommandCore method sets the transaction property of the created command to the
-        /// active transaction when a transaction is active.
-        /// </summary>
-        /// <remarks>This test ensures that when an active transaction is present, the command created by
-        /// CreateCommandCore is associated with that transaction. This behavior is important for maintaining
-        /// transactional consistency when executing database commands.</remarks>
-        [Fact]
-        public void CreateCommandCore_Sets_Transaction_From_ActiveTransaction()
-        {
-            var mat = new MaterializerTestable
-            {
-                DbConnectionSet = new FakeDbConnection(),
-                DbTransactionSet = new FakeDbTransaction(),
-                IsTransactionActiveSet = true
-            };
-            var cmd = mat.CallCreateCommandCore(
-                CommandType.Text,
-                "SELECT 1",
-                null,
-                mat.DbTransaction);
-            Assert.Equal(mat.DbTransaction, cmd.Transaction);
-        }
-
-        /// <summary>
-        /// Verifies that the CreateCommandCore method calls LogCommand when SQL logging is enabled.
-        /// </summary>
-        /// <remarks>This test ensures that enabling SQL logging on the MaterializerTestable instance
-        /// results in LogCommand being executed during command creation. The absence of exceptions indicates that
-        /// LogCommand was called successfully.</remarks>
-        [Fact]
-        public void CreateCommandCore_Calls_LogCommand_When_Enabled()
-        {
-            var mat = new MaterializerTestable
-            {
-                DbConnectionSet = new FakeDbConnection(),
-                EnableSqlLogging = true
-            };
-            // No exception means LogCommand executed (writes to console)
-            var cmd = mat.CallCreateCommandCore(
-                CommandType.Text,
-                "SELECT 1",
-                null,
-                null);
-            Assert.NotNull(cmd);
-        }
-
-        /// <summary>
-        /// Verifies that creating a command does not throw an exception when a null logger is provided.
-        /// </summary>
-        /// <remarks>This test ensures that the command creation logic is robust against a null logger,
-        /// allowing scenarios where logging is optional or not required.</remarks>
-        [Fact]
-        public void CreateCommandCore_DoesNotThrow_WhenLoggerIsNull()
-        {
-            var mat = new MaterializerTestable
-            {
-                DbConnectionSet = new FakeDbConnection(),
-                EnableSqlLogging = true
-            };
-            var cmd = mat.CallCreateCommandCore(
-                CommandType.Text,
-                "SELECT 1",
-                null,
-                null);
-            Assert.NotNull(cmd);
-        }
-
         /// <summary>
         /// Verifies that the CreateCommand method correctly binds parameters when provided with an object containing
         /// parameter values.
@@ -214,7 +55,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             };
             var sqlMat = (IMaterializer)mat;
             var param = new FakeDataParameter { ParameterName = "@Id", Value = 1, DbType = DbType.Int32 };
-            var cmd = sqlMat.CreateCommand(CommandType.Text, "SELECT * FROM T WHERE Id=@Id", new[] { param }, null);
+            var cmd = sqlMat.CreateCommand(CommandType.Text, "SELECT * FROM T WHERE Id=@Id", new[] { param }, null, null);
             Assert.Single(cmd.Parameters.Cast<IDataParameter>().Where(p => p.ParameterName == "@Id"));
         }
 
@@ -263,105 +104,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
-        /// Verifies that invoking the LogCommand method does not throw exceptions or perform any actions when the
-        /// logger is null.
-        /// </summary>
-        /// <remarks>This test ensures that the LogCommand method handles a null logger gracefully,
-        /// without causing side effects or failures. It is intended to confirm the method's robustness in scenarios
-        /// where logging is not configured.</remarks>
-        [Fact]
-        public void LogCommand_LoggerIsNull_DoesNothing()
-        {
-            var materializer = CreateInstanceWithLogger(null);
-            var command = new Mock<IDbCommand>().Object;
-
-            // Invoca o método privado LogCommand
-            typeof(Materializer)
-                .GetMethod("LogCommand", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(materializer, new object[] { command });
-        }
-
-        /// <summary>
-        /// Verifies that the logger records the command text when a database command with no parameters is executed.
-        /// </summary>
-        /// <remarks>This test ensures that the Materializer class's logging functionality correctly
-        /// captures and logs the command text even when the command does not include any parameters. It is intended to
-        /// validate the logging behavior for parameterless commands.</remarks>
-        [Fact]
-        public void LogCommand_NoParameters_LogsCommandText()
-        {
-            var loggerMock = new Mock<ILogger>();
-            var materializer = CreateInstanceWithLogger(loggerMock.Object);
-
-            var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.CommandText).Returns("SELECT 1");
-            var parametersMock = new Mock<IDataParameterCollection>();
-            parametersMock.Setup(p => p.Count).Returns(0);
-            commandMock.Setup(c => c.Parameters).Returns(parametersMock.Object);
-
-            typeof(Materializer)
-                .GetMethod("LogCommand", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(materializer, new object[] { commandMock.Object });
-
-            loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Executing DbCommand") && v.ToString().Contains("SELECT 1")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
-        }
-
-        /// <summary>
-        /// Verifies that the LogCommand method logs the command text and all associated parameter information when
-        /// parameters are present.
-        /// </summary>
-        /// <remarks>This test ensures that the logger receives a message containing the executed command
-        /// text as well as each parameter's name, value, and data type. It is intended to confirm that database command
-        /// execution details are fully captured for debugging or auditing purposes.</remarks>
-        [Fact]
-        public void LogCommand_WithParameters_LogsAllParameterInfo()
-        {
-            var loggerMock = new Mock<ILogger>();
-            var materializer = CreateInstanceWithLogger(loggerMock.Object);
-
-            var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.CommandText).Returns("SELECT * FROM Table");
-
-            var paramMock = new Mock<IDataParameter>();
-            paramMock.Setup(p => p.ParameterName).Returns("@id");
-            paramMock.Setup(p => p.Value).Returns(42);
-            paramMock.Setup(p => p.DbType).Returns(DbType.Int32);
-
-            var parametersMock = new Mock<IDataParameterCollection>();
-            parametersMock.Setup(p => p.Count).Returns(1);
-            parametersMock.Setup(p => p.GetEnumerator()).Returns(new[] { paramMock.Object }.GetEnumerator());
-
-            commandMock.Setup(c => c.Parameters).Returns(parametersMock.Object);
-
-            typeof(Materializer)
-                .GetMethod("LogCommand", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(materializer, new object[] { commandMock.Object });
-
-            loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) =>
-                        v.ToString().Contains("Executing DbCommand") &&
-                        v.ToString().Contains("SELECT * FROM Table") &&
-                        v.ToString().Contains("Parameters:") &&
-                        v.ToString().Contains("@id") &&
-                        v.ToString().Contains("42") &&
-                        v.ToString().Contains("Int32")
-                    ),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
-        }
-
-        /// <summary>
         /// Verifies that calling CreateCommand&lt;T&gt; on a disposed materializer throws an ObjectDisposedException.
         /// </summary>
         /// <remarks>This test ensures that the materializer enforces correct object lifecycle management
@@ -378,7 +120,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var sqlMat = (IMaterializer)mat;
             var proc = new ProcedureWithAttributes { Id = 1, Name = "abc" };
             Assert.Throws<ObjectDisposedException>(() =>
-                sqlMat.CreateCommand<AttributeParameter>(proc, null));
+                sqlMat.CreateCommand<AttributeParameter>(proc, null, null));
         }
 
         /// <summary>

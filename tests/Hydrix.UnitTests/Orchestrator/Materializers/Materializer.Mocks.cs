@@ -1,5 +1,6 @@
 ﻿using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
+using Hydrix.Engines;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
@@ -933,26 +934,36 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// Creates and returns a database command configured with the specified command type, SQL statement,
             /// parameters, and transaction context.
             /// </summary>
+            /// <param name="connection">The database connection to use for creating the command. Must be an open connection.</param>
+            /// <param name="transaction">An optional database transaction within which the command will be executed. If null, the current active
+            /// transaction is used if available.</param>
             /// <param name="commandType">The type of command to execute, such as Text, StoredProcedure, or TableDirect. Determines how the SQL
             /// statement is interpreted by the database.</param>
             /// <param name="sql">The SQL statement or stored procedure to execute. Cannot be null or empty.</param>
             /// <param name="parameterBinder">An action that binds parameters to the command. This delegate is invoked to configure the command's
             /// parameters before execution. Can be null if no parameters are required.</param>
-            /// <param name="transaction">The transaction context in which the command will execute. Can be null if the command should execute
-            /// outside of a transaction.</param>
+            /// <param name="timeout">An optional command timeout, in seconds, to use for this command.
+            /// If null, the default timeout configured for the Materializer is used.</param>
+            /// <param name="logger">An optional logger instance to use for logging command execution details. If null, logging is skipped.</param>
             /// <returns>An <see cref="IDbCommand"/> instance configured with the specified command type, SQL statement,
             /// parameters, and transaction. The caller is responsible for disposing the returned command when it is no
             /// longer needed.</returns>
             public IDbCommand CallCreateCommandCore(
+                in IDbConnection connection,
+                IDbTransaction transaction,
                 CommandType commandType,
                 string sql,
                 Action<IDbCommand> parameterBinder,
-                IDbTransaction transaction)
-            => CreateCommandCore(
+                int? timeout = null,
+                ILogger logger = null)
+            => CommandEngine.CreateCommandCore(
+                    connection,
+                    transaction,
                     commandType,
                     sql,
                     parameterBinder,
-                    transaction);
+                    timeout,
+                    logger);
         }
 
         /// <summary>

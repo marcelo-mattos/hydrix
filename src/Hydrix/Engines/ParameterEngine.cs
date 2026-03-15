@@ -2,18 +2,39 @@
 using System;
 using System.Data;
 
-namespace Hydrix.Orchestrator.Materializers
+namespace Hydrix.Engines
 {
-    /// <summary>
-    /// Provides functionality for binding SQL parameters, automatically determining whether values are scalar or
-    /// collections, and expanding collections into multiple parameters for SQL <c>IN</c> clauses.
-    /// </summary>
-    /// <remarks>This class acts as the central decision point for parameter binding within the ORM, ensuring
-    /// consistent behavior across all command creation and execution paths. It supports lightweight parameter binding
-    /// from objects and handles both scalar and collection values appropriately.</remarks>
-    public partial class Materializer :
-        Contract.IMaterializer
+    internal static class ParameterEngine
     {
+        /// <summary>
+        /// Binds the properties of the specified parameters object as parameters to the given database command.
+        /// </summary>
+        /// <remarks>This method uses a parameter binder appropriate for the type of the provided
+        /// parameters object to map its properties to command parameters. Only public properties of the parameters
+        /// object are considered.</remarks>
+        /// <param name="command">The database command to which parameters will be added. Must not be null.</param>
+        /// <param name="parameters">An object whose public properties represent the parameters to bind to the command. If null, no parameters
+        /// are bound.</param>
+        /// <param name="parameterPrefix">The prefix to use for parameter names (e.g., "@").
+        /// This is used to ensure that parameter names are correctly formatted for the target database.</param>
+        public static void BindParametersFromObject(
+            IDbCommand command,
+            object parameters,
+            string parameterPrefix)
+        {
+            if (parameters == null)
+                return;
+
+            var binder = ParameterBinderCache.GetOrAdd(
+                parameters.GetType());
+
+            binder.Bind(
+                command,
+                parameters,
+                parameterPrefix,
+                AddParameter);
+        }
+
         /// <summary>
         /// Creates and adds a scalar SQL parameter to the specified command.
         ///
@@ -31,7 +52,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="value">
         /// The value to assign to the parameter, or <c>null</c> to represent a database NULL.
         /// </param>
-        private void AddParameter(
+        private static void AddParameter(
             IDbCommand command,
             string name,
             object value)
@@ -41,32 +62,6 @@ namespace Hydrix.Orchestrator.Materializers
             parameter.Value = value ?? DBNull.Value;
 
             command.Parameters.Add(parameter);
-        }
-
-        /// <summary>
-        /// Binds the properties of the specified parameters object as parameters to the given database command.
-        /// </summary>
-        /// <remarks>This method uses a parameter binder appropriate for the type of the provided
-        /// parameters object to map its properties to command parameters. Only public properties of the parameters
-        /// object are considered.</remarks>
-        /// <param name="command">The database command to which parameters will be added. Must not be null.</param>
-        /// <param name="parameters">An object whose public properties represent the parameters to bind to the command. If null, no parameters
-        /// are bound.</param>
-        private void BindParametersFromObject(
-            IDbCommand command,
-            object parameters)
-        {
-            if (parameters == null)
-                return;
-
-            var binder = ParameterBinderCache.GetOrAdd(
-                parameters.GetType());
-
-            binder.Bind(
-                command,
-                parameters,
-                _parameterPrefix,
-                AddParameter);
         }
 
         /// <summary>
@@ -81,7 +76,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// represents a database null, it is treated as a SQL NULL.</param>
         /// <returns>A string representation of the parameter value, formatted for use in a database query. Returns the string
         /// 'NULL' for null or database null values.</returns>
-        private static string FormatParameterValue(object value)
+        internal static string FormatParameterValue(
+            object value)
         {
             if (value == null || value == DBNull.Value)
                 return "NULL";
