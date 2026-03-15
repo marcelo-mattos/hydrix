@@ -43,9 +43,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
@@ -84,9 +82,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
@@ -183,9 +179,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
@@ -227,9 +221,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
@@ -334,9 +326,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataTable = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
@@ -380,9 +370,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataTable = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
@@ -494,9 +482,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataTable = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
@@ -543,9 +529,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataTable = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
@@ -662,9 +646,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
@@ -705,9 +687,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
@@ -750,9 +730,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
@@ -798,9 +776,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
-            var result = ValidateEntityRequest<TEntity>();
-            if (!result)
-                return new List<TEntity>();
+            EnsureValidEntityRequest<TEntity>();
 
             using var dataReader = await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(

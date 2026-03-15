@@ -35,6 +35,22 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Defines a set of named constants with an unsigned integer underlying type.
+        /// </summary>
+        public enum EnumWithUIntUnderlying : uint
+        {
+            /// <summary>
+            /// Represents the constant value zero.
+            /// </summary>
+            Zero = 0,
+
+            /// <summary>
+            /// Represents the numeric value one.
+            /// </summary>
+            One = 1
+        }
+
+        /// <summary>
         /// Represents a byte-based enumeration with values for zero and one.
         /// </summary>
         /// <remarks>Use this enumeration to express binary states or options in a compact form. The
@@ -197,6 +213,22 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Verifies that the field reader returns null for nullable base reference types when the record value is
+        /// DBNull.
+        /// </summary>
+        [Fact]
+        public void NullableReferenceBaseType_ReturnsNullOnDBNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(true);
+
+            var reader = FieldReaderFactory.Create(typeof(string));
+            var result = reader(mock.Object, 0);
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that reading a non-nullable base type from a data record returns the default value when the data is
         /// DBNull.
         /// </summary>
@@ -258,6 +290,22 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Verifies that reading a non-nullable enum returns the enum default value when the record value is
+        /// DBNull.
+        /// </summary>
+        [Fact]
+        public void NonNullableEnumType_ReturnsDefaultOnDBNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(true);
+
+            var reader = FieldReaderFactory.Create(typeof(MyEnum));
+            var result = reader(mock.Object, 0);
+
+            Assert.Equal(MyEnum.Zero, result);
+        }
+
+        /// <summary>
         /// Verifies that a field reader correctly converts a byte value from a data record into the corresponding
         /// MyByteEnum value.
         /// </summary>
@@ -297,6 +345,22 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             var reader = FieldReaderFactory.Create(enumType);
             var result = reader(mock.Object, 0);
             Assert.Equal(EnumWithLongUnderlying.One, result);
+        }
+
+        /// <summary>
+        /// Verifies that enum fallback conversion returns null when the underlying raw value is null.
+        /// </summary>
+        [Fact]
+        public void EnumType_WithUnsupportedUnderlying_ReturnsNullWhenRawIsNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(false);
+            mock.Setup(r => r.GetValue(0)).Returns((object)null);
+
+            var reader = FieldReaderFactory.Create(typeof(EnumWithUIntUnderlying));
+            var result = reader(mock.Object, 0);
+
+            Assert.Null(result);
         }
 
         /// <summary>

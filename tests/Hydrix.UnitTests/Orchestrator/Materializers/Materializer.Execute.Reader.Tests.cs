@@ -2,6 +2,7 @@
 using Moq;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -61,6 +62,44 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that ExecuteReaderAsync uses the DbCommand asynchronous reader path for SQL and object parameters.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithSqlParameters_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, null, token);
+
+            Assert.Same(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteReaderAsync with SQL, parameters and transaction overload uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, (IDbTransaction)null, null, token);
+
+            Assert.Same(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
         /// Verifies that the ExecuteReader method of IMaterializer returns an IDataReader when called with a SQL
         /// query string.
         /// </summary>
@@ -78,6 +117,44 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var result = (materializer as IMaterializer).ExecuteReader("SELECT");
 
             Assert.Same(readerMock.Object, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteReaderAsync with command type and parameters uses the DbCommand asynchronous reader path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithCommandTypeSqlParameters_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", (IEnumerable<IDataParameter>)null, null, token);
+
+            Assert.Same(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteReaderAsync with command type, parameters and transaction overload uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithCommandTypeSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", (IEnumerable<IDataParameter>)null, (IDbTransaction)null, null, token);
+
+            Assert.Same(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>
@@ -99,6 +176,44 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var result = (materializer as IMaterializer).ExecuteReader("SELECT", transaction);
 
             Assert.Same(readerMock.Object, result);
+        }
+
+        /// <summary>
+        /// Verifies that generic ExecuteReaderAsync uses the DbCommand asynchronous reader path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_Generic_WithProcedure_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(new TestProcedure(), null, token);
+
+            Assert.Same(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that generic ExecuteReaderAsync with transaction overload uses the DbCommand asynchronous reader path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_Generic_WithProcedureAndTransaction_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(new TestProcedure(), (IDbTransaction)null, null, token);
+
+            Assert.Same(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>

@@ -162,9 +162,9 @@ namespace Hydrix.Orchestrator.Materializers
             return CommandEngine.CreateCommand(
                 this.DbConnection,
                 transaction,
+                commandType,
                 sql,
                 parameters,
-                _parameterPrefix,
                 timeout,
                 this._logger);
         }

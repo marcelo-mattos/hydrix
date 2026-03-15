@@ -234,6 +234,47 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that ExecuteNonQueryAsync correctly uses the provided SQL parameters and passes the cancellation
+        /// token to the underlying DbCommand.
+        /// </summary>
+        /// <remarks>This test ensures that the ExecuteNonQueryAsync method forwards SQL parameters and
+        /// the cancellation token as expected, and that the result matches the value set on the test command.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteNonQueryAsync_WithSqlParameters_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 101 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteNonQueryAsync("UPDATE", new { Id = 1 }, null, token);
+
+            Assert.Equal(101, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteNonQueryAsync uses the correct command path when provided with SQL parameters and a
+        /// transaction.
+        /// </summary>
+        /// <remarks>This test ensures that the cancellation token is passed to the underlying command and
+        /// that the result returned matches the expected value when executing a non-query command with parameters and a
+        /// transaction.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteNonQueryAsync_WithSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 102 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteNonQueryAsync("UPDATE", new { Id = 1 }, (IDbTransaction)null, null, token);
+
+            Assert.Equal(102, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
         /// Verifies that ExecuteNonQueryAsync returns the number of rows affected when called with only a SQL
         /// statement.
         /// </summary>
@@ -309,6 +350,53 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var result = await materializer.ExecuteNonQueryAsync(CommandType.Text, "SELECT", parameters, transactionMock);
 
             Assert.Equal(15, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteNonQueryAsync uses the provided DbCommand and correctly passes the command type, SQL
+        /// text, parameters, and cancellation token.
+        /// </summary>
+        /// <remarks>This test ensures that the ExecuteNonQueryAsync method interacts with the underlying
+        /// DbCommand as expected when provided with specific command type, SQL, and parameters. It also verifies that
+        /// the cancellation token is propagated correctly.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteNonQueryAsync_WithCommandTypeSqlParameters_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 103 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteNonQueryAsync(
+                CommandType.Text,
+                "SELECT",
+                (IEnumerable<IDataParameter>)null,
+                null,
+                token);
+
+            Assert.Equal(103, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteNonQueryAsync uses the correct DbCommand path when provided with a command type, SQL
+        /// parameters, and a transaction.
+        /// </summary>
+        /// <remarks>This test ensures that the cancellation token is passed correctly and that the result
+        /// returned by ExecuteNonQueryAsync matches the expected value when using a stored procedure command
+        /// type.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteNonQueryAsync_WithCommandTypeSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 104 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteNonQueryAsync(CommandType.StoredProcedure, "EXEC", null, (IDbTransaction)null, null, token);
+
+            Assert.Equal(104, result);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>
@@ -422,6 +510,47 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var result = await materializer.ExecuteNonQueryAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.Equal(21, result);
+        }
+
+        /// <summary>
+        /// Verifies that the ExecuteNonQueryAsync method executes a stored procedure using the correct DbCommand path
+        /// and passes the provided cancellation token.
+        /// </summary>
+        /// <remarks>This test ensures that the ExecuteNonQueryAsync method correctly invokes the database
+        /// command for a stored procedure and that the cancellation token is propagated as expected.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteNonQueryAsync_WithProcedure_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 105 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteNonQueryAsync<FakeDataParameter>(new TestProcedure(), null, token);
+
+            Assert.Equal(105, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteNonQueryAsync executes a stored procedure using the DbCommand path when a transaction
+        /// is provided, and correctly propagates the cancellation token.
+        /// </summary>
+        /// <remarks>This test ensures that the materializer uses the expected command and transaction
+        /// behavior when executing a stored procedure asynchronously, and that the cancellation token is passed through
+        /// to the underlying command.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteNonQueryAsync_WithProcedureAndTransaction_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 106 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteNonQueryAsync<FakeDataParameter>(new TestProcedure(), (IDbTransaction)null, null, token);
+
+            Assert.Equal(106, result);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>

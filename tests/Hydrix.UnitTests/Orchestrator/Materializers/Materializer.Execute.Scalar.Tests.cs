@@ -213,6 +213,40 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that ExecuteScalarAsync with SQL and parameters uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteScalarAsync_WithSqlParameters_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 101 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteScalarAsync("SELECT", new { Id = 1 }, null, token);
+
+            Assert.Equal(101, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteScalarAsync with SQL, parameters and transaction overload uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteScalarAsync_WithSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 102 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteScalarAsync("SELECT", new { Id = 1 }, (IDbTransaction)null, null, token);
+
+            Assert.Equal(102, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
         /// Verifies that ExecuteScalarAsync returns the expected value when called with only a SQL statement.
         /// </summary>
         /// <remarks>This test ensures that the ExecuteScalarAsync method correctly executes a scalar SQL
@@ -290,6 +324,40 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var result = await materializer.ExecuteScalarAsync(CommandType.Text, "SELECT", parameters, transactionMock);
 
             Assert.Equal(15, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteScalarAsync with command type and parameters uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteScalarAsync_WithCommandTypeSqlParameters_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 103 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteScalarAsync(CommandType.Text, "SELECT", (IEnumerable<IDataParameter>)null, null, token);
+
+            Assert.Equal(103, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteScalarAsync with command type, parameters and transaction overload uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteScalarAsync_WithCommandTypeSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 104 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteScalarAsync(CommandType.Text, "SELECT", (IEnumerable<IDataParameter>)null, (IDbTransaction)null, null, token);
+
+            Assert.Equal(104, result);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>
@@ -404,6 +472,40 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var result = await materializer.ExecuteScalarAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
 
             Assert.Equal(21, result);
+        }
+
+        /// <summary>
+        /// Verifies that generic ExecuteScalarAsync uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteScalarAsync_WithProcedure_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 105 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteScalarAsync<FakeDataParameter>(new TestProcedure(), null, token);
+
+            Assert.Equal(105, result);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that generic ExecuteScalarAsync with transaction overload uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteScalarAsync_WithProcedureAndTransaction_UsesDbCommandPath()
+        {
+            var command = new TestDbCommand { Result = 106 };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await materializer.ExecuteScalarAsync<FakeDataParameter>(new TestProcedure(), (IDbTransaction)null, null, token);
+
+            Assert.Equal(106, result);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>

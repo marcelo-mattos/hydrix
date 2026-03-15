@@ -44,6 +44,34 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that <see cref="Materializer.ConvertDataReaderToEntities{TEntity}(IDataReader, int)"/>
+        /// respects the provided positive limit and materializes only the requested number of entities.
+        /// </summary>
+        [Fact]
+        public void ConvertDataReaderToEntities_WithPositiveLimit_ReturnsLimitedEntities()
+        {
+            var mockReader = new Mock<IDataReader>();
+            var callCount = 0;
+
+            mockReader.Setup(r => r.Read()).Returns(() => callCount++ < 5);
+            mockReader.Setup(r => r.FieldCount).Returns(2);
+            mockReader.Setup(r => r.GetName(0)).Returns("Id");
+            mockReader.Setup(r => r.GetName(1)).Returns("Name");
+            mockReader.Setup(r => r.GetValue(0)).Returns(7);
+            mockReader.Setup(r => r.GetValue(1)).Returns("Limited");
+            mockReader.Setup(r => r.GetInt32(0)).Returns(7);
+            mockReader.Setup(r => r.GetString(1)).Returns("Limited");
+            mockReader.Setup(r => r.IsDBNull(0)).Returns(false);
+            mockReader.Setup(r => r.IsDBNull(1)).Returns(false);
+
+            var entities = Materializer.ConvertDataReaderToEntities<TestEntity>(mockReader.Object, limit: 1);
+
+            Assert.Single(entities);
+            Assert.Equal(7, entities[0].Id);
+            Assert.Equal("Limited", entities[0].Name);
+        }
+
+        /// <summary>
         /// Verifies that the ConvertDataReaderToEntities method returns an empty list when the provided IDataReader
         /// contains no rows.
         /// </summary>
@@ -54,6 +82,24 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         {
             var mockReader = new Mock<IDataReader>();
             mockReader.Setup(r => r.Read()).Returns(false);
+
+            var entities = Materializer.ConvertDataReaderToEntities<TestEntity>(mockReader.Object);
+
+            Assert.Empty(entities);
+        }
+
+        /// <summary>
+        /// Verifies that ConvertDataReaderToEntities handles null column names from IDataReader metadata.
+        /// </summary>
+        /// <remarks>This test covers the fallback branch that normalizes null column names to an empty
+        /// string during ordinal map construction.</remarks>
+        [Fact]
+        public void ConvertDataReaderToEntities_NullColumnName_UsesEmptyStringFallback()
+        {
+            var mockReader = new Mock<IDataReader>();
+            mockReader.Setup(r => r.Read()).Returns(false);
+            mockReader.Setup(r => r.FieldCount).Returns(1);
+            mockReader.Setup(r => r.GetName(0)).Returns((string)null);
 
             var entities = Materializer.ConvertDataReaderToEntities<TestEntity>(mockReader.Object);
 
@@ -170,6 +216,25 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that null property values are converted to <see cref="DBNull.Value"/> when materializing
+        /// entities into a <see cref="DataTable"/>.
+        /// </summary>
+        [Fact]
+        public void ConvertEntityToDataTable_NullProperty_UsesDBNullValue()
+        {
+            var entities = new List<TestEntity>
+            {
+                new TestEntity { Id = 10, Name = null }
+            };
+
+            var table = Materializer.ConvertEntityToDataTable(entities);
+
+            Assert.Single(table.Rows);
+            Assert.Equal(10, table.Rows[0]["Id"]);
+            Assert.Equal(DBNull.Value, table.Rows[0]["Name"]);
+        }
+
+        /// <summary>
         /// Verifies that calling ConvertEntityToDataTable&lt;T&gt; with a null entity returns a DataTable containing only the
         /// schema, with no data rows.
         /// </summary>
@@ -186,35 +251,33 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
-        /// Verifies that the ValidateEntityRequest method returns true when invoked with a valid TestEntity type.
+        /// Verifies that the EnsureValidEntityRequest method completes without throwing for a valid entity type.
         /// </summary>
         /// <remarks>This unit test ensures that the ValidateEntityRequest method, when called for
         /// TestEntity, correctly identifies the entity as valid. The test uses reflection to access and invoke the
         /// non-public static method.</remarks>
         [Fact]
-        public void ValidateEntityRequest_ValidEntity_ReturnsTrue()
+        public void EnsureValidEntityRequest_ValidEntity_DoesNotThrow()
         {
             var method = typeof(Materializer)
-                .GetMethod("ValidateEntityRequest", BindingFlags.NonPublic | BindingFlags.Static)
+                .GetMethod("EnsureValidEntityRequest", BindingFlags.NonPublic | BindingFlags.Static)
                 .MakeGenericMethod(typeof(TestEntity));
 
-            var result = (bool)method.Invoke(null, null);
-
-            Assert.True(result);
+            method.Invoke(null, null);
         }
 
         /// <summary>
-        /// Verifies that the ValidateEntityRequest method throws a MissingMemberException when the entity type lacks
+        /// Verifies that the EnsureValidEntityRequest method throws a MissingMemberException when the entity type lacks
         /// the required attribute.
         /// </summary>
         /// <remarks>This test ensures that the internal ValidateEntityRequest method enforces attribute
         /// requirements on entity types. It is intended to validate error handling for missing attributes in entity
         /// definitions.</remarks>
         [Fact]
-        public void ValidateEntityRequest_MissingAttribute_Throws()
+        public void EnsureValidEntityRequest_MissingAttribute_Throws()
         {
             var method = typeof(Materializer)
-                .GetMethod("ValidateEntityRequest", BindingFlags.NonPublic | BindingFlags.Static)
+                .GetMethod("EnsureValidEntityRequest", BindingFlags.NonPublic | BindingFlags.Static)
                 .MakeGenericMethod(typeof(NoAttributeEntity));
 
             var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, null));

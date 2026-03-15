@@ -175,8 +175,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// entity type meets the required criteria. It is typically used to ensure that entity requests conform to
         /// expected validation rules before processing.</remarks>
         /// <typeparam name="TEntity">The type of entity to validate. Must implement the ITable interface and have a parameterless constructor.</typeparam>
-        /// <returns>true if the entity request is valid; otherwise, false.</returns>
-        private static bool ValidateEntityRequest<TEntity>()
+        private static void EnsureValidEntityRequest<TEntity>()
             where TEntity : ITable, new()
             => EntityRequestValidationCache
                 .Validate(typeof(TEntity));

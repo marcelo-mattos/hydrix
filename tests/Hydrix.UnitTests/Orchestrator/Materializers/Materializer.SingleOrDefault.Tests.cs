@@ -40,6 +40,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for SQL, parameters, and transaction.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithSqlParametersAndTransaction_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefault method returns null when executing a SQL query with parameters and no
         /// matching records are found.
         /// </summary>
@@ -79,6 +94,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for SQL-only execution.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithSqlOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity>("SELECT 1");
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefault method returns the expected entity when executed with a raw SQL query.
         /// </summary>
         /// <remarks>This test ensures that the materializer correctly maps the result of the provided SQL
@@ -95,6 +125,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for SQL and transaction-only execution.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithSqlAndTransactionOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity>("SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
         }
 
         /// <summary>
@@ -119,6 +164,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for command type, SQL, and parameters.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithCommandTypeSqlAndParameters_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefault method returns the expected entity when executed with a specified command
         /// type, SQL query, and parameters.
         /// </summary>
@@ -137,6 +197,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for command type, SQL, parameters, and transaction.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithCommandTypeSqlParametersAndTransaction_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
         }
 
         /// <summary>
@@ -161,6 +236,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for command type and SQL-only execution.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithCommandTypeAndSqlOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1");
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefault method returns a mapped entity when executed with only a command type and
         /// SQL statement.
         /// </summary>
@@ -179,6 +269,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for command type, SQL, and transaction-only execution.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithCommandTypeSqlAndTransactionOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
         }
 
         /// <summary>
@@ -203,6 +308,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for procedure execution.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithProcedure_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestProcedure());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefault method returns the expected entity when executed with a SQL procedure.
         /// </summary>
         /// <remarks>This test ensures that the materializer correctly maps the result of a SQL procedure
@@ -220,6 +340,21 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefault returns null when no records are found for procedure and transaction execution.
+        /// </summary>
+        [Fact]
+        public void SingleOrDefault_WithProcedureAndTransaction_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.SingleOrDefault<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
+
+            Assert.Null(result);
         }
 
         /// <summary>
@@ -244,6 +379,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for SQL, parameters, and transaction.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithSqlParametersAndTransaction_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1", new { Id = 1 }, Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefaultAsync method returns the expected entity when executed with a SQL query and
         /// parameters.
         /// </summary>
@@ -263,6 +414,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for SQL-only execution.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithSqlOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1");
+
+            Assert.Null(result);
         }
 
         /// <summary>
@@ -307,6 +474,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for SQL and transaction-only execution.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithSqlAndTransactionOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity>("SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefaultAsync method returns the expected entity when executed with a raw SQL
         /// query.
         /// </summary>
@@ -326,6 +509,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for command type, SQL, and parameters.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithCommandTypeSqlAndParameters_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>());
+
+            Assert.Null(result);
         }
 
         /// <summary>
@@ -351,6 +550,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for command type, SQL, parameters, and transaction.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithCommandTypeSqlParametersAndTransaction_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1", new List<IDataParameter>(), Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that SingleOrDefaultAsync returns the expected entity when executed with a SQL command type, a SQL
         /// query, and a collection of parameters.
         /// </summary>
@@ -370,6 +585,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for command type and SQL-only execution.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithCommandTypeAndSqlOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1");
+
+            Assert.Null(result);
         }
 
         /// <summary>
@@ -396,6 +627,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for command type, SQL, and transaction-only execution.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithCommandTypeSqlAndTransactionOnly_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity>(CommandType.Text, "SELECT 1", Mock.Of<IDbTransaction>());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefaultAsync method returns the expected entity when called with only the command
         /// type and SQL statement.
         /// </summary>
@@ -418,6 +665,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for procedure execution.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithProcedure_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestProcedure());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that the SingleOrDefaultAsync method returns the expected entity when called with a SQL command
         /// type, a SQL query, and a transaction, without additional parameters.
         /// </summary>
@@ -437,6 +700,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.NotNull(result);
             Assert.Equal(1, result.Id);
             Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that SingleOrDefaultAsync returns null when no records are found for procedure and transaction execution.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task SingleOrDefaultAsync_WithProcedureAndTransaction_ReturnsNull()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(true).Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.SingleOrDefaultAsync<TestEntity, FakeDataParameter>(new TestProcedure(), new FakeDbTransaction());
+
+            Assert.Null(result);
         }
 
         /// <summary>

@@ -92,5 +92,40 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.True(matEx.IsDisposed);
             Assert.True(matEx.IsDisposing);
         }
+
+        /// <summary>
+        /// Verifies that invoking the protected dispose routine with <c>disposing=false</c> still marks the
+        /// materializer as disposing/disposed and releases the connection.
+        /// </summary>
+        [Fact]
+        public void DisposeCore_False_SetsStateAndDisposesConnection()
+        {
+            var mat = new TestMaterializerDispose();
+            var conn = (TestDbConnection)mat.DbConnection;
+
+            mat.CallDisposeCore(false);
+
+            Assert.True(mat.IsDisposing);
+            Assert.True(mat.IsDisposed);
+            Assert.True(conn.Disposed);
+            Assert.Null(mat.DbConnection);
+        }
+
+        /// <summary>
+        /// Verifies that disposing with a null connection does not throw and marks the instance as disposed.
+        /// </summary>
+        [Fact]
+        public void Dispose_WithNullConnection_DoesNotThrow()
+        {
+            var mat = new TestMaterializerDispose();
+            mat.SetDbConnectionNull();
+
+            var exception = Record.Exception(() => mat.Dispose());
+
+            Assert.Null(exception);
+            Assert.True(mat.IsDisposing);
+            Assert.True(mat.IsDisposed);
+            Assert.Null(mat.DbConnection);
+        }
     }
 }

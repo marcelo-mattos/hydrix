@@ -1,5 +1,6 @@
 using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
+using Hydrix.Configuration;
 using Hydrix.Engines;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
@@ -457,6 +458,41 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Represents a provider-specific db type enum used to validate provider-specific setter binding.
+        /// </summary>
+        private enum CustomProviderDbType
+        {
+            /// <summary>
+            /// Test enum value mapped from an invalid <see cref="DbType"/> integer.
+            /// </summary>
+            ProviderSpecific = 777
+        }
+
+        /// <summary>
+        /// Represents a parameter exposing a provider-specific *DbType property.
+        /// </summary>
+        private class ProviderAwareDataParameter : AttributeParameter
+        {
+            /// <summary>
+            /// Gets or sets the provider-specific database type.
+            /// </summary>
+            public CustomProviderDbType SqlDbType { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a procedure using an out-of-range <see cref="DbType"/> value to trigger provider-specific mapping.
+        /// </summary>
+        [Procedure("ProviderAwareProcedure")]
+        private class ProviderAwareProcedure : IProcedure<ProviderAwareDataParameter>
+        {
+            /// <summary>
+            /// Gets or sets a sample value to bind.
+            /// </summary>
+            [Parameter("Code", (DbType)777)]
+            public int Code { get; set; }
+        }
+
+        /// <summary>
         /// Represents a parameter for a database command or query, providing metadata such as type, direction, and
         /// value.
         /// </summary>
@@ -509,6 +545,17 @@ namespace Hydrix.UnitTests.Engines
             /// Gets or sets the value associated with this instance.
             /// </summary>
             public object Value { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a procedure type without the required ProcedureAttribute for negative testing.
+        /// </summary>
+        private class NoAttributeProcedure : IProcedure<FakeDataParameter>
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            public int Id { get; set; }
         }
 
         /// <summary>
@@ -596,6 +643,25 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies that CreateCommand safely handles a null enumerable parameter collection.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_EnumerableParameters_Null_DoesNotBindParameters()
+        {
+            var conn = new FakeDbConnection();
+            var cmd = CommandEngine.CreateCommand(
+                conn,
+                null,
+                CommandType.Text,
+                "SELECT 1",
+                null,
+                15,
+                null);
+
+            Assert.Empty(cmd.Parameters.Cast<IDataParameter>());
+        }
+
+        /// <summary>
         /// Verifies that the CreateCommandCore method assigns the specified transaction to the created command.
         /// </summary>
         /// <remarks>This test ensures that when a transaction is provided to CreateCommandCore, the
@@ -615,6 +681,25 @@ namespace Hydrix.UnitTests.Engines
                 null,
                 null);
             Assert.Equal(transaction, cmd.Transaction);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommandCore uses the default timeout when no timeout is supplied.
+        /// </summary>
+        [Fact]
+        public void CreateCommandCore_UsesDefaultTimeout_WhenTimeoutIsNull()
+        {
+            var conn = new FakeDbConnection();
+            var cmd = CommandEngine.CreateCommandCore(
+                conn,
+                null,
+                CommandType.Text,
+                "SELECT 1",
+                null,
+                null,
+                null);
+
+            Assert.Equal(HydrixOptions.DefaultTimeout, cmd.CommandTimeout);
         }
 
         /// <summary>
@@ -678,6 +763,228 @@ namespace Hydrix.UnitTests.Engines
                     null,
                     It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.AtLeastOnce());
+        }
+
+        /// <summary>
+        /// Verifies that LogCommand does not emit logs when information level is disabled.
+        /// </summary>
+        [Fact]
+        public void LogCommand_WhenInformationLevelDisabled_DoesNotLog()
+        {
+            var conn = new FakeDbConnection();
+            var loggerMock = new Mock<ILogger>();
+            loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(false);
+
+            CommandEngine.CreateCommandCore(
+                conn,
+                null,
+                CommandType.Text,
+                "SELECT 1",
+                null,
+                null,
+                loggerMock.Object);
+
+            loggerMock.Verify(
+                l => l.Log(
+                    It.IsAny<LogLevel>(),
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Never);
+        }
+
+        /// <summary>
+        /// Verifies that LogCommand logs command text even when there are no parameters.
+        /// </summary>
+        [Fact]
+        public void LogCommand_LogsCommandText_WhenThereAreNoParameters()
+        {
+            var conn = new FakeDbConnection();
+            var loggerMock = new Mock<ILogger>();
+            loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+
+            CommandEngine.CreateCommandCore(
+                conn,
+                null,
+                CommandType.Text,
+                "SELECT 1",
+                null,
+                null,
+                loggerMock.Object);
+
+            loggerMock.Verify(
+                l => l.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) =>
+                        v.ToString().Contains("Executing DbCommand") &&
+                        !v.ToString().Contains("Parameters:")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand throws ArgumentNullException when the procedure argument is null.
+        /// </summary>
+        /// <remarks>This test ensures that passing a null procedure to CreateCommand results in the expected exception,
+        /// enforcing correct usage of the API.</remarks>
+        [Fact]
+        public void CreateCommand_ThrowsArgumentNullException_WhenProcedureIsNull()
+        {
+            var conn = new FakeDbConnection();
+            CustomProcedure procedure = null;
+            Assert.Throws<ArgumentNullException>(() =>
+                CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, null));
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand throws InvalidOperationException when the connection is not open.
+        /// </summary>
+        /// <remarks>This test ensures that attempting to create a command with a closed connection results in the expected exception.</remarks>
+        [Fact]
+        public void CreateCommand_ThrowsInvalidOperationException_WhenConnectionNotOpen()
+        {
+            var conn = new FakeDbConnection { State = ConnectionState.Closed };
+            var procedure = new CustomProcedure { Id = 1, Name = "Test" };
+            Assert.Throws<InvalidOperationException>(() =>
+                CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, null));
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand throws MissingMemberException when the procedure type is not decorated with ProcedureAttribute.
+        /// </summary>
+        /// <remarks>This test ensures that a procedure type without the required attribute results in the expected exception.</remarks>
+        [Fact]
+        public void CreateCommand_ThrowsMissingMemberException_WhenProcedureAttributeMissing()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new NoAttributeProcedure();
+            Assert.Throws<MissingMemberException>(() =>
+                CommandEngine.CreateCommand<FakeDataParameter>(conn, null, procedure, "@", 10, null));
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand sets command properties and binds parameters as expected for a valid procedure.
+        /// </summary>
+        /// <remarks>This test ensures that the command is created, parameters are bound, and properties are set correctly.</remarks>
+        [Fact]
+        public void CreateCommand_SetsProperties_AndBindsParameters()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new CustomProcedure { Id = 42, Name = "Alpha" };
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 20, null);
+            Assert.NotNull(cmd);
+            Assert.Equal(20, cmd.CommandTimeout);
+            // The following assertion is removed because FakeDbConnection's CreateCommand does not set the Connection property.
+            // Assert.Equal(conn, cmd.Connection);
+            Assert.Null(cmd.Transaction);
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Id" && (int)p.Value == 42);
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Name" && (string)p.Value == "Alpha");
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand assigns the specified transaction to the created command.
+        /// </summary>
+        /// <remarks>This test ensures that when a transaction is provided, the resulting command's Transaction property is set.</remarks>
+        [Fact]
+        public void CreateCommand_SetsTransaction_WhenProvided()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new CustomProcedure { Id = 7, Name = "Beta" };
+            var transaction = new FakeDbTransaction();
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, transaction, procedure, "@", 15, null);
+            Assert.Equal(transaction, cmd.Transaction);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand uses the default timeout when the timeout argument is null.
+        /// </summary>
+        /// <remarks>This test ensures that the command timeout is set to HydrixOptions.DefaultTimeout if not specified.</remarks>
+        [Fact]
+        public void CreateCommand_UsesDefaultTimeout_WhenTimeoutIsNull()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new CustomProcedure { Id = 99, Name = "Gamma" };
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", null, null);
+            Assert.Equal(HydrixOptions.DefaultTimeout, cmd.CommandTimeout);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand uses the specified parameter prefix for parameter names.
+        /// </summary>
+        /// <remarks>This test ensures that the parameter prefix is applied to all parameter names in the command.</remarks>
+        [Theory]
+        [InlineData("@")]
+        [InlineData(":")]
+        [InlineData("p")]
+        public void CreateCommand_UsesParameterPrefix(string prefix)
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new CustomProcedure { Id = 5, Name = "Delta" };
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, prefix, 10, null);
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == prefix + "Id");
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == prefix + "Name");
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand calls LogCommand when a logger is provided.
+        /// </summary>
+        /// <remarks>This test ensures that the logger is used to log command details if provided.</remarks>
+        [Fact]
+        public void CreateCommand_LogsCommand_WhenLoggerProvided()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new CustomProcedure { Id = 11, Name = "Epsilon" };
+            var loggerMock = new Mock<ILogger>();
+            loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, loggerMock.Object);
+            loggerMock.Verify(
+                l => l.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Executing DbCommand")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.AtLeastOnce);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand maps non-standard DbType values using provider-specific DbType properties.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_UsesProviderSpecificDbTypeSetter_WhenDbTypeIsOutOfRange()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new ProviderAwareProcedure { Code = 123 };
+
+            var cmd = CommandEngine.CreateCommand<ProviderAwareDataParameter>(
+                conn,
+                null,
+                procedure,
+                "@",
+                10,
+                null);
+
+            var parameter = Assert.IsType<ProviderAwareDataParameter>(Assert.Single(cmd.Parameters.Cast<IDataParameter>()));
+            Assert.Equal("@Code", parameter.ParameterName);
+            Assert.Equal(123, parameter.Value);
+            Assert.Equal(CustomProviderDbType.ProviderSpecific, parameter.SqlDbType);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand correctly handles parameter values of various types and nulls.
+        /// </summary>
+        /// <remarks>This test ensures that null and non-null values are bound as expected.</remarks>
+        [Fact]
+        public void CreateCommand_BindsNullAndNonNullParameterValues()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new CustomProcedure { Id = 0, Name = null };
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, null);
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Id" && (int)p.Value == 0);
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Name" && p.Value == DBNull.Value);
         }
     }
 }

@@ -172,7 +172,7 @@ namespace Hydrix.Engines
                     {
                         ParameterName = name,
                         Direction = direction,
-                        Value = value ?? DBNull.Value
+                        Value = value
                     };
 
                     if (Enum.IsDefined(typeof(DbType), dbType))

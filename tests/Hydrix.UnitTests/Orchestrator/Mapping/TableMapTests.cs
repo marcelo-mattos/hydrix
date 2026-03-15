@@ -262,6 +262,26 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that the TableMap constructor sets key-related metadata to null when no usable primary key is
+        /// provided.
+        /// </summary>
+        [Fact]
+        public void Constructor_WithoutPrimaryKey_SetsKeyMetadataToNull()
+        {
+            var property = typeof(TestEntity).GetProperty(nameof(TestEntity.NestedNullPrimaryKey));
+            var attribute = new ForeignTableAttribute("text")
+            {
+                Schema = "Nested",
+                PrimaryKeys = null
+            };
+
+            var map = new TableMap(property, attribute);
+
+            Assert.Null(map.PrimaryKey);
+            Assert.Null(map.KeyColumnSuffix);
+        }
+
+        /// <summary>
         /// Verifies that the SetEntity method correctly handles an IDataRecord created from a DataRow without throwing
         /// exceptions.
         /// </summary>
@@ -1042,6 +1062,86 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that candidate ordinals are recalculated when the schema hash changes.
+        /// </summary>
+        [Fact]
+        public void GetCandidateOrdinals_Recalculates_WhenSchemaHashChanges()
+        {
+            var tableMap = CreateTableMapWithPrimaryKey();
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var ordinalsA = new Dictionary<string, int> { { "Child.Id", 1 } };
+            var ordinalsB = new Dictionary<string, int> { { "Child.Id", 9 } };
+
+            var result1 = (int[])method.Invoke(tableMap, new object[] { ordinalsA, "Child.", 100 });
+            var result2 = (int[])method.Invoke(tableMap, new object[] { ordinalsB, "Child.", 200 });
+
+            Assert.NotSame(result1, result2);
+            Assert.Contains(1, result1);
+            Assert.Contains(9, result2);
+        }
+
+        /// <summary>
+        /// Verifies that candidate ordinal discovery matches prefixes using ordinal case-insensitive comparison.
+        /// </summary>
+        [Fact]
+        public void GetCandidateOrdinals_MatchesPrefix_CaseInsensitive()
+        {
+            var tableMap = CreateTableMapWithPrimaryKey();
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var ordinals = new Dictionary<string, int>
+            {
+                { "cHiLd.Id", 3 },
+                { "Other.Id", 4 }
+            };
+
+            var result = (int[])method.Invoke(tableMap, new object[] { ordinals, "Child.", 321 });
+
+            Assert.Single(result);
+            Assert.Equal(3, result[0]);
+        }
+
+        /// <summary>
+        /// Verifies that SetEntity populates both scalar fields and nested entities in a single call.
+        /// </summary>
+        [Fact]
+        public void SetEntity_SetsFieldsAndInstantiatesNestedEntity()
+        {
+            var entity = new TestEntity();
+            var record = new Mock<IDataRecord>();
+
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(77);
+            record.Setup(r => r.IsDBNull(1)).Returns(false);
+
+            var idField = new ColumnMap(
+                "Id",
+                (obj, val) => ((TestEntity)obj).Id = (int)val,
+                (r, ordinal) => r.GetInt32(ordinal));
+
+            var nestedMap = new TableMap(
+                typeof(TestEntity).GetProperty(nameof(TestEntity.Nested)),
+                new ForeignTableAttribute("text")
+                {
+                    Schema = "Nested",
+                    PrimaryKeys = new[] { "Id" }
+                });
+
+            var metadata = MetadataFactory.CreateEntity(new[] { idField }, new[] { nestedMap });
+            var ordinals = new Dictionary<string, int>
+            {
+                { "Id", 0 },
+                { "Nested.Id", 1 }
+            };
+
+            TableMap.SetEntity(entity, record.Object, metadata, string.Empty, ordinals, 10);
+
+            Assert.Equal(77, entity.Id);
+            Assert.NotNull(entity.Nested);
+        }
+
+        /// <summary>
         /// Verifies that the GetCandidateOrdinals method returns the correct matching ordinals based on the specified
         /// prefix and that it caches the results for subsequent calls with the same parameters.
         /// </summary>
@@ -1144,6 +1244,95 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             });
 
             // Assert
+            Assert.Same(expected, result);
+        }
+
+        /// <summary>
+        /// Verifies that the second cache check inside the lock evaluates the branch where initialization is true but
+        /// schema hash does not match.
+        /// </summary>
+        [Fact]
+        public void GetCandidateOrdinals_InsideLock_InitializedTrueButSchemaMismatch_Recomputes()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var attr = new ForeignTableAttribute("SomeTable");
+            var tableMap = new TableMap(property, attr);
+
+            var candidateOrdinalsField = typeof(TableMap).GetField("_candidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsSchemaHashField = typeof(TableMap).GetField("_candidateOrdinalsSchemaHash", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsInitializedField = typeof(TableMap).GetField("_candidateOrdinalsInitialized", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            candidateOrdinalsField.SetValue(tableMap, new[] { 99 });
+            candidateOrdinalsSchemaHashField.SetValue(tableMap, 111);
+            candidateOrdinalsInitializedField.SetValue(tableMap, true);
+
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 5 }, { "Other.Id", 7 } };
+
+            var result = (int[])method.Invoke(tableMap, new object[] { ordinals, "Child.", 222 });
+
+            Assert.Single(result);
+            Assert.Equal(5, result[0]);
+        }
+
+        /// <summary>
+        /// Verifies that the second cache check inside the lock returns the cached value when another thread
+        /// initializes the cache before lock acquisition.
+        /// </summary>
+        [Fact]
+        public void GetCandidateOrdinals_InsideLock_InitializedByAnotherThread_ReturnsCachedValue()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var attr = new ForeignTableAttribute("SomeTable");
+            var tableMap = new TableMap(property, attr);
+
+            var candidateOrdinalsField = typeof(TableMap).GetField("_candidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsSchemaHashField = typeof(TableMap).GetField("_candidateOrdinalsSchemaHash", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsInitializedField = typeof(TableMap).GetField("_candidateOrdinalsInitialized", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateLockField = typeof(TableMap).GetField("_candidateLock", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateLock = candidateLockField.GetValue(tableMap);
+
+            var expected = new[] { 41, 42 };
+            const int schemaHash = 333;
+
+            candidateOrdinalsInitializedField.SetValue(tableMap, false);
+
+            int[] result = null;
+            Exception threadException = null;
+            Thread thread = null;
+
+            lock (candidateLock)
+            {
+                thread = new Thread(() =>
+                {
+                    try
+                    {
+                        result = (int[])method.Invoke(tableMap, new object[]
+                        {
+                            new Dictionary<string, int> { { "Child.Id", 1 } },
+                            "Child.",
+                            schemaHash
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        threadException = ex;
+                    }
+                });
+
+                thread.Start();
+                Thread.Sleep(50);
+
+                candidateOrdinalsField.SetValue(tableMap, expected);
+                candidateOrdinalsSchemaHashField.SetValue(tableMap, schemaHash);
+                candidateOrdinalsInitializedField.SetValue(tableMap, true);
+            }
+
+            thread.Join(1000);
+
+            Assert.Null(threadException);
             Assert.Same(expected, result);
         }
 

@@ -1,4 +1,5 @@
 ﻿using Moq;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;
@@ -955,6 +956,75 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             await Assert.ThrowsAsync<TaskCanceledException>(() =>
                 materializer.QueryAsync<TestEntity>("SELECT 1", new { }, 0, It.IsAny<int>(), new CancellationToken(true)));
+        }
+
+        /// <summary>
+        /// Verifies that Query applies the limit parameter and returns only the requested number of entities.
+        /// </summary>
+        /// <remarks>This test ensures that the conversion pipeline honors a positive limit and truncates the
+        /// materialized result set accordingly.</remarks>
+        [Fact]
+        public void Query_WithPositiveLimit_ReturnsLimitedEntities()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = materializer.Query<TestEntity>("SELECT 1", new { Id = 1 }, limit: 1);
+
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal(1, result[0].Id);
+            Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that QueryAsync applies the limit parameter and returns only the requested number of entities.
+        /// </summary>
+        /// <remarks>This test validates limit handling on the asynchronous query flow.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithPositiveLimit_ReturnsLimitedEntities()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.QueryAsync<TestEntity>("SELECT 1", new { Id = 1 }, limit: 1);
+
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal(1, result[0].Id);
+            Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that Query throws when the entity mapping metadata is missing and does not execute the reader.
+        /// </summary>
+        /// <remarks>This test ensures the invalid-entity path fails fast before attempting command execution.</remarks>
+        [Fact]
+        public void Query_WhenEntityMetadataIsMissing_ThrowsAndDoesNotExecuteReader()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            Assert.Throws<MissingMemberException>(() => materializer.Query<NoAttributeEntity>("SELECT 1", new { Id = 1 }));
+            commandMock.Verify(c => c.ExecuteReader(It.IsAny<CommandBehavior>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Verifies that QueryAsync throws when the entity mapping metadata is missing and does not execute the reader.
+        /// </summary>
+        /// <remarks>This test ensures the asynchronous invalid-entity path fails fast before command execution.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WhenEntityMetadataIsMissing_ThrowsAndDoesNotExecuteReader()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            await Assert.ThrowsAsync<MissingMemberException>(() => materializer.QueryAsync<NoAttributeEntity>("SELECT 1", new { Id = 1 }));
+            commandMock.Verify(c => c.ExecuteReader(It.IsAny<CommandBehavior>()), Times.Never);
         }
     }
 }

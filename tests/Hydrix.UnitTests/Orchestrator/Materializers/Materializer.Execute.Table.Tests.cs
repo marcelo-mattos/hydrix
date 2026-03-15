@@ -155,6 +155,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the ExecuteTableAsync method returns a DataTable when called without SQL parameters.
+        /// </summary>
+        /// <remarks>This test ensures that the ExecuteTableAsync method correctly retrieves data as a
+        /// DataTable when no SQL parameters are provided. It checks that the result is not null and contains the
+        /// expected number of rows.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteTableAsync_WithoutSqlParameters_ReturnsDataTable()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await (materializer as IMaterializer).ExecuteTableAsync("SELECT * FROM Test", It.IsAny<int>(), CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Rows.Count);
+        }
+
+        /// <summary>
         /// Verifies that ExecuteTableAsync returns a DataTable for SQL, parameters, and cancellation token.
         /// </summary>
         [Fact]

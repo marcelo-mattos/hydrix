@@ -557,6 +557,22 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
         }
 
         /// <summary>
+        /// Verifies that binding with no configured bindings does not add parameters or change command text.
+        /// </summary>
+        [Fact]
+        public void Bind_WithNoBindings_DoesNothing()
+        {
+            var binder = new ParameterObjectBinder(Array.Empty<ParameterObjectBinding>());
+            var command = new DummyCommand { CommandText = "SELECT 1" };
+            var added = new List<(string, object)>();
+
+            binder.Bind(command, new TestParams(), "@", (cmd, name, value) => added.Add((name, value)));
+
+            Assert.Empty(added);
+            Assert.Equal("SELECT 1", command.CommandText);
+        }
+
+        /// <summary>
         /// Verifies that the binder excludes write-only properties when binding parameters to a command.
         /// </summary>
         /// <remarks>This test ensures that only properties with accessible getters are included as
@@ -691,6 +707,24 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
             );
             Assert.IsType<InvalidOperationException>(ex.InnerException);
             Assert.Contains("Enumerable parameter 'X' is empty.", ex.InnerException.Message);
+        }
+
+        /// <summary>
+        /// Verifies that enumerable expansion adds parameters even when the token is not present in command text.
+        /// </summary>
+        [Fact]
+        public void ExpandEnumerableParameter_TokenNotPresent_AddsParametersAndKeepsCommandText()
+        {
+            var command = new DummyCommand { CommandText = "SELECT 1" };
+
+            InvokeExpandEnumerableParameter(
+                command,
+                "X",
+                "@",
+                new[] { 10, 20 });
+
+            Assert.Equal(2, command.Parameters.Count);
+            Assert.Equal("SELECT 1", command.CommandText);
         }
 
         /// <summary>
@@ -1072,6 +1106,71 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
             var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
             Assert.False(result);
             Assert.Equal("", builder.ToString());
+            Assert.Equal("Normal", state.ToString());
+        }
+
+        /// <summary>
+        /// Verifies that token replacement returns null when the SQL input is null.
+        /// </summary>
+        [Fact]
+        public void ReplaceParameterToken_NullSql_ReturnsNull()
+        {
+            var result = InvokeReplaceParameterToken(null, "@X", "@Y");
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that token replacement returns the original SQL when token is null.
+        /// </summary>
+        [Fact]
+        public void ReplaceParameterToken_NullToken_ReturnsOriginalSql()
+        {
+            var sql = "SELECT @X";
+            var result = InvokeReplaceParameterToken(sql, null, "@Y");
+            Assert.Equal(sql, result);
+        }
+
+        /// <summary>
+        /// Verifies that token replacement evaluates the normal-state path and keeps the SQL unchanged when the token
+        /// does not exist in regular SQL text.
+        /// </summary>
+        [Fact]
+        public void ReplaceParameterToken_NormalStateWithoutMatch_KeepsOriginalSql()
+        {
+            var sql = "abc";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+
+            Assert.Equal("abc", result);
+        }
+
+        /// <summary>
+        /// Verifies that token replacement keeps the SQL unchanged when the token is longer than the remaining input
+        /// at the current index.
+        /// </summary>
+        [Fact]
+        public void ReplaceParameterToken_TokenLongerThanRemainingText_KeepsOriginalSql()
+        {
+            var sql = "@";
+            var result = InvokeReplaceParameterToken(sql, "@X", "@Y");
+
+            Assert.Equal("@", result);
+        }
+
+        /// <summary>
+        /// Verifies that a newline character ends a line-comment scan state and transitions back to normal.
+        /// </summary>
+        [Fact]
+        public void LineComment_Newline_TransitionsToNormal()
+        {
+            var sql = "\n";
+            var builder = new StringBuilder();
+            object state = Enum.Parse(typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic), "LineComment");
+            int index = 0;
+
+            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
+
+            Assert.True(result);
+            Assert.Equal("\n", builder.ToString());
             Assert.Equal("Normal", state.ToString());
         }
 

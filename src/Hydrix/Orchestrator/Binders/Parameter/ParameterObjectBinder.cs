@@ -216,13 +216,12 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     ref index))
                     continue;
 
-                if (state == SqlScanState.Normal &&
-                    TryReplaceToken(
-                        sql,
-                        token,
-                        replacement,
-                        builder,
-                        ref index))
+                if (TryReplaceToken(
+                    sql,
+                    token,
+                    replacement,
+                    builder,
+                    ref index))
                     continue;
 
                 builder.Append(@char);

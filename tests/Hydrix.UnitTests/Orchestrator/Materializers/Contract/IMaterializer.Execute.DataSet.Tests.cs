@@ -152,7 +152,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { Id = 1 }, It.IsAny<int>());
+            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { Id = 1 }, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 

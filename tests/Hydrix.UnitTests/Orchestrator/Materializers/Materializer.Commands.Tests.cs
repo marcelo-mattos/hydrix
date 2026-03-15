@@ -41,6 +41,25 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that CreateCommand with object parameters uses the active transaction when no transaction is
+        /// explicitly provided.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_Object_UsesActiveTransaction_WhenAvailable()
+        {
+            var mat = new MaterializerTestable
+            {
+                DbConnectionSet = new FakeDbConnection(),
+                IsTransactionActiveSet = true
+            };
+
+            var sqlMat = (IMaterializer)mat;
+            var cmd = sqlMat.CreateCommand("SELECT * FROM T WHERE Id=@Id", new { Id = 1 }, null);
+
+            Assert.NotNull(cmd.Transaction);
+        }
+
+        /// <summary>
         /// Verifies that the CreateCommand method correctly binds enumerable parameters to the resulting command.
         /// </summary>
         /// <remarks>This test ensures that when an enumerable of parameters is provided to CreateCommand,
@@ -57,6 +76,54 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var param = new FakeDataParameter { ParameterName = "@Id", Value = 1, DbType = DbType.Int32 };
             var cmd = sqlMat.CreateCommand(CommandType.Text, "SELECT * FROM T WHERE Id=@Id", new[] { param }, null, null);
             Assert.Single(cmd.Parameters.Cast<IDataParameter>().Where(p => p.ParameterName == "@Id"));
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand with command type uses the current active transaction when no transaction is
+        /// explicitly provided.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_CommandType_UsesActiveTransaction_WhenAvailable()
+        {
+            var mat = new MaterializerTestable
+            {
+                DbConnectionSet = new FakeDbConnection(),
+                IsTransactionActiveSet = true
+            };
+
+            var sqlMat = (IMaterializer)mat;
+            var param = new FakeDataParameter { ParameterName = "@Id", Value = 1, DbType = DbType.Int32 };
+
+            var cmd = sqlMat.CreateCommand(
+                CommandType.StoredProcedure,
+                "sp_Test",
+                new[] { param },
+                null);
+
+            Assert.Equal(CommandType.StoredProcedure, cmd.CommandType);
+            Assert.Equal("sp_Test", cmd.CommandText);
+            Assert.NotNull(cmd.Transaction);
+            Assert.Single(cmd.Parameters.Cast<IDataParameter>());
+        }
+
+        /// <summary>
+        /// Verifies that generic CreateCommand without explicit transaction uses the current active transaction.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_Generic_UsesActiveTransaction_WhenAvailable()
+        {
+            var mat = new MaterializerTestable
+            {
+                DbConnectionSet = new FakeDbConnection(),
+                IsTransactionActiveSet = true
+            };
+
+            var sqlMat = (IMaterializer)mat;
+            var proc = new ProcedureWithAttributes { Id = 10, Name = "with-tran" };
+
+            var cmd = sqlMat.CreateCommand<AttributeParameter>(proc, null);
+
+            Assert.NotNull(cmd.Transaction);
         }
 
         /// <summary>

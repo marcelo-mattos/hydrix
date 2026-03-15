@@ -205,6 +205,28 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the ExecuteDataSetAsync method returns a DataSet containing the expected data when called
+        /// without SQL parameters.
+        /// </summary>
+        /// <remarks>This test ensures that the method correctly materializes a DataSet from a SQL query
+        /// when no parameters are provided. It checks that the resulting DataSet contains a single table with the
+        /// expected number of rows and values.</remarks>
+        [Fact]
+        public async Task ExecuteDataSetAsync_WithoutSqlParameters_ReturnsDataSet()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", It.IsAny<int>(), CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.Single(result.Tables);
+            Assert.Equal(2, result.Tables[0].Rows.Count);
+            Assert.Equal("Alice", result.Tables[0].Rows[0]["Name"]);
+        }
+
+        /// <summary>
         /// Verifies that ExecuteDataSetAsync returns a DataSet for SQL, parameters, and cancellation token.
         /// </summary>
         [Fact]
