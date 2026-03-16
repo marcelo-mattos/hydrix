@@ -46,7 +46,7 @@ namespace Hydrix.Engines
             IDbTransaction transaction,
             string sql,
             object parameters,
-            string parameterPrefix = HydrixOptions.DefaultParameterPrefix,
+            string parameterPrefix = null,
             int? timeout = null,
             ILogger logger = null)
             => CreateCommandCore(
@@ -57,7 +57,7 @@ namespace Hydrix.Engines
                 command => ParameterEngine.BindParametersFromObject(
                     command,
                     parameters,
-                    parameterPrefix),
+                    parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix),
                 timeout,
                 logger);
 
@@ -140,7 +140,7 @@ namespace Hydrix.Engines
             in IDbConnection connection,
             IDbTransaction transaction,
             IProcedure<TDataParameterDriver> procedure,
-            string parameterPrefix = HydrixOptions.DefaultParameterPrefix,
+            string parameterPrefix = null,
             int? timeout = null,
             ILogger logger = null)
             where TDataParameterDriver : IDataParameter, new()
@@ -159,13 +159,13 @@ namespace Hydrix.Engines
 
             var command = connection.CreateCommand();
             binder.ApplyCommand(command);
-            command.CommandTimeout = timeout ?? HydrixOptions.DefaultTimeout;
+            command.CommandTimeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             command.Transaction = transaction;
 
             binder.BindParameters(
                 command,
                 procedure,
-                parameterPrefix,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 (cmd, name, value, direction, dbType) =>
                 {
                     var dataParameter = new TDataParameterDriver
@@ -226,7 +226,7 @@ namespace Hydrix.Engines
             var command = connection.CreateCommand();
             command.CommandType = commandType;
             command.CommandText = sql;
-            command.CommandTimeout = timeout ?? HydrixOptions.DefaultTimeout;
+            command.CommandTimeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             command.Transaction = transaction;
 
             parameterBinder?.Invoke(command);

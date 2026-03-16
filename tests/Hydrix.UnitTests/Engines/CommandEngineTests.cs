@@ -559,6 +559,19 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Represents a procedure with an out-of-range DbType and no provider-specific DbType property on parameter.
+        /// </summary>
+        [Procedure("NoProviderSetterProcedure")]
+        private class NoProviderSetterProcedure : IProcedure<AttributeParameter>
+        {
+            /// <summary>
+            /// Gets or sets a sample value.
+            /// </summary>
+            [Parameter("Code", (DbType)777)]
+            public int Code { get; set; }
+        }
+
+        /// <summary>
         /// Verifies that CreateCommandCore throws an InvalidOperationException when the connection is not open.
         /// </summary>
         /// <remarks>This test ensures that attempting to create a command with a closed connection
@@ -696,7 +709,7 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.Text,
                 "SELECT 1",
                 null,
-                null,
+                HydrixOptions.DefaultTimeout,
                 null);
 
             Assert.Equal(HydrixOptions.DefaultTimeout, cmd.CommandTimeout);
@@ -907,7 +920,7 @@ namespace Hydrix.UnitTests.Engines
         {
             var conn = new FakeDbConnection();
             var procedure = new CustomProcedure { Id = 99, Name = "Gamma" };
-            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", null, null);
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", HydrixOptions.DefaultTimeout, null);
             Assert.Equal(HydrixOptions.DefaultTimeout, cmd.CommandTimeout);
         }
 
@@ -985,6 +998,77 @@ namespace Hydrix.UnitTests.Engines
             var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, null);
             Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Id" && (int)p.Value == 0);
             Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Name" && p.Value == DBNull.Value);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand for text commands uses default timeout and default parameter prefix when omitted.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_Text_UsesDefaults_WhenTimeoutAndPrefixAreNull()
+        {
+            var conn = new FakeDbConnection();
+
+            var cmd = CommandEngine.CreateCommand(
+                conn,
+                null,
+                "SELECT * FROM T WHERE Id = @Id",
+                new { Id = 12 },
+                null,
+                null,
+                null);
+
+            Assert.Equal(HydrixConfiguration.Options.CommandTimeout, cmd.CommandTimeout);
+            Assert.Contains(
+                cmd.Parameters.Cast<IDataParameter>(),
+                p => p.ParameterName == $"{HydrixConfiguration.Options.ParameterPrefix}Id" && (int)p.Value == 12);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand for procedure commands uses default timeout and default parameter prefix when omitted.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_Procedure_UsesDefaults_WhenTimeoutAndPrefixAreNull()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new CustomProcedure { Id = 21, Name = "Omega" };
+
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(
+                conn,
+                null,
+                procedure,
+                null,
+                null,
+                null);
+
+            Assert.Equal(HydrixConfiguration.Options.CommandTimeout, cmd.CommandTimeout);
+            Assert.Contains(
+                cmd.Parameters.Cast<IDataParameter>(),
+                p => p.ParameterName == $"{HydrixConfiguration.Options.ParameterPrefix}Id" && (int)p.Value == 21);
+            Assert.Contains(
+                cmd.Parameters.Cast<IDataParameter>(),
+                p => p.ParameterName == $"{HydrixConfiguration.Options.ParameterPrefix}Name" && (string)p.Value == "Omega");
+        }
+
+        /// <summary>
+        /// Verifies that provider-specific DbType setter path safely handles missing setter when DbType is out of range.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_ProviderSpecificDbTypeSetterMissing_DoesNotThrow()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new NoProviderSetterProcedure { Code = 777 };
+
+            var cmd = CommandEngine.CreateCommand<AttributeParameter>(
+                conn,
+                null,
+                procedure,
+                "@",
+                10,
+                null);
+
+            var parameter = Assert.IsType<AttributeParameter>(Assert.Single(cmd.Parameters.Cast<IDataParameter>()));
+            Assert.Equal("@Code", parameter.ParameterName);
+            Assert.Equal(777, parameter.Value);
         }
     }
 }

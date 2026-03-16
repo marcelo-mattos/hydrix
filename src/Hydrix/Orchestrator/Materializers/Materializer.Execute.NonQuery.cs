@@ -1,4 +1,5 @@
 ﻿using Hydrix.Schemas.Contract;
+using Hydrix.Engines;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,15 +39,14 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             object parameters,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    timeout);
-
-            return command.ExecuteNonQuery();
-        }
+            => ExecutionEngine.ExecuteNonQuery(
+                this.DbConnection,
+                sql,
+                parameters,
+                null,
+                CommandType.Text,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
@@ -66,16 +66,14 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             IDbTransaction transaction,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteNonQuery();
-        }
+            => ExecutionEngine.ExecuteNonQuery(
+                this.DbConnection,
+                sql,
+                parameters,
+                transaction,
+                CommandType.Text,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
@@ -136,16 +134,14 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
-                    sql,
-                    parameters,
-                    timeout);
-
-            return command.ExecuteNonQuery();
-        }
+            => ExecutionEngine.ExecuteNonQuery(
+                this.DbConnection,
+                sql,
+                parameters,
+                null,
+                commandType,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
@@ -167,17 +163,14 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
-                    sql,
-                    parameters,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteNonQuery();
-        }
+            => ExecutionEngine.ExecuteNonQuery(
+                this.DbConnection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
@@ -245,23 +238,16 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteNonQueryAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteNonQueryAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteNonQuery,
-                cancellationToken);
-        }
+                    null,
+                    CommandType.Text,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
@@ -284,24 +270,16 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteNonQueryAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteNonQueryAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteNonQuery,
-                cancellationToken);
-        }
+                    CommandType.Text,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
@@ -375,24 +353,16 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteNonQueryAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteNonQueryAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteNonQuery,
-                cancellationToken);
-        }
+                    null,
+                    commandType,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.
@@ -417,25 +387,16 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteNonQueryAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteNonQueryAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteNonQuery,
-                cancellationToken);
-        }
+                    commandType,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes an SQL statement against the Connection object data provider, and returns the number of rows affected.

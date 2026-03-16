@@ -1,5 +1,5 @@
 ﻿using Hydrix.Configuration;
-using Hydrix.Orchestrator.Caching;
+using Hydrix.Engines;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Schemas.Contract;
 using System;
@@ -50,30 +50,13 @@ namespace Hydrix.Extensions
             int? commandTimeout = null)
         {
             ValidateCommand(connection, sql);
-            var materializer = CreateMaterializer(
-                connection);
-
-            if (parameters != null)
-            {
-                if (commandType == CommandType.Text)
-                    return transaction == null
-                        ? materializer.ExecuteNonQuery(sql, parameters, commandTimeout)
-                        : materializer.ExecuteNonQuery(sql, parameters, transaction, commandTimeout);
-
-                var @params = parameters.AsIDataParameters();
-                return transaction == null
-                    ? materializer.ExecuteNonQuery(commandType, sql, @params, commandTimeout)
-                    : materializer.ExecuteNonQuery(commandType, sql, @params, transaction, commandTimeout);
-            }
-
-            if (commandType == CommandType.Text)
-                return transaction == null
-                    ? materializer.ExecuteNonQuery(sql, commandTimeout)
-                    : materializer.ExecuteNonQuery(sql, transaction, commandTimeout);
-
-            return transaction == null
-                ? materializer.ExecuteNonQuery(commandType, sql, commandTimeout)
-                : materializer.ExecuteNonQuery(commandType, sql, transaction, commandTimeout);
+            return ExecutionEngine.ExecuteNonQuery(
+                connection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                commandTimeout);
         }
 
         /// <summary>
@@ -111,30 +94,15 @@ namespace Hydrix.Extensions
             CancellationToken cancellationToken = default)
         {
             ValidateCommand(connection, sql);
-            var materializer = CreateMaterializer(
-                connection);
-
-            if (parameters != null)
-            {
-                if (commandType == CommandType.Text)
-                    return transaction == null
-                        ? materializer.ExecuteNonQueryAsync(sql, parameters, commandTimeout, cancellationToken)
-                        : materializer.ExecuteNonQueryAsync(sql, parameters, transaction, commandTimeout, cancellationToken);
-
-                var @params = parameters.AsIDataParameters();
-                return transaction == null
-                    ? materializer.ExecuteNonQueryAsync(commandType, sql, @params, commandTimeout, cancellationToken)
-                    : materializer.ExecuteNonQueryAsync(commandType, sql, @params, transaction, commandTimeout, cancellationToken);
-            }
-
-            if (commandType == CommandType.Text)
-                return transaction == null
-                    ? materializer.ExecuteNonQueryAsync(sql, commandTimeout, cancellationToken)
-                    : materializer.ExecuteNonQueryAsync(sql, transaction, commandTimeout, cancellationToken);
-
-            return transaction == null
-                ? materializer.ExecuteNonQueryAsync(commandType, sql, commandTimeout, cancellationToken)
-                : materializer.ExecuteNonQueryAsync(commandType, sql, transaction, commandTimeout, cancellationToken);
+            return ExecutionEngine.ExecuteNonQueryAsync(
+                connection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix,
+                cancellationToken);
         }
 
         /// <summary>
@@ -169,30 +137,14 @@ namespace Hydrix.Extensions
             int? commandTimeout = null)
         {
             ValidateCommand(connection, sql);
-            var materializer = CreateMaterializer(
-                connection);
-
-            if (parameters != null)
-            {
-                if (commandType == CommandType.Text)
-                    return transaction == null
-                        ? materializer.ExecuteScalar(sql, parameters, commandTimeout).As<TResult>()
-                        : materializer.ExecuteScalar(sql, parameters, transaction, commandTimeout).As<TResult>();
-
-                var @params = parameters.AsIDataParameters();
-                return transaction == null
-                    ? materializer.ExecuteScalar(commandType, sql, @params, commandTimeout).As<TResult>()
-                    : materializer.ExecuteScalar(commandType, sql, @params, transaction, commandTimeout).As<TResult>();
-            }
-
-            if (commandType == CommandType.Text)
-                return transaction == null
-                    ? materializer.ExecuteScalar(sql, commandTimeout).As<TResult>()
-                    : materializer.ExecuteScalar(sql, transaction, commandTimeout).As<TResult>();
-
-            return transaction == null
-                ? materializer.ExecuteScalar(commandType, sql, commandTimeout).As<TResult>()
-                : materializer.ExecuteScalar(commandType, sql, transaction, commandTimeout).As<TResult>();
+            return ExecutionEngine.ExecuteScalar(
+                connection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                commandTimeout)
+            .As<TResult>();
         }
 
         /// <summary>
@@ -227,30 +179,16 @@ namespace Hydrix.Extensions
             CancellationToken cancellationToken = default)
         {
             ValidateCommand(connection, sql);
-            var materializer = CreateMaterializer(
-                connection);
-
-            if (parameters != null)
-            {
-                if (commandType == CommandType.Text)
-                    return transaction == null
-                        ? (await materializer.ExecuteScalarAsync(sql, parameters, commandTimeout, cancellationToken)).As<TResult>()
-                        : (await materializer.ExecuteScalarAsync(sql, parameters, transaction, commandTimeout, cancellationToken)).As<TResult>();
-
-                var @params = parameters.AsIDataParameters();
-                return transaction == null
-                    ? (await materializer.ExecuteScalarAsync(commandType, sql, @params, commandTimeout, cancellationToken)).As<TResult>()
-                    : (await materializer.ExecuteScalarAsync(commandType, sql, @params, transaction, commandTimeout, cancellationToken)).As<TResult>();
-            }
-
-            if (commandType == CommandType.Text)
-                return transaction == null
-                    ? (await materializer.ExecuteScalarAsync(sql, commandTimeout, cancellationToken)).As<TResult>()
-                    : (await materializer.ExecuteScalarAsync(sql, transaction, commandTimeout, cancellationToken)).As<TResult>();
-
-            return transaction == null
-                ? (await materializer.ExecuteScalarAsync(commandType, sql, commandTimeout, cancellationToken)).As<TResult>()
-                : (await materializer.ExecuteScalarAsync(commandType, sql, transaction, commandTimeout, cancellationToken)).As<TResult>();
+            return (await ExecutionEngine.ExecuteScalarAsync(
+                connection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix,
+                cancellationToken))
+            .As<TResult>();
         }
 
         /// <summary>
@@ -288,30 +226,15 @@ namespace Hydrix.Extensions
             where TEntity : ITable, new()
         {
             ValidateCommand(connection, sql);
-            var materializer = CreateMaterializer(
-                connection);
-
-            if (parameters != null)
-            {
-                if (commandType == CommandType.Text)
-                    return transaction == null
-                        ? materializer.Query<TEntity>(sql, parameters, limit, commandTimeout)
-                        : materializer.Query<TEntity>(sql, parameters, transaction, limit, commandTimeout);
-
-                var @params = parameters.AsIDataParameters();
-                return transaction == null
-                    ? materializer.Query<TEntity>(commandType, sql, @params, limit, commandTimeout)
-                    : materializer.Query<TEntity>(commandType, sql, @params, transaction, limit, commandTimeout);
-            }
-
-            if (commandType == CommandType.Text)
-                return transaction == null
-                    ? materializer.Query<TEntity>(sql, limit)
-                    : materializer.Query<TEntity>(sql, transaction, limit, commandTimeout);
-
-            return transaction == null
-                ? materializer.Query<TEntity>(commandType, sql, limit, commandTimeout)
-                : materializer.Query<TEntity>(commandType, sql, transaction, limit, commandTimeout);
+            return MaterializationEngine.Query<TEntity>(
+                connection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                limit,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix);
         }
 
         /// <summary>
@@ -352,30 +275,17 @@ namespace Hydrix.Extensions
             where TEntity : ITable, new()
         {
             ValidateCommand(connection, sql);
-            var materializer = CreateMaterializer(
-                connection);
-
-            if (parameters != null)
-            {
-                if (commandType == CommandType.Text)
-                    return transaction == null
-                        ? await materializer.QueryAsync<TEntity>(sql, parameters, limit, commandTimeout, cancellationToken)
-                        : await materializer.QueryAsync<TEntity>(sql, parameters, transaction, limit, commandTimeout, cancellationToken);
-
-                var @params = parameters.AsIDataParameters();
-                return transaction == null
-                    ? await materializer.QueryAsync<TEntity>(commandType, sql, @params, limit, commandTimeout, cancellationToken)
-                    : await materializer.QueryAsync<TEntity>(commandType, sql, @params, transaction, limit, commandTimeout, cancellationToken);
-            }
-
-            if (commandType == CommandType.Text)
-                return transaction == null
-                    ? await materializer.QueryAsync<TEntity>(sql, limit, commandTimeout, cancellationToken)
-                    : await materializer.QueryAsync<TEntity>(sql, transaction, limit, commandTimeout, cancellationToken);
-
-            return transaction == null
-                ? await materializer.QueryAsync<TEntity>(commandType, sql, limit, commandTimeout, cancellationToken)
-                : await materializer.QueryAsync<TEntity>(commandType, sql, transaction, limit, commandTimeout, cancellationToken);
+            return await MaterializationEngine.QueryAsync<TEntity>(
+                    connection,
+                    sql,
+                    parameters,
+                    transaction,
+                    commandType,
+                    limit,
+                    commandTimeout,
+                    HydrixConfiguration.Options.ParameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -747,26 +657,6 @@ namespace Hydrix.Extensions
                 throw new InvalidOperationException("Sequence contains more than one element.");
 
             return first;
-        }
-
-        /// <summary>
-        /// Creates a new instance of the Materializer class using the specified database connection and command timeout
-        /// settings.
-        /// </summary>
-        /// <remarks>The caller is responsible for managing the lifetime of the provided database
-        /// connection. The Materializer uses the specified timeout for all executed commands.</remarks>
-        /// <param name="connection">The open database connection to be used by the Materializer. This connection must remain valid for the
-        /// lifetime of the Materializer instance.</param>
-        /// <returns>A Materializer instance configured with the provided connection and timeout.</returns>
-        private static Materializer CreateMaterializer(
-            IDbConnection connection)
-        {
-            var options = HydrixConfiguration.Options;
-            var materializer = MaterializerCache.GetOrCreate(
-                connection,
-                options);
-
-            return materializer;
         }
 
         /// <summary>

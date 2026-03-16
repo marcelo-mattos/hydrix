@@ -27,12 +27,12 @@ namespace Hydrix.Orchestrator.Materializers
         /// </param>
         public Materializer(
             IDbConnection connection,
-            int timeout = HydrixOptions.DefaultTimeout,
-            string parameterPrefix = HydrixOptions.DefaultParameterPrefix) : this(
+            int? timeout = null,
+            string parameterPrefix = null) : this(
                 connection,
                 null,
-                timeout,
-                parameterPrefix)
+                timeout ?? HydrixConfiguration.Options.CommandTimeout,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix)
         { }
 
         /// <summary>
@@ -50,16 +50,16 @@ namespace Hydrix.Orchestrator.Materializers
         public Materializer(
             IDbConnection connection,
             ILogger logger,
-            int timeout = HydrixOptions.DefaultTimeout,
-            string parameterPrefix = HydrixOptions.DefaultParameterPrefix)
+            int? timeout = null,
+            string parameterPrefix = null)
         {
             this._logger = logger;
 
             lock (this._lockConnection)
                 this.DbConnection = connection;
 
-            this.Timeout = timeout;
-            this._parameterPrefix = parameterPrefix;
+            this.Timeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
+            this._parameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
         }
     }
 }
