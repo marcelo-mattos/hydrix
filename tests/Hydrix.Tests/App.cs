@@ -1,6 +1,5 @@
 ﻿using Hydrix.Extensions;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
-using Hydrix.Orchestrator.Materializers;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
 using Hydrix.Tests.Resources;
@@ -11,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -238,19 +238,47 @@ namespace Hydrix.Tests
             productResult = await connection.QueryAsync<Product>(
                 sql);
 
+            sql = $@"
+                SELECT
+                    p.Id,
+                    p.CustomerId,
+                    p.Name,
+                    p.Ean,
+                    p.Quantity,
+                    p.Price,
+                    p.Type,
+                    p.Token,
+                    c.Id        as [Customer.Id],
+                    c.Name      as [Customer.Name],
+                    c.BirthDate as [Customer.BirthDate],
+                    c.Level     as [Customer.Level],
+                    c.Salary    as [Customer.Salary],
+                    c.IsActive  as [Customer.IsActive]
+                FROM Product p
+                LEFT JOIN Customer c ON p.CustomerId = c.Id
+                WHERE
+                    c.IsActive = @IsActive
+                ORDER BY
+                    p.CustomerId;";
+
+            productResult = await connection.QueryAsync<Product>(
+                sql,
+                new List<SqlParameter>()
+                {
+                    new SqlParameter()
+                    {
+                        ParameterName = "@IsActive",
+                        SqlDbType = System.Data.SqlDbType.Bit,
+                        Value = false
+                    }
+                });
+
             // ----------------- DELETE DATA -----------------
 
             await connection.ExecuteAsync(@"
                 DELETE
                 FROM [dbo].[Product]
             ");
-
-            var sqlMaterializer = new Materializer(
-                connection,
-                logger: _logger);
-            sqlMaterializer.OpenConnection();
-
-            await sqlMaterializer.ExecuteNonQueryAsync(new DelCustomers());
 
             // ----------------- INSERT DATA -----------------
 
@@ -264,7 +292,7 @@ namespace Hydrix.Tests
                 IsActive = Faker.BooleanFaker.Boolean()
             };
 
-            await sqlMaterializer.ExecuteNonQueryAsync(addCustomer);
+            await connection.ExecuteAsync(addCustomer);
 
             addCustomer = new AddCustomer()
             {
@@ -276,15 +304,19 @@ namespace Hydrix.Tests
                 IsActive = null
             };
 
-            await sqlMaterializer.ExecuteNonQueryAsync(addCustomer);
+            await connection.ExecuteAsync(addCustomer);
 
             // ----------------- SELECT DATA -----------------
 
-            var customer = await sqlMaterializer.QueryAsync<Customer, SqlParameter>(new GetCustomer());
+            var customers = await connection.QueryAsync<Customer, SqlParameter>(new GetCustomer());
+
+            await connection.ExecuteAsync(new DelCustomers());
+
+            customers = await connection.QueryAsync<Customer, SqlParameter>(new GetCustomer());
 
             // ----------------- DELETE DATA -----------------
 
-            await sqlMaterializer.ExecuteNonQueryAsync(new DelCustomers());
+            await connection.ExecuteAsync(new DelCustomers());
 
             Console.ReadKey();
         }

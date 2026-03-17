@@ -60,6 +60,30 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that CreateCommand with object parameters and explicit transaction assigns the provided
+        /// transaction to the generated command.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_Object_WithExplicitTransaction_SetsTransaction()
+        {
+            var mat = new MaterializerTestable
+            {
+                DbConnectionSet = new FakeDbConnection()
+            };
+
+            var sqlMat = (IMaterializer)mat;
+            var transaction = new FakeDbTransaction();
+
+            var cmd = sqlMat.CreateCommand(
+                "SELECT * FROM T WHERE Id=@Id",
+                new { Id = 1 },
+                transaction,
+                null);
+
+            Assert.Equal(transaction, cmd.Transaction);
+        }
+
+        /// <summary>
         /// Verifies that the CreateCommand method correctly binds enumerable parameters to the resulting command.
         /// </summary>
         /// <remarks>This test ensures that when an enumerable of parameters is provided to CreateCommand,
@@ -104,6 +128,58 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.Equal("sp_Test", cmd.CommandText);
             Assert.NotNull(cmd.Transaction);
             Assert.Single(cmd.Parameters.Cast<IDataParameter>());
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand with command type and no active transaction does not assign a transaction
+        /// when none is explicitly provided.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_CommandType_DoesNotSetTransaction_WhenNoActiveTransaction()
+        {
+            var mat = new MaterializerTestable
+            {
+                DbConnectionSet = new FakeDbConnection()
+            };
+
+            var sqlMat = (IMaterializer)mat;
+            var param = new FakeDataParameter { ParameterName = "@Id", Value = 1, DbType = DbType.Int32 };
+
+            var cmd = sqlMat.CreateCommand(
+                CommandType.StoredProcedure,
+                "sp_Test",
+                new[] { param },
+                null);
+
+            Assert.Null(cmd.Transaction);
+            Assert.Equal(CommandType.StoredProcedure, cmd.CommandType);
+        }
+
+        /// <summary>
+        /// Verifies that CreateCommand with command type and explicit transaction assigns the provided transaction
+        /// to the generated command.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_CommandType_WithExplicitTransaction_SetsTransaction()
+        {
+            var mat = new MaterializerTestable
+            {
+                DbConnectionSet = new FakeDbConnection()
+            };
+
+            var sqlMat = (IMaterializer)mat;
+            var transaction = new FakeDbTransaction();
+            var param = new FakeDataParameter { ParameterName = "@Id", Value = 1, DbType = DbType.Int32 };
+
+            var cmd = sqlMat.CreateCommand(
+                CommandType.StoredProcedure,
+                "sp_Test",
+                new[] { param },
+                transaction,
+                null);
+
+            Assert.Equal(transaction, cmd.Transaction);
+            Assert.Equal("sp_Test", cmd.CommandText);
         }
 
         /// <summary>

@@ -1,3 +1,4 @@
+using Hydrix.Attributes.Schemas;
 using Hydrix.Engines;
 using Hydrix.Schemas.Contract;
 using Moq;
@@ -19,6 +20,14 @@ namespace Hydrix.UnitTests.Engines
     /// </summary>
     public class MaterializationEngineTests
     {
+        /// <summary>
+        /// Represents a valid stored procedure descriptor for procedure materialization scenarios.
+        /// </summary>
+        [Procedure("usp_TestEntity")]
+        private sealed class TestProcedure :
+            IProcedure<TestParameter>
+        { }
+
         /// <summary>
         /// Represents a valid test entity for materialization scenarios.
         /// </summary>
@@ -98,7 +107,8 @@ namespace Hydrix.UnitTests.Engines
             /// <summary>
             /// Resets the parameter type.
             /// </summary>
-            public override void ResetDbType() { }
+            public override void ResetDbType()
+            { }
         }
 
         /// <summary>
@@ -378,7 +388,8 @@ namespace Hydrix.UnitTests.Engines
             /// <summary>
             /// Cancels execution.
             /// </summary>
-            public override void Cancel() { }
+            public override void Cancel()
+            { }
 
             /// <summary>
             /// Executes non-query command.
@@ -393,7 +404,8 @@ namespace Hydrix.UnitTests.Engines
             /// <summary>
             /// Prepares command.
             /// </summary>
-            public override void Prepare() { }
+            public override void Prepare()
+            { }
 
             /// <summary>
             /// Creates a parameter instance.
@@ -411,6 +423,23 @@ namespace Hydrix.UnitTests.Engines
             /// </summary>
             protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
                 => Task.FromResult(ReaderResult);
+        }
+
+        /// <summary>
+        /// Verifies that AddRange in TestDbParameterCollection covers both loop branches
+        /// (with values and with empty input).
+        /// </summary>
+        [Fact]
+        public void TestDbParameterCollection_AddRange_CoversEmptyAndNonEmpty()
+        {
+            var collection = new TestDbParameterCollection();
+            var parameter = new TestDbParameter { ParameterName = "@Id", Value = 1 };
+
+            collection.AddRange(new object[] { parameter });
+            Assert.Equal(1, collection.Count);
+
+            collection.AddRange(Array.Empty<object>());
+            Assert.Equal(1, collection.Count);
         }
 
         /// <summary>
@@ -492,6 +521,88 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies procedure Query overload maps rows to entities.
+        /// </summary>
+        [Fact]
+        public void Query_Procedure_ReturnsMappedEntities()
+        {
+            var command = new TestReaderDbCommand { ReaderResult = CreateReader((9, "ProcEntity")) };
+            var connection = CreateOpenConnection(command);
+
+            var result = MaterializationEngine.Query<TestEntity, TestParameter>(
+                connection.Object,
+                new TestProcedure(),
+                commandTimeout: 15,
+                parameterPrefix: "@");
+
+            Assert.Single(result);
+            Assert.Equal(9, result[0].Id);
+            Assert.Equal("ProcEntity", result[0].Name);
+            Assert.Equal(CommandType.StoredProcedure, command.CommandType);
+        }
+
+        /// <summary>
+        /// Verifies procedure Query overload maps rows to entities when parameterPrefix is null,
+        /// covering the default prefix branch.
+        /// </summary>
+        [Fact]
+        public void Query_Procedure_WithNullParameterPrefix_ReturnsMappedEntities()
+        {
+            var command = new TestReaderDbCommand { ReaderResult = CreateReader((11, "ProcDefaultPrefix")) };
+            var connection = CreateOpenConnection(command);
+
+            var result = MaterializationEngine.Query<TestEntity, TestParameter>(
+                connection.Object,
+                new TestProcedure());
+
+            Assert.Single(result);
+            Assert.Equal(11, result[0].Id);
+            Assert.Equal("ProcDefaultPrefix", result[0].Name);
+            Assert.Equal(CommandType.StoredProcedure, command.CommandType);
+        }
+
+        /// <summary>
+        /// Verifies procedure QueryAsync overload maps rows to entities.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_Procedure_ReturnsMappedEntities()
+        {
+            var command = new TestReaderDbCommand { ReaderResult = CreateReader((10, "ProcAsync")) };
+            var connection = CreateOpenConnection(command);
+
+            var result = await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
+                connection.Object,
+                new TestProcedure(),
+                commandTimeout: 15,
+                parameterPrefix: "@");
+
+            Assert.Single(result);
+            Assert.Equal(10, result[0].Id);
+            Assert.Equal("ProcAsync", result[0].Name);
+            Assert.Equal(CommandType.StoredProcedure, command.CommandType);
+        }
+
+        /// <summary>
+        /// Verifies procedure QueryAsync overload propagates cancellation for non-DbCommand fallback path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_Procedure_Canceled_ThrowsTaskCanceledException()
+        {
+            var command = new FallbackReaderCommand();
+            var connection = CreateOpenConnection(command);
+            using var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.Cancel();
+
+            await Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
+                    connection.Object,
+                    new TestProcedure(),
+                    cancellationToken: cancellationTokenSource.Token));
+        }
+
+        /// <summary>
         /// Verifies invalid entity requests throw missing metadata exceptions.
         /// </summary>
         [Fact]
@@ -503,6 +614,20 @@ namespace Hydrix.UnitTests.Engines
             Assert.Throws<MissingMemberException>(() => MaterializationEngine.Query<InvalidEntity>(
                 connection.Object,
                 "select Id from t"));
+        }
+
+        /// <summary>
+        /// Verifies invalid entity requests throw missing metadata exceptions for procedure Query overload.
+        /// </summary>
+        [Fact]
+        public void Query_Procedure_InvalidEntity_ThrowsMissingMemberException()
+        {
+            var command = new TestReaderDbCommand { ReaderResult = CreateReader((1, "x")) };
+            var connection = CreateOpenConnection(command);
+
+            Assert.Throws<MissingMemberException>(() => MaterializationEngine.Query<InvalidEntity, TestParameter>(
+                connection.Object,
+                new TestProcedure()));
         }
 
         /// <summary>
@@ -518,14 +643,24 @@ namespace Hydrix.UnitTests.Engines
             public IDbTransaction Transaction { get; set; }
             public UpdateRowSource UpdatedRowSource { get; set; }
 
-            public void Cancel() { }
+            public void Cancel()
+            { }
+
             public IDbDataParameter CreateParameter() => new TestParameter();
-            public void Dispose() { }
+
+            public void Dispose()
+            { }
+
             public int ExecuteNonQuery() => 0;
+
             public IDataReader ExecuteReader() => CreateReader((1, "fallback"));
+
             public IDataReader ExecuteReader(CommandBehavior behavior) => CreateReader((1, "fallback"));
+
             public object ExecuteScalar() => null;
-            public void Prepare() { }
+
+            public void Prepare()
+            { }
         }
 
         /// <summary>

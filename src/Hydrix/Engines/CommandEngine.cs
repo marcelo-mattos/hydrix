@@ -3,7 +3,6 @@ using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Text;
 
@@ -25,6 +24,9 @@ namespace Hydrix.Engines
         /// <param name="connection">The database connection to use for creating the command. Must be an open connection.</param>
         /// <param name="transaction">An optional database transaction within which the command will be executed. If null, the current active
         /// transaction is used if available.</param>
+        /// <param name="commandType">
+        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
+        /// </param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
@@ -44,6 +46,7 @@ namespace Hydrix.Engines
         public static IDbCommand CreateCommand(
             in IDbConnection connection,
             IDbTransaction transaction,
+            CommandType commandType,
             string sql,
             object parameters,
             string parameterPrefix = null,
@@ -52,59 +55,12 @@ namespace Hydrix.Engines
             => CreateCommandCore(
                 connection,
                 transaction,
-                CommandType.Text,
+                commandType,
                 sql,
                 command => ParameterEngine.BindParametersFromObject(
                     command,
                     parameters,
                     parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix),
-                timeout,
-                logger);
-
-        /// <summary>
-        /// Creates and returns a Command object associated with the connection.
-        /// </summary>
-        /// <param name="connection">The database connection to use for creating the command. Must be an open connection.</param>
-        /// <param name="transaction">An optional database transaction within which the command will be executed. If null, the current active
-        /// transaction is used if available.</param>
-        /// <param name="commandType">
-        /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
-        /// </param>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="parameters">
-        /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
-        /// or stored procedure.
-        /// </param>
-        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
-        /// a command and generating an error.</param>
-        /// <param name="logger">An optional logger instance to use for logging command execution details. If null, logging is skipped.</param>
-        /// <returns>A Command object associated with the connection.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">
-        /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
-        /// </exception>
-        public static IDbCommand CreateCommand(
-            in IDbConnection connection,
-            IDbTransaction transaction,
-            CommandType commandType,
-            string sql,
-            IEnumerable<IDataParameter> parameters,
-            int? timeout = null,
-            ILogger logger = null)
-            => CreateCommandCore(
-                connection,
-                transaction,
-                commandType,
-                sql,
-                command =>
-                {
-                    if (parameters == null)
-                        return;
-
-                    foreach (var parameter in parameters)
-                        command.Parameters.Add(parameter);
-                },
                 timeout,
                 logger);
 

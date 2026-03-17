@@ -606,18 +606,13 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
-        {
-            EnsureValidEntityRequest<TEntity>();
-
-            using var dataReader = (this as Contract.IMaterializer)
-                .ExecuteReader(
-                    procedure,
-                    timeout);
-
-            return ConvertDataReaderToEntities<TEntity>(
-                dataReader,
-                limit);
-        }
+            => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
+                this.DbConnection,
+                procedure,
+                null,
+                limit,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -647,19 +642,13 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
-        {
-            EnsureValidEntityRequest<TEntity>();
-
-            using var dataReader = (this as Contract.IMaterializer)
-                .ExecuteReader(
-                    procedure,
-                    transaction,
-                    timeout);
-
-            return ConvertDataReaderToEntities<TEntity>(
-                dataReader,
-                limit);
-        }
+            => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
+                this.DbConnection,
+                procedure,
+                transaction,
+                limit,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -690,20 +679,15 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
-        {
-            EnsureValidEntityRequest<TEntity>();
-
-            using var dataReader = await (this as Contract.IMaterializer)
-                .ExecuteReaderAsync(
+            => await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
+                    this.DbConnection,
                     procedure,
+                    null,
+                    limit,
                     timeout,
+                    _parameterPrefix,
                     cancellationToken)
                 .ConfigureAwait(false);
-
-            return ConvertDataReaderToEntities<TEntity>(
-                dataReader,
-                limit);
-        }
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -736,20 +720,14 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
-        {
-            EnsureValidEntityRequest<TEntity>();
-
-            using var dataReader = await (this as Contract.IMaterializer)
-                .ExecuteReaderAsync(
+            => await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
+                    this.DbConnection,
                     procedure,
                     transaction,
+                    limit,
                     timeout,
+                    _parameterPrefix,
                     cancellationToken)
                 .ConfigureAwait(false);
-
-            return ConvertDataReaderToEntities<TEntity>(
-                dataReader,
-                limit);
-        }
     }
 }

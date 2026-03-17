@@ -1,8 +1,8 @@
-﻿using Hydrix.Schemas.Contract;
+﻿using Hydrix.Engines;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,15 +37,14 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             object parameters,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    timeout);
-
-            return command.ExecuteScalar();
-        }
+            => ExecutionEngine.ExecuteScalar(
+                this.DbConnection,
+                sql,
+                parameters,
+                null,
+                CommandType.Text,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -65,16 +64,14 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             IDbTransaction transaction,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteScalar();
-        }
+            => ExecutionEngine.ExecuteScalar(
+                this.DbConnection,
+                sql,
+                parameters,
+                transaction,
+                CommandType.Text,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -135,16 +132,14 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
-                    sql,
-                    parameters,
-                    timeout);
-
-            return command.ExecuteScalar();
-        }
+            => ExecutionEngine.ExecuteScalar(
+                this.DbConnection,
+                sql,
+                parameters,
+                null,
+                commandType,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -166,17 +161,14 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction,
             int? timeout = null)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
-                    sql,
-                    parameters,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteScalar();
-        }
+            => ExecutionEngine.ExecuteScalar(
+                this.DbConnection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -244,23 +236,16 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteScalarAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteScalarAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteScalar,
-                cancellationToken);
-        }
+                    null,
+                    CommandType.Text,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -283,24 +268,16 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteScalarAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteScalarAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteScalar,
-                cancellationToken);
-        }
+                    CommandType.Text,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -320,11 +297,11 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await this.ExecuteScalarAsync(
-                sql,
-                (object)null,
-                timeout,
-                cancellationToken)
-            .ConfigureAwait(false);
+                    sql,
+                    (object)null,
+                    timeout,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -346,12 +323,12 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await this.ExecuteScalarAsync(
-                sql,
-                (object)null,
-                transaction,
-                timeout,
-                cancellationToken)
-            .ConfigureAwait(false);
+                    sql,
+                    (object)null,
+                    transaction,
+                    timeout,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -374,24 +351,16 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteScalarAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteScalarAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteScalar,
-                cancellationToken);
-        }
+                    null,
+                    commandType,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -416,25 +385,16 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteScalarAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteScalarAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteScalar,
-                cancellationToken);
-        }
+                    commandType,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -456,12 +416,12 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await this.ExecuteScalarAsync(
-                commandType,
-                sql,
-                (IEnumerable<IDataParameter>)null,
-                timeout,
-                cancellationToken)
-            .ConfigureAwait(false);
+                    commandType,
+                    sql,
+                    (IEnumerable<IDataParameter>)null,
+                    timeout,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -485,13 +445,13 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await this.ExecuteScalarAsync(
-                commandType,
-                sql,
-                (IEnumerable<IDataParameter>)null,
-                transaction,
-                timeout,
-                cancellationToken)
-            .ConfigureAwait(false);
+                    commandType,
+                    sql,
+                    (IEnumerable<IDataParameter>)null,
+                    transaction,
+                    timeout,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -513,14 +473,12 @@ namespace Hydrix.Orchestrator.Materializers
             IProcedure<TDataParameterDriver> procedure,
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    procedure,
-                    timeout);
-
-            return command.ExecuteScalar();
-        }
+            => ExecutionEngine.ExecuteScalar(
+                this.DbConnection,
+                procedure,
+                null,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -544,15 +502,12 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    procedure,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteScalar();
-        }
+            => ExecutionEngine.ExecuteScalar(
+                this.DbConnection,
+                procedure,
+                transaction,
+                timeout,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -577,22 +532,14 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteScalarAsync(
+                    this.DbConnection,
                     procedure,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteScalarAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteScalar,
-                cancellationToken);
-        }
+                    null,
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -619,22 +566,13 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
-        {
-            using var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteScalarAsync(
+                    this.DbConnection,
                     procedure,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteScalarAsync(
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                command.ExecuteScalar,
-                cancellationToken);
-        }
+                    timeout,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
     }
 }

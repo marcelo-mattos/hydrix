@@ -623,6 +623,7 @@ namespace Hydrix.UnitTests.Engines
             var cmd = CommandEngine.CreateCommand(
                 conn,
                 null,
+                CommandType.Text,
                 "SELECT * FROM T WHERE Id=@Id",
                 new { Id = 42 },
                 "@",
@@ -649,6 +650,7 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.Text,
                 "SELECT * FROM T WHERE Id=@Id",
                 new[] { param },
+                "@",
                 15,
                 null);
             Assert.Single(cmd.Parameters);
@@ -668,6 +670,7 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.Text,
                 "SELECT 1",
                 null,
+                "@",
                 15,
                 null);
 
@@ -1011,6 +1014,7 @@ namespace Hydrix.UnitTests.Engines
             var cmd = CommandEngine.CreateCommand(
                 conn,
                 null,
+                CommandType.Text,
                 "SELECT * FROM T WHERE Id = @Id",
                 new { Id = 12 },
                 null,

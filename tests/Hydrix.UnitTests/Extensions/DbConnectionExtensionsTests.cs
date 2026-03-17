@@ -1,4 +1,5 @@
-﻿using Hydrix.Extensions;
+﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Extensions;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Orchestrator.Materializers.Contract;
 using Hydrix.Schemas.Contract;
@@ -42,6 +43,14 @@ namespace Hydrix.UnitTests.Extensions
             /// </summary>
             public string Name { get; set; }
         }
+
+        /// <summary>
+        /// Represents a dummy stored procedure used for extension method tests.
+        /// </summary>
+        [Procedure("usp_DummyProcedure")]
+        private class DummyProcedure :
+            IProcedure<MockDbParameter>
+        { }
 
         /// <summary>
         /// Represents a collection of database parameters for a command, supporting access by parameter name and index.
@@ -1137,6 +1146,496 @@ namespace Hydrix.UnitTests.Extensions
             var twoList = new List<DummyEntity> { new DummyEntity() { Id = 1, Name = "Alice" }, new DummyEntity() { Id = 2, Name = "Bob" } };
             var matTwo = SetupMaterializerForQuery(twoList).Object;
             Assert.Throws<InvalidOperationException>(() => matTwo.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql).GetAwaiter().GetResult());
+        }
+
+        /// <summary>
+        /// Verifies that Execute with procedure overload throws an ArgumentNullException when the connection is null.
+        /// </summary>
+        [Fact]
+        public void Execute_WithProcedure_ThrowsOnNullConnection()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                DbConnectionExtensions.Execute<MockDbParameter>(
+                    null,
+                    new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that Execute with procedure overload throws an ArgumentNullException when the procedure is null.
+        /// </summary>
+        [Fact]
+        public void Execute_WithProcedure_ThrowsOnNullProcedure()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteNonQuery()).Returns(1);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            Assert.Throws<ArgumentNullException>(() =>
+                connection.Execute<MockDbParameter>(null));
+        }
+
+        /// <summary>
+        /// Verifies that Execute with procedure overload returns the affected rows when executing a valid procedure.
+        /// </summary>
+        [Fact]
+        public void Execute_WithProcedure_ReturnsAffectedRows()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteNonQuery()).Returns(7);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = connection.Execute(
+                new DummyProcedure(),
+                null,
+                30);
+
+            Assert.Equal(7, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteAsync with procedure overload returns the affected rows when executing a valid procedure.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteAsync_WithProcedure_ReturnsAffectedRows()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteNonQuery()).Returns(9);
+            var connection = CreateConnectionMock(commandMock).Object;
+            var transaction = new Mock<IDbTransaction>().Object;
+
+            var result = await connection.ExecuteAsync(
+                new DummyProcedure(),
+                transaction,
+                30,
+                CancellationToken.None);
+
+            Assert.Equal(9, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteScalar with procedure overload returns the scalar result when executing a valid procedure.
+        /// </summary>
+        [Fact]
+        public void ExecuteScalar_WithProcedure_ReturnsScalarValue()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteScalar()).Returns(42);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = connection.ExecuteScalar<MockDbParameter, int>(
+                new DummyProcedure(),
+                null,
+                30);
+
+            Assert.Equal(42, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteScalarAsync with procedure overload returns the scalar result when executing a valid procedure.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteScalarAsync_WithProcedure_ReturnsScalarValue()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteScalar()).Returns(84);
+            var connection = CreateConnectionMock(commandMock).Object;
+            var transaction = new Mock<IDbTransaction>().Object;
+
+            var result = await connection.ExecuteScalarAsync<MockDbParameter, int>(
+                new DummyProcedure(),
+                transaction,
+                30,
+                CancellationToken.None);
+
+            Assert.Equal(84, result);
+        }
+
+        /// <summary>
+        /// Verifies that Query with procedure overload returns mapped entities.
+        /// </summary>
+        [Fact]
+        public void Query_WithProcedure_ReturnsEntities()
+        {
+            var entities = new List<DummyEntity>
+            {
+                new DummyEntity { Id = 1, Name = "Alice" },
+                new DummyEntity { Id = 2, Name = "Bob" }
+            };
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = connection.Query<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that QueryAsync with procedure overload returns mapped entities.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithProcedure_ReturnsEntities()
+        {
+            var entities = new List<DummyEntity>
+            {
+                new DummyEntity { Id = 1, Name = "Alice" },
+                new DummyEntity { Id = 2, Name = "Bob" }
+            };
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = await connection.QueryAsync<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Alice", result[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies procedure overloads for QueryFirst and QueryFirstAsync.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryFirst_WithProcedure_ReturnsFirst_ForSyncAndAsync()
+        {
+            var entities = new List<DummyEntity>
+            {
+                new DummyEntity { Id = 1, Name = "Alice" },
+                new DummyEntity { Id = 2, Name = "Bob" }
+            };
+
+            var commandSync = new Mock<IDbCommand>();
+            commandSync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connectionSync = CreateConnectionMock(commandSync).Object;
+            var firstSync = connectionSync.QueryFirst<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            var commandAsync = new Mock<IDbCommand>();
+            commandAsync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connectionAsync = CreateConnectionMock(commandAsync).Object;
+            var firstAsync = await connectionAsync.QueryFirstAsync<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Equal("Alice", firstSync.Name);
+            Assert.Equal("Alice", firstAsync.Name);
+        }
+
+        /// <summary>
+        /// Verifies procedure overloads for QueryFirstOrDefault and QueryFirstOrDefaultAsync.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryFirstOrDefault_WithProcedure_ReturnsFirstOrDefault_ForSyncAndAsync()
+        {
+            var entities = new List<DummyEntity> { new DummyEntity { Id = 1, Name = "Alice" } };
+
+            var commandSync = new Mock<IDbCommand>();
+            commandSync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connectionSync = CreateConnectionMock(commandSync).Object;
+            var firstSync = connectionSync.QueryFirstOrDefault<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            var commandAsync = new Mock<IDbCommand>();
+            commandAsync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connectionAsync = CreateConnectionMock(commandAsync).Object;
+            var firstAsync = await connectionAsync.QueryFirstOrDefaultAsync<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Equal("Alice", firstSync.Name);
+            Assert.Null(firstAsync);
+        }
+
+        /// <summary>
+        /// Verifies procedure overloads for QuerySingle and QuerySingleAsync.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QuerySingle_WithProcedure_ReturnsSingle_ForSyncAndAsync()
+        {
+            var entities = new List<DummyEntity> { new DummyEntity { Id = 1, Name = "Alice" } };
+
+            var commandSync = new Mock<IDbCommand>();
+            commandSync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connectionSync = CreateConnectionMock(commandSync).Object;
+            var singleSync = connectionSync.QuerySingle<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            var commandAsync = new Mock<IDbCommand>();
+            commandAsync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connectionAsync = CreateConnectionMock(commandAsync).Object;
+            var singleAsync = await connectionAsync.QuerySingleAsync<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Equal("Alice", singleSync.Name);
+            Assert.Equal("Alice", singleAsync.Name);
+        }
+
+        /// <summary>
+        /// Verifies procedure overloads for QuerySingleOrDefault and QuerySingleOrDefaultAsync.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QuerySingleOrDefault_WithProcedure_ReturnsSingleOrDefault_ForSyncAndAsync()
+        {
+            var one = new List<DummyEntity> { new DummyEntity { Id = 1, Name = "Alice" } };
+
+            var commandSync = new Mock<IDbCommand>();
+            commandSync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(one).Object);
+            var connectionSync = CreateConnectionMock(commandSync).Object;
+            var syncResult = connectionSync.QuerySingleOrDefault<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            var commandAsync = new Mock<IDbCommand>();
+            commandAsync.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connectionAsync = CreateConnectionMock(commandAsync).Object;
+            var asyncResult = await connectionAsync.QuerySingleOrDefaultAsync<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Equal("Alice", syncResult.Name);
+            Assert.Null(asyncResult);
+        }
+
+        /// <summary>
+        /// Verifies that Query with procedure overload throws an ArgumentNullException when the connection is null.
+        /// </summary>
+        [Fact]
+        public void Query_WithProcedure_ThrowsOnNullConnection()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                DbConnectionExtensions.Query<DummyEntity, MockDbParameter>(
+                    null,
+                    new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that Query with procedure overload throws an ArgumentNullException when the procedure is null.
+        /// </summary>
+        [Fact]
+        public void Query_WithProcedure_ThrowsOnNullProcedure()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            Assert.Throws<ArgumentNullException>(() =>
+                connection.Query<DummyEntity, MockDbParameter>(null));
+        }
+
+        /// <summary>
+        /// Verifies that QueryAsync with procedure overload throws an ArgumentNullException when the procedure is null.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithProcedure_ThrowsOnNullProcedure()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+                await connection.QueryAsync<DummyEntity, MockDbParameter>(null));
+        }
+
+        /// <summary>
+        /// Verifies that QueryFirst with procedure overload throws an InvalidOperationException when the result is empty.
+        /// </summary>
+        [Fact]
+        public void QueryFirst_WithProcedure_ThrowsWhenEmpty()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            Assert.Throws<InvalidOperationException>(() =>
+                connection.QueryFirst<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingle with procedure overload throws an InvalidOperationException when the result contains more than one element.
+        /// </summary>
+        [Fact]
+        public void QuerySingle_WithProcedure_ThrowsWhenMoreThanOne()
+        {
+            var entities = new List<DummyEntity>
+            {
+                new DummyEntity { Id = 1, Name = "Alice" },
+                new DummyEntity { Id = 2, Name = "Bob" }
+            };
+
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            Assert.Throws<InvalidOperationException>(() =>
+                connection.QuerySingle<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingleAsync with procedure overload throws an InvalidOperationException when the result is empty.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QuerySingleAsync_WithProcedure_ThrowsWhenEmpty()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await connection.QuerySingleAsync<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingleOrDefault with procedure overload throws an InvalidOperationException when the result contains more than one element.
+        /// </summary>
+        [Fact]
+        public void QuerySingleOrDefault_WithProcedure_ThrowsWhenMoreThanOne()
+        {
+            var entities = new List<DummyEntity>
+            {
+                new DummyEntity { Id = 1, Name = "Alice" },
+                new DummyEntity { Id = 2, Name = "Bob" }
+            };
+
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            Assert.Throws<InvalidOperationException>(() =>
+                connection.QuerySingleOrDefault<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingleOrDefaultAsync with procedure overload throws an InvalidOperationException when the result contains more than one element.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QuerySingleOrDefaultAsync_WithProcedure_ThrowsWhenMoreThanOne()
+        {
+            var entities = new List<DummyEntity>
+            {
+                new DummyEntity { Id = 1, Name = "Alice" },
+                new DummyEntity { Id = 2, Name = "Bob" }
+            };
+
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await connection.QuerySingleOrDefaultAsync<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QueryFirstAsync with procedure overload throws when the result is empty.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryFirstAsync_WithProcedure_ThrowsWhenEmpty()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await connection.QueryFirstAsync<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QueryFirstOrDefault with procedure overload returns default when the result is empty.
+        /// </summary>
+        [Fact]
+        public void QueryFirstOrDefault_WithProcedure_ReturnsDefaultWhenEmpty()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = connection.QueryFirstOrDefault<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that QueryFirstOrDefaultAsync with procedure overload returns first item when available.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryFirstOrDefaultAsync_WithProcedure_ReturnsFirstWhenAvailable()
+        {
+            var entities = new List<DummyEntity> { new DummyEntity { Id = 1, Name = "Alice" } };
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = await connection.QueryFirstOrDefaultAsync<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.NotNull(result);
+            Assert.Equal("Alice", result.Name);
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingle with procedure overload throws when the result is empty.
+        /// </summary>
+        [Fact]
+        public void QuerySingle_WithProcedure_ThrowsWhenEmpty()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            Assert.Throws<InvalidOperationException>(() =>
+                connection.QuerySingle<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingleAsync with procedure overload throws when the result contains more than one element.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QuerySingleAsync_WithProcedure_ThrowsWhenMoreThanOne()
+        {
+            var entities = new List<DummyEntity>
+            {
+                new DummyEntity { Id = 1, Name = "Alice" },
+                new DummyEntity { Id = 2, Name = "Bob" }
+            };
+
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await connection.QuerySingleAsync<DummyEntity, MockDbParameter>(new DummyProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingleOrDefault with procedure overload returns default when the result is empty.
+        /// </summary>
+        [Fact]
+        public void QuerySingleOrDefault_WithProcedure_ReturnsDefaultWhenEmpty()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(new List<DummyEntity>()).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = connection.QuerySingleOrDefault<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that QuerySingleOrDefaultAsync with procedure overload returns the single item when available.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QuerySingleOrDefaultAsync_WithProcedure_ReturnsSingleWhenAvailable()
+        {
+            var entities = new List<DummyEntity> { new DummyEntity { Id = 1, Name = "Alice" } };
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(entities).Object);
+            var connection = CreateConnectionMock(commandMock).Object;
+
+            var result = await connection.QuerySingleOrDefaultAsync<DummyEntity, MockDbParameter>(new DummyProcedure());
+
+            Assert.NotNull(result);
+            Assert.Equal("Alice", result.Name);
         }
     }
 }

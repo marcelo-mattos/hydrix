@@ -110,7 +110,10 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     continue;
                 }
 
-                addParameter(command, $"{prefix}{binder.Name}", value);
+                addParameter(
+                    command,
+                    $"{prefix}{binder.Name}",
+                    value);
             }
         }
 

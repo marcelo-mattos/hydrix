@@ -1882,7 +1882,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// <remarks>Call this method to clear any custom database type settings and revert the
             /// parameter to its original type mapping. This is useful when reusing parameter objects for different
             /// commands or queries.</remarks>
-            public override void ResetDbType() { }
+            public override void ResetDbType()
+            { }
         }
 
         /// <summary>
@@ -2185,7 +2186,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// </summary>
             /// <remarks>Override this method to provide custom cancellation logic for operations that
             /// support cancellation. If the operation cannot be canceled, this method may have no effect.</remarks>
-            public override void Cancel() { }
+            public override void Cancel()
+            { }
 
             /// <summary>
             /// Executes a SQL statement against the connection and returns the number of rows affected.
@@ -2203,7 +2205,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// <summary>
             /// Prepares the command for execution by performing any necessary setup or validation steps.
             /// </summary>
-            public override void Prepare() { }
+            public override void Prepare()
+            { }
 
             /// <summary>
             /// Creates a new instance of a database parameter specific to the test implementation.

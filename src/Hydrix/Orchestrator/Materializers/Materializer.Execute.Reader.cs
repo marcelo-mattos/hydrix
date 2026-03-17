@@ -1,8 +1,8 @@
-﻿using Hydrix.Schemas.Contract;
+﻿using Hydrix.Engines;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,16 +34,15 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             object parameters,
             int? timeout)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    timeout);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+            => ExecutionEngine.ExecuteReader(
+                this.DbConnection,
+                sql,
+                parameters,
+                null,
+                CommandType.Text,
+                timeout,
+                CommandBehavior.Default,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -63,17 +62,15 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             IDbTransaction transaction,
             int? timeout)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+            => ExecutionEngine.ExecuteReader(
+                this.DbConnection,
+                sql,
+                parameters,
+                transaction,
+                CommandType.Text,
+                timeout,
+                CommandBehavior.Default,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -136,17 +133,15 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters,
             int? timeout)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
-                    sql,
-                    parameters,
-                    timeout);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+            => ExecutionEngine.ExecuteReader(
+                this.DbConnection,
+                sql,
+                parameters,
+                null,
+                commandType,
+                timeout,
+                CommandBehavior.Default,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -168,18 +163,15 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction,
             int? timeout)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
-                    sql,
-                    parameters,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+            => ExecutionEngine.ExecuteReader(
+                this.DbConnection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                timeout,
+                CommandBehavior.Default,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -249,25 +241,17 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteReaderAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    null,
+                    CommandType.Text,
+                    timeout,
+                    CommandBehavior.Default,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -290,26 +274,17 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteReaderAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    CommandType.Text,
+                    timeout,
+                    CommandBehavior.Default,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -385,26 +360,17 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteReaderAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    null,
+                    commandType,
+                    timeout,
+                    CommandBehavior.Default,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -429,27 +395,17 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteReaderAsync(
+                    this.DbConnection,
                     sql,
                     parameters,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    commandType,
+                    timeout,
+                    CommandBehavior.Default,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -529,15 +485,13 @@ namespace Hydrix.Orchestrator.Materializers
         IDataReader Contract.IMaterializer.ExecuteReader<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
             int? timeout)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    procedure,
-                    timeout);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+            => ExecutionEngine.ExecuteReader(
+                this.DbConnection,
+                procedure,
+                null,
+                timeout,
+                CommandBehavior.Default,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -560,16 +514,13 @@ namespace Hydrix.Orchestrator.Materializers
             IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
             int? timeout)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    procedure,
-                    transaction,
-                    timeout);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+            => ExecutionEngine.ExecuteReader(
+                this.DbConnection,
+                procedure,
+                transaction,
+                timeout,
+                CommandBehavior.Default,
+                _parameterPrefix);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -593,24 +544,15 @@ namespace Hydrix.Orchestrator.Materializers
             IProcedure<TDataParameterDriver> procedure,
             int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteReaderAsync(
+                    this.DbConnection,
                     procedure,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    null,
+                    timeout,
+                    CommandBehavior.Default,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -636,24 +578,14 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteReaderAsync(
+                    this.DbConnection,
                     procedure,
                     transaction,
-                    timeout);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    timeout,
+                    CommandBehavior.Default,
+                    _parameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
     }
 }

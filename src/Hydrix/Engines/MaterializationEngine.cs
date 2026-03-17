@@ -65,6 +65,43 @@ namespace Hydrix.Engines
         }
 
         /// <summary>
+        /// Executes the specified stored procedure and maps the result set to a list of entities of type TEntity.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of entity to map the query results to. Must implement ITable and have a parameterless constructor.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure. Must be open and valid.</param>
+        /// <param name="procedure">The stored procedure descriptor and parameters.</param>
+        /// <param name="transaction">The transaction context in which to execute the procedure, or null to execute outside of a transaction.</param>
+        /// <param name="limit">The maximum number of entities to return. Specify 0 to return all results.</param>
+        /// <param name="commandTimeout">The command timeout, in seconds. If null, the default timeout for the connection is used.</param>
+        /// <param name="parameterPrefix">The prefix to use for parameter names. If null, the default prefix from configuration is used.</param>
+        /// <returns>A list of entities of type TEntity mapped from the result set.</returns>
+        public static IList<TEntity> Query<TEntity, TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int limit = 0,
+            int? commandTimeout = null,
+            string parameterPrefix = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            EnsureValidEntityRequest<TEntity>();
+
+            using var dataReader = ExecutionEngine.ExecuteReader(
+                connection,
+                procedure,
+                transaction,
+                commandTimeout,
+                CommandBehavior.Default,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+
+            return Materializer.ConvertDataReaderToEntities<TEntity>(
+                dataReader,
+                limit);
+        }
+
+        /// <summary>
         /// Asynchronously executes a SQL query and maps the result set to a list of entities of type TEntity.
         /// </summary>
         /// <remarks>The method automatically maps each row in the result set to an instance of TEntity
@@ -104,6 +141,48 @@ namespace Hydrix.Engines
                     parameters,
                     transaction,
                     commandType,
+                    commandTimeout,
+                    CommandBehavior.Default,
+                    parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return Materializer.ConvertDataReaderToEntities<TEntity>(
+                dataReader,
+                limit);
+        }
+
+        /// <summary>
+        /// Asynchronously executes the specified stored procedure and maps the result set to a list of entities of type TEntity.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of entity to map the query results to. Must implement ITable and have a parameterless constructor.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure. Must be open and valid.</param>
+        /// <param name="procedure">The stored procedure descriptor and parameters.</param>
+        /// <param name="transaction">The transaction context in which to execute the procedure, or null to execute outside of a transaction.</param>
+        /// <param name="limit">The maximum number of entities to return. Specify 0 to return all results.</param>
+        /// <param name="commandTimeout">The command timeout, in seconds. If null, the default timeout for the connection is used.</param>
+        /// <param name="parameterPrefix">The prefix to use for parameter names. If null, the default prefix from configuration is used.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task representing the asynchronous operation. The task result contains the mapped entity list.</returns>
+        public static async Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int limit = 0,
+            int? commandTimeout = null,
+            string parameterPrefix = null,
+            CancellationToken cancellationToken = default)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            EnsureValidEntityRequest<TEntity>();
+
+            using var dataReader = await ExecutionEngine
+                .ExecuteReaderAsync(
+                    connection,
+                    procedure,
+                    transaction,
                     commandTimeout,
                     CommandBehavior.Default,
                     parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,

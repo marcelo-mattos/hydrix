@@ -1,4 +1,5 @@
-﻿using Hydrix.Engines;
+﻿using Hydrix.Configuration;
+using Hydrix.Engines;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,7 @@ namespace Hydrix.Orchestrator.Materializers
             => CommandEngine.CreateCommand(
                 this.DbConnection,
                 transaction,
+                CommandType.Text,
                 sql,
                 parameters,
                 _parameterPrefix,
@@ -85,6 +87,7 @@ namespace Hydrix.Orchestrator.Materializers
             return CommandEngine.CreateCommand(
                 this.DbConnection,
                 transaction,
+                CommandType.Text,
                 sql,
                 parameters,
                 _parameterPrefix,
@@ -126,6 +129,7 @@ namespace Hydrix.Orchestrator.Materializers
                 commandType,
                 sql,
                 parameters,
+                HydrixConfiguration.Options.ParameterPrefix,
                 timeout,
                 this._logger);
 
@@ -165,6 +169,7 @@ namespace Hydrix.Orchestrator.Materializers
                 commandType,
                 sql,
                 parameters,
+                HydrixConfiguration.Options.ParameterPrefix,
                 timeout,
                 this._logger);
         }

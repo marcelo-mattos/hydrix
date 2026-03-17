@@ -1,5 +1,6 @@
 ﻿using Hydrix.Orchestrator.Caching;
 using System;
+using System.Collections.Generic;
 using System.Data;
 
 namespace Hydrix.Engines
@@ -24,6 +25,19 @@ namespace Hydrix.Engines
         {
             if (parameters == null)
                 return;
+
+            if (parameters is IDataParameter dbParam)
+            {
+                command.Parameters.Add(dbParam);
+                return;
+            }
+
+            if (parameters is IEnumerable<IDataParameter> dbParams)
+            {
+                foreach (var parameter in dbParams)
+                    command.Parameters.Add(parameter);
+                return;
+            }
 
             var binder = ParameterBinderCache.GetOrAdd(
                 parameters.GetType());

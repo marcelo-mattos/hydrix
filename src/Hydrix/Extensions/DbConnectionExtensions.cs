@@ -60,6 +60,33 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
+        /// Executes a stored procedure represented by the specified procedure object and returns the number of rows
+        /// affected.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The parameter driver type used by the procedure.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction in which to execute the procedure.</param>
+        /// <param name="commandTimeout">An optional command timeout in seconds.</param>
+        /// <returns>The number of rows affected by the stored procedure execution.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="connection"/> or <paramref name="procedure"/> is null.</exception>
+        public static int Execute<TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            ValidateProcedure(connection, procedure);
+            return ExecutionEngine.ExecuteNonQuery(
+                connection,
+                procedure,
+                transaction,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix);
+        }
+
+        /// <summary>
         /// Asynchronously executes a SQL command using the specified database connection and returns the number of rows
         /// affected.
         /// </summary>
@@ -84,7 +111,7 @@ namespace Hydrix.Extensions
         /// command.</returns>
         /// <exception cref="ArgumentNullException">Thrown if the connection parameter is null.</exception>
         /// <exception cref="ArgumentException">Thrown when the sql parameter is null, empty, or consists only of white-space characters.</exception>
-        public static Task<int> ExecuteAsync(
+        public static async Task<int> ExecuteAsync(
             this IDbConnection connection,
             string sql,
             object parameters = null,
@@ -94,7 +121,7 @@ namespace Hydrix.Extensions
             CancellationToken cancellationToken = default)
         {
             ValidateCommand(connection, sql);
-            return ExecutionEngine.ExecuteNonQueryAsync(
+            return await ExecutionEngine.ExecuteNonQueryAsync(
                 connection,
                 sql,
                 parameters,
@@ -102,7 +129,39 @@ namespace Hydrix.Extensions
                 commandType,
                 commandTimeout,
                 HydrixConfiguration.Options.ParameterPrefix,
-                cancellationToken);
+                cancellationToken)
+            .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Asynchronously executes a stored procedure represented by the specified procedure object and returns the
+        /// number of rows affected.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The parameter driver type used by the procedure.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction in which to execute the procedure.</param>
+        /// <param name="commandTimeout">An optional command timeout in seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task containing the number of rows affected by the stored procedure execution.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="connection"/> or <paramref name="procedure"/> is null.</exception>
+        public static async Task<int> ExecuteAsync<TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CancellationToken cancellationToken = default)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            ValidateProcedure(connection, procedure);
+            return await ExecutionEngine.ExecuteNonQueryAsync(
+                connection,
+                procedure,
+                transaction,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix,
+                cancellationToken)
+            .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -148,6 +207,35 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
+        /// Executes a stored procedure represented by the specified procedure object and returns the first column of
+        /// the first row in the result set.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The parameter driver type used by the procedure.</typeparam>
+        /// <typeparam name="TResult">The type to which the result value is cast before being returned.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction in which to execute the procedure.</param>
+        /// <param name="commandTimeout">An optional command timeout in seconds.</param>
+        /// <returns>The first column of the first row in the result set.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="connection"/> or <paramref name="procedure"/> is null.</exception>
+        public static TResult ExecuteScalar<TDataParameterDriver, TResult>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            ValidateProcedure(connection, procedure);
+            return ExecutionEngine.ExecuteScalar(
+                connection,
+                procedure,
+                transaction,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix)
+            .As<TResult>();
+        }
+
+        /// <summary>
         /// Asynchronously executes a SQL command and returns the value of the first column in the first row of the
         /// result set, cast to the specified type.
         /// </summary>
@@ -187,7 +275,42 @@ namespace Hydrix.Extensions
                 commandType,
                 commandTimeout,
                 HydrixConfiguration.Options.ParameterPrefix,
-                cancellationToken))
+                cancellationToken)
+            .ConfigureAwait(false))
+            .As<TResult>();
+        }
+
+        /// <summary>
+        /// Asynchronously executes a stored procedure represented by the specified procedure object and returns the
+        /// first column of the first row in the result set.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The parameter driver type used by the procedure.</typeparam>
+        /// <typeparam name="TResult">The type to which the result value is cast before being returned.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction in which to execute the procedure.</param>
+        /// <param name="commandTimeout">An optional command timeout in seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task containing the first column of the first row in the result set.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="connection"/> or <paramref name="procedure"/> is null.</exception>
+        public static async Task<TResult> ExecuteScalarAsync<TDataParameterDriver, TResult>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CancellationToken cancellationToken = default)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            ValidateProcedure(connection, procedure);
+
+            return (await ExecutionEngine.ExecuteScalarAsync(
+                connection,
+                procedure,
+                transaction,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix,
+                cancellationToken)
+            .ConfigureAwait(false))
             .As<TResult>();
         }
 
@@ -238,6 +361,37 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
+        /// Executes the specified stored procedure and returns a list of entities of type TEntity.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of entities to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional database transaction within which to execute the command.</param>
+        /// <param name="limit">An optional limit on the number of records to process. If not specified, all records are processed.</param>
+        /// <param name="commandTimeout">An optional timeout value, in seconds, for the command execution.</param>
+        /// <returns>A list of entities of type TEntity that represent the result set of the executed procedure.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if the connection or procedure parameter is null.</exception>
+        public static IList<TEntity> Query<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int limit = 0,
+            int? commandTimeout = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            ValidateProcedure(connection, procedure);
+            return MaterializationEngine.Query<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                limit,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix);
+        }
+
+        /// <summary>
         /// Asynchronously executes a SQL query and returns a list of entities of type TEntity mapped from the result
         /// set.
         /// </summary>
@@ -276,16 +430,51 @@ namespace Hydrix.Extensions
         {
             ValidateCommand(connection, sql);
             return await MaterializationEngine.QueryAsync<TEntity>(
-                    connection,
-                    sql,
-                    parameters,
-                    transaction,
-                    commandType,
-                    limit,
-                    commandTimeout,
-                    HydrixConfiguration.Options.ParameterPrefix,
-                    cancellationToken)
-                .ConfigureAwait(false);
+                connection,
+                sql,
+                parameters,
+                transaction,
+                commandType,
+                limit,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix,
+                cancellationToken)
+            .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Asynchronously executes the specified stored procedure and returns a list of entities of type TEntity.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of entities to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional database transaction within which to execute the command.</param>
+        /// <param name="limit">An optional limit on the number of records to process. If not specified, all records are processed.</param>
+        /// <param name="commandTimeout">An optional timeout value, in seconds, for executing the command.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task representing the asynchronous operation with the mapped entity list.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if the connection or procedure parameter is null.</exception>
+        public static async Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int limit = 0,
+            int? commandTimeout = null,
+            CancellationToken cancellationToken = default)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            ValidateProcedure(connection, procedure);
+            return await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                limit,
+                commandTimeout,
+                HydrixConfiguration.Options.ParameterPrefix,
+                cancellationToken)
+            .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -333,6 +522,39 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
+        /// Retrieves the first entity of type TEntity from the specified stored procedure result set.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to retrieve.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction within which the command executes.</param>
+        /// <param name="commandTimeout">An optional command timeout in seconds.</param>
+        /// <returns>The first entity of type TEntity returned by the procedure.</returns>
+        public static TEntity QueryFirst<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = Query<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.FirstRecordLimit,
+                commandTimeout);
+
+            using var enumerator = result.GetEnumerator();
+
+            if (!enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains no elements.");
+
+            return enumerator.Current;
+        }
+
+        /// <summary>
         /// Asynchronously executes a SQL query and returns the first entity of the specified type from the result set.
         /// </summary>
         /// <typeparam name="TEntity">The type of the entity to return. Must implement the ITable interface and have a parameterless constructor.</typeparam>
@@ -367,7 +589,45 @@ namespace Hydrix.Extensions
                 commandType,
                 Materializer.FirstRecordLimit,
                 commandTimeout,
-                cancellationToken);
+                cancellationToken)
+            .ConfigureAwait(false);
+
+            using var enumerator = result.GetEnumerator();
+
+            if (!enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains no elements.");
+
+            return enumerator.Current;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the first entity of type TEntity from the specified stored procedure result set.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional database transaction within which to execute the query.</param>
+        /// <param name="commandTimeout">An optional timeout, in seconds, to wait before terminating the command execution.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task containing the first entity of type TEntity returned by the procedure.</returns>
+        public static async Task<TEntity> QueryFirstAsync<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CancellationToken cancellationToken = default)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = await QueryAsync<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.FirstRecordLimit,
+                commandTimeout,
+                cancellationToken)
+            .ConfigureAwait(false);
 
             using var enumerator = result.GetEnumerator();
 
@@ -417,6 +677,39 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
+        /// Executes the specified stored procedure and returns the first result mapped to an entity of type TEntity,
+        /// or the default value for TEntity if no results are found.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction within which the command executes.</param>
+        /// <param name="commandTimeout">An optional command timeout, in seconds.</param>
+        /// <returns>The first entity of type TEntity returned by the procedure, or the default value for TEntity.</returns>
+        public static TEntity QueryFirstOrDefault<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = Query<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.FirstRecordLimit,
+                commandTimeout);
+
+            using var enumerator = result.GetEnumerator();
+
+            return enumerator.MoveNext()
+                ? enumerator.Current
+                : default;
+        }
+
+        /// <summary>
         /// Asynchronously executes a SQL query and returns the first result mapped to the specified entity type, or the
         /// default value if no results are found.
         /// </summary>
@@ -448,7 +741,45 @@ namespace Hydrix.Extensions
                 commandType,
                 Materializer.FirstRecordLimit,
                 commandTimeout,
-                cancellationToken);
+                cancellationToken)
+            .ConfigureAwait(false);
+
+            using var enumerator = result.GetEnumerator();
+
+            return enumerator.MoveNext()
+                ? enumerator.Current
+                : default;
+        }
+
+        /// <summary>
+        /// Asynchronously executes the specified stored procedure and returns the first result mapped to TEntity,
+        /// or the default value if no results are found.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction within which the command executes.</param>
+        /// <param name="commandTimeout">An optional command timeout in seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task containing the first entity or default value.</returns>
+        public static async Task<TEntity> QueryFirstOrDefaultAsync<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CancellationToken cancellationToken = default)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = await QueryAsync<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.FirstRecordLimit,
+                commandTimeout,
+                cancellationToken)
+            .ConfigureAwait(false);
 
             using var enumerator = result.GetEnumerator();
 
@@ -505,6 +836,45 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
+        /// Executes the specified stored procedure and returns a single entity of type TEntity.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction within which the command executes.</param>
+        /// <param name="commandTimeout">An optional command timeout in seconds.</param>
+        /// <returns>A single entity of type TEntity that matches the procedure result.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the procedure returns no results or more than one result.</exception>
+        public static TEntity QuerySingle<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = Query<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.SingleRecordLimit,
+                commandTimeout);
+
+            using var enumerator = result.GetEnumerator();
+
+            if (!enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains no elements.");
+
+            var first = enumerator.Current;
+
+            if (enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains more than one element.");
+
+            return first;
+        }
+
+        /// <summary>
         /// Asynchronously executes a SQL query and returns a single entity of type TEntity. Throws an exception if the
         /// query returns no results or more than one result.
         /// </summary>
@@ -541,7 +911,51 @@ namespace Hydrix.Extensions
                 commandType,
                 Materializer.SingleRecordLimit,
                 commandTimeout,
-                cancellationToken);
+                cancellationToken)
+            .ConfigureAwait(false);
+
+            using var enumerator = result.GetEnumerator();
+
+            if (!enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains no elements.");
+
+            var first = enumerator.Current;
+
+            if (enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains more than one element.");
+
+            return first;
+        }
+
+        /// <summary>
+        /// Asynchronously executes the specified stored procedure and returns a single entity of type TEntity.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction within which the command executes.</param>
+        /// <param name="commandTimeout">The command timeout in seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task containing the single entity of type TEntity returned by the procedure.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the procedure returns no results or more than one result.</exception>
+        public static async Task<TEntity> QuerySingleAsync<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CancellationToken cancellationToken = default)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = await QueryAsync<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.SingleRecordLimit,
+                commandTimeout,
+                cancellationToken)
+            .ConfigureAwait(false);
 
             using var enumerator = result.GetEnumerator();
 
@@ -606,6 +1020,45 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
+        /// Executes the specified stored procedure and returns a single entity of type TEntity, or the default value if no result is found.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to return.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to execute the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional transaction within which the query is executed.</param>
+        /// <param name="commandTimeout">An optional command timeout, in seconds.</param>
+        /// <returns>A single entity of type TEntity, or the default value if no results are found.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the procedure returns more than one result.</exception>
+        public static TEntity QuerySingleOrDefault<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = Query<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.SingleRecordLimit,
+                commandTimeout);
+
+            using var enumerator = result.GetEnumerator();
+
+            if (!enumerator.MoveNext())
+                return default;
+
+            var first = enumerator.Current;
+
+            if (enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains more than one element.");
+
+            return first;
+        }
+
+        /// <summary>
         /// Asynchronously retrieves a single entity of the specified type from the database, or returns the default
         /// value if no entity is found. Throws an exception if more than one entity matches the query.
         /// </summary>
@@ -644,7 +1097,51 @@ namespace Hydrix.Extensions
                 commandType,
                 Materializer.SingleRecordLimit,
                 commandTimeout,
-                cancellationToken);
+                cancellationToken)
+            .ConfigureAwait(false);
+
+            using var enumerator = result.GetEnumerator();
+
+            if (!enumerator.MoveNext())
+                return default;
+
+            var first = enumerator.Current;
+
+            if (enumerator.MoveNext())
+                throw new InvalidOperationException("Sequence contains more than one element.");
+
+            return first;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a single entity of the specified type from the stored procedure result, or returns default if no entity is found.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to retrieve.</typeparam>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection to use for executing the procedure.</param>
+        /// <param name="procedure">The stored procedure definition containing the command metadata and parameters.</param>
+        /// <param name="transaction">An optional database transaction within which the command executes.</param>
+        /// <param name="commandTimeout">An optional command execution timeout, in seconds.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>A task containing the single entity if found; otherwise, the default value.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the procedure returns more than one entity.</exception>
+        public static async Task<TEntity> QuerySingleOrDefaultAsync<TEntity, TDataParameterDriver>(
+            this IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CancellationToken cancellationToken = default)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var result = await QueryAsync<TEntity, TDataParameterDriver>(
+                connection,
+                procedure,
+                transaction,
+                Materializer.SingleRecordLimit,
+                commandTimeout,
+                cancellationToken)
+            .ConfigureAwait(false);
 
             using var enumerator = result.GetEnumerator();
 
@@ -670,11 +1167,38 @@ namespace Hydrix.Extensions
             IDbConnection connection,
             string sql)
         {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(connection);
+#else
+            if (connection == null)
+                throw new ArgumentNullException(nameof(connection));
+#endif
+            if (string.IsNullOrWhiteSpace(sql))
+                throw new ArgumentException("SQL command cannot be null or empty.", nameof(sql));
+        }
+
+        /// <summary>
+        /// Validates the provided database connection and procedure instance for correctness before execution.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The parameter driver type used by the procedure.</typeparam>
+        /// <param name="connection">The database connection to validate. This parameter cannot be null.</param>
+        /// <param name="procedure">The procedure instance to validate. This parameter cannot be null.</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="connection"/> or <paramref name="procedure"/> is null.</exception>
+        private static void ValidateProcedure<TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(connection);
+            ArgumentNullException.ThrowIfNull(procedure);
+#else
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
 
-            if (string.IsNullOrWhiteSpace(sql))
-                throw new ArgumentException("SQL command cannot be null or empty.", nameof(sql));
+            if (procedure == null)
+                throw new ArgumentNullException(nameof(procedure));
+#endif
         }
     }
 }

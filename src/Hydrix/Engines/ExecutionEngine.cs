@@ -1,5 +1,6 @@
 using Hydrix.Configuration;
 using Hydrix.Extensions;
+using Hydrix.Schemas.Contract;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -34,14 +35,44 @@ namespace Hydrix.Engines
             int? commandTimeout = null,
             string parameterPrefix = null)
         {
-            using var command = CreateCommand(
+            using var command = CommandEngine.CreateCommand(
                 connection,
-                sql,
-                parameters,
                 transaction,
                 commandType,
+                sql,
+                parameters,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 commandTimeout,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+                HydrixConfiguration.Options.Logger);
+
+            return command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Executes a stored procedure command and returns the number of affected rows.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to create and execute the command.</param>
+        /// <param name="procedure">The procedure descriptor and parameters.</param>
+        /// <param name="transaction">The optional transaction associated with the command.</param>
+        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
+        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <returns>The number of rows affected.</returns>
+        public static int ExecuteNonQuery<TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            string parameterPrefix = null)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            using var command = CommandEngine.CreateCommand(
+                connection,
+                transaction,
+                procedure,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
+                commandTimeout,
+                HydrixConfiguration.Options.Logger);
 
             return command.ExecuteNonQuery();
         }
@@ -68,14 +99,54 @@ namespace Hydrix.Engines
             string parameterPrefix = null,
             CancellationToken cancellationToken = default)
         {
-            using var command = CreateCommand(
+            using var command = CommandEngine.CreateCommand(
                 connection,
-                sql,
-                parameters,
                 transaction,
                 commandType,
+                sql,
+                parameters,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 commandTimeout,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+                HydrixConfiguration.Options.Logger);
+
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                    command.ExecuteNonQuery,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Executes a stored procedure command asynchronously and returns the number of affected rows.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to create and execute the command.</param>
+        /// <param name="procedure">The procedure descriptor and parameters.</param>
+        /// <param name="transaction">The optional transaction associated with the command.</param>
+        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
+        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
+        /// <returns>A task containing the number of rows affected.</returns>
+        public static async Task<int> ExecuteNonQueryAsync<TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            string parameterPrefix = null,
+            CancellationToken cancellationToken = default)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            using var command = CommandEngine.CreateCommand(
+                connection,
+                transaction,
+                procedure,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
+                commandTimeout,
+                HydrixConfiguration.Options.Logger);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -108,14 +179,44 @@ namespace Hydrix.Engines
             int? commandTimeout = null,
             string parameterPrefix = null)
         {
-            using var command = CreateCommand(
+            using var command = CommandEngine.CreateCommand(
                 connection,
-                sql,
-                parameters,
                 transaction,
                 commandType,
+                sql,
+                parameters,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 commandTimeout,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+                HydrixConfiguration.Options.Logger);
+
+            return command.ExecuteScalar();
+        }
+
+        /// <summary>
+        /// Executes a stored procedure command and returns the first column of the first row.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to create and execute the command.</param>
+        /// <param name="procedure">The procedure descriptor and parameters.</param>
+        /// <param name="transaction">The optional transaction associated with the command.</param>
+        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
+        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <returns>The scalar result.</returns>
+        public static object ExecuteScalar<TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            string parameterPrefix = null)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            using var command = CommandEngine.CreateCommand(
+                connection,
+                transaction,
+                procedure,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
+                commandTimeout,
+                HydrixConfiguration.Options.Logger);
 
             return command.ExecuteScalar();
         }
@@ -142,14 +243,54 @@ namespace Hydrix.Engines
             string parameterPrefix = null,
             CancellationToken cancellationToken = default)
         {
-            using var command = CreateCommand(
+            using var command = CommandEngine.CreateCommand(
                 connection,
-                sql,
-                parameters,
                 transaction,
                 commandType,
+                sql,
+                parameters,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 commandTimeout,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+                HydrixConfiguration.Options.Logger);
+
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteScalarAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                    command.ExecuteScalar,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Executes a stored procedure command asynchronously and returns the first column of the first row.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to create and execute the command.</param>
+        /// <param name="procedure">The procedure descriptor and parameters.</param>
+        /// <param name="transaction">The optional transaction associated with the command.</param>
+        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
+        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
+        /// <returns>A task containing the scalar result.</returns>
+        public static async Task<object> ExecuteScalarAsync<TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            string parameterPrefix = null,
+            CancellationToken cancellationToken = default)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            using var command = CommandEngine.CreateCommand(
+                connection,
+                transaction,
+                procedure,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
+                commandTimeout,
+                HydrixConfiguration.Options.Logger);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -184,14 +325,46 @@ namespace Hydrix.Engines
             CommandBehavior behavior = CommandBehavior.Default,
             string parameterPrefix = null)
         {
-            var command = CreateCommand(
+            using var command = CommandEngine.CreateCommand(
                 connection,
-                sql,
-                parameters,
                 transaction,
                 commandType,
+                sql,
+                parameters,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 commandTimeout,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+                HydrixConfiguration.Options.Logger);
+
+            return command.ExecuteReader(behavior);
+        }
+
+        /// <summary>
+        /// Executes a stored procedure command and returns a data reader.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
+        /// <param name="connection">The database connection used to create and execute the command.</param>
+        /// <param name="procedure">The procedure descriptor and parameters.</param>
+        /// <param name="transaction">The optional transaction associated with the command.</param>
+        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
+        /// <param name="behavior">The command behavior flags.</param>
+        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <returns>The data reader.</returns>
+        public static IDataReader ExecuteReader<TDataParameterDriver>(
+            IDbConnection connection,
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandBehavior behavior = CommandBehavior.Default,
+            string parameterPrefix = null)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            using var command = CommandEngine.CreateCommand(
+                connection,
+                transaction,
+                procedure,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
+                commandTimeout,
+                HydrixConfiguration.Options.Logger);
 
             return command.ExecuteReader(behavior);
         }
@@ -220,14 +393,15 @@ namespace Hydrix.Engines
             string parameterPrefix = null,
             CancellationToken cancellationToken = default)
         {
-            var command = CreateCommand(
+            using var command = CommandEngine.CreateCommand(
                 connection,
-                sql,
-                parameters,
                 transaction,
                 commandType,
+                sql,
+                parameters,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 commandTimeout,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+                HydrixConfiguration.Options.Logger);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -241,45 +415,44 @@ namespace Hydrix.Engines
         }
 
         /// <summary>
-        /// Creates a configured command using either object-based or parameter-collection binding.
+        /// Executes a stored procedure command asynchronously and returns a data reader.
         /// </summary>
+        /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
         /// <param name="connection">The database connection used to create and execute the command.</param>
-        /// <param name="sql">The SQL command text or stored procedure name.</param>
-        /// <param name="parameters">The optional parameters object or parameter collection.</param>
+        /// <param name="procedure">The procedure descriptor and parameters.</param>
         /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandType">The command interpretation mode.</param>
         /// <param name="commandTimeout">The optional command timeout in seconds.</param>
+        /// <param name="behavior">The command behavior flags.</param>
         /// <param name="parameterPrefix">The parameter name prefix.</param>
-        /// <returns>The configured command.</returns>
-        private static IDbCommand CreateCommand(
+        /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
+        /// <returns>The data reader.</returns>
+        public static async Task<IDataReader> ExecuteReaderAsync<TDataParameterDriver>(
             IDbConnection connection,
-            string sql,
-            object parameters,
-            IDbTransaction transaction,
-            CommandType commandType,
-            int? commandTimeout,
-            string parameterPrefix)
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction = null,
+            int? commandTimeout = null,
+            CommandBehavior behavior = CommandBehavior.Default,
+            string parameterPrefix = null,
+            CancellationToken cancellationToken = default)
+            where TDataParameterDriver : IDataParameter, new()
         {
-            if (commandType == CommandType.Text)
-                return CommandEngine.CreateCommand(
-                    connection,
-                    transaction,
-                    sql,
-                    parameters,
-                    parameterPrefix,
-                    commandTimeout,
-                    HydrixConfiguration.Options.Logger);
-
-            var sqlParameters = parameters?.AsIDataParameters();
-
-            return CommandEngine.CreateCommand(
+            using var command = CommandEngine.CreateCommand(
                 connection,
                 transaction,
-                commandType,
-                sql,
-                sqlParameters,
+                procedure,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                 commandTimeout,
                 HydrixConfiguration.Options.Logger);
+
+            if (command is DbCommand dbCommand)
+                return await dbCommand
+                    .ExecuteReaderAsync(behavior, cancellationToken)
+                    .ConfigureAwait(false);
+
+            return await Task.Run(
+                    () => command.ExecuteReader(behavior),
+                    cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }
