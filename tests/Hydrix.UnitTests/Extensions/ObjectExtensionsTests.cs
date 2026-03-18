@@ -167,6 +167,19 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that As&lt;T&gt; uses the same-type shortcut for targets without explicit conversion branches.
+        /// </summary>
+        [Fact]
+        public void As_ReturnsSameValue_WhenAlreadyTargetType_ThroughSameTypeBranch()
+        {
+            object value = 'Z';
+
+            var converted = value.As<char>();
+
+            Assert.Equal('Z', converted);
+        }
+
+        /// <summary>
         /// Verifies that As&lt;T&gt; returns null for nullable value types when the input is null.
         /// </summary>
         [Fact]
@@ -238,6 +251,139 @@ namespace Hydrix.UnitTests.Extensions
 
             Assert.True(converted.HasValue);
             Assert.Equal(TestStatus.Active, converted.Value);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts a Guid from a byte array payload.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsGuid_FromByteArray()
+        {
+            var guid = Guid.NewGuid();
+            object bytes = guid.ToByteArray();
+
+            var converted = bytes.As<Guid>();
+
+            Assert.Equal(guid, converted);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts non-string values to string using ToString().
+        /// </summary>
+        [Fact]
+        public void As_ConvertsNonStringValue_ToString()
+        {
+            object value = 123;
+
+            var converted = value.As<string>();
+
+            Assert.Equal("123", converted);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts integral values to boolean values.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsIntegralValues_ToBoolean()
+        {
+            object intValue = 1;
+            object shortValue = (short)0;
+            object longValue = 5L;
+
+            Assert.True(intValue.As<bool>());
+            Assert.False(shortValue.As<bool>());
+            Assert.True(longValue.As<bool>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; returns direct boolean values through the specialized boolean branch.
+        /// </summary>
+        [Fact]
+        public void As_ReturnsDirectBooleanValue_WhenSourceIsBoolean()
+        {
+            object value = true;
+
+            var converted = value.As<bool>();
+
+            Assert.True(converted);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; falls back to Convert.ChangeType for boolean conversion when source is not an integer type.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsString_ToBoolean_UsingFallback()
+        {
+            object value = "true";
+
+            var converted = value.As<bool>();
+
+            Assert.True(converted);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts string values to all supported numeric target types.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsString_ToSupportedNumericTypes()
+        {
+            object asInt = "10";
+            object asLong = "20";
+            object asShort = "30";
+            object asByte = "40";
+            object asDecimal = "50.5";
+            object asDouble = "60.25";
+            object asFloat = "70.75";
+
+            Assert.Equal(10, asInt.As<int>());
+            Assert.Equal(20L, asLong.As<long>());
+            Assert.Equal((short)30, asShort.As<short>());
+            Assert.Equal((byte)40, asByte.As<byte>());
+            Assert.Equal(50.5m, asDecimal.As<decimal>());
+            Assert.Equal(60.25d, asDouble.As<double>());
+            Assert.Equal(70.75f, asFloat.As<float>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts a date string to DateTime.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsString_ToDateTime()
+        {
+            object value = "2024-01-31T10:20:30";
+
+            var converted = value.As<DateTime>();
+
+            Assert.Equal(2024, converted.Year);
+            Assert.Equal(1, converted.Month);
+            Assert.Equal(31, converted.Day);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; returns direct DateTime values through the specialized DateTime branch.
+        /// </summary>
+        [Fact]
+        public void As_ReturnsDirectDateTimeValue_WhenSourceIsDateTime()
+        {
+            var now = DateTime.UtcNow;
+            object value = now;
+
+            var converted = value.As<DateTime>();
+
+            Assert.Equal(now, converted);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts unsupported explicit target types through fallback conversion logic.
+        /// </summary>
+        [Fact]
+        public void As_UsesFallback_ForTypesWithoutExplicitBranch()
+        {
+            object value = "A";
+
+            var converted = value.As<char>();
+
+            Assert.Equal('A', converted);
         }
     }
 }
