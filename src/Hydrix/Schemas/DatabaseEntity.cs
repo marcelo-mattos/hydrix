@@ -3,10 +3,12 @@ using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Metadata.Builders;
+using Hydrix.Orchestrator.Metadata.Snapshots;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Threading;
 
 namespace Hydrix.Schemas
 {
@@ -20,22 +22,11 @@ namespace Hydrix.Schemas
         IEntity
     {
         /// <summary>
-        /// Holds the last entity type processed in the current thread context.
+        /// Holds the process-wide hot cache snapshot for the most recently requested entity metadata.
         /// </summary>
-        /// <remarks>This field is marked with the ThreadStatic attribute, meaning its value is unique per
-        /// thread. It is intended for internal use to track entity type state during thread-specific
-        /// operations.</remarks>
-        [ThreadStatic]
-        private static Type _lastEntityType;
-
-        /// <summary>
-        /// Holds the metadata of the most recently processed entity for the current thread.
-        /// </summary>
-        /// <remarks>This field is marked with the [ThreadStatic] attribute, ensuring that each thread has
-        /// its own independent value. It is intended for internal use to optimize entity building operations by caching
-        /// metadata per thread.</remarks>
-        [ThreadStatic]
-        private static EntityBuilderMetadata _lastEntityMetadata;
+        /// <remarks>This field is read/written using volatile operations to provide a lock-free fast path for repeated
+        /// metadata lookups in high-throughput and async scenarios.</remarks>
+        private static EntityMetadataSnapshot _cache;
 
         /// <summary>
         /// Validates the current object and returns a value that indicates whether the object is in a valid state.
@@ -128,18 +119,22 @@ namespace Hydrix.Schemas
         private static EntityBuilderMetadata GetOrAddEntityMetadata(
             Type entityType)
         {
+            var snapshot = Volatile.Read(ref _cache);
+
             if (ReferenceEquals(
-                    _lastEntityType,
-                    entityType) &&
-                _lastEntityMetadata != null)
+                snapshot?.EntityType,
+                entityType))
             {
-                return _lastEntityMetadata;
+                return snapshot.Metadata;
             }
 
             var metadata = EntityBuilderMetadataCache.GetMetadata(entityType);
 
-            _lastEntityType = entityType;
-            _lastEntityMetadata = metadata;
+            Volatile.Write(
+                ref _cache,
+                new EntityMetadataSnapshot(
+                    entityType,
+                    metadata));
 
             return metadata;
         }

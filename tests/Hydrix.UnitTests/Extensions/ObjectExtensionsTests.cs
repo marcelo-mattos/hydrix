@@ -404,5 +404,58 @@ namespace Hydrix.UnitTests.Extensions
 
             Assert.Equal('A', converted);
         }
+
+        /// <summary>
+        /// Verifies that the Guid converter delegate returns direct Guid values without additional parsing.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_GuidDelegate_ReturnsDirectGuid_WhenValueIsGuid()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildConverter",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(Guid) });
+            var guid = Guid.NewGuid();
+
+            var result = converter(guid);
+
+            Assert.Equal(guid, result);
+        }
+
+        /// <summary>
+        /// Verifies that the boolean converter delegate returns direct bool values without fallback conversion.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_BooleanDelegate_ReturnsDirectBool_WhenValueIsBool()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildConverter",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(bool) });
+
+            var result = converter(true);
+
+            Assert.Equal(true, result);
+        }
+
+        /// <summary>
+        /// Verifies that the DateTime converter delegate returns direct DateTime values without fallback conversion.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_DateTimeDelegate_ReturnsDirectDateTime_WhenValueIsDateTime()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildConverter",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(DateTime) });
+            var now = DateTime.UtcNow;
+
+            var result = converter(now);
+
+            Assert.Equal(now, result);
+        }
     }
 }

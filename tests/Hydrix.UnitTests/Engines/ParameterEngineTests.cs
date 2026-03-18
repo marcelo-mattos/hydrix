@@ -2,6 +2,7 @@ using Hydrix.Engines;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using Xunit;
 
@@ -17,6 +18,18 @@ namespace Hydrix.UnitTests.Engines
     /// logic.</remarks>
     public class ParameterEngineTests
     {
+        /// <summary>
+        /// Represents a non-formattable value used to validate fallback string formatting behavior.
+        /// </summary>
+        private class NonFormattableValue
+        {
+            /// <summary>
+            /// Returns the string representation for test assertions.
+            /// </summary>
+            /// <returns>A deterministic string value.</returns>
+            public override string ToString() => "non-formattable";
+        }
+
         /// <summary>
         /// Represents a mock implementation of the <see cref="IDbCommand"/> interface for testing or simulation
         /// purposes.
@@ -361,6 +374,79 @@ namespace Hydrix.UnitTests.Engines
             var expected = $"'{guid}'";
             var result = ParameterEngine.FormatParameterValue(guid);
             Assert.Equal(expected, result);
+        }
+
+        /// <summary>
+        /// Verifies that string values are SQL-escaped when formatted for logging.
+        /// </summary>
+        [Fact]
+        public void FormatParameterValue_EscapesSingleQuotes_InStringValues()
+        {
+            var value = "O'Reilly";
+
+            var result = ParameterEngine.FormatParameterValue(value);
+
+            Assert.Equal("'O''Reilly'", result);
+        }
+
+        /// <summary>
+        /// Verifies that empty string values are formatted as quoted empty literals.
+        /// </summary>
+        [Fact]
+        public void FormatParameterValue_FormatsEmptyString_AsQuotedEmptyLiteral()
+        {
+            var result = ParameterEngine.FormatParameterValue(string.Empty);
+
+            Assert.Equal("''", result);
+        }
+
+        /// <summary>
+        /// Verifies that DateTimeOffset values are formatted with offset information.
+        /// </summary>
+        [Fact]
+        public void FormatParameterValue_FormatsDateTimeOffset()
+        {
+            var value = new DateTimeOffset(2023, 1, 2, 3, 4, 5, 678, TimeSpan.FromHours(2));
+
+            var result = ParameterEngine.FormatParameterValue(value);
+
+            Assert.Equal("'2023-01-02 03:04:05.678 +02:00'", result);
+        }
+
+        /// <summary>
+        /// Verifies that numeric formattable values use invariant culture when formatted.
+        /// </summary>
+        [Fact]
+        public void FormatParameterValue_UsesInvariantCulture_ForFormattableValues()
+        {
+            var originalCulture = CultureInfo.CurrentCulture;
+
+            try
+            {
+                CultureInfo.CurrentCulture = new CultureInfo("pt-BR");
+                object value = 1234.56m;
+
+                var result = ParameterEngine.FormatParameterValue(value);
+
+                Assert.Equal("1234.56", result);
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = originalCulture;
+            }
+        }
+
+        /// <summary>
+        /// Verifies that non-formattable values use the fallback ToString formatting branch.
+        /// </summary>
+        [Fact]
+        public void FormatParameterValue_UsesToStringFallback_ForNonFormattableValues()
+        {
+            object value = new NonFormattableValue();
+
+            var result = ParameterEngine.FormatParameterValue(value);
+
+            Assert.Equal("non-formattable", result);
         }
 
         /// <summary>

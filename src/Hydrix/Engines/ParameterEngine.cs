@@ -3,6 +3,8 @@ using Hydrix.Orchestrator.Caching;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
+using System.Threading;
 
 namespace Hydrix.Engines
 {
@@ -10,28 +12,26 @@ namespace Hydrix.Engines
     /// Provides methods for binding object properties as database command parameters and formatting parameter values
     /// for SQL queries. This class is intended for internal use within the parameter binding infrastructure.
     /// </summary>
-    /// <remarks>The class includes thread-specific caching of parameter binders to optimize performance for
-    /// repeated accesses. It supports mapping public properties of objects to command parameters and formatting values
-    /// for safe inclusion in SQL statements. All methods and fields are intended for internal use and are not
-    /// thread-safe beyond the thread-specific caching mechanism.</remarks>
+    /// <remarks>The class includes a lock-free process-wide hot cache of the most recently used binder to optimize
+    /// repeated accesses in high-throughput and async scenarios. It supports mapping public properties of objects to
+    /// command parameters and formatting values for safe inclusion in SQL statements.</remarks>
     internal static class ParameterEngine
     {
         /// <summary>
-        /// Holds the last parameter type used in the current thread context.
+        /// Provides a culture-invariant format provider for parameter value rendering.
         /// </summary>
-        /// <remarks>This field is marked with the [ThreadStatic] attribute, meaning its value is unique
-        /// to each thread. It is intended for internal tracking of parameter types within thread-specific
-        /// operations.</remarks>
-        [ThreadStatic]
+        private static readonly IFormatProvider _invariantCulture = CultureInfo.InvariantCulture;
+
+        /// <summary>
+        /// Holds the last parameter type used in the process-wide hot cache.
+        /// </summary>
+        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache key for binder reuse.</remarks>
         private static Type _lastParameterType;
 
         /// <summary>
-        /// Holds the last instance of the parameter object binder used in the current thread.
+        /// Holds the last instance of the parameter object binder used in the process-wide hot cache.
         /// </summary>
-        /// <remarks>This field is marked with the [ThreadStatic] attribute, ensuring that each thread has
-        /// its own independent value. It is intended for internal tracking of binder state within thread-specific
-        /// operations.</remarks>
-        [ThreadStatic]
+        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache value for binder reuse.</remarks>
         private static ParameterObjectBinder _lastBinder;
 
         /// <summary>
@@ -88,19 +88,27 @@ namespace Hydrix.Engines
         private static ParameterObjectBinder GetOrAddBinder(
             Type parameterType)
         {
+            var cachedType = Volatile.Read(ref _lastParameterType);
+            var cachedBinder = Volatile.Read(ref _lastBinder);
+
             if (ReferenceEquals(
-                    _lastParameterType,
+                    cachedType,
                     parameterType) &&
-                _lastBinder != null)
+                cachedBinder != null)
             {
-                return _lastBinder;
+                return cachedBinder;
             }
 
             var binder = ParameterBinderCache.GetOrAdd(
                 parameterType);
 
-            _lastParameterType = parameterType;
-            _lastBinder = binder;
+            Volatile.Write(
+                ref _lastBinder,
+                binder);
+
+            Volatile.Write(
+                ref _lastParameterType,
+                parameterType);
 
             return binder;
         }
@@ -154,12 +162,25 @@ namespace Hydrix.Engines
 
             return value switch
             {
-                string s => $"'{s}'",
+                string s => $"'{EscapeSqlLiteral(s)}'",
                 DateTime d => $"'{d:yyyy-MM-dd HH:mm:ss.fff}'",
+                DateTimeOffset dto => $"'{dto:yyyy-MM-dd HH:mm:ss.fff zzz}'",
                 Guid g => $"'{g}'",
                 bool b => b ? "1" : "0",
+                IFormattable formattable => formattable.ToString(null, _invariantCulture),
                 _ => value.ToString()
             };
         }
+
+        /// <summary>
+        /// Escapes SQL literal text by doubling single quotes.
+        /// </summary>
+        /// <param name="value">The text to escape.</param>
+        /// <returns>The escaped text safe for SQL literal rendering.</returns>
+        private static string EscapeSqlLiteral(
+            string value)
+            => string.IsNullOrEmpty(value)
+                ? value
+                : value.Replace("'", "''");
     }
 }

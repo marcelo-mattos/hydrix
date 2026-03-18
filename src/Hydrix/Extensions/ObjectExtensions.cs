@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace Hydrix.Extensions
@@ -10,6 +11,12 @@ namespace Hydrix.Extensions
     /// allowing for more concise and expressive code when working with dynamic or loosely-typed data.</remarks>
     internal static class ObjectExtensions
     {
+        /// <summary>
+        /// Caches conversion delegates by target type to reduce repeated branch evaluation in hot paths.
+        /// </summary>
+        private static readonly ConcurrentDictionary<Type, Func<object, object>> _converterCache =
+            new ConcurrentDictionary<Type, Func<object, object>>();
+
         /// <summary>
         /// Converts the specified object to the specified type, returning the default value if the object is null or
         /// represents a database null (DBNull).
@@ -28,341 +35,292 @@ namespace Hydrix.Extensions
                 return default(T);
 
             var targetType = typeof(T);
+            if (value is T typedValue)
+                return typedValue;
+
+            var converter = _converterCache.GetOrAdd(
+                targetType,
+                BuildConverter);
+
+            return (T)converter(value);
+        }
+
+        /// <summary>
+        /// Creates a delegate that converts an input object to the specified target type, handling common type
+        /// conversions such as enums, GUIDs, strings, booleans, numbers, and date/time values.
+        /// </summary>
+        /// <remarks>The returned converter handles several common .NET types explicitly. If the target
+        /// type is not one of the supported types, the converter uses standard type conversion with invariant culture.
+        /// This method is intended for internal use when dynamic type conversion is required.</remarks>
+        /// <param name="targetType">The type to which the input object should be converted. May be a nullable type.</param>
+        /// <returns>A function that takes an object and returns its value converted to the specified target type.</returns>
+        private static Func<object, object> BuildConverter(
+            Type targetType)
+        {
             var underlyingType = Nullable.GetUnderlyingType(targetType);
             var conversionType = underlyingType ?? targetType;
 
-            var (flowControl, converted) = TryConvertEnum<T>(value, conversionType);
+            var (flowControl, value) = TryConvertEnum(conversionType);
             if (!flowControl)
-                return converted;
+                return value;
 
-            (flowControl, converted) = TryConvertGuid<T>(value, conversionType);
+            (flowControl, value) = TryConvertGuid(conversionType);
             if (!flowControl)
-                return converted;
+                return value;
 
-            (flowControl, converted) = TryConvertString<T>(value, conversionType);
+            (flowControl, value) = TryConvertString(conversionType);
             if (!flowControl)
-                return converted;
+                return value;
 
-            (flowControl, converted) = TryConvertBoolean<T>(value, conversionType);
+            (flowControl, value) = TryConvertBoolean(conversionType);
             if (!flowControl)
-                return converted;
+                return value;
 
-            (flowControl, converted) = TryConvertNumber<T>(value, conversionType);
+            (flowControl, value) = TryConvertNumber(conversionType);
             if (!flowControl)
-                return converted;
+                return value;
 
-            (flowControl, converted) = TryConvertDateTime<T>(value, conversionType);
+            (flowControl, value) = TryConvertDateTime(conversionType);
             if (!flowControl)
-                return converted;
+                return value;
 
-            (flowControl, converted) = TryConvertType<T>(value);
-            if (!flowControl)
-                return converted;
-
-            return (T)Convert.ChangeType(
+            return value => Convert.ChangeType(
                 value,
                 conversionType,
                 CultureInfo.InvariantCulture);
         }
 
         /// <summary>
-        /// Attempts to convert the specified object to the given type and indicates whether flow control should be
-        /// applied based on the conversion result.
+        /// Attempts to create a delegate that converts values to the specified enumeration type.
         /// </summary>
-        /// <typeparam name="T">The target type to which the object is to be converted.</typeparam>
-        /// <param name="value">The object to convert to the specified type. Can be null.</param>
-        /// <returns>A tuple containing a Boolean value indicating whether flow control should be applied and the converted value
-        /// of type T. If the conversion fails, the value is the default for type T.</returns>
-        private static (bool flowControl, T value) TryConvertType<T>(
-            object value)
-        {
-            if (value is T t)
-                return (
-                    flowControl: false,
-                    value: t);
-
-            return (
-                flowControl: true,
-                value: default);
-        }
-
-        /// <summary>
-        /// Attempts to convert the specified value to a DateTime type and returns the result along with a flow control
-        /// flag.
-        /// </summary>
-        /// <remarks>If the conversion type is not DateTime, the method returns the default value of T and
-        /// sets the flow control flag to true. The conversion uses invariant culture settings.</remarks>
-        /// <typeparam name="T">The type to which the value is cast after conversion. Typically used to match the expected return type.</typeparam>
-        /// <param name="value">The object to convert to a DateTime. Can be a DateTime instance or a value convertible to DateTime.</param>
-        /// <param name="conversionType">The target type for conversion. If set to typeof(DateTime), the method attempts the conversion; otherwise,
-        /// no conversion is performed.</param>
-        /// <returns>A tuple containing a flow control flag and the converted value. The flow control flag is false if conversion
-        /// was attempted; otherwise, true. The value is the converted DateTime cast to type T, or the default value of
-        /// T if conversion was not performed.</returns>
-        private static (bool flowControl, T value) TryConvertDateTime<T>(
-            object value,
+        /// <remarks>If the specified type is an enumeration, the returned delegate can convert from a
+        /// string (case-insensitive) or from a value of the underlying type. If the type is not an enumeration, flow
+        /// control is indicated as true and no delegate is provided.</remarks>
+        /// <param name="conversionType">The target type to convert to. Must be an enumeration type to enable conversion.</param>
+        /// <returns>A tuple containing a Boolean indicating whether flow control should continue, and a delegate that converts
+        /// an object to the specified enumeration type if applicable; otherwise, null.</returns>
+        private static (bool flowControl, Func<object, object> value) TryConvertEnum(
             Type conversionType)
         {
-            if (conversionType == typeof(DateTime))
+            if (conversionType.IsEnum)
             {
-                if (value is DateTime)
-                    return (
-                        flowControl: false,
-                        value: (T)value);
-
                 return (
                     flowControl: false,
-                    value: (T)(object)Convert.ToDateTime(
-                        value,
-                        CultureInfo.InvariantCulture));
+                    value: value =>
+                    value is string text
+                    ? Enum.Parse(
+                        conversionType,
+                        text,
+                        ignoreCase: true)
+                    : Enum.ToObject(
+                        conversionType,
+                        value)
+                );
             }
 
             return (
                 flowControl: true,
-                value: default);
+                value: null);
         }
 
         /// <summary>
-        /// Attempts to convert the specified value to a numeric type using the provided conversion type.
+        /// Attempts to create a delegate that converts an object to a Guid if the specified type is Guid.
         /// </summary>
-        /// <remarks>Conversion is performed using invariant culture. If the conversion type is not
-        /// supported, the method returns flowControl as true and value as the default for type T.</remarks>
-        /// <typeparam name="T">The target numeric type to which the value will be converted.</typeparam>
-        /// <param name="value">The value to convert. Must be compatible with the specified conversion type.</param>
-        /// <param name="conversionType">The type representing the numeric type to convert to. Supported types include int, long, short, byte,
-        /// decimal, double, and float.</param>
-        /// <returns>A tuple containing a flow control flag and the converted value. If conversion is successful, flowControl is
-        /// false and value contains the converted result; otherwise, flowControl is true and value is the default for
-        /// type T.</returns>
-        private static (bool flowControl, T value) TryConvertNumber<T>(
-            object value,
+        /// <remarks>The returned delegate handles conversion from Guid, string, and byte array
+        /// representations to Guid. For other types, it uses standard type conversion.</remarks>
+        /// <param name="conversionType">The target type to check for Guid conversion. If this is typeof(Guid), a conversion delegate is returned.</param>
+        /// <returns>A tuple containing a Boolean indicating whether flow control should continue, and a delegate that converts
+        /// an object to a Guid if applicable. If the type is not Guid, the delegate is null and flow control is set to
+        /// true.</returns>
+        private static (bool flowControl, Func<object, object> value) TryConvertGuid(
             Type conversionType)
         {
-            if (conversionType == typeof(int))
-                return (
-                    flowControl: false,
-                    value: (T)(object)Convert.ToInt32(
-                        value,
-                        CultureInfo.InvariantCulture));
-
-            if (conversionType == typeof(long))
-                return (
-                    flowControl: false,
-                    value: (T)(object)Convert.ToInt64(
-                        value,
-                        CultureInfo.InvariantCulture));
-
-            if (conversionType == typeof(short))
-                return (
-                    flowControl: false,
-                    value: (T)(object)Convert.ToInt16(
-                        value,
-                        CultureInfo.InvariantCulture));
-
-            if (conversionType == typeof(byte))
-                return (
-                    flowControl: false,
-                    value: (T)(object)Convert.ToByte(
-                        value,
-                        CultureInfo.InvariantCulture));
-
-            if (conversionType == typeof(decimal))
-                return (
-                    flowControl: false,
-                    value: (T)(object)Convert.ToDecimal(
-                        value,
-                        CultureInfo.InvariantCulture));
-
-            if (conversionType == typeof(double))
-                return (
-                    flowControl: false,
-                    value: (T)(object)Convert.ToDouble(
-                        value,
-                        CultureInfo.InvariantCulture));
-
-            if (conversionType == typeof(float))
-                return (
-                    flowControl: false,
-                    value: (T)(object)Convert.ToSingle(
-                        value,
-                        CultureInfo.InvariantCulture));
-
-            return (
-                flowControl: true,
-                value: default);
-        }
-
-        /// <summary>
-        /// Attempts to convert the specified value to a Boolean type or its equivalent, returning a tuple indicating
-        /// whether the conversion was successful and the converted value.
-        /// </summary>
-        /// <remarks>Supported conversions include Boolean and integral numeric types (int, short, long, byte,
-        /// sbyte, ushort, uint, ulong), where
-        /// nonzero values are treated as <see langword="true"/>. If the conversion type is not Boolean or the value is
-        /// not convertible, the method returns the default value and sets the flow control flag to <see
-        /// langword="true"/>.</remarks>
-        /// <typeparam name="T">The type to which the Boolean value is converted. Must be compatible with Boolean or its equivalent
-        /// representation.</typeparam>
-        /// <param name="value">The value to convert. Can be a Boolean, integer, or other supported type.</param>
-        /// <param name="conversionType">The target type for conversion. Typically Boolean or a type representing Boolean values.</param>
-        /// <returns>A tuple containing a flow control flag and the converted value. The flow control flag is <see
-        /// langword="false"/> if conversion was successful; otherwise, <see langword="true"/>. The value is the
-        /// converted result or the default value of <typeparamref name="T"/> if conversion fails.</returns>
-        private static (bool flowControl, T value) TryConvertBoolean<T>(
-            object value,
-            Type conversionType)
-        {
-            if (conversionType == typeof(bool))
+            if (conversionType == typeof(Guid))
             {
-                if (value is bool)
-                    return (
-                        flowControl: false,
-                        value: (T)value);
+                return (
+                    flowControl: false,
+                    value: value =>
+                    {
+                        if (value is Guid guid)
+                            return guid;
 
-                if (value is int i)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(i != 0));
+                        if (value is string text)
+                            return Guid.Parse(text);
 
-                if (value is short s)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(s != 0));
+                        if (value is byte[] bytes)
+                            return new Guid(bytes);
 
-                if (value is long l)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(l != 0));
-
-                if (value is byte b)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(b != 0));
-
-                if (value is sbyte sb)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(sb != 0));
-
-                if (value is ushort us)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(us != 0));
-
-                if (value is uint ui)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(ui != 0));
-
-                if (value is ulong ul)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)(ul != 0));
+                        return Convert.ChangeType(
+                            value,
+                            conversionType,
+                            CultureInfo.InvariantCulture);
+                    }
+                );
             }
 
             return (
                 flowControl: true,
-                value: default);
+                value: null);
         }
 
         /// <summary>
-        /// Attempts to convert the specified value to a string if the target conversion type is string.
+        /// Attempts to create a string conversion delegate for the specified type.
         /// </summary>
-        /// <typeparam name="T">The type to which the value is to be converted.</typeparam>
-        /// <param name="value">The value to be converted.</param>
-        /// <param name="conversionType">The target type for conversion. If this is typeof(string), the value is converted to a string.</param>
-        /// <returns>A tuple containing a flow control flag and the converted value. If conversionType is string, flowControl is
-        /// false and value is the string representation; otherwise, flowControl is true and value is the default value
-        /// of type T.</returns>
-        private static (bool flowControl, T value) TryConvertString<T>(
-            object value,
+        /// <remarks>If the specified type is string, the returned delegate converts an object to its
+        /// string representation using ToString. For other types, the delegate is null and flow control is indicated as
+        /// required.</remarks>
+        /// <param name="conversionType">The target type to check for string conversion support. Typically, this is the type to which a value may be
+        /// converted.</param>
+        /// <returns>A tuple containing a Boolean value that indicates whether flow control is required, and a delegate that
+        /// performs the conversion if supported; otherwise, null.</returns>
+        private static (bool flowControl, Func<object, object> value) TryConvertString(
             Type conversionType)
         {
             if (conversionType == typeof(string))
                 return (
                     flowControl: false,
-                    value: (T)(object)value.ToString());
+                    value: value => value.ToString());
 
             return (
                 flowControl: true,
-                value: default);
+                value: null);
         }
 
         /// <summary>
-        /// Attempts to convert the specified value to a Guid using the provided conversion type.
+        /// Attempts to create a boolean conversion delegate for the specified type.
         /// </summary>
-        /// <remarks>If the conversion type is not Guid or the value cannot be converted, the method
-        /// returns flowControl as true and value as default. Supported input types are Guid, string, and byte
-        /// array.</remarks>
-        /// <typeparam name="T">The type to which the value is converted. Must be compatible with Guid.</typeparam>
-        /// <param name="value">The value to convert. Can be a Guid, a string representation of a Guid, or a byte array containing Guid
-        /// data.</param>
-        /// <param name="conversionType">The target type for conversion. Must be typeof(Guid) to perform the conversion.</param>
-        /// <returns>A tuple containing a flow control flag and the converted value. If conversion is successful, flowControl is
-        /// false and value contains the converted Guid; otherwise, flowControl is true and value is the default value
-        /// of T.</returns>
-        private static (bool flowControl, T value) TryConvertGuid<T>(
-            object value,
+        /// <remarks>The returned delegate can convert values of several numeric types to boolean,
+        /// interpreting nonzero values as <see langword="true"/>. For unsupported types, the method indicates that flow
+        /// control should be used instead.</remarks>
+        /// <param name="conversionType">The target type to check for boolean conversion support. Typically, this is the type to which a value should
+        /// be converted.</param>
+        /// <returns>A tuple containing a flow control flag and a delegate for converting values to boolean. If the conversion is
+        /// supported, the delegate is non-null and the flow control flag is false; otherwise, the delegate is null and
+        /// the flow control flag is true.</returns>
+        private static (bool flowControl, Func<object, object> value) TryConvertBoolean(
             Type conversionType)
         {
-            if (conversionType == typeof(Guid))
+            if (conversionType == typeof(bool))
             {
-                if (value is Guid)
-                    return (
-                        flowControl: false,
-                        value: (T)value);
-
-                if (value is string s)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)Guid.Parse(s));
-
-                if (value is byte[] b)
-                    return (
-                        flowControl: false,
-                        value: (T)(object)new Guid(b));
-            }
-
-            return (
-                flowControl: true,
-                value: default);
-        }
-
-        /// <summary>
-        /// Attempts to convert the specified value to the given enum type, returning a tuple indicating whether flow
-        /// control should continue and the converted value.
-        /// </summary>
-        /// <remarks>If the conversion type is not an enum, the method returns the default value for the
-        /// type and signals that flow control should continue.</remarks>
-        /// <typeparam name="T">The enum type to which the value is to be converted.</typeparam>
-        /// <param name="value">The value to convert. Can be a string or a value compatible with the target enum type.</param>
-        /// <param name="conversionType">The target enum type for conversion. Must be a valid enum type.</param>
-        /// <returns>A tuple containing a boolean indicating whether flow control should continue and the converted enum value.
-        /// If conversion is not possible, flow control is set to true and the value is the default for the type.</returns>
-        private static (bool flowControl, T value) TryConvertEnum<T>(
-            object value,
-            Type conversionType)
-        {
-            if (conversionType.IsEnum)
-            {
-                if (value is string s)
-                    return (
-                        flowControl: false,
-                        value: (T)Enum.Parse(
-                            conversionType,
-                            s,
-                            true));
-
                 return (
                     flowControl: false,
-                    value: (T)Enum.ToObject(
-                        conversionType,
-                        value));
+                    value: value =>
+                    {
+                        if (value is bool b)
+                            return b;
+
+                        return value switch
+                        {
+                            int i => i != 0,
+                            short s => s != 0,
+                            long l => l != 0,
+                            byte bt => bt != 0,
+                            sbyte sb => sb != 0,
+                            ushort us => us != 0,
+                            uint ui => ui != 0,
+                            ulong ul => ul != 0,
+                            _ => Convert.ChangeType(
+                                value,
+                                typeof(bool),
+                                CultureInfo.InvariantCulture)
+                        };
+                    }
+                );
             }
 
             return (
                 flowControl: true,
-                value: default);
+                value: null);
+        }
+
+        /// <summary>
+        /// Attempts to create a conversion delegate for the specified numeric type.
+        /// </summary>
+        /// <remarks>If the specified type is not a supported numeric type, the returned delegate will be
+        /// null and the flow control flag will be set to true. The conversion uses CultureInfo.InvariantCulture to
+        /// ensure consistent parsing of numeric values.</remarks>
+        /// <param name="conversionType">The target numeric type to which values should be converted. Supported types include int, long, short, byte,
+        /// decimal, double, and float.</param>
+        /// <returns>A tuple where the first element indicates whether the conversion type is unsupported, and the second element
+        /// is a delegate that converts an object to the specified numeric type using invariant culture, or null if the
+        /// type is not supported.</returns>
+        private static (bool flowControl, Func<object, object> value) TryConvertNumber(
+            Type conversionType)
+        {
+            return conversionType switch
+            {
+                var t when t == typeof(int) => (
+                    false,
+                    value => Convert.ToInt32(
+                        value,
+                        CultureInfo.InvariantCulture)),
+
+                var t when t == typeof(long) => (
+                    false,
+                    value => Convert.ToInt64(
+                        value,
+                        CultureInfo.InvariantCulture)),
+
+                var t when t == typeof(short) => (
+                    false,
+                    value => Convert.ToInt16(
+                        value,
+                        CultureInfo.InvariantCulture)),
+
+                var t when t == typeof(byte) => (
+                    false,
+                    value => Convert.ToByte(
+                        value,
+                        CultureInfo.InvariantCulture)),
+
+                var t when t == typeof(decimal) => (
+                    false,
+                    value => Convert.ToDecimal(
+                        value,
+                        CultureInfo.InvariantCulture)),
+
+                var t when t == typeof(double) => (
+                    false,
+                    value => Convert.ToDouble(
+                        value,
+                        CultureInfo.InvariantCulture)),
+
+                var t when t == typeof(float) => (
+                    false,
+                    value => Convert.ToSingle(
+                        value,
+                        CultureInfo.InvariantCulture)),
+
+                _ => (true, null)
+            };
+        }
+
+        /// <summary>
+        /// Attempts to create a conversion delegate for values to the specified type if it is a DateTime.
+        /// </summary>
+        /// <remarks>If the specified type is DateTime, the returned delegate converts the input value to
+        /// a DateTime using invariant culture. For other types, no conversion delegate is provided.</remarks>
+        /// <param name="conversionType">The target type to convert values to. Must be a valid type, typically DateTime.</param>
+        /// <returns>A tuple containing a Boolean indicating whether flow control should continue, and a delegate that converts
+        /// an object to a DateTime if applicable. If the type is not DateTime, the delegate is null and flow control is
+        /// set to true.</returns>
+        private static (bool flowControl, Func<object, object> value) TryConvertDateTime(
+            Type conversionType)
+        {
+            if (conversionType == typeof(DateTime))
+            {
+                return (
+                    flowControl: false,
+                    value: value => value is DateTime dateTime
+                        ? (object)dateTime
+                        : Convert.ToDateTime(
+                            value,
+                            CultureInfo.InvariantCulture));
+            }
+
+            return (
+                flowControl: true,
+                value: null);
         }
     }
 }

@@ -223,12 +223,12 @@ namespace Hydrix.Tests
                     p.Price,
                     p.Type,
                     p.Token,
-                    c.Id        as [Customer.Id],
-                    c.Name      as [Customer.Name],
-                    c.BirthDate as [Customer.BirthDate],
-                    c.Level     as [Customer.Level],
-                    c.Salary    as [Customer.Salary],
-                    c.IsActive  as [Customer.IsActive]
+                    c.Id        as ""Customer.Id"",
+                    c.Name      as ""Customer.Name"",
+                    c.BirthDate as ""Customer.BirthDate"",
+                    c.Level     as ""Customer.Level"",
+                    c.Salary    as ""Customer.Salary"",
+                    c.IsActive  as ""Customer.IsActive""
                 FROM Product p
                 LEFT JOIN Customer c ON p.CustomerId = c.Id
                 ORDER BY
@@ -247,12 +247,12 @@ namespace Hydrix.Tests
                     p.Price,
                     p.Type,
                     p.Token,
-                    c.Id        as [Customer.Id],
-                    c.Name      as [Customer.Name],
-                    c.BirthDate as [Customer.BirthDate],
-                    c.Level     as [Customer.Level],
-                    c.Salary    as [Customer.Salary],
-                    c.IsActive  as [Customer.IsActive]
+                    c.Id        as ""Customer.Id"",
+                    c.Name      as ""Customer.Name"",
+                    c.BirthDate as ""Customer.BirthDate"",
+                    c.Level     as ""Customer.Level"",
+                    c.Salary    as ""Customer.Salary"",
+                    c.IsActive  as ""Customer.IsActive""
                 FROM Product p
                 LEFT JOIN Customer c ON p.CustomerId = c.Id
                 WHERE
