@@ -36,7 +36,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\..\dbg\Hydrix.UnitTests\Hydrix.UnitTests.xml</DocumentationFile>
-    <NoWarn>NETSDK1138;NU1701</NoWarn>
+    <NoWarn>NETSDK1138;NU1701;CS0618</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

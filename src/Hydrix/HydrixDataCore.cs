@@ -1,6 +1,7 @@
 ﻿using Hydrix.Configuration;
+using Hydrix.Defaults;
 using Hydrix.Engines;
-using Hydrix.Orchestrator.Materializers;
+using Hydrix.Extensions;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hydrix.Extensions
+namespace Hydrix
 {
     /// <summary>
     /// Provides extension methods for executing SQL commands against a database connection.
@@ -16,7 +17,7 @@ namespace Hydrix.Extensions
     /// <remarks>These methods allow for synchronous and asynchronous execution of SQL commands with optional
     /// parameters, transaction support, and command type specification. The methods throw an ArgumentNullException if
     /// the connection is null.</remarks>
-    public static class DbConnectionExtensions
+    public static class HydrixDataCore
     {
         /// <summary>
         /// Executes a SQL command against the specified database connection and returns the number of rows affected.
@@ -510,7 +511,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -543,7 +544,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -587,7 +588,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -624,7 +625,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -666,7 +667,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -699,7 +700,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -739,7 +740,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -776,7 +777,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.FirstRecordLimit,
+                Constants.FirstRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -819,7 +820,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -858,7 +859,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -909,7 +910,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -952,7 +953,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -1003,7 +1004,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -1042,7 +1043,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout);
 
             using var enumerator = result.GetEnumerator();
@@ -1095,7 +1096,7 @@ namespace Hydrix.Extensions
                 parameters,
                 transaction,
                 commandType,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);
@@ -1138,7 +1139,7 @@ namespace Hydrix.Extensions
                 connection,
                 procedure,
                 transaction,
-                Materializer.SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 commandTimeout,
                 cancellationToken)
             .ConfigureAwait(false);

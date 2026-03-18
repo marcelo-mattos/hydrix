@@ -3,7 +3,6 @@ using BenchmarkDotNet.Order;
 using Dapper;
 using Hydrix.Benchmarks.Infrastructure;
 using Hydrix.Benchmarks.Models;
-using Hydrix.Orchestrator.Materializers;
 using System.Collections.Generic;
 using System.Data;
 
@@ -34,13 +33,6 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// Represents the database connection used for data operations.
         /// </summary>
         private IDbConnection _conn = null!;
-
-        /// <summary>
-        /// Represents the materializer instance used for processing data within the application.
-        /// </summary>
-        /// <remarks>This field must be assigned a valid Materializer object before use. Ensure that the
-        /// materializer is properly configured to meet the application's data processing requirements.</remarks>
-        private Materializer _hydrix = null!;
 
         /// <summary>
         /// Gets or sets the total number of rows to use as the seed size for database operations in benchmarks.
@@ -92,7 +84,6 @@ namespace Hydrix.Benchmarks.Benchmarks
             _db.EnsureSeeded(RowCount);
 
             _conn = _db.Connection;
-            _hydrix = new Materializer(_conn, parameterPrefix: "$");
 
             _sqlDapper = @"
                 SELECT
@@ -146,7 +137,8 @@ namespace Hydrix.Benchmarks.Benchmarks
         {
             // splitOn uses the column name where the second object starts.
             // Here, the second object starts at the second Id column (o.Id).
-            var rows = _conn.Query<UserWithOrder, Order, UserWithOrder>(
+            var rows = SqlMapper.Query<UserWithOrder, Order, UserWithOrder>(
+                _conn,
                 _sqlDapper,
                 (u, o) => { u.Order = o; return u; },
                 new { take = Take },
@@ -165,7 +157,11 @@ namespace Hydrix.Benchmarks.Benchmarks
         [Benchmark]
         public List<UserWithOrder> Hydrix_Nested()
         {
-            return _hydrix.Query<UserWithOrder>(_sqlHydrix, new { take = Take }).AsList();
+            return HydrixDataCore.Query<UserWithOrder>(
+                _conn,
+                _sqlHydrix,
+                new { take = Take })
+                .AsList();
         }
 
         /// <summary>

@@ -1,5 +1,4 @@
-﻿using Hydrix.Extensions;
-using Hydrix.Orchestrator.Builders.Query.Conditions;
+﻿using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
 using Hydrix.Tests.Resources;

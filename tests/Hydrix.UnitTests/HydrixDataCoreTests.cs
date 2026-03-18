@@ -1,5 +1,4 @@
 ﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Extensions;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Orchestrator.Materializers.Contract;
 using Hydrix.Schemas.Contract;
@@ -15,16 +14,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Hydrix.UnitTests.Extensions
+namespace Hydrix.UnitTests
 {
     /// <summary>
-    /// Provides unit tests for the DbConnectionExtensions class, verifying the correct behavior of its extension
+    /// Provides unit tests for the HydrixDataCore class, verifying the correct behavior of its extension
     /// methods under various scenarios.
     /// </summary>
     /// <remarks>This test class covers both synchronous and asynchronous execution paths, ensuring that all
     /// parameter combinations and exception cases are validated. The tests help maintain the reliability and
     /// correctness of the extension methods by checking their responses to valid and invalid inputs.</remarks>
-    public class DbConnectionExtensionsTests
+    public class HydrixDataCoreTests
     {
         /// <summary>
         /// Represents a placeholder implementation of the ITable interface for testing or mock scenarios.
@@ -486,7 +485,7 @@ namespace Hydrix.UnitTests.Extensions
         public void Execute_ThrowsOnNullConnection()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                DbConnectionExtensions.Execute(null, "SELECT 1"));
+                HydrixDataCore.Execute(null, "SELECT 1"));
         }
 
         /// <summary>
@@ -507,14 +506,14 @@ namespace Hydrix.UnitTests.Extensions
             commandMock.Setup(c => c.ExecuteNonQuery()).Returns(1);
             var conn = CreateConnectionMock(commandMock).Object;
             Assert.Throws<ArgumentException>(() =>
-                DbConnectionExtensions.Execute(conn, sql));
+                HydrixDataCore.Execute(conn, sql));
         }
 
         /// <summary>
         /// Verifies that the Execute method correctly invokes the materializer for all combinations of parameters and
         /// transaction states.
         /// </summary>
-        /// <remarks>This test ensures that the Execute method in DbConnectionExtensions handles various
+        /// <remarks>This test ensures that the Execute method in HydrixDataCore handles various
         /// scenarios, including the presence or absence of parameters and transactions, as well as different command
         /// types. Each assertion checks that the expected number of affected rows is returned, confirming consistent
         /// behavior across all supported input combinations.</remarks>
@@ -1155,7 +1154,7 @@ namespace Hydrix.UnitTests.Extensions
         public void Execute_WithProcedure_ThrowsOnNullConnection()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                DbConnectionExtensions.Execute<MockDbParameter>(
+                HydrixDataCore.Execute<MockDbParameter>(
                     null,
                     new DummyProcedure()));
         }
@@ -1398,7 +1397,7 @@ namespace Hydrix.UnitTests.Extensions
         public void Query_WithProcedure_ThrowsOnNullConnection()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                DbConnectionExtensions.Query<DummyEntity, MockDbParameter>(
+                HydrixDataCore.Query<DummyEntity, MockDbParameter>(
                     null,
                     new DummyProcedure()));
         }

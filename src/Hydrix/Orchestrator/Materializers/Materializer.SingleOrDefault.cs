@@ -1,4 +1,5 @@
-﻿using Hydrix.Schemas.Contract;
+﻿using Hydrix.Defaults;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -43,7 +44,7 @@ namespace Hydrix.Orchestrator.Materializers
             var result = this.Query<TEntity>(
                 sql,
                 parameters,
-                SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 timeout);
 
             return result.Count != 1
@@ -79,7 +80,7 @@ namespace Hydrix.Orchestrator.Materializers
                 sql,
                 parameters,
                 transaction,
-                SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 timeout);
 
             return result.Count != 1
@@ -166,7 +167,7 @@ namespace Hydrix.Orchestrator.Materializers
                 commandType,
                 sql,
                 parameters,
-                SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 timeout);
 
             return result.Count != 1
@@ -205,7 +206,7 @@ namespace Hydrix.Orchestrator.Materializers
                 sql,
                 parameters,
                 transaction,
-                SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 timeout);
 
             return result.Count != 1
@@ -299,7 +300,7 @@ namespace Hydrix.Orchestrator.Materializers
                 .QueryAsync<TEntity>(
                     sql,
                     parameters,
-                    SingleRecordLimit,
+                Constants.SingleRecordLimit,
                     timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -341,7 +342,7 @@ namespace Hydrix.Orchestrator.Materializers
                     sql,
                     parameters,
                     transaction,
-                    SingleRecordLimit,
+                Constants.SingleRecordLimit,
                     timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -446,7 +447,7 @@ namespace Hydrix.Orchestrator.Materializers
                     commandType,
                     sql,
                     parameters,
-                    SingleRecordLimit,
+                Constants.SingleRecordLimit,
                     timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -491,7 +492,7 @@ namespace Hydrix.Orchestrator.Materializers
                     sql,
                     parameters,
                     transaction,
-                    SingleRecordLimit,
+                Constants.SingleRecordLimit,
                     timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -596,7 +597,7 @@ namespace Hydrix.Orchestrator.Materializers
         {
             var result = this.Query<TEntity, TDataParameterDriver>(
                 procedure,
-                SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 timeout);
 
             return result.Count != 1
@@ -633,7 +634,7 @@ namespace Hydrix.Orchestrator.Materializers
             var result = this.Query<TEntity, TDataParameterDriver>(
                 procedure,
                 transaction,
-                SingleRecordLimit,
+                Constants.SingleRecordLimit,
                 timeout);
 
             return result.Count != 1
@@ -672,7 +673,7 @@ namespace Hydrix.Orchestrator.Materializers
             var result = await this
                 .QueryAsync<TEntity, TDataParameterDriver>(
                     procedure,
-                    SingleRecordLimit,
+                Constants.SingleRecordLimit,
                     timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -716,7 +717,7 @@ namespace Hydrix.Orchestrator.Materializers
                 .QueryAsync<TEntity, TDataParameterDriver>(
                     procedure,
                     transaction,
-                    SingleRecordLimit,
+                Constants.SingleRecordLimit,
                     timeout,
                     cancellationToken)
                 .ConfigureAwait(false);

@@ -1,5 +1,6 @@
 ﻿using Hydrix.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Data;
 
 namespace Hydrix.Orchestrator.Materializers
@@ -11,6 +12,7 @@ namespace Hydrix.Orchestrator.Materializers
     /// <remarks>This class allows for customization of the database connection, command execution timeout,
     /// and parameter naming conventions. It is designed to facilitate data retrieval and manipulation in a structured
     /// manner.</remarks>
+    [Obsolete("This class is deprecated. Please use the extension methods in HydrixDataCore class.")]
     public partial class Materializer :
         Contract.IMaterializer
     {

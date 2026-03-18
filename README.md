@@ -95,7 +95,7 @@ dotnet add package Hydrix
 ### Executing SQL Commands
 
 ```csharp
-hydrix.ExecuteNonQuery(
+conn.Execute(
     "INSERT INTO orders (id, total) VALUES (@id, @total)",
     new
     {
@@ -110,7 +110,7 @@ hydrix.ExecuteNonQuery(
 ### Querying Entities
 
 ```csharp
-var orders = hydrix.Query<Order>(
+var orders = conn.Query<Order>(
     "SELECT id, total FROM orders WHERE total > @min",
     new { min = 100 }
 );
@@ -121,7 +121,7 @@ var orders = hydrix.Query<Order>(
 ### Native `IN` Clause Support
 
 ```csharp
-var orders = hydrix.Query<Order>(
+var orders = conn.Query<Order>(
     "SELECT * FROM orders WHERE id IN (@ids)",
     new
     {
@@ -203,29 +203,6 @@ public class CreateOrder :
 
 ---
 
-## 🔄 Transactions
-
-```csharp
-hydrix.OpenConnection();
-hydrix.BeginTransaction(IsolationLevel.ReadCommitted);
-
-try
-{
-    await hydrix.ExecuteNonQueryAsync(...);
-    await hydrix.ExecuteNonQueryAsync(...);
-
-    hydrix.CommitTransaction();
-}
-catch
-{
-    hydrix.RollbackTransaction();
-    throw;
-}
-```
-
-
----
-
 ## 📝 SQL Command Logging
 
 ```
@@ -246,6 +223,7 @@ Hydrix works with any ADO.NET-compatible provider:
 * PostgreSQL
 * MySQL
 * Oracle
+* DB2
 * Others
 
 ---

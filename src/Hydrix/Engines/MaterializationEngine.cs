@@ -1,6 +1,6 @@
 using Hydrix.Configuration;
+using Hydrix.Extensions;
 using Hydrix.Orchestrator.Caching;
-using Hydrix.Orchestrator.Materializers;
 using Hydrix.Schemas.Contract;
 using System.Collections.Generic;
 using System.Data;
@@ -59,8 +59,7 @@ namespace Hydrix.Engines
                 CommandBehavior.Default,
                 parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
 
-            return Materializer.ConvertDataReaderToEntities<TEntity>(
-                dataReader,
+            return dataReader.MapTo<TEntity>(
                 limit);
         }
 
@@ -96,8 +95,7 @@ namespace Hydrix.Engines
                 CommandBehavior.Default,
                 parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
 
-            return Materializer.ConvertDataReaderToEntities<TEntity>(
-                dataReader,
+            return dataReader.MapTo<TEntity>(
                 limit);
         }
 
@@ -147,8 +145,7 @@ namespace Hydrix.Engines
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            return Materializer.ConvertDataReaderToEntities<TEntity>(
-                dataReader,
+            return dataReader.MapTo<TEntity>(
                 limit);
         }
 
@@ -189,8 +186,7 @@ namespace Hydrix.Engines
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            return Materializer.ConvertDataReaderToEntities<TEntity>(
-                dataReader,
+            return dataReader.MapTo<TEntity>(
                 limit);
         }
 

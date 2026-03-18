@@ -1,5 +1,4 @@
 using Hydrix.Configuration;
-using Hydrix.Extensions;
 using Hydrix.Schemas.Contract;
 using System.Data;
 using System.Data.Common;

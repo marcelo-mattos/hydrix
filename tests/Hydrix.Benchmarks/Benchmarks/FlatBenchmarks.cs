@@ -3,7 +3,6 @@ using BenchmarkDotNet.Order;
 using Dapper;
 using Hydrix.Benchmarks.Infrastructure;
 using Hydrix.Benchmarks.Models;
-using Hydrix.Orchestrator.Materializers;
 using System.Collections.Generic;
 using System.Data;
 
@@ -34,13 +33,6 @@ namespace Hydrix.Benchmarks.Benchmarks
         private IDbConnection _conn = null!;
 
         /// <summary>
-        /// Represents the materializer instance used for processing data within the application.
-        /// </summary>
-        /// <remarks>This field must be assigned a valid Materializer object before use. Ensure that the
-        /// materializer is properly configured to meet the application's data processing requirements.</remarks>
-        private Materializer _hydrix = null!;
-
-        /// <summary>
         /// Gets or sets the total number of rows to use as the seed size for database operations in benchmarks.
         /// </summary>
         /// <remarks>Set this field to define the initial dataset size for performance testing or seeding
@@ -69,7 +61,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// with a predefined number of rows.
         /// </summary>
         /// <remarks>This method is executed before any benchmarks are run to ensure that the database is
-        /// in a consistent and known state. It sets up the database connection, configures the data materializer, and
+        /// in a consistent and known state. It sets up the database connection and
         /// prepares the SQL query used for retrieving user data during benchmarks.</remarks>
         [GlobalSetup]
         public void GlobalSetup()
@@ -78,7 +70,6 @@ namespace Hydrix.Benchmarks.Benchmarks
             _db.EnsureSeeded(RowCount);
 
             _conn = _db.Connection;
-            _hydrix = new Materializer(_conn, parameterPrefix: "$");
 
             _sql = "SELECT Id, Name, Age, Status FROM Users ORDER BY Id LIMIT $take";
         }
@@ -104,7 +95,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         [Benchmark(Baseline = true)]
         public List<UserFlat> Dapper_Flat()
         {
-            return _conn.Query<UserFlat>(_sql, new { take = Take }).AsList();
+            return SqlMapper
+                .Query<UserFlat>(_conn, _sql, new { take = Take })
+                .AsList();
         }
 
         /// <summary>
@@ -118,7 +111,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         public List<UserFlat> Hydrix_Flat()
         {
             // Hydrix expects a parameters object even when using SQLite named params.
-            return _hydrix.Query<UserFlat>(_sql, new { take = Take }).AsList();
+            return HydrixDataCore
+                .Query<UserFlat>(_conn, _sql, new { take = Take })
+                .AsList();
         }
 
         /// <summary>
