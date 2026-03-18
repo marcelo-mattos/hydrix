@@ -45,9 +45,15 @@ namespace Hydrix.Orchestrator.Caching
         /// </returns>
         public static Action<IDataParameter, int> GetOrAdd(
             Type type)
-            => _cache.GetOrAdd(
+        {
+            var setter = _cache.GetOrAdd(
                 type,
                 BuildSetter);
+
+            return ReferenceEquals(setter, _noop)
+                ? null
+                : setter;
+        }
 
         /// <summary>
         /// Creates a delegate that sets a database type property on a parameter object of the specified type.

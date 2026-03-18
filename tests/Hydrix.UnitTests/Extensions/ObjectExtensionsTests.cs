@@ -111,6 +111,23 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that As&lt;T&gt; converts direct Guid values for both Guid and nullable Guid targets.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsDirectGuidValue_ToGuidAndNullableGuid()
+        {
+            var guid = Guid.NewGuid();
+            object value = guid;
+
+            var asGuid = value.As<Guid>();
+            var asNullableGuid = value.As<Guid?>();
+
+            Assert.Equal(guid, asGuid);
+            Assert.True(asNullableGuid.HasValue);
+            Assert.Equal(guid, asNullableGuid.Value);
+        }
+
+        /// <summary>
         /// Verifies that As&lt;T&gt; converts a valid Guid string to a nullable Guid target.
         /// </summary>
         [Fact]

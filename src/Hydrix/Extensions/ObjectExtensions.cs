@@ -25,12 +25,21 @@ namespace Hydrix.Extensions
             if (value == null || value is DBNull)
                 return default;
 
-            if (value is T typedValue)
-                return typedValue;
-
             var targetType = typeof(T);
             var underlyingType = Nullable.GetUnderlyingType(targetType);
             var conversionType = underlyingType ?? targetType;
+
+            if (conversionType == typeof(Guid))
+            {
+                if (value is Guid guid)
+                    return (T)(object)guid;
+
+                if (value is string guidText)
+                    return (T)(object)Guid.Parse(guidText);
+            }
+
+            if (value is T typedValue)
+                return typedValue;
 
             if (conversionType.IsEnum)
             {
@@ -40,15 +49,6 @@ namespace Hydrix.Extensions
                 var enumUnderlyingType = Enum.GetUnderlyingType(conversionType);
                 var numericValue = Convert.ChangeType(value, enumUnderlyingType);
                 return (T)Enum.ToObject(conversionType, numericValue);
-            }
-
-            if (conversionType == typeof(Guid))
-            {
-                if (value is Guid guid)
-                    return (T)(object)guid;
-
-                if (value is string guidText)
-                    return (T)(object)Guid.Parse(guidText);
             }
 
             var convertedValue = Convert.ChangeType(value, conversionType);

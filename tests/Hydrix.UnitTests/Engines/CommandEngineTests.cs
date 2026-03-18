@@ -493,6 +493,25 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Represents a procedure containing both standard and provider-specific DbType mappings.
+        /// </summary>
+        [Procedure("MixedProviderAwareProcedure")]
+        private class MixedProviderAwareProcedure : IProcedure<ProviderAwareDataParameter>
+        {
+            /// <summary>
+            /// Gets or sets a standard DbType-mapped value.
+            /// </summary>
+            [Parameter("Name", DbType.String)]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// Gets or sets a provider-specific DbType-mapped value.
+            /// </summary>
+            [Parameter("Code", (DbType)777)]
+            public int Code { get; set; }
+        }
+
+        /// <summary>
         /// Represents a parameter for a database command or query, providing metadata such as type, direction, and
         /// value.
         /// </summary>
@@ -1073,6 +1092,121 @@ namespace Hydrix.UnitTests.Engines
             var parameter = Assert.IsType<AttributeParameter>(Assert.Single(cmd.Parameters.Cast<IDataParameter>()));
             Assert.Equal("@Code", parameter.ParameterName);
             Assert.Equal(777, parameter.Value);
+        }
+
+        /// <summary>
+        /// Verifies that command parameter addition occurs for both standard and provider-specific DbType paths.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_AddsParameters_ForStandardAndProviderSpecificDbTypes()
+        {
+            var conn = new FakeDbConnection();
+            var procedure = new MixedProviderAwareProcedure
+            {
+                Name = "Alpha",
+                Code = 321
+            };
+
+            var cmd = CommandEngine.CreateCommand<ProviderAwareDataParameter>(
+                conn,
+                null,
+                procedure,
+                "@",
+                10,
+                null);
+
+            Assert.Equal(2, cmd.Parameters.Count);
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Name" && (string)p.Value == "Alpha");
+            Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Code" && (int)p.Value == 321);
+        }
+
+        /// <summary>
+        /// Verifies that consecutive command creation with the same procedure type exercises the procedure-binder cache hit path.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_ReusesCachedProcedureBinder_WhenProcedureTypeRepeats()
+        {
+            var commandEngineType = typeof(CommandEngine);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+
+            commandEngineType.GetField("_lastProcedureType", flags).SetValue(null, null);
+            commandEngineType.GetField("_lastProcedureBinder", flags).SetValue(null, null);
+
+            var conn = new FakeDbConnection();
+
+            var first = CommandEngine.CreateCommand<CustomDataParameter>(
+                conn,
+                null,
+                new CustomProcedure { Id = 1, Name = "One" },
+                "@",
+                10,
+                null);
+
+            var second = CommandEngine.CreateCommand<CustomDataParameter>(
+                conn,
+                null,
+                new CustomProcedure { Id = 2, Name = "Two" },
+                "@",
+                10,
+                null);
+
+            Assert.Equal(2, first.Parameters.Count);
+            Assert.Equal(2, second.Parameters.Count);
+            Assert.Contains(second.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Id" && (int)p.Value == 2);
+            Assert.Contains(second.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Name" && (string)p.Value == "Two");
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddProcedureBinder returns the thread-cached binder when called consecutively for the
+        /// same procedure type.
+        /// </summary>
+        [Fact]
+        public void GetOrAddProcedureBinder_ReturnsCachedBinder_WhenSameTypeIsRequestedTwice()
+        {
+            var commandEngineType = typeof(CommandEngine);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+
+            var lastProcedureTypeField = commandEngineType.GetField("_lastProcedureType", flags);
+            var lastProcedureBinderField = commandEngineType.GetField("_lastProcedureBinder", flags);
+            var getOrAddProcedureBinderMethod = commandEngineType.GetMethod("GetOrAddProcedureBinder", flags);
+
+            lastProcedureTypeField.SetValue(null, null);
+            lastProcedureBinderField.SetValue(null, null);
+
+            var first = getOrAddProcedureBinderMethod.Invoke(null, new object[] { typeof(CustomProcedure) });
+            var second = getOrAddProcedureBinderMethod.Invoke(null, new object[] { typeof(CustomProcedure) });
+
+            Assert.NotNull(first);
+            Assert.Same(first, second);
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddProviderDbTypeSetter returns the thread-cached setter when called consecutively for
+        /// the same parameter type.
+        /// </summary>
+        [Fact]
+        public void GetOrAddProviderDbTypeSetter_ReturnsCachedSetter_WhenSameTypeIsRequestedTwice()
+        {
+            var commandEngineType = typeof(CommandEngine);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+
+            var lastProviderSetterParameterTypeField = commandEngineType.GetField("_lastProviderSetterParameterType", flags);
+            var lastProviderSetterField = commandEngineType.GetField("_lastProviderSetter", flags);
+            var getOrAddProviderDbTypeSetterMethod = commandEngineType.GetMethod("GetOrAddProviderDbTypeSetter", flags);
+
+            lastProviderSetterParameterTypeField.SetValue(null, null);
+            lastProviderSetterField.SetValue(null, null);
+
+            var first = (Action<IDataParameter, int>)getOrAddProviderDbTypeSetterMethod.Invoke(
+                null,
+                new object[] { typeof(ProviderAwareDataParameter) });
+
+            var second = (Action<IDataParameter, int>)getOrAddProviderDbTypeSetterMethod.Invoke(
+                null,
+                new object[] { typeof(ProviderAwareDataParameter) });
+
+            Assert.NotNull(first);
+            Assert.Same(first, second);
         }
     }
 }

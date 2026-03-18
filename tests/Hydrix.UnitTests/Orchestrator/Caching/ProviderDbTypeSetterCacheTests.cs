@@ -241,14 +241,10 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         /// do not have a provider-specific DbType property, indicating that no setter is available for such
         /// types.</remarks>
         [Fact]
-        public void GetOrAdd_ReturnsNoop_WhenNoProviderDbTypeProperty()
+        public void GetOrAdd_ReturnsNull_WhenNoProviderDbTypeProperty()
         {
             var setter = ProviderDbTypeSetterCache.GetOrAdd(typeof(ParameterNoEnumDbType));
-            Assert.NotNull(setter);
-
-            var param = new ParameterNoEnumDbType();
-            setter(param, 123);
-            Assert.Equal("<.cctor>b__4_0", setter.Method.Name);
+            Assert.Null(setter);
         }
 
         /// <summary>
