@@ -1,4 +1,5 @@
 ﻿using Hydrix.Configuration;
+using Hydrix.Extensions;
 using Hydrix.Orchestrator.Binders.Procedure;
 using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
@@ -169,7 +170,7 @@ namespace Hydrix.Engines
                         Value = value
                     };
 
-                    if (Enum.IsDefined(typeof(DbType), dbType))
+                    if (dbType.IsStandardDbType())
                     {
                         dataParameter.DbType = (DbType)dbType;
                     }

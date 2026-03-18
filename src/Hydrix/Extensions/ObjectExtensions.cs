@@ -21,7 +21,8 @@ namespace Hydrix.Extensions
         /// the default value for type T.</param>
         /// <returns>The converted value of type T, or the default value of T if the input is null or represents a database null
         /// (DBNull).</returns>
-        public static T As<T>(this object value)
+        public static T As<T>(
+            this object value)
         {
             if (value == null || value is DBNull)
                 return default(T);
@@ -195,7 +196,8 @@ namespace Hydrix.Extensions
         /// Attempts to convert the specified value to a Boolean type or its equivalent, returning a tuple indicating
         /// whether the conversion was successful and the converted value.
         /// </summary>
-        /// <remarks>Supported conversions include Boolean, integer types (int, short, long), where
+        /// <remarks>Supported conversions include Boolean and integral numeric types (int, short, long, byte,
+        /// sbyte, ushort, uint, ulong), where
         /// nonzero values are treated as <see langword="true"/>. If the conversion type is not Boolean or the value is
         /// not convertible, the method returns the default value and sets the flow control flag to <see
         /// langword="true"/>.</remarks>
@@ -231,6 +233,31 @@ namespace Hydrix.Extensions
                     return (
                         flowControl: false,
                         value: (T)(object)(l != 0));
+
+                if (value is byte b)
+                    return (
+                        flowControl: false,
+                        value: (T)(object)(b != 0));
+
+                if (value is sbyte sb)
+                    return (
+                        flowControl: false,
+                        value: (T)(object)(sb != 0));
+
+                if (value is ushort us)
+                    return (
+                        flowControl: false,
+                        value: (T)(object)(us != 0));
+
+                if (value is uint ui)
+                    return (
+                        flowControl: false,
+                        value: (T)(object)(ui != 0));
+
+                if (value is ulong ul)
+                    return (
+                        flowControl: false,
+                        value: (T)(object)(ul != 0));
             }
 
             return (

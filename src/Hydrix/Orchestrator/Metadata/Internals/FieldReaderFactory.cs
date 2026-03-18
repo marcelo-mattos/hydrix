@@ -24,7 +24,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         /// type specified. Each entry associates a Type with a function that reads the corresponding value from the
         /// IDataRecord. The mapping covers common primitive and framework types such as int, long, short, byte, bool,
         /// decimal, double, float, Guid, DateTime, and string.</remarks>
-        private static readonly IReadOnlyDictionary<Type, Func<IDataRecord, int, object>> _baseReaders
+        private static readonly Dictionary<Type, Func<IDataRecord, int, object>> _baseReaders
             = new Dictionary<Type, Func<IDataRecord, int, object>>()
             {
                 [typeof(bool)] = (record, ordinal) => record.GetBoolean(ordinal),
@@ -60,6 +60,8 @@ namespace Hydrix.Orchestrator.Metadata.Internals
             if (!isNullable)
                 defaultValue = DefaultValueFactoryCache.Get(type)();
 
+            var nullValue = isNullable ? null : defaultValue;
+
             if (type.IsEnum)
             {
                 var enumUnderlying = Enum.GetUnderlyingType(type);
@@ -76,23 +78,31 @@ namespace Hydrix.Orchestrator.Metadata.Internals
                     var raw = enumReader(record, ordinal);
 
                     return raw == null
-                        ? null
+                        ? nullValue
                         : converter(raw);
                 };
             }
 
-            if (_baseReaders.TryGetValue(type, out var reader))
-            {
-                return (record, ordinal) =>
-                    record.IsDBNull(ordinal)
-                        ? (isNullable ? null : defaultValue)
-                        : reader(record, ordinal);
-            }
-
-            return (record, ordinal) =>
-                record.IsDBNull(ordinal)
-                    ? null
-                    : record.GetValue(ordinal);
+            return _baseReaders.TryGetValue(type, out var reader)
+                ? CreateTypedReader(nullValue, reader)
+                : CreateTypedReader(nullValue, (record, ordinal) => record.GetValue(ordinal));
         }
+
+        /// <summary>
+        /// Creates a delegate that reads a typed value from an IDataRecord, returning a specified value when the
+        /// database field is null.
+        /// </summary>
+        /// <param name="nullValue">The value to return when the database field is null. This value is used in place of DBNull.</param>
+        /// <param name="valueReader">A function that reads and converts the value from the IDataRecord for a given ordinal. This function is
+        /// called when the field is not null.</param>
+        /// <returns>A FieldReader delegate that returns the specified null value if the field is null, or the result of the
+        /// valueReader function otherwise.</returns>
+        private static FieldReader CreateTypedReader(
+            object nullValue,
+            Func<IDataRecord, int, object> valueReader)
+            => (record, ordinal) =>
+                record.IsDBNull(ordinal)
+                    ? nullValue
+                    : valueReader(record, ordinal);
     }
 }

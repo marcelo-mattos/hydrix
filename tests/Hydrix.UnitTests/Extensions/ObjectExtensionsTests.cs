@@ -296,6 +296,25 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that As&lt;T&gt; converts additional integral numeric types to boolean values.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsAdditionalIntegralValues_ToBoolean()
+        {
+            object byteValue = (byte)1;
+            object sbyteValue = (sbyte)0;
+            object ushortValue = (ushort)2;
+            object uintValue = (uint)0;
+            object ulongValue = (ulong)3;
+
+            Assert.True(byteValue.As<bool>());
+            Assert.False(sbyteValue.As<bool>());
+            Assert.True(ushortValue.As<bool>());
+            Assert.False(uintValue.As<bool>());
+            Assert.True(ulongValue.As<bool>());
+        }
+
+        /// <summary>
         /// Verifies that As&lt;T&gt; returns direct boolean values through the specialized boolean branch.
         /// </summary>
         [Fact]

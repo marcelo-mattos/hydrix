@@ -96,6 +96,17 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         { }
 
         /// <summary>
+        /// Represents a custom value type used to validate fallback behavior for non-nullable structs.
+        /// </summary>
+        public struct CustomStruct
+        {
+            /// <summary>
+            /// Gets or sets a sample value.
+            /// </summary>
+            public int Value { get; set; }
+        }
+
+        /// <summary>
         /// Verifies that the correct value is returned for various base types when reading from a data record.
         /// </summary>
         /// <remarks>This test uses a mock IDataRecord to simulate database field retrieval for multiple
@@ -348,10 +359,11 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
-        /// Verifies that enum fallback conversion returns null when the underlying raw value is null.
+        /// Verifies that enum fallback conversion returns the enum default when the raw value is null for
+        /// non-nullable enum targets.
         /// </summary>
         [Fact]
-        public void EnumType_WithUnsupportedUnderlying_ReturnsNullWhenRawIsNull()
+        public void EnumType_WithUnsupportedUnderlying_ReturnsDefaultWhenRawIsNull()
         {
             var mock = new Mock<IDataRecord>();
             mock.Setup(r => r.IsDBNull(0)).Returns(false);
@@ -360,7 +372,7 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             var reader = FieldReaderFactory.Create(typeof(EnumWithUIntUnderlying));
             var result = reader(mock.Object, 0);
 
-            Assert.Null(result);
+            Assert.Equal(EnumWithUIntUnderlying.Zero, result);
         }
 
         /// <summary>
@@ -399,6 +411,41 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             var reader = FieldReaderFactory.Create(typeof(CustomType));
             var result = reader(mock.Object, 0);
             Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that fallback readers return default values for non-nullable structs when the record contains
+        /// DBNull.
+        /// </summary>
+        [Fact]
+        public void NonNullableCustomStruct_ReturnsDefaultOnDBNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(true);
+
+            var reader = FieldReaderFactory.Create(typeof(CustomStruct));
+            var result = reader(mock.Object, 0);
+
+            Assert.Equal(default(CustomStruct), result);
+        }
+
+        /// <summary>
+        /// Verifies that fallback readers return the original value for non-nullable structs when the record contains
+        /// data.
+        /// </summary>
+        [Fact]
+        public void NonNullableCustomStruct_FallbackReturnsValue()
+        {
+            var value = new CustomStruct { Value = 42 };
+
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(false);
+            mock.Setup(r => r.GetValue(0)).Returns(value);
+
+            var reader = FieldReaderFactory.Create(typeof(CustomStruct));
+            var result = reader(mock.Object, 0);
+
+            Assert.Equal(value, result);
         }
     }
 }

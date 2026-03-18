@@ -493,6 +493,19 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Represents a procedure using a high-range standard DbType value.
+        /// </summary>
+        [Procedure("DateTimeOffsetDbTypeProcedure")]
+        private class DateTimeOffsetDbTypeProcedure : IProcedure<AttributeParameter>
+        {
+            /// <summary>
+            /// Gets or sets a sample timestamp value.
+            /// </summary>
+            [Parameter("When", DbType.DateTimeOffset)]
+            public DateTimeOffset When { get; set; }
+        }
+
+        /// <summary>
         /// Represents a procedure containing both standard and provider-specific DbType mappings.
         /// </summary>
         [Procedure("MixedProviderAwareProcedure")]
@@ -1006,6 +1019,30 @@ namespace Hydrix.UnitTests.Engines
             Assert.Equal("@Code", parameter.ParameterName);
             Assert.Equal(123, parameter.Value);
             Assert.Equal(CustomProviderDbType.ProviderSpecific, parameter.SqlDbType);
+        }
+
+        /// <summary>
+        /// Verifies that standard DbType values in the upper enum range are treated as built-in DbType values.
+        /// </summary>
+        [Fact]
+        public void CreateCommand_RecognizesStandardDbType_DateTimeOffset()
+        {
+            var conn = new FakeDbConnection();
+            var expected = new DateTimeOffset(2025, 1, 2, 3, 4, 5, TimeSpan.Zero);
+            var procedure = new DateTimeOffsetDbTypeProcedure { When = expected };
+
+            var cmd = CommandEngine.CreateCommand<AttributeParameter>(
+                conn,
+                null,
+                procedure,
+                "@",
+                10,
+                null);
+
+            var parameter = Assert.IsType<AttributeParameter>(Assert.Single(cmd.Parameters.Cast<IDataParameter>()));
+            Assert.Equal("@When", parameter.ParameterName);
+            Assert.Equal(expected, parameter.Value);
+            Assert.Equal(DbType.DateTimeOffset, parameter.DbType);
         }
 
         /// <summary>
