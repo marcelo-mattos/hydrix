@@ -26,16 +26,6 @@ namespace Hydrix.Orchestrator.Materializers
                 if (disposing)
                 { }
 
-                // Dispose unmanaged state (unmanaged objects).
-                try { this.RollbackTransaction(); } catch { }
-                try { this.CloseConnection(); } catch { }
-
-                lock (this._lockConnection)
-                {
-                    this.DbConnection?.Dispose();
-                    this.DbConnection = null;
-                }
-
                 this.IsDisposed = true;
             }
         }

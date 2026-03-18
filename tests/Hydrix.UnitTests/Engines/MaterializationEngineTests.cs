@@ -521,6 +521,25 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies QueryAsync maps entities when using the non-DbCommand fallback execution path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithFallbackReader_ReturnsMappedEntities()
+        {
+            var command = new FallbackReaderCommand();
+            var connection = CreateOpenConnection(command);
+
+            var result = await MaterializationEngine.QueryAsync<TestEntity>(
+                connection.Object,
+                "select Id from t");
+
+            Assert.Single(result);
+            Assert.Equal(1, result[0].Id);
+            Assert.Equal("fallback", result[0].Name);
+        }
+
+        /// <summary>
         /// Verifies procedure Query overload maps rows to entities.
         /// </summary>
         [Fact]
@@ -600,6 +619,25 @@ namespace Hydrix.UnitTests.Engines
                     connection.Object,
                     new TestProcedure(),
                     cancellationToken: cancellationTokenSource.Token));
+        }
+
+        /// <summary>
+        /// Verifies procedure QueryAsync maps entities when using the non-DbCommand fallback execution path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_Procedure_WithFallbackReader_ReturnsMappedEntities()
+        {
+            var command = new FallbackReaderCommand();
+            var connection = CreateOpenConnection(command);
+
+            var result = await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
+                connection.Object,
+                new TestProcedure());
+
+            Assert.Single(result);
+            Assert.Equal(1, result[0].Id);
+            Assert.Equal("fallback", result[0].Name);
         }
 
         /// <summary>

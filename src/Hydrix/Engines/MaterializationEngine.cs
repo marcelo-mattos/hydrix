@@ -4,6 +4,7 @@ using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -145,6 +146,15 @@ namespace Hydrix.Engines
                     cancellationToken)
                 .ConfigureAwait(false);
 
+            if (dataReader is DbDataReader)
+            {
+                return await dataReader
+                    .MapToAsync<TEntity>(
+                        limit,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             return dataReader.MapTo<TEntity>(
                 limit);
         }
@@ -185,6 +195,15 @@ namespace Hydrix.Engines
                     parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
                     cancellationToken)
                 .ConfigureAwait(false);
+
+            if (dataReader is DbDataReader)
+            {
+                return await dataReader
+                    .MapToAsync<TEntity>(
+                        limit,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             return dataReader.MapTo<TEntity>(
                 limit);

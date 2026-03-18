@@ -24,37 +24,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
-        /// Verifies that disposing the TestMaterializer instance calls both Rollback and Close operations.
-        /// </summary>
-        /// <remarks>This test ensures that the Dispose method triggers the expected cleanup actions by
-        /// asserting that both RollbackCalled and CloseCalled are set to true after disposal.</remarks>
-        [Fact]
-        public void Dispose_CallsRollbackAndClose()
-        {
-            var mat = new TestMaterializerDispose();
-            mat.Dispose();
-            Assert.True(mat.RollbackCalled);
-            Assert.True(mat.CloseCalled);
-        }
-
-        /// <summary>
-        /// Verifies that disposing the materializer disposes the underlying database connection and sets the
-        /// DbConnection property to null.
-        /// </summary>
-        /// <remarks>This test ensures that resource cleanup is performed correctly when the materializer
-        /// is disposed. It checks that the associated database connection is properly disposed and that the reference
-        /// to the connection is cleared.</remarks>
-        [Fact]
-        public void Dispose_DisposesDbConnectionAndSetsNull()
-        {
-            var mat = new TestMaterializerDispose();
-            var conn = (TestDbConnection)mat.DbConnection;
-            mat.Dispose();
-            Assert.True(conn.Disposed);
-            Assert.Null(mat.DbConnection);
-        }
-
-        /// <summary>
         /// Verifies that calling Dispose multiple times on a TestMaterializer instance does not perform disposal
         /// actions more than once.
         /// </summary>
@@ -91,24 +60,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Exception ex = Record.Exception(() => matEx.Dispose());
             Assert.True(matEx.IsDisposed);
             Assert.True(matEx.IsDisposing);
-        }
-
-        /// <summary>
-        /// Verifies that invoking the protected dispose routine with <c>disposing=false</c> still marks the
-        /// materializer as disposing/disposed and releases the connection.
-        /// </summary>
-        [Fact]
-        public void DisposeCore_False_SetsStateAndDisposesConnection()
-        {
-            var mat = new TestMaterializerDispose();
-            var conn = (TestDbConnection)mat.DbConnection;
-
-            mat.CallDisposeCore(false);
-
-            Assert.True(mat.IsDisposing);
-            Assert.True(mat.IsDisposed);
-            Assert.True(conn.Disposed);
-            Assert.Null(mat.DbConnection);
         }
 
         /// <summary>

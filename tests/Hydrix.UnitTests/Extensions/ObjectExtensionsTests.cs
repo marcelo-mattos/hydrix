@@ -14,6 +14,16 @@ namespace Hydrix.UnitTests.Extensions
     public class ObjectExtensionsTests
     {
         /// <summary>
+        /// Represents an enum used to validate enum conversions in As&lt;T&gt; tests.
+        /// </summary>
+        private enum TestStatus
+        {
+            Unknown = 0,
+            Active = 1,
+            Inactive = 2
+        }
+
+        /// <summary>
         /// Verifies that the As&lt;T&gt; extension method returns the default value of the specified type when the input
         /// object is null.
         /// </summary>
@@ -71,6 +81,146 @@ namespace Hydrix.UnitTests.Extensions
         {
             object value = "abc";
             Assert.Throws<FormatException>(() => value.As<int>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; correctly converts values to enum types from both string and numeric sources.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsEnum_FromStringAndNumeric()
+        {
+            object enumName = "active";
+            object enumNumber = 2;
+
+            Assert.Equal(TestStatus.Active, enumName.As<TestStatus>());
+            Assert.Equal(TestStatus.Inactive, enumNumber.As<TestStatus>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; correctly converts Guid values from Guid and string inputs.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsGuid_FromGuidAndString()
+        {
+            var guid = Guid.NewGuid();
+            object guidValue = guid;
+            object guidText = guid.ToString();
+
+            Assert.Equal(guid, guidValue.As<Guid>());
+            Assert.Equal(guid, guidText.As<Guid>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts a valid Guid string to a nullable Guid target.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsGuidString_ToNullableGuid()
+        {
+            var guid = Guid.NewGuid();
+            object guidText = guid.ToString();
+
+            Guid? converted = guidText.As<Guid?>();
+
+            Assert.True(converted.HasValue);
+            Assert.Equal(guid, converted.Value);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts values to nullable target types.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsValue_ToNullableType()
+        {
+            object value = "123";
+            int? converted = value.As<int?>();
+
+            Assert.True(converted.HasValue);
+            Assert.Equal(123, converted.Value);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; returns the original value when the input is already of the target type.
+        /// </summary>
+        [Fact]
+        public void As_ReturnsSameValue_WhenAlreadyTargetType()
+        {
+            object value = 77;
+
+            Assert.Equal(77, value.As<int>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; returns null for nullable value types when the input is null.
+        /// </summary>
+        [Fact]
+        public void As_ReturnsNull_WhenNullableTargetAndValueIsNull()
+        {
+            object value = null;
+            int? converted = value.As<int?>();
+
+            Assert.Null(converted);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts Guid values to nullable Guid targets through the Guid specialized path.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsGuid_ToNullableGuid()
+        {
+            var guid = Guid.NewGuid();
+            object value = guid;
+
+            Guid? converted = value.As<Guid?>();
+
+            Assert.True(converted.HasValue);
+            Assert.Equal(guid, converted.Value);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; throws a format exception when converting an invalid Guid string.
+        /// </summary>
+        [Fact]
+        public void As_ThrowsFormatException_WhenGuidStringIsInvalid()
+        {
+            object value = "invalid-guid";
+
+            Assert.Throws<FormatException>(() => value.As<Guid>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; throws when target is Guid and source is neither Guid nor string.
+        /// </summary>
+        [Fact]
+        public void As_ThrowsInvalidCastException_WhenGuidTargetAndSourceIsUnsupported()
+        {
+            object value = 10;
+
+            Assert.Throws<InvalidCastException>(() => value.As<Guid>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; throws when target is nullable Guid and source is neither Guid nor string.
+        /// </summary>
+        [Fact]
+        public void As_ThrowsInvalidCastException_WhenNullableGuidTargetAndSourceIsUnsupported()
+        {
+            object value = 10;
+
+            Assert.Throws<InvalidCastException>(() => value.As<Guid?>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts numeric values to nullable enum targets.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsNumericValue_ToNullableEnum()
+        {
+            object value = 1;
+
+            TestStatus? converted = value.As<TestStatus?>();
+
+            Assert.True(converted.HasValue);
+            Assert.Equal(TestStatus.Active, converted.Value);
         }
     }
 }

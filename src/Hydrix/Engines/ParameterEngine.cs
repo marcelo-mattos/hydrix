@@ -1,12 +1,39 @@
-﻿using Hydrix.Orchestrator.Caching;
+﻿using Hydrix.Orchestrator.Binders.Parameter;
+using Hydrix.Orchestrator.Caching;
 using System;
 using System.Collections.Generic;
 using System.Data;
 
 namespace Hydrix.Engines
 {
+    /// <summary>
+    /// Provides methods for binding object properties as database command parameters and formatting parameter values
+    /// for SQL queries. This class is intended for internal use within the parameter binding infrastructure.
+    /// </summary>
+    /// <remarks>The class includes thread-specific caching of parameter binders to optimize performance for
+    /// repeated accesses. It supports mapping public properties of objects to command parameters and formatting values
+    /// for safe inclusion in SQL statements. All methods and fields are intended for internal use and are not
+    /// thread-safe beyond the thread-specific caching mechanism.</remarks>
     internal static class ParameterEngine
     {
+        /// <summary>
+        /// Holds the last parameter type used in the current thread context.
+        /// </summary>
+        /// <remarks>This field is marked with the [ThreadStatic] attribute, meaning its value is unique
+        /// to each thread. It is intended for internal tracking of parameter types within thread-specific
+        /// operations.</remarks>
+        [ThreadStatic]
+        private static Type _lastParameterType;
+
+        /// <summary>
+        /// Holds the last instance of the parameter object binder used in the current thread.
+        /// </summary>
+        /// <remarks>This field is marked with the [ThreadStatic] attribute, ensuring that each thread has
+        /// its own independent value. It is intended for internal tracking of binder state within thread-specific
+        /// operations.</remarks>
+        [ThreadStatic]
+        private static ParameterObjectBinder _lastBinder;
+
         /// <summary>
         /// Binds the properties of the specified parameters object as parameters to the given database command.
         /// </summary>
@@ -39,7 +66,7 @@ namespace Hydrix.Engines
                 return;
             }
 
-            var binder = ParameterBinderCache.GetOrAdd(
+            var binder = GetOrAddBinder(
                 parameters.GetType());
 
             binder.Bind(
@@ -47,6 +74,35 @@ namespace Hydrix.Engines
                 parameters,
                 parameterPrefix,
                 AddParameter);
+        }
+
+        /// <summary>
+        /// Retrieves a cached parameter object binder for the specified parameter type, or creates and caches a new
+        /// binder if one does not already exist.
+        /// </summary>
+        /// <remarks>This method optimizes binder retrieval by caching the most recently used binder.
+        /// Subsequent calls with the same parameter type return the cached binder, improving performance for repeated
+        /// accesses.</remarks>
+        /// <param name="parameterType">The type of the parameter for which a binder is required. Cannot be null.</param>
+        /// <returns>A parameter object binder associated with the specified parameter type.</returns>
+        private static ParameterObjectBinder GetOrAddBinder(
+            Type parameterType)
+        {
+            if (ReferenceEquals(
+                    _lastParameterType,
+                    parameterType) &&
+                _lastBinder != null)
+            {
+                return _lastBinder;
+            }
+
+            var binder = ParameterBinderCache.GetOrAdd(
+                parameterType);
+
+            _lastParameterType = parameterType;
+            _lastBinder = binder;
+
+            return binder;
         }
 
         /// <summary>

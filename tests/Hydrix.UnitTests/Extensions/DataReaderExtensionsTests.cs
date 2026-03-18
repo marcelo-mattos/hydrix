@@ -4,6 +4,8 @@ using Moq;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Hydrix.UnitTests.Extensions
@@ -151,6 +153,101 @@ namespace Hydrix.UnitTests.Extensions
 
             Assert.Throws<ArgumentNullException>(() =>
                 reader.MapTo<TestEntity>());
+        }
+
+        /// <summary>
+        /// Verifies that the asynchronous mapping method correctly maps all rows from a DbDataReader-backed
+        /// IDataReader into entities.
+        /// </summary>
+        /// <remarks>This test uses a DataTable reader (which is a DbDataReader implementation) to validate
+        /// the asynchronous execution path and property materialization.</remarks>
+        [Fact]
+        public async Task MapToAsync_ReturnsEntities()
+        {
+            var table = new DataTable();
+            table.Columns.Add("Id", typeof(int));
+            table.Columns.Add("Name", typeof(string));
+            table.Rows.Add(1, "Alpha");
+            table.Rows.Add(2, "Beta");
+
+            using var reader = table.CreateDataReader();
+
+            var entities = await reader.MapToAsync<TestEntity>();
+
+            Assert.Equal(2, entities.Count);
+            Assert.Equal(1, entities[0].Id);
+            Assert.Equal("Alpha", entities[0].Name);
+            Assert.Equal(2, entities[1].Id);
+            Assert.Equal("Beta", entities[1].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the asynchronous mapping operation is canceled when a canceled CancellationToken is provided.
+        /// </summary>
+        /// <remarks>This test ensures that the MapToAsync method throws a TaskCanceledException when the
+        /// provided CancellationToken is already canceled, confirming correct cancellation behavior.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task MapToAsync_CancellationToken_CancelsOperation()
+        {
+            var table = new DataTable();
+            table.Columns.Add("Id", typeof(int));
+            table.Columns.Add("Name", typeof(string));
+            table.Rows.Add(1, "Alpha");
+
+            using var reader = table.CreateDataReader();
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            await Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await reader.MapToAsync<TestEntity>(cancellationToken: cts.Token));
+        }
+
+        /// <summary>
+        /// Verifies that the asynchronous mapping method respects a positive row limit and returns only the requested
+        /// number of entities.
+        /// </summary>
+        [Fact]
+        public async Task MapToAsync_WithPositiveLimit_ReturnsLimitedEntities()
+        {
+            var table = new DataTable();
+            table.Columns.Add("Id", typeof(int));
+            table.Columns.Add("Name", typeof(string));
+            table.Rows.Add(10, "First");
+            table.Rows.Add(20, "Second");
+
+            using var reader = table.CreateDataReader();
+
+            var entities = await reader.MapToAsync<TestEntity>(limit: 1);
+
+            Assert.Single(entities);
+            Assert.Equal(10, entities[0].Id);
+            Assert.Equal("First", entities[0].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the asynchronous mapping method throws when the provided IDataReader is not a DbDataReader.
+        /// </summary>
+        [Fact]
+        public async Task MapToAsync_WithNonDbDataReader_Throws()
+        {
+            var mockReader = new Mock<IDataReader>();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await mockReader.Object.MapToAsync<TestEntity>());
+        }
+
+        /// <summary>
+        /// Verifies that the asynchronous mapping method throws an ArgumentNullException when called with a null
+        /// reader.
+        /// </summary>
+        [Fact]
+        public async Task MapToAsync_Null_Throws()
+        {
+            IDataReader reader = null;
+
+            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+                await reader.MapToAsync<TestEntity>());
         }
     }
 }

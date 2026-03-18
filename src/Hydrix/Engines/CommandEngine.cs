@@ -1,4 +1,5 @@
 ﻿using Hydrix.Configuration;
+using Hydrix.Orchestrator.Binders.Procedure;
 using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,42 @@ namespace Hydrix.Engines
     /// and may throw exceptions if preconditions are not met.</remarks>
     internal static class CommandEngine
     {
+        /// <summary>
+        /// Holds the last procedure type used in the current thread context.
+        /// </summary>
+        /// <remarks>This field is marked with the [ThreadStatic] attribute, meaning its value is unique
+        /// to each thread. It is intended for internal tracking of procedure types and should not be accessed directly
+        /// by consumers.</remarks>
+        [ThreadStatic]
+        private static Type _lastProcedureType;
+
+        /// <summary>
+        /// Holds the last used procedure binder for the current thread.
+        /// </summary>
+        /// <remarks>This field is marked with the ThreadStatic attribute, meaning its value is unique per
+        /// thread. It is intended for internal tracking of procedure binding operations within a thread
+        /// context.</remarks>
+        [ThreadStatic]
+        private static ProcedureBinder _lastProcedureBinder;
+
+        /// <summary>
+        /// Holds the type of the last parameter used to set a provider, specific to the current thread context.
+        /// </summary>
+        /// <remarks>This field is marked with the [ThreadStatic] attribute, meaning its value is unique
+        /// per thread. It is intended for internal tracking of provider setter parameter types and should not be
+        /// accessed directly by consumers.</remarks>
+        [ThreadStatic]
+        private static Type _lastProviderSetterParameterType;
+
+        /// <summary>
+        /// Stores the last provider-specific parameter setter action used in the current thread context.
+        /// </summary>
+        /// <remarks>This field is marked with the [ThreadStatic] attribute, ensuring that each thread has
+        /// its own instance. It is intended for internal caching of parameter setter delegates to optimize repeated
+        /// parameter assignments in data operations.</remarks>
+        [ThreadStatic]
+        private static Action<IDataParameter, int> _lastProviderSetter;
+
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
         /// </summary>
@@ -111,12 +148,13 @@ namespace Hydrix.Engines
                 throw new InvalidOperationException("Database connection is not open.");
 
             var procedureType = procedure.GetType();
-            var binder = ProcedureBinderCache.GetOrAdd(procedureType);
+            var binder = GetOrAddProcedureBinder(procedureType);
 
             var command = connection.CreateCommand();
             binder.ApplyCommand(command);
             command.CommandTimeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             command.Transaction = transaction;
+            var providerDbTypeSetter = GetOrAddProviderDbTypeSetter(typeof(TDataParameterDriver));
 
             binder.BindParameters(
                 command,
@@ -137,8 +175,7 @@ namespace Hydrix.Engines
                     }
                     else
                     {
-                        var setter = ProviderDbTypeSetterCache.GetOrAdd(dataParameter.GetType());
-                        setter?.Invoke(
+                        providerDbTypeSetter?.Invoke(
                             dataParameter,
                             dbType);
                     }
@@ -149,6 +186,63 @@ namespace Hydrix.Engines
             LogCommand(logger, command);
 
             return command;
+        }
+
+        /// <summary>
+        /// Retrieves a cached procedure binder for the specified procedure type, or creates and caches a new binder if
+        /// one does not already exist.
+        /// </summary>
+        /// <remarks>This method optimizes repeated access by caching the most recently used procedure
+        /// binder. If the binder for the given type is already cached, it is returned directly; otherwise, a new binder
+        /// is created and stored for future use.</remarks>
+        /// <param name="procedureType">The type of the procedure for which to obtain a binder. Cannot be null.</param>
+        /// <returns>A procedure binder instance associated with the specified procedure type.</returns>
+        private static ProcedureBinder GetOrAddProcedureBinder(
+            Type procedureType)
+        {
+            if (ReferenceEquals(
+                    _lastProcedureType,
+                    procedureType) &&
+                _lastProcedureBinder != null)
+            {
+                return _lastProcedureBinder;
+            }
+
+            var binder = ProcedureBinderCache.GetOrAdd(
+                procedureType);
+
+            _lastProcedureType = procedureType;
+            _lastProcedureBinder = binder;
+
+            return binder;
+        }
+
+        /// <summary>
+        /// Retrieves a cached delegate that sets the provider-specific database type for a parameter, or adds a new
+        /// setter to the cache if one does not exist.
+        /// </summary>
+        /// <remarks>This method uses an internal cache to optimize retrieval of provider-specific
+        /// database type setters. Repeated calls with the same parameter type are efficient due to caching.</remarks>
+        /// <param name="parameterType">The type of the parameter for which to obtain or add a provider-specific database type setter. Cannot be
+        /// null.</param>
+        /// <returns>An action delegate that sets the provider-specific database type for the specified parameter type.</returns>
+        private static Action<IDataParameter, int> GetOrAddProviderDbTypeSetter(
+            Type parameterType)
+        {
+            if (ReferenceEquals(
+                    _lastProviderSetterParameterType,
+                    parameterType) &&
+                _lastProviderSetter != null)
+            {
+                return _lastProviderSetter;
+            }
+
+            var setter = ProviderDbTypeSetterCache.GetOrAdd(parameterType);
+
+            _lastProviderSetterParameterType = parameterType;
+            _lastProviderSetter = setter;
+
+            return setter;
         }
 
         /// <summary>

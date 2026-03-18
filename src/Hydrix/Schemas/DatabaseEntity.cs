@@ -2,7 +2,9 @@
 using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Caching;
+using Hydrix.Orchestrator.Metadata.Builders;
 using Hydrix.Schemas.Contract;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -17,6 +19,24 @@ namespace Hydrix.Schemas
     public abstract class DatabaseEntity :
         IEntity
     {
+        /// <summary>
+        /// Holds the last entity type processed in the current thread context.
+        /// </summary>
+        /// <remarks>This field is marked with the ThreadStatic attribute, meaning its value is unique per
+        /// thread. It is intended for internal use to track entity type state during thread-specific
+        /// operations.</remarks>
+        [ThreadStatic]
+        private static Type _lastEntityType;
+
+        /// <summary>
+        /// Holds the metadata of the most recently processed entity for the current thread.
+        /// </summary>
+        /// <remarks>This field is marked with the [ThreadStatic] attribute, ensuring that each thread has
+        /// its own independent value. It is intended for internal use to optimize entity building operations by caching
+        /// metadata per thread.</remarks>
+        [ThreadStatic]
+        private static EntityBuilderMetadata _lastEntityMetadata;
+
         /// <summary>
         /// Validates the current object and returns a value that indicates whether the object is in a valid state.
         /// </summary>
@@ -77,7 +97,7 @@ namespace Hydrix.Schemas
         private void ValidateInternal(
             List<ValidationResult> results)
         {
-            var metadata = EntityBuilderMetadataCache.GetMetadata(GetType());
+            var metadata = GetOrAddEntityMetadata(GetType());
 
             foreach (var column in metadata.Columns)
             {
@@ -93,6 +113,35 @@ namespace Hydrix.Schemas
                     context,
                     results);
             }
+        }
+
+        /// <summary>
+        /// Retrieves the metadata associated with the specified entity type, adding it to the cache if it does not
+        /// already exist.
+        /// </summary>
+        /// <remarks>This method optimizes repeated access by caching the most recently requested entity
+        /// type and its metadata. Subsequent calls with the same entity type return the cached metadata, improving
+        /// performance for frequent lookups.</remarks>
+        /// <param name="entityType">The type of the entity for which metadata is requested. Cannot be null.</param>
+        /// <returns>The metadata object for the specified entity type. If the metadata is already cached, returns the cached
+        /// instance; otherwise, retrieves and caches the metadata before returning it.</returns>
+        private static EntityBuilderMetadata GetOrAddEntityMetadata(
+            Type entityType)
+        {
+            if (ReferenceEquals(
+                    _lastEntityType,
+                    entityType) &&
+                _lastEntityMetadata != null)
+            {
+                return _lastEntityMetadata;
+            }
+
+            var metadata = EntityBuilderMetadataCache.GetMetadata(entityType);
+
+            _lastEntityType = entityType;
+            _lastEntityMetadata = metadata;
+
+            return metadata;
         }
 
         /// <summary>
