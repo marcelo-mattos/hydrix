@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Threading;
 
 namespace Hydrix.Extensions
 {
@@ -12,10 +13,27 @@ namespace Hydrix.Extensions
     internal static class ObjectExtensions
     {
         /// <summary>
+        /// Holds the target type of the most recently used converter in the process-wide hot cache.
+        /// </summary>
+        private static Type _lastConverterTargetType;
+
+        /// <summary>
+        /// Holds the converter delegate of the most recently used converter in the process-wide hot cache.
+        /// </summary>
+        private static Func<object, object> _lastConverter;
+
+        /// <summary>
         /// Caches conversion delegates by target type to reduce repeated branch evaluation in hot paths.
         /// </summary>
         private static readonly ConcurrentDictionary<Type, Func<object, object>> _converterCache =
             new ConcurrentDictionary<Type, Func<object, object>>();
+
+        /// <summary>
+        /// Defines the maximum number of converter delegates stored in the shared cache.
+        /// </summary>
+        /// <remarks>When the limit is reached, new converters are created on demand without being added to the
+        /// dictionary, avoiding unbounded memory growth while keeping hot-path performance through the volatile cache.</remarks>
+        private const int MaxConverterCacheSize = 256;
 
         /// <summary>
         /// Converts the specified object to the specified type, returning the default value if the object is null or
@@ -38,9 +56,38 @@ namespace Hydrix.Extensions
             if (value is T typedValue)
                 return typedValue;
 
-            var converter = _converterCache.GetOrAdd(
-                targetType,
-                BuildConverter);
+            var cachedTargetType = Volatile.Read(ref _lastConverterTargetType);
+            var cachedConverter = Volatile.Read(ref _lastConverter);
+
+            Func<object, object> converter;
+            if (ReferenceEquals(
+                cachedTargetType,
+                targetType) && cachedConverter != null)
+            {
+                converter = cachedConverter;
+            }
+            else
+            {
+                if (!_converterCache.TryGetValue(
+                        targetType,
+                        out converter))
+                {
+                    converter = _converterCache.Count < MaxConverterCacheSize
+                        ? _converterCache.GetOrAdd(
+                            targetType,
+                            BuildConverter)
+                        : BuildConverter(
+                            targetType);
+                }
+
+                Volatile.Write(
+                    ref _lastConverter,
+                    converter);
+
+                Volatile.Write(
+                    ref _lastConverterTargetType,
+                    targetType);
+            }
 
             return (T)converter(value);
         }

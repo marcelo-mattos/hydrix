@@ -70,8 +70,6 @@ namespace Hydrix.Orchestrator.Caching
                     "Navigation property cannot be null.");
 
             var foreignType = navigationProperty.PropertyType;
-
-            var mainTable = mainType.GetCustomAttribute<TableAttribute>();
             var foreignTable = foreignType.GetCustomAttribute<TableAttribute>();
 
             var primaryKeys = attr.PrimaryKeys
@@ -88,19 +86,22 @@ namespace Hydrix.Orchestrator.Caching
                     .Select(p => p.Name)
                     .ToArray();
 
-            if (primaryKeys.Length == 0)
-                throw new InvalidOperationException(
-                    $"Primary key not resolved for {foreignType.Name}");
-
             if (foreignKeys.Length == 0)
                 throw new InvalidOperationException(
                     $"Foreign key not resolved for {mainType.Name}");
 
-            if (primaryKeys.Length != foreignKeys.Length)
+            if (primaryKeys.Length > 0 && primaryKeys.Length != foreignKeys.Length)
                 throw new InvalidOperationException(
                     $"PrimaryKeys and ForeignKeys count mismatch.");
 
-            return (attr.Schema, primaryKeys, foreignKeys);
+            var schema = string.IsNullOrWhiteSpace(attr.Schema)
+                ? foreignTable?.Schema
+                : attr.Schema;
+
+            return (
+                schema,
+                primaryKeys,
+                foreignKeys);
         }
 
         /// <summary>
@@ -120,7 +121,6 @@ namespace Hydrix.Orchestrator.Caching
             var table = tableAttr?.Name ?? type.Name;
             var schema = tableAttr?.Schema;
 
-            var validatableColumns = new List<ColumnBuilderMetadata>();
             var columns = new List<ColumnBuilderMetadata>();
             var joins = new List<JoinBuilderMetadata>();
 
@@ -132,15 +132,15 @@ namespace Hydrix.Orchestrator.Caching
                 var foreignAttr = property.GetCustomAttribute<ForeignTableAttribute>();
                 if (foreignAttr != null)
                 {
-                    if (foreignAttr.PrimaryKeys == null || foreignAttr.PrimaryKeys.Length == 0)
-                        throw new InvalidOperationException(
-                            $"ForeignTable '{property.Name}' must define at least one PrimaryKey.");
-
                     var (resolvedSchema, primaryKeys, foreignKeys) =
                         ResolveForeignMetadata(
                             type,
                             property,
                             foreignAttr);
+
+                    if (primaryKeys.Length == 0)
+                        throw new InvalidOperationException(
+                            $"ForeignTable '{property.Name}' must define at least one PrimaryKey.");
 
                     var isRequiredJoin = foreignKeys.All(fk =>
                     {

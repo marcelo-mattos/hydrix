@@ -1,5 +1,8 @@
 using Hydrix.Extensions;
 using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Reflection.Emit;
 using Xunit;
 
 namespace Hydrix.UnitTests.Extensions
@@ -413,7 +416,7 @@ namespace Hydrix.UnitTests.Extensions
         {
             var method = typeof(ObjectExtensions).GetMethod(
                 "BuildConverter",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                BindingFlags.NonPublic | BindingFlags.Static);
 
             var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(Guid) });
             var guid = Guid.NewGuid();
@@ -431,7 +434,7 @@ namespace Hydrix.UnitTests.Extensions
         {
             var method = typeof(ObjectExtensions).GetMethod(
                 "BuildConverter",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                BindingFlags.NonPublic | BindingFlags.Static);
 
             var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(bool) });
 
@@ -448,7 +451,7 @@ namespace Hydrix.UnitTests.Extensions
         {
             var method = typeof(ObjectExtensions).GetMethod(
                 "BuildConverter",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                BindingFlags.NonPublic | BindingFlags.Static);
 
             var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(DateTime) });
             var now = DateTime.UtcNow;
@@ -456,6 +459,66 @@ namespace Hydrix.UnitTests.Extensions
             var result = converter(now);
 
             Assert.Equal(now, result);
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; builds converters on demand without growing the shared cache when the cache is at its
+        /// configured maximum size.
+        /// </summary>
+        [Fact]
+        public void As_DoesNotGrowCache_WhenConverterCacheHasReachedMaximumSize()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheField = objectExtensionsType.GetField("_converterCache", flags);
+            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
+            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+            var previousLastType = lastConverterTargetTypeField.GetValue(null);
+            var previousLastConverter = lastConverterField.GetValue(null);
+
+            try
+            {
+                cache.Clear();
+                lastConverterTargetTypeField.SetValue(null, null);
+                lastConverterField.SetValue(null, null);
+
+                var assemblyName = new AssemblyName($"Hydrix.DynamicTypes.{Guid.NewGuid():N}");
+                var assembly = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+                var module = assembly.DefineDynamicModule("Main");
+
+                const int maxConverterCacheSize = 256;
+                for (int i = 0; i < maxConverterCacheSize; i++)
+                {
+                    var typeBuilder = module.DefineType(
+                        $"Hydrix.DynamicType{i}",
+                        TypeAttributes.Public | TypeAttributes.Class);
+
+                    var dynamicType = typeBuilder.CreateTypeInfo().AsType();
+                    var converter = (Func<object, object>)buildConverterMethod.Invoke(null, new object[] { dynamicType });
+                    cache.TryAdd(dynamicType, converter);
+                }
+
+                var countBefore = cache.Count;
+                var result = "A".As<char>();
+
+                Assert.Equal('A', result);
+                Assert.Equal(countBefore, cache.Count);
+                Assert.False(cache.ContainsKey(typeof(char)));
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+
+                lastConverterTargetTypeField.SetValue(null, previousLastType);
+                lastConverterField.SetValue(null, previousLastConverter);
+            }
         }
     }
 }

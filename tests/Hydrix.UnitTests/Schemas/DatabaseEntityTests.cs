@@ -816,28 +816,6 @@ namespace Hydrix.UnitTests.Schemas
         }
 
         /// <summary>
-        /// Verifies that an InvalidOperationException is thrown when the primary keys of the specified entity type
-        /// cannot be resolved during foreign key metadata resolution.
-        /// </summary>
-        /// <remarks>This test ensures that the foreign key resolution process correctly identifies the
-        /// absence of primary keys and throws an appropriate exception. This validation is important for maintaining
-        /// data integrity when establishing foreign key relationships.</remarks>
-        [Fact]
-        public void Throws_WhenPrimaryKeysNotResolved()
-        {
-            var navigationProperty = typeof(MainNoForeignKey).GetProperty(nameof(MainNoForeignKey.Foreign));
-            var attr = new ForeignTableAttribute("foreign");
-            var ex = Assert.Throws<TargetInvocationException>(() =>
-                ResolveForeignMetadataMethod.Invoke(
-                    null,
-                    new object[] { typeof(MainNoForeignKey), navigationProperty, attr }
-                )
-            );
-            Assert.IsType<InvalidOperationException>(ex.InnerException);
-            Assert.Contains("Primary key not resolved", ex.InnerException.Message);
-        }
-
-        /// <summary>
         /// Verifies that an InvalidOperationException is thrown when foreign keys are not resolved during metadata
         /// resolution.
         /// </summary>
@@ -1140,25 +1118,6 @@ namespace Hydrix.UnitTests.Schemas
             var result = entity.IsValid<DatabaseEntityTests.Product>(out var errors, validator);
             Assert.True(result);
             Assert.Empty(errors);
-        }
-
-        /// <summary>
-        /// Verifies that the BuildMetadata method throws an InvalidOperationException when a foreign table does not
-        /// define any primary keys.
-        /// </summary>
-        /// <remarks>This test ensures that the BuildMetadata method enforces the requirement for foreign
-        /// tables to have at least one primary key defined. The exception message is validated to confirm that it
-        /// clearly indicates the missing primary key constraint.</remarks>
-        [Fact]
-        public void BuildMetadata_Throws_WhenForeignTableHasNoPrimaryKeys()
-        {
-            var type = typeof(EntityWithInvalidForeignTable);
-            var method = typeof(EntityBuilderMetadataCache)
-                .GetMethod("BuildMetadata", BindingFlags.NonPublic | BindingFlags.Static);
-
-            var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { type }));
-            Assert.IsType<InvalidOperationException>(ex.InnerException);
-            Assert.Contains("must define at least one PrimaryKey", ex.InnerException.Message);
         }
     }
 }

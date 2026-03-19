@@ -71,31 +71,41 @@ Hydrix 2.0 establishes a stable, performance-oriented foundation for long-term e
 
 ---
 
-## 🔬 v2.1 — Performance & Diagnostics Enhancements
+## 🔬 v2.1 — Core Evolution, Performance & Stability (Completed)
 
-Focus: measurement, profiling, and observability
+Focus: **execution architecture modernization, conversion correctness, and stronger runtime stability**
 
-### Planned
-- Official benchmark suite (Hydrix vs Dapper vs ADO.NET baseline)
-- Allocation profiling scenarios
-- Optional performance diagnostics hooks
-- Improved logging extensibility
-- Better structured error messages for mapping failures
-- Enhanced debug tooling for metadata inspection
+### Delivered
+- Hydrix configuration model with centralized runtime options (`HydrixOptions`)
+- Dependency Injection integration via `AddHydrix(...)`
+- `HydrixDataCore` and extension-first usage paths
+- Strongly typed stored procedure support via `IProcedure<TDataParameter>`
+- Optional timeout support across execution and query APIs
+- Materialization and execution pipeline refactoring (`CommandEngine`/`ParameterEngine` split)
+- Conversion flow improvements (`As<T>`, `Guid`, provider `DbType` handling)
+- Process-wide hot cache refinements and cache architecture improvements
+- Expanded unit test coverage and validation hardening
+- Benchmarking foundation for regression tracking
+
+Hydrix 2.1 consolidates the transition to a more modular and performance-oriented runtime model.
 
 ---
 
-## 🧩 v2.2 — Advanced Scenarios (Non-Magical Extensibility)
+## 🧩 v2.2 — Transitional Performance Release (Planned)
 
-Focus: controlled extensibility
+Focus: **higher throughput, safer migration, and legacy bridge stabilization**
 
 ### Planned
 
-- Public extension points for custom materialization strategies
-- Pluggable naming conventions
-- Optional advanced provider-specific optimizations
-- More granular control over nested materialization behavior
-- Additional stored procedure patterns
+- Keep the legacy `Materializer` API available as `[Obsolete]` (migration bridge)
+- Prioritize `HydrixDataCore` extension-based API in documentation and examples
+- Add migration diagnostics/warnings to help identify remaining legacy API usage
+- Improve async execution throughput and reduce allocations in query/command pipelines
+- Expand hot-cache invalidation and reuse strategies for metadata/materialization internals
+- Add more microbenchmarks for high-volume reads, joins, and scalar/non-query workloads
+- Improve resilience under concurrent load and long-running process scenarios
+- Refine error classification/messages for faster troubleshooting in production
+- Increase regression and stress test coverage focused on performance and stability
 
 #### All enhancements will preserve:
 
@@ -105,18 +115,41 @@ Focus: controlled extensibility
 
 ---
 
-## 🏗 v3.0 — Long-Term Evolution (Under Evaluation)
+## 🏗 v3.0 (LTS) — HydrixDataCore-Only Runtime (Planned)
 
-Focus: **carefully evaluated expansion**
+Focus: **long-term support baseline with maximum runtime efficiency and API stability**
 
-Possible areas of exploration (not commitments):
+### Planned (Breaking Changes)
 
-- Advanced batching scenarios
-- Further GC pressure reduction strategies
-- Optional source generators for metadata (if aligned with philosophy)
-- Additional compile-time validation helpers
+- Remove legacy `Materializer` API completely
+- Adopt `HydrixDataCore` extension-based API as the only supported access model
+- Finalize and simplify public API surface around extension-first contracts
+- Remove compatibility layers kept only for 2.x transition support
+
+### LTS Goals
+
+- Strong backward stability guarantees within the 3.x LTS line
+- Lower steady-state memory footprint and reduced GC pressure
+- Predictable latency under concurrent workloads
+- Stable diagnostics and observability primitives for production operations
 
 Any breaking changes will strictly follow semantic versioning.
+
+---
+
+## 🚀 v3.x+ — Post-LTS Performance & Reliability Evolution (Planned)
+
+Focus: **continuous throughput gains and operational stability**
+
+### Direction
+
+- Adaptive command/materialization pipelines tuned by workload profile
+- Deeper provider-specific fast paths (without compromising provider-agnostic defaults)
+- Advanced batching and streaming strategies for large result sets
+- Optional compile-time metadata generation where it clearly improves hot-path latency
+- Additional safeguards for cold-start determinism and cache warm-up behavior
+- Expanded chaos/stress testing for connection failures, timeouts, and retries
+- Performance regression gates in CI/CD using benchmark baselines
 
 ---
 

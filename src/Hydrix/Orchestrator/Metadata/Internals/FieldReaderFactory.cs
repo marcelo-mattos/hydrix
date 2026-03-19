@@ -41,6 +41,12 @@ namespace Hydrix.Orchestrator.Metadata.Internals
             };
 
         /// <summary>
+        /// Provides a reusable fallback field reader that retrieves raw values by ordinal.
+        /// </summary>
+        private static readonly Func<IDataRecord, int, object> _valueReader =
+            (record, ordinal) => record.GetValue(ordinal);
+
+        /// <summary>
         /// Creates a FieldReader delegate for the specified target type, supporting nullable types and enums.
         /// </summary>
         /// <remarks>If the target type is an enum, the underlying type is used to read the value, and the
@@ -68,12 +74,12 @@ namespace Hydrix.Orchestrator.Metadata.Internals
                 var converter = EnumConverterCache.GetOrAdd(type);
 
                 if (!_baseReaders.TryGetValue(enumUnderlying, out var enumReader))
-                    enumReader = (record, ordinal) => record.GetValue(ordinal);
+                    enumReader = _valueReader;
 
                 return (record, ordinal) =>
                 {
                     if (record.IsDBNull(ordinal))
-                        return isNullable ? null : defaultValue;
+                        return nullValue;
 
                     var raw = enumReader(record, ordinal);
 
@@ -85,7 +91,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
 
             return _baseReaders.TryGetValue(type, out var reader)
                 ? CreateTypedReader(nullValue, reader)
-                : CreateTypedReader(nullValue, (record, ordinal) => record.GetValue(ordinal));
+                : CreateTypedReader(nullValue, _valueReader);
         }
 
         /// <summary>

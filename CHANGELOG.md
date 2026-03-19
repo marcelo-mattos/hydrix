@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.1.0] - 2026-03-19
+
+Hydrix 2.1.0 expands the 2.0 foundation with stronger execution architecture,
+better dependency injection/configuration support, improved conversion behavior,
+and broader runtime coverage for reliability and performance.
+
+### ✨ Added
+
+- Configuration APIs for Hydrix setup.
+- Dependency Injection integration and extension APIs.
+- `HydrixDataCore` and related mapping extension points.
+- Strongly typed stored procedure support via `IProcedure<T>`.
+- Optional timeout parameter support across materializer execution methods.
+- `MaterializerCache` for reusing materialization internals.
+- `IntExtensions` and additional conversion helpers.
+- Benchmarking suite for measuring runtime behavior.
+
+### 🔄 Changed
+
+- Internal command and parameter responsibilities extracted to
+  `CommandEngine` and `ParameterEngine`.
+- Command execution and materialization flow centralized and refactored.
+- Mapping pipeline improved with async path refinements and lower overhead.
+- `As<T>` conversion flow revised for more predictable coercion behavior.
+- Provider `DbType` setter behavior refined, including `Guid` handling.
+- Cache architecture migrated to a process-wide volatile hot cache model.
+
+### 🛠 Fixed
+
+- Core conversion edge cases affecting default value and type coercion paths.
+- `Guid` conversion inconsistencies across providers.
+- Validation hardening for metadata/materialization scenarios.
+- Stability issues discovered during expanded unit test coverage.
+
+### 🧪 Tests
+
+- Increased unit test coverage across orchestration, caching, conversion,
+  materialization, and validation flows.
+
+### 🧹 Maintenance
+
+- Removed obsolete `report.coverage` artifact from repository history.
+- Version/package metadata aligned for the `2.1.0` release.
+
+---
+
 ## [2.0.0] - 2026-02-28
 
 Hydrix 2.0 introduces significant internal architectural improvements focused on:
