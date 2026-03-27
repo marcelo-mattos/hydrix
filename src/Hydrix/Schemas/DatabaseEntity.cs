@@ -8,6 +8,7 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading;
 
 namespace Hydrix.Schemas
@@ -45,17 +46,21 @@ namespace Hydrix.Schemas
         {
             IsValid(out results);
 
-            if (fluentValidator != null && this is T entity)
-            {
-                var fluentResult = fluentValidator.Validate(entity);
+            if (fluentValidator == null || !(this is T entity))
+                return results.Count == 0;
 
-                foreach (var error in fluentResult.Errors)
-                {
-                    results.Add(new ValidationResult(
+            var fluentResult = fluentValidator.Validate(entity);
+
+            results.AddRange(fluentResult
+                .Errors
+                .Select(
+                    error => new ValidationResult(
                         error.ErrorMessage,
-                        new string[] { error.PropertyName }));
-                }
-            }
+                        new string[]
+                        {
+                            error.PropertyName
+                        })));
+
             return results.Count == 0;
         }
 
@@ -93,7 +98,6 @@ namespace Hydrix.Schemas
             foreach (var column in metadata.Columns)
             {
                 var value = column.Getter(this);
-
                 var context = new ValidationContext(this)
                 {
                     MemberName = column.PropertyName
@@ -121,8 +125,8 @@ namespace Hydrix.Schemas
         {
             var snapshot = Volatile.Read(ref _cache);
 
-            if (ReferenceEquals(
-                snapshot?.EntityType,
+            if (snapshot != null && ReferenceEquals(
+                snapshot.EntityType,
                 entityType))
             {
                 return snapshot.Metadata;

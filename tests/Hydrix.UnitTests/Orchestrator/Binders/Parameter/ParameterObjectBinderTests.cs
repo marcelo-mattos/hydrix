@@ -1175,24 +1175,23 @@ namespace Hydrix.UnitTests.Orchestrator.Binders.Parameter
         }
 
         /// <summary>
-        /// Verifies that the method returns false when the input string contains characters other than valid SQL
-        /// comment or string delimiters.
+        /// Verifies that the parser throws when an invalid internal scan state value is provided.
         /// </summary>
-        /// <remarks>This test ensures that the method correctly identifies unsupported input and does not
-        /// modify the output builder or the scan state when encountering invalid characters. It is useful for
-        /// confirming that only recognized SQL comment or string delimiters are processed.</remarks>
+        /// <remarks>This test ensures the defensive default branch is exercised and throws
+        /// <see cref="ArgumentOutOfRangeException"/> for unknown enum values.</remarks>
         [Fact]
-        public void Unknown_ReturnsFalseForOtherChars()
+        public void Unknown_ThrowsArgumentOutOfRangeException()
         {
             var sql = "a";
             var builder = new StringBuilder();
             var enumType = typeof(ParameterObjectBinder).GetNestedType("SqlScanState", BindingFlags.NonPublic);
             object state = Enum.ToObject(enumType, -1);
             int index = 0;
-            var result = InvokeTryHandleCommentOrString(sql, builder, ref state, ref index);
-            Assert.False(result);
-            Assert.Equal("", builder.ToString());
-            Assert.Equal("-1", state.ToString());
+
+            var exception = Assert.Throws<TargetInvocationException>(() =>
+                InvokeTryHandleCommentOrString(sql, builder, ref state, ref index));
+
+            Assert.IsType<ArgumentOutOfRangeException>(exception.InnerException);
         }
 
         /// <summary>

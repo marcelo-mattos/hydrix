@@ -169,7 +169,7 @@ namespace Hydrix.Engines
                     }
                     else
                     {
-                        providerDbTypeSetter?.Invoke(
+                        providerDbTypeSetter(
                             dataParameter,
                             dbType);
                     }

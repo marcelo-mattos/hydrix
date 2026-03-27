@@ -55,13 +55,13 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             string parameterPrefix = null)
         {
-            this._logger = logger;
+            _logger = logger;
 
-            lock (this._lockConnection)
-                this.DbConnection = connection;
+            lock (_lockConnection)
+                DbConnection = connection;
 
-            this.Timeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
-            this._parameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
+            Timeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
+            _parameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
         }
     }
 }

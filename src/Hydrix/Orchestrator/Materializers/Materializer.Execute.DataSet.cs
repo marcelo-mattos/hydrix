@@ -44,15 +44,13 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout = null)
         {
-            DataSet dataSet = null;
-
             using var dataTable = (this as Contract.IMaterializer)
                 .ExecuteTable(
                     sql,
                     parameters,
                     timeout);
 
-            dataSet = new DataSet(nameof(Materializer));
+            var dataSet = new DataSet(nameof(Materializer));
             dataSet.Tables.Add(
                 dataTable);
 
@@ -86,8 +84,6 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
         {
-            DataSet dataSet = null;
-
             using var dataTable = (this as Contract.IMaterializer)
                 .ExecuteTable(
                     sql,
@@ -95,7 +91,7 @@ namespace Hydrix.Orchestrator.Materializers
                     transaction,
                     timeout);
 
-            dataSet = new DataSet(nameof(Materializer));
+            var dataSet = new DataSet(nameof(Materializer));
             dataSet.Tables.Add(
                 dataTable);
 
@@ -121,7 +117,7 @@ namespace Hydrix.Orchestrator.Materializers
         public DataSet ExecuteDataSet(
             string sql,
             int? timeout = null)
-            => this.ExecuteDataSet(
+            => ExecuteDataSet(
                 sql,
                 (object)null,
                 timeout);
@@ -147,7 +143,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IDbTransaction transaction,
             int? timeout = null)
-            => this.ExecuteDataSet(
+            => ExecuteDataSet(
                 sql,
                 (object)null,
                 transaction,
@@ -182,8 +178,6 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout = null)
         {
-            DataSet dataSet = null;
-
             using var dataTable = (this as Contract.IMaterializer)
                 .ExecuteTable(
                     commandType,
@@ -191,7 +185,7 @@ namespace Hydrix.Orchestrator.Materializers
                     parameters,
                     timeout);
 
-            dataSet = new DataSet(nameof(Materializer));
+            var dataSet = new DataSet(nameof(Materializer));
             dataSet.Tables.Add(
                 dataTable);
 
@@ -229,8 +223,6 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
         {
-            DataSet dataSet = null;
-
             using var dataTable = (this as Contract.IMaterializer)
                 .ExecuteTable(
                     commandType,
@@ -239,7 +231,7 @@ namespace Hydrix.Orchestrator.Materializers
                     transaction,
                     timeout);
 
-            dataSet = new DataSet(nameof(Materializer));
+            var dataSet = new DataSet(nameof(Materializer));
             dataSet.Tables.Add(
                 dataTable);
 
@@ -269,7 +261,7 @@ namespace Hydrix.Orchestrator.Materializers
             CommandType commandType,
             string sql,
             int? timeout = null)
-            => this.ExecuteDataSet(
+            => ExecuteDataSet(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -300,7 +292,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IDbTransaction transaction,
             int? timeout = null)
-            => this.ExecuteDataSet(
+            => ExecuteDataSet(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -658,14 +650,12 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
         {
-            DataSet dataSet = null;
-
             using var dataTable = (this as Contract.IMaterializer)
                 .ExecuteTable(
                     procedure,
                     timeout);
 
-            dataSet = new DataSet(nameof(Materializer));
+            var dataSet = new DataSet(nameof(Materializer));
             dataSet.Tables.Add(
                 dataTable);
 
@@ -705,15 +695,13 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
         {
-            DataSet dataSet = null;
-
             using var dataTable = (this as Contract.IMaterializer)
                 .ExecuteTable(
                     procedure,
                     transaction,
                     timeout);
 
-            dataSet = new DataSet(nameof(Materializer));
+            var dataSet = new DataSet(nameof(Materializer));
             dataSet.Tables.Add(
                 dataTable);
 

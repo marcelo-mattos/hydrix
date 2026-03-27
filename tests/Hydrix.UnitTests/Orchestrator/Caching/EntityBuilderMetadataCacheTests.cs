@@ -49,6 +49,58 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
+        /// Represents a main entity with an explicit foreign-key name that does not match any property.
+        /// </summary>
+        private class MainEntityWithNonExistentConfiguredForeignKey
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity with explicit join key configuration.
+            /// </summary>
+            [ForeignTable("foreign", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "UnknownForeignKey" })]
+            public ForeignEntityWithColumn Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets a sample property unrelated to the configured foreign key name.
+            /// </summary>
+            public int AnyValue { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a main entity with a required foreign-key property.
+        /// </summary>
+        private class MainEntityWithRequiredForeignKey
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity with explicit join key configuration.
+            /// </summary>
+            [ForeignTable("foreign", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "ForeignId" })]
+            public ForeignEntityWithColumn Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets the required foreign-key value used by the join.
+            /// </summary>
+            [Required]
+            public int ForeignId { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a main entity whose foreign mapping explicitly defines a schema.
+        /// </summary>
+        private class MainEntityWithExplicitForeignSchema
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity with an explicit schema in the foreign-table attribute.
+            /// </summary>
+            [ForeignTable("foreign", Schema = "custom", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "ForeignId" })]
+            public ForeignEntityWithColumn Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets the foreign key value used in the relationship.
+            /// </summary>
+            public int ForeignId { get; set; }
+        }
+
+        /// <summary>
         /// Represents an entity that includes a mapped identifier, a name, and a nested foreign entity, with support
         /// for custom column mapping and ignored properties.
         /// </summary>
@@ -266,6 +318,42 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
                 EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithMismatchedKeys)));
 
             Assert.Contains("PrimaryKeys and ForeignKeys count mismatch", ex.Message);
+        }
+
+        /// <summary>
+        /// Verifies that explicit schema configured in <see cref="ForeignTableAttribute"/> is preserved in join metadata.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_UsesExplicitSchema_WhenForeignTableAttributeDefinesSchema()
+        {
+            var metadata = EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithExplicitForeignSchema));
+
+            Assert.NotEmpty(metadata.Joins);
+            Assert.Equal("custom", metadata.Joins[0].Schema);
+        }
+
+        /// <summary>
+        /// Verifies that join metadata is marked as required when all configured foreign-key properties are required.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_JoinIsRequired_WhenForeignKeyPropertyHasRequiredAttribute()
+        {
+            var metadata = EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithRequiredForeignKey));
+
+            Assert.NotEmpty(metadata.Joins);
+            Assert.True(metadata.Joins[0].IsRequiredJoin);
+        }
+
+        /// <summary>
+        /// Verifies that join metadata is optional when the configured foreign-key property cannot be found.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_JoinIsNotRequired_WhenConfiguredForeignKeyPropertyDoesNotExist()
+        {
+            var metadata = EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithNonExistentConfiguredForeignKey));
+
+            Assert.NotEmpty(metadata.Joins);
+            Assert.False(metadata.Joins[0].IsRequiredJoin);
         }
     }
 }

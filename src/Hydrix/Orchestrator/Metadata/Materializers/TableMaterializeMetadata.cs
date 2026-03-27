@@ -43,8 +43,8 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
             IReadOnlyList<ColumnMap> fields,
             IReadOnlyList<TableMap> entities)
         {
-            this.Fields = fields;
-            this.Entities = entities;
+            Fields = fields;
+            Entities = entities;
         }
     }
 }

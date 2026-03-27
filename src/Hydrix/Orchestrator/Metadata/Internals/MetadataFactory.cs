@@ -67,7 +67,8 @@ namespace Hydrix.Orchestrator.Metadata.Internals
 
             var cast = Expression.Convert(
                 parameter,
-                property.DeclaringType);
+                property.DeclaringType ?? throw new InvalidOperationException(
+                    $"Property '{property.Name}' does not have a declaring type."));
 
             var propertyAccess = Expression.Property(
                 cast,
@@ -106,7 +107,8 @@ namespace Hydrix.Orchestrator.Metadata.Internals
 
             var castInstance = Expression.Convert(
                 instance,
-                property.DeclaringType);
+                property.DeclaringType ?? throw new InvalidOperationException(
+                    $"Property '{property.Name}' does not have a declaring type."));
 
             var castValue = Expression.Convert(
                 value,

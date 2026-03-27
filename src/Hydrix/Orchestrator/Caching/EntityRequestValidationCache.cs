@@ -20,7 +20,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This cache is thread-safe and can be accessed concurrently by multiple threads. It is
         /// used to avoid repeated evaluations for the same type, which can enhance performance in multi-threaded
         /// scenarios.</remarks>
-        private static readonly ConcurrentDictionary<Type, bool> _cache
+        private static readonly ConcurrentDictionary<Type, bool> Cache
             = new ConcurrentDictionary<Type, bool>();
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <returns>true if the specified type is valid; otherwise, false.</returns>
         public static bool Validate(
             Type type)
-            => _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 BuildMetadata);
 

@@ -19,7 +19,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This dictionary enables efficient retrieval and reuse of object creation delegates.
         /// It is safe for concurrent access by multiple threads, preventing data corruption when adding or retrieving
         /// factory functions.</remarks>
-        private static readonly ConcurrentDictionary<Type, Func<object>> _cache =
+        private static readonly ConcurrentDictionary<Type, Func<object>> Cache =
             new ConcurrentDictionary<Type, Func<object>>();
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Hydrix.Orchestrator.Caching
         /// cref="Type"/> object.</param>
         /// <returns>A function that, when invoked, creates an instance of the specified type.</returns>
         public static Func<object> Get(Type type)
-            => _cache.GetOrAdd(type, CreateFactory);
+            => Cache.GetOrAdd(type, CreateFactory);
 
         /// <summary>
         /// Creates a factory function that returns the default value for the specified type.

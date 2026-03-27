@@ -3,6 +3,7 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Hydrix.Orchestrator.Binders.Entity;
 
 namespace Hydrix.Extensions
 {
@@ -24,9 +25,8 @@ namespace Hydrix.Extensions
             var map = DataColumnMapCache<TEntity>.GetOrCreate();
             var dataTable = new DataTable();
 
-            for (var index = 0; index < map.Columns.Length; index++)
+            foreach (var column in map.Columns)
             {
-                var column = map.Columns[index];
                 dataTable.Columns.Add(
                     column.ColumnName,
                     column.DataType);

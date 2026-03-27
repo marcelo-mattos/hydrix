@@ -25,7 +25,7 @@ namespace Hydrix.Extensions
         /// <summary>
         /// Caches conversion delegates by target type to reduce repeated branch evaluation in hot paths.
         /// </summary>
-        private static readonly ConcurrentDictionary<Type, Func<object, object>> _converterCache =
+        private static readonly ConcurrentDictionary<Type, Func<object, object>> ConverterCache =
             new ConcurrentDictionary<Type, Func<object, object>>();
 
         /// <summary>
@@ -59,35 +59,32 @@ namespace Hydrix.Extensions
             var cachedTargetType = Volatile.Read(ref _lastConverterTargetType);
             var cachedConverter = Volatile.Read(ref _lastConverter);
 
-            Func<object, object> converter;
             if (ReferenceEquals(
                 cachedTargetType,
                 targetType) && cachedConverter != null)
             {
-                converter = cachedConverter;
+                return (T)cachedConverter(value);
             }
-            else
+
+            if (!ConverterCache.TryGetValue(
+                targetType,
+                out var converter))
             {
-                if (!_converterCache.TryGetValue(
+                converter = ConverterCache.Count < MaxConverterCacheSize
+                    ? ConverterCache.GetOrAdd(
                         targetType,
-                        out converter))
-                {
-                    converter = _converterCache.Count < MaxConverterCacheSize
-                        ? _converterCache.GetOrAdd(
-                            targetType,
-                            BuildConverter)
-                        : BuildConverter(
-                            targetType);
-                }
-
-                Volatile.Write(
-                    ref _lastConverter,
-                    converter);
-
-                Volatile.Write(
-                    ref _lastConverterTargetType,
-                    targetType);
+                        BuildConverter)
+                    : BuildConverter(
+                        targetType);
             }
+
+            Volatile.Write(
+                ref _lastConverter,
+                converter);
+
+            Volatile.Write(
+                ref _lastConverterTargetType,
+                targetType);
 
             return (T)converter(value);
         }
@@ -131,8 +128,8 @@ namespace Hydrix.Extensions
             if (!flowControl)
                 return value;
 
-            return value => Convert.ChangeType(
-                value,
+            return data => Convert.ChangeType(
+                data,
                 conversionType,
                 CultureInfo.InvariantCulture);
         }
@@ -188,19 +185,13 @@ namespace Hydrix.Extensions
                     flowControl: false,
                     value: value =>
                     {
-                        if (value is Guid guid)
-                            return guid;
-
-                        if (value is string text)
-                            return Guid.Parse(text);
-
-                        if (value is byte[] bytes)
-                            return new Guid(bytes);
-
-                        return Convert.ChangeType(
-                            value,
-                            conversionType,
-                            CultureInfo.InvariantCulture);
+                        return value switch
+                        {
+                            Guid guid => guid,
+                            string text => Guid.Parse(text),
+                            byte[] bytes => new Guid(bytes),
+                            _ => Convert.ChangeType(value, conversionType, CultureInfo.InvariantCulture)
+                        };
                     }
                 );
             }

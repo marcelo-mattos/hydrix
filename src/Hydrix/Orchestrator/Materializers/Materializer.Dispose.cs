@@ -18,16 +18,16 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="disposing">Flag to determine if the managed objects needs to be released.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!(this.IsDisposed))
-            {
-                this.IsDisposing = true;
+            if (IsDisposed)
+                return;
 
-                // Dispose managed state (managed objects).
-                if (disposing)
-                { }
+            IsDisposing = true;
 
-                this.IsDisposed = true;
-            }
+            // Dispose managed state (managed objects).
+            if (disposing)
+            { }
+
+            IsDisposed = true;
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// </summary>
         public void Dispose()
         {
-            this.Dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
     }

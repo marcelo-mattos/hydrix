@@ -49,14 +49,14 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout)
             => CommandEngine.CreateCommand(
-                this.DbConnection,
+                DbConnection,
                 transaction,
                 CommandType.Text,
                 sql,
                 parameters,
                 _parameterPrefix,
                 timeout,
-                this._logger);
+                _logger);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -81,18 +81,18 @@ namespace Hydrix.Orchestrator.Materializers
         {
             IDbTransaction transaction = null;
 
-            if (this.IsTransactionActive)
-                transaction = this.DbTransaction;
+            if (IsTransactionActive)
+                transaction = DbTransaction;
 
             return CommandEngine.CreateCommand(
-                this.DbConnection,
+                DbConnection,
                 transaction,
                 CommandType.Text,
                 sql,
                 parameters,
                 _parameterPrefix,
                 timeout,
-                this._logger);
+                _logger);
         }
 
         /// <summary>
@@ -124,14 +124,14 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout)
             => CommandEngine.CreateCommand(
-                this.DbConnection,
+                DbConnection,
                 transaction,
                 commandType,
                 sql,
                 parameters,
                 HydrixConfiguration.Options.ParameterPrefix,
                 timeout,
-                this._logger);
+                _logger);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -160,18 +160,18 @@ namespace Hydrix.Orchestrator.Materializers
         {
             IDbTransaction transaction = null;
 
-            if (this.IsTransactionActive)
-                transaction = this.DbTransaction;
+            if (IsTransactionActive)
+                transaction = DbTransaction;
 
             return CommandEngine.CreateCommand(
-                this.DbConnection,
+                DbConnection,
                 transaction,
                 commandType,
                 sql,
                 parameters,
                 HydrixConfiguration.Options.ParameterPrefix,
                 timeout,
-                this._logger);
+                _logger);
         }
 
         /// <summary>
@@ -202,16 +202,16 @@ namespace Hydrix.Orchestrator.Materializers
         {
             IDbTransaction transaction = null;
 
-            if (this.IsTransactionActive)
-                transaction = this.DbTransaction;
+            if (IsTransactionActive)
+                transaction = DbTransaction;
 
             return CommandEngine.CreateCommand(
-               this.DbConnection,
+               DbConnection,
                transaction,
                procedure,
                _parameterPrefix,
                timeout,
-               this._logger);
+               _logger);
         }
 
         /// <summary>
@@ -249,17 +249,17 @@ namespace Hydrix.Orchestrator.Materializers
                 IsDisposed,
                 "The connection has been disposed.");
 #else
-            if (this.IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 #endif
 
             return CommandEngine.CreateCommand(
-                this.DbConnection,
+                DbConnection,
                 transaction,
                 procedure,
                 _parameterPrefix,
                 timeout,
-                this._logger);
+                _logger);
         }
     }
 }

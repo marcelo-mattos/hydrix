@@ -514,14 +514,12 @@ namespace Hydrix.Orchestrator.Materializers
             IProcedure<TDataParameterDriver> procedure,
             int? timeout)
         {
-            DataTable dataTable = null;
-
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
                     procedure,
                     timeout);
 
-            dataTable = new DataTable(nameof(Materializer));
+            var dataTable = new DataTable(nameof(Materializer));
             dataTable.Load(dataReader);
 
             return dataTable;
@@ -549,15 +547,13 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout)
         {
-            DataTable dataTable = null;
-
             using var dataReader = (this as Contract.IMaterializer)
                 .ExecuteReader(
                     procedure,
                     transaction,
                     timeout);
 
-            dataTable = new DataTable(nameof(Materializer));
+            var dataTable = new DataTable(nameof(Materializer));
             dataTable.Load(dataReader);
 
             return dataTable;

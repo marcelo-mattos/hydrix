@@ -14,13 +14,13 @@ namespace Hydrix.Attributes.Parameters
         /// <summary>
         /// Gets or sets the name of the System.Data.IDataParameter.
         /// </summary>
-        public string Name { get; private set; } = string.Empty;
+        public string Name { get; private set; }
 
         /// <summary>
         /// Gets or sets the System.Data.DbType of the parameter.
         /// </summary>
         /// <exception cref="System.ArgumentOutOfRangeException">The property was not set to a valid System.Data.DbType.</exception>
-        public DbType DbType { get; private set; } = DbType.String;
+        public DbType DbType { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the parameter is input-only, output-only,
@@ -39,8 +39,8 @@ namespace Hydrix.Attributes.Parameters
             string parameterName,
             DbType dbType)
         {
-            this.Name = parameterName;
-            this.DbType = dbType;
+            Name = parameterName;
+            DbType = dbType;
         }
     }
 }

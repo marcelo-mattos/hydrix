@@ -20,7 +20,7 @@ namespace Hydrix.Engines
         /// <summary>
         /// Provides a culture-invariant format provider for parameter value rendering.
         /// </summary>
-        private static readonly IFormatProvider _invariantCulture = CultureInfo.InvariantCulture;
+        private static readonly IFormatProvider InvariantCulture = CultureInfo.InvariantCulture;
 
         /// <summary>
         /// Holds the last parameter type used in the process-wide hot cache.
@@ -50,30 +50,35 @@ namespace Hydrix.Engines
             object parameters,
             string parameterPrefix)
         {
-            if (parameters == null)
-                return;
-
-            if (parameters is IDataParameter dbParam)
+            switch (parameters)
             {
-                command.Parameters.Add(dbParam);
-                return;
+                case null:
+                    return;
+                
+                case IDataParameter dbParam:
+                    command.Parameters.Add(dbParam);
+                    return;
+                
+                case IEnumerable<IDataParameter> dbParams:
+                {
+                    foreach (var parameter in dbParams)
+                        command.Parameters.Add(parameter);
+                    return;
+                }
+                
+                default:
+                {
+                    var binder = GetOrAddBinder(
+                        parameters.GetType());
+
+                    binder.Bind(
+                        command,
+                        parameters,
+                        parameterPrefix,
+                        AddParameter);
+                    break;
+                }
             }
-
-            if (parameters is IEnumerable<IDataParameter> dbParams)
-            {
-                foreach (var parameter in dbParams)
-                    command.Parameters.Add(parameter);
-                return;
-            }
-
-            var binder = GetOrAddBinder(
-                parameters.GetType());
-
-            binder.Bind(
-                command,
-                parameters,
-                parameterPrefix,
-                AddParameter);
         }
 
         /// <summary>
@@ -167,7 +172,7 @@ namespace Hydrix.Engines
                 DateTimeOffset dto => $"'{dto:yyyy-MM-dd HH:mm:ss.fff zzz}'",
                 Guid g => $"'{g}'",
                 bool b => b ? "1" : "0",
-                IFormattable formattable => formattable.ToString(null, _invariantCulture),
+                IFormattable formattable => formattable.ToString(null, InvariantCulture),
                 _ => value.ToString()
             };
         }
