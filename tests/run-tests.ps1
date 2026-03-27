@@ -75,6 +75,7 @@ function GenerateReportCoverage {
     #aliasReport
     dotnet tool run reportgenerator "-reports:./*/TestResults/*/coverage.*.xml" `
         "-targetdir:TestResults/Reports" `
+		"-filefilters:-**/*RegexGenerator.g.cs" `
         "-reportTypes:Html;Badges;SonarQube" `
         "-assemblyfilters:-xunit.*"
  
