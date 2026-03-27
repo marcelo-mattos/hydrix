@@ -41,7 +41,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = this.Query<TEntity>(
+            var result = Query<TEntity>(
                 sql,
                 parameters,
                 Constants.SingleRecordLimit,
@@ -76,7 +76,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = this.Query<TEntity>(
+            var result = Query<TEntity>(
                 sql,
                 parameters,
                 transaction,
@@ -107,7 +107,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             int? timeout = null)
             where TEntity : ITable, new()
-            => this.SingleOrDefault<TEntity>(
+            => SingleOrDefault<TEntity>(
                 sql,
                 (object)null,
                 timeout);
@@ -133,7 +133,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             where TEntity : ITable, new()
-            => this.SingleOrDefault<TEntity>(
+            => SingleOrDefault<TEntity>(
                 sql,
                 (object)null,
                 transaction,
@@ -163,7 +163,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = this.Query<TEntity>(
+            var result = Query<TEntity>(
                 commandType,
                 sql,
                 parameters,
@@ -201,7 +201,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
         {
-            var result = this.Query<TEntity>(
+            var result = Query<TEntity>(
                 commandType,
                 sql,
                 parameters,
@@ -235,7 +235,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             int? timeout = null)
             where TEntity : ITable, new()
-            => this.SingleOrDefault<TEntity>(
+            => SingleOrDefault<TEntity>(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -264,7 +264,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             where TEntity : ITable, new()
-            => this.SingleOrDefault<TEntity>(
+            => SingleOrDefault<TEntity>(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -595,7 +595,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
-            var result = this.Query<TEntity, TDataParameterDriver>(
+            var result = Query<TEntity, TDataParameterDriver>(
                 procedure,
                 Constants.SingleRecordLimit,
                 timeout);
@@ -631,7 +631,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
         {
-            var result = this.Query<TEntity, TDataParameterDriver>(
+            var result = Query<TEntity, TDataParameterDriver>(
                 procedure,
                 transaction,
                 Constants.SingleRecordLimit,

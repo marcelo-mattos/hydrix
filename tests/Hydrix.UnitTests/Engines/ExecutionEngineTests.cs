@@ -111,6 +111,11 @@ namespace Hydrix.UnitTests.Engines
             public IDataReader ReaderResult { get; set; } = new Mock<IDataReader>().Object;
 
             /// <summary>
+            /// Gets a value indicating whether the command has been disposed.
+            /// </summary>
+            public bool IsDisposed { get; private set; }
+
+            /// <summary>
             /// Requests cancellation of the current operation, if supported.
             /// </summary>
             public void Cancel()
@@ -177,7 +182,7 @@ namespace Hydrix.UnitTests.Engines
             /// resources and perform other cleanup operations. After calling <see cref="Dispose"/>, the object should
             /// not be used further.</remarks>
             public void Dispose()
-            { }
+                => IsDisposed = true;
         }
 
         /// <summary>

@@ -26,7 +26,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This field enables efficient retrieval of metadata required for table materialization
         /// operations. Access to the cache is thread-safe, allowing concurrent read and write operations without
         /// additional synchronization.</remarks>
-        private static readonly ConcurrentDictionary<Type, TableMaterializeMetadata> _cache
+        private static readonly ConcurrentDictionary<Type, TableMaterializeMetadata> Cache
             = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace Hydrix.Orchestrator.Caching
         /// added to the cache.</returns>
         public static TableMaterializeMetadata GetOrAdd(
             Type type)
-            => _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 BuildMetadata);
 

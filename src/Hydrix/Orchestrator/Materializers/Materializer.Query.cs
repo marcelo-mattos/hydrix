@@ -44,7 +44,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -79,7 +79,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -171,7 +171,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -208,7 +208,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -307,7 +307,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -347,7 +347,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -454,7 +454,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -496,7 +496,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -607,7 +607,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
             => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 null,
                 limit,
@@ -643,7 +643,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
             => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 transaction,
                 limit,
@@ -680,7 +680,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
             => await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     null,
                     limit,
@@ -721,7 +721,7 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
             => await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     transaction,
                     limit,

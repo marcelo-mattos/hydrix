@@ -7,7 +7,7 @@ namespace Hydrix.Attributes.Schemas
     /// Represents an entity table from a database and its mapping to System.Data.DataSet
     /// columns; and is implemented by .NET Framework data providers that access data sources.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property)]
     public sealed class ForeignTableAttribute :
         TableAttribute
     {

@@ -55,7 +55,7 @@ namespace Hydrix.Orchestrator.Mapping
         /// <remarks>Use this property to retrieve the formatting characters that are prepended and
         /// appended to string representations. This ensures consistent formatting across different contexts where
         /// string values are displayed or processed.</remarks>
-        public string PrefixSuffix { get; }
+        private string PrefixSuffix { get; }
 
         /// <summary>
         /// Gets the primary key value associated with the entity.
@@ -286,7 +286,7 @@ namespace Hydrix.Orchestrator.Mapping
                     ? nested.PrefixSuffix
                     : string.Concat(prefix, nested.PrefixSuffix);
 
-                var shouldInstantiate = false;
+                bool shouldInstantiate;
 
                 if (!string.IsNullOrWhiteSpace(nested.PrimaryKey))
                 {
@@ -305,17 +305,10 @@ namespace Hydrix.Orchestrator.Mapping
                         nestedPrefix,
                         schemaHash);
 
-                    if (candidates.Length != 0)
-                    {
-                        for (var index = 0; index < candidates.Length; index++)
-                        {
-                            if (!record.IsDBNull(candidates[index]))
-                            {
-                                shouldInstantiate = true;
-                                break;
-                            }
-                        }
-                    }
+                    shouldInstantiate =
+                        candidates.Length != 0 &&
+                        candidates.Any(ordinal => 
+                            !record.IsDBNull(ordinal));
                 }
 
                 if (!shouldInstantiate)

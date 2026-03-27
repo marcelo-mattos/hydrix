@@ -23,7 +23,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This delegate can be used as a placeholder where an Action&lt;IDataParameter, int&gt; is
         /// required but no operation is needed. It is useful for avoiding null checks or conditional logic when an
         /// action is optional.</remarks>
-        private static readonly Action<IDataParameter, int> _noop = (_, __) => { };
+        private static readonly Action<IDataParameter, int> Noop = (_, __) => { };
 
         /// <summary>
         /// Provides a thread-safe cache that stores actions for setting parameter values of a specific type in a data
@@ -32,7 +32,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This dictionary enables efficient reuse of delegate actions for parameter assignment,
         /// reducing overhead when processing multiple parameters of the same type. It is safe for concurrent access by
         /// multiple threads.</remarks>
-        private static readonly ConcurrentDictionary<Type, Action<IDataParameter, int>> _cache =
+        private static readonly ConcurrentDictionary<Type, Action<IDataParameter, int>> Cache =
             new ConcurrentDictionary<Type, Action<IDataParameter, int>>();
 
         /// <summary>
@@ -45,15 +45,9 @@ namespace Hydrix.Orchestrator.Caching
         /// </returns>
         public static Action<IDataParameter, int> GetOrAdd(
             Type type)
-        {
-            var setter = _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 BuildSetter);
-
-            return ReferenceEquals(setter, _noop)
-                ? null
-                : setter;
-        }
 
         /// <summary>
         /// Creates a delegate that sets a database type property on a parameter object of the specified type.
@@ -86,7 +80,7 @@ namespace Hydrix.Orchestrator.Caching
                         StringComparison.Ordinal));
 
             if (property == null)
-                return _noop;
+                return Noop;
 
             var paramExp = Expression.Parameter(typeof(IDataParameter), "param");
             var valueExp = Expression.Parameter(typeof(int), "value");

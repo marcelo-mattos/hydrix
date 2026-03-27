@@ -1,7 +1,9 @@
 using Hydrix.Orchestrator.Metadata.Internals;
 using Moq;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
@@ -22,6 +24,22 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         /// values, such as enabled/disabled or on/off. Using an enumeration improves code clarity and type safety
         /// compared to using raw integer or boolean values.</remarks>
         public enum MyEnum : int
+        {
+            /// <summary>
+            /// Represents the constant value zero.
+            /// </summary>
+            Zero = 0,
+
+            /// <summary>
+            /// Represents the numeric value one.
+            /// </summary>
+            One = 1
+        }
+
+        /// <summary>
+        /// Defines a set of named constants with an sbyte underlying type.
+        /// </summary>
+        public enum EnumWithSByteUnderlying : sbyte
         {
             /// <summary>
             /// Represents the constant value zero.
@@ -224,6 +242,27 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Verifies that enum readers return the configured null/default path when the underlying raw value resolves
+        /// to null while the record is not marked as DBNull.
+        /// </summary>
+        [Fact]
+        public void EnumType_WhenRawValueIsNull_ReturnsNullValuePath()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(false);
+            mock.Setup(r => r.GetValue(0)).Returns((object)null);
+
+            var nullableReader = FieldReaderFactory.Create(typeof(EnumWithUIntUnderlying?));
+            var nonNullableReader = FieldReaderFactory.Create(typeof(EnumWithUIntUnderlying));
+
+            var nullableResult = nullableReader(mock.Object, 0);
+            var nonNullableResult = nonNullableReader(mock.Object, 0);
+
+            Assert.Null(nullableResult);
+            Assert.Equal(EnumWithUIntUnderlying.Zero, nonNullableResult);
+        }
+
+        /// <summary>
         /// Verifies that the field reader returns null for nullable base reference types when the record value is
         /// DBNull.
         /// </summary>
@@ -373,6 +412,44 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             var result = reader(mock.Object, 0);
 
             Assert.Equal(EnumWithUIntUnderlying.Zero, result);
+        }
+
+        /// <summary>
+        /// Verifies that enum reader creation handles a null delegate entry in the internal base-readers map, covering
+        /// the null-conditional invocation branch.
+        /// </summary>
+        [Fact]
+        public void EnumType_WhenEnumReaderDelegateIsNull_ReturnsDefaultPath()
+        {
+            var baseReadersField = typeof(FieldReaderFactory).GetField(
+                "BaseReaders",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var baseReaders = (Dictionary<Type, Func<IDataRecord, int, object>>)baseReadersField.GetValue(null);
+
+            var key = typeof(sbyte);
+            baseReaders.TryGetValue(key, out var previous);
+            var existed = baseReaders.ContainsKey(key);
+
+            try
+            {
+                baseReaders[key] = null;
+
+                var mock = new Mock<IDataRecord>();
+                mock.Setup(r => r.IsDBNull(0)).Returns(false);
+
+                var reader = FieldReaderFactory.Create(typeof(EnumWithSByteUnderlying));
+                var result = reader(mock.Object, 0);
+
+                Assert.Equal(EnumWithSByteUnderlying.Zero, result);
+            }
+            finally
+            {
+                if (existed)
+                    baseReaders[key] = previous;
+                else
+                    baseReaders.Remove(key);
+            }
         }
 
         /// <summary>

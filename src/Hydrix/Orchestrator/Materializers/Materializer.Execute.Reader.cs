@@ -35,7 +35,7 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout)
             => ExecutionEngine.ExecuteReader(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -63,7 +63,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout)
             => ExecutionEngine.ExecuteReader(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -134,7 +134,7 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout)
             => ExecutionEngine.ExecuteReader(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -164,7 +164,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout)
             => ExecutionEngine.ExecuteReader(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -242,7 +242,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout,
             CancellationToken cancellationToken)
             => await ExecutionEngine.ExecuteReaderAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -275,7 +275,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout,
             CancellationToken cancellationToken)
             => await ExecutionEngine.ExecuteReaderAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -361,7 +361,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout,
             CancellationToken cancellationToken)
             => await ExecutionEngine.ExecuteReaderAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -396,7 +396,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout,
             CancellationToken cancellationToken)
             => await ExecutionEngine.ExecuteReaderAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -486,7 +486,7 @@ namespace Hydrix.Orchestrator.Materializers
             IProcedure<TDataParameterDriver> procedure,
             int? timeout)
             => ExecutionEngine.ExecuteReader(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 null,
                 timeout,
@@ -515,7 +515,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout)
             => ExecutionEngine.ExecuteReader(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 transaction,
                 timeout,
@@ -545,7 +545,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout,
             CancellationToken cancellationToken)
             => await ExecutionEngine.ExecuteReaderAsync(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     null,
                     timeout,
@@ -579,7 +579,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout,
             CancellationToken cancellationToken)
             => await ExecutionEngine.ExecuteReaderAsync(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     transaction,
                     timeout,

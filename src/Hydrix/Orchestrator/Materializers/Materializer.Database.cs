@@ -20,13 +20,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         public virtual void OpenConnection()
         {
-            if (this.IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
-            lock (this._lockConnection)
+            lock (_lockConnection)
             {
-                if (this.DbConnection.State == ConnectionState.Closed)
-                    this.DbConnection.Open();
+                if (DbConnection.State == ConnectionState.Closed)
+                    DbConnection.Open();
             }
         }
 
@@ -36,13 +36,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         public virtual void CloseConnection()
         {
-            if (this.IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
-            lock (this._lockConnection)
+            lock (_lockConnection)
             {
-                if (this.DbConnection.State != ConnectionState.Closed)
-                    this.DbConnection.Close();
+                if (DbConnection.State != ConnectionState.Closed)
+                    DbConnection.Close();
             }
         }
 
@@ -54,16 +54,16 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">There is another active transaction.</exception>
         public virtual void BeginTransaction(IsolationLevel isolationLevel)
         {
-            if (this.IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
-            lock (this._lockTransaction)
+            lock (_lockTransaction)
             {
-                if (this.DbTransaction != null)
+                if (DbTransaction != null)
                     throw new InvalidOperationException("There is another active transaction.");
 
-                lock (this._lockConnection)
-                    this.DbTransaction = this.DbConnection.BeginTransaction(isolationLevel);
+                lock (_lockConnection)
+                    DbTransaction = DbConnection.BeginTransaction(isolationLevel);
             }
         }
 
@@ -78,17 +78,17 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">There is no active transaction.</exception>
         public virtual void CommitTransaction()
         {
-            if (this.IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
-            lock (this._lockTransaction)
+            lock (_lockTransaction)
             {
-                if (null == this.DbTransaction)
+                if (null == DbTransaction)
                     throw new InvalidOperationException("There is no active transaction.");
 
-                this.DbTransaction.Commit();
-                this.DbTransaction.Dispose();
-                this.DbTransaction = null;
+                DbTransaction.Commit();
+                DbTransaction.Dispose();
+                DbTransaction = null;
             }
         }
 
@@ -103,21 +103,21 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">There is no active transaction.</exception>
         public virtual void RollbackTransaction()
         {
-            if (this.IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException("The connection has been disposed.");
 
-            lock (this._lockTransaction)
+            lock (_lockTransaction)
             {
-                if (null == this.DbTransaction)
+                if (null == DbTransaction)
                 {
-                    if (!(this.IsDisposing))
+                    if (!(IsDisposing))
                         throw new InvalidOperationException("There is no active transaction.");
                     return;
                 }
 
-                this.DbTransaction.Rollback();
-                this.DbTransaction.Dispose();
-                this.DbTransaction = null;
+                DbTransaction.Rollback();
+                DbTransaction.Dispose();
+                DbTransaction = null;
             }
         }
     }

@@ -2,6 +2,7 @@
 using Hydrix.Orchestrator.Materializers.Contract;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Data;
 using System.Linq;
 using System.Reflection;
@@ -347,8 +348,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             // Simula um tipo de parâmetro customizado
             var customParamType = typeof(CustomDataParameter);
             var binderCacheType = typeof(ProviderDbTypeSetterCache);
-            var cacheField = binderCacheType.GetField("_cache", BindingFlags.NonPublic | BindingFlags.Static);
-            var cache = (IDictionary)cacheField.GetValue(null);
+            var cacheField = binderCacheType.GetField("Cache", BindingFlags.NonPublic | BindingFlags.Static);
+            var cache = (ConcurrentDictionary<Type, Action<IDataParameter, int>>)cacheField.GetValue(null);
             cache[customParamType] = new Action<IDataParameter, int>((obj, dbType) => ((CustomDataParameter)obj).CustomSet = false);
 
             var cmd = sqlMat.CreateCommand<CustomDataParameter>(proc, null);
@@ -376,9 +377,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             // Remove qualquer setter para garantir que será null
             var customParamType = typeof(CustomDataParameter);
             var binderCacheType = typeof(ProviderDbTypeSetterCache);
-            var cacheField = binderCacheType.GetField("_cache", BindingFlags.NonPublic | BindingFlags.Static);
-            var cache = (IDictionary)cacheField.GetValue(null);
-            cache[customParamType] = null;
+            var cacheField = binderCacheType.GetField("Cache", BindingFlags.NonPublic | BindingFlags.Static);
+            var cache = (ConcurrentDictionary<Type, Action<IDataParameter, int>>)cacheField.GetValue(null);
+            cache[customParamType] = (_, __) => { };
 
             var cmd = sqlMat.CreateCommand<CustomDataParameter>(proc, null);
             var param = (CustomDataParameter)cmd.Parameters[0];

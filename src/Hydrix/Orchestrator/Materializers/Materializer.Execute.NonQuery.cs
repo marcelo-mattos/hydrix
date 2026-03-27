@@ -39,7 +39,7 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout = null)
             => ExecutionEngine.ExecuteNonQuery(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -66,7 +66,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             => ExecutionEngine.ExecuteNonQuery(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -88,7 +88,7 @@ namespace Hydrix.Orchestrator.Materializers
         public int ExecuteNonQuery(
             string sql,
             int? timeout = null)
-            => this.ExecuteNonQuery(
+            => ExecuteNonQuery(
                 sql,
                 (object)null,
                 timeout);
@@ -109,7 +109,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IDbTransaction transaction,
             int? timeout = null)
-            => this.ExecuteNonQuery(
+            => ExecuteNonQuery(
                 sql,
                 (object)null,
                 transaction,
@@ -134,7 +134,7 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout = null)
             => ExecutionEngine.ExecuteNonQuery(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -163,7 +163,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             => ExecutionEngine.ExecuteNonQuery(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -187,7 +187,7 @@ namespace Hydrix.Orchestrator.Materializers
             CommandType commandType,
             string sql,
             int? timeout = null)
-            => this.ExecuteNonQuery(
+            => ExecuteNonQuery(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -211,7 +211,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IDbTransaction transaction,
             int? timeout = null)
-            => this.ExecuteNonQuery(
+            => ExecuteNonQuery(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -238,7 +238,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteNonQueryAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -270,7 +270,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteNonQueryAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -353,7 +353,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteNonQueryAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -387,7 +387,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteNonQueryAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -475,7 +475,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
             => ExecutionEngine.ExecuteNonQuery(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 null,
                 timeout,
@@ -504,7 +504,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
             => ExecutionEngine.ExecuteNonQuery(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 transaction,
                 timeout,
@@ -534,7 +534,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
             => await ExecutionEngine.ExecuteNonQueryAsync(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     null,
                     timeout,
@@ -568,7 +568,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
             => await ExecutionEngine.ExecuteNonQueryAsync(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     transaction,
                     timeout,

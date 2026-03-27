@@ -1,8 +1,10 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
+using Moq;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
@@ -188,6 +190,34 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             var meta = MetadataFactory.CreateNestedEntity(prop, attr);
             Assert.Equal(prop, meta.Property);
             Assert.Equal(attr, meta.Attribute);
+        }
+
+        /// <summary>
+        /// Verifies that CreateGetter throws when property metadata has no declaring type.
+        /// </summary>
+        [Fact]
+        public void CreateGetter_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("Orphan");
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateGetter(property.Object));
+        }
+
+        /// <summary>
+        /// Verifies that CreateSetter throws when property metadata has no declaring type.
+        /// </summary>
+        [Fact]
+        public void CreateSetter_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("Orphan");
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateSetter(property.Object));
         }
     }
 }

@@ -25,26 +25,28 @@ namespace Hydrix.Extensions
         public static IEnumerable<IDataParameter> AsIDataParameters(
             this object parameters)
         {
-            if (parameters == null)
-                yield break;
-
-            if (parameters is IEnumerable<IDataParameter> dbParams)
+            switch (parameters)
             {
-                foreach (var dbParam in dbParams)
-                    yield return dbParam;
+                case null:
+                    yield break;
+                
+                case IEnumerable<IDataParameter> dbParams:
+                {
+                    foreach (var dbParam in dbParams)
+                        yield return dbParam;
 
-                yield break;
+                    yield break;
+                }
+                
+                case IDataParameter single:
+                    yield return single;
+                    yield break;
+                
+                default:
+                    throw new ArgumentException(
+                        $"Parameter type '{parameters.GetType().FullName}' is not supported.",
+                        nameof(parameters));
             }
-
-            if (parameters is IDataParameter single)
-            {
-                yield return single;
-                yield break;
-            }
-
-            throw new ArgumentException(
-                $"Parameter type '{parameters.GetType().FullName}' is not supported.",
-                nameof(parameters));
         }
     }
 }

@@ -26,7 +26,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This field is implemented as a thread-safe concurrent dictionary to ensure safe
         /// access in multi-threaded scenarios. Caching metadata improves performance by avoiding repeated lookups when
         /// building entities.</remarks>
-        private static readonly ConcurrentDictionary<Type, EntityBuilderMetadata> _cache
+        private static readonly ConcurrentDictionary<Type, EntityBuilderMetadata> Cache
             = new ConcurrentDictionary<Type, EntityBuilderMetadata>();
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <returns>An instance of EntityBuilderMetadata containing the metadata for the specified entity type.</returns>
         public static EntityBuilderMetadata GetMetadata(
             Type type)
-            => _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 BuildMetadata);
 
@@ -145,20 +145,20 @@ namespace Hydrix.Orchestrator.Caching
                     var isRequiredJoin = foreignKeys.All(fk =>
                     {
                         var fkProp = type.GetProperty(fk);
-                        return fkProp.GetCustomAttribute<RequiredAttribute>() != null;
+                        return fkProp?.GetCustomAttribute<RequiredAttribute>() != null;
                     });
 
                     var foreignSelectColumns = property.PropertyType
                         .GetProperties(
                             BindingFlags.Instance |
                             BindingFlags.Public)
-                        .Where(property =>
-                            property.GetCustomAttribute<NotMappedAttribute>() == null &&
-                            property.GetCustomAttribute<ForeignTableAttribute>() == null)
-                        .Select(property =>
+                        .Where(propertyInfo =>
+                            propertyInfo.GetCustomAttribute<NotMappedAttribute>() == null &&
+                            propertyInfo.GetCustomAttribute<ForeignTableAttribute>() == null)
+                        .Select(propertyInfo =>
                         {
-                            var columnAttribute = property.GetCustomAttribute<ColumnAttribute>();
-                            var columnName = columnAttribute?.Name ?? property.Name;
+                            var columnAttribute = propertyInfo.GetCustomAttribute<ColumnAttribute>();
+                            var columnName = columnAttribute?.Name ?? propertyInfo.Name;
 
                             return new ForeignColumnMetadata(
                                 columnName,

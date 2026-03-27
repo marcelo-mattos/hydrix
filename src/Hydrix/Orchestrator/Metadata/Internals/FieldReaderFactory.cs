@@ -24,7 +24,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         /// type specified. Each entry associates a Type with a function that reads the corresponding value from the
         /// IDataRecord. The mapping covers common primitive and framework types such as int, long, short, byte, bool,
         /// decimal, double, float, Guid, DateTime, and string.</remarks>
-        private static readonly Dictionary<Type, Func<IDataRecord, int, object>> _baseReaders
+        private static readonly Dictionary<Type, Func<IDataRecord, int, object>> BaseReaders
             = new Dictionary<Type, Func<IDataRecord, int, object>>()
             {
                 [typeof(bool)] = (record, ordinal) => record.GetBoolean(ordinal),
@@ -43,7 +43,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         /// <summary>
         /// Provides a reusable fallback field reader that retrieves raw values by ordinal.
         /// </summary>
-        private static readonly Func<IDataRecord, int, object> _valueReader =
+        private static readonly Func<IDataRecord, int, object> ValueReader =
             (record, ordinal) => record.GetValue(ordinal);
 
         /// <summary>
@@ -68,30 +68,29 @@ namespace Hydrix.Orchestrator.Metadata.Internals
 
             var nullValue = isNullable ? null : defaultValue;
 
-            if (type.IsEnum)
+            if (!type.IsEnum)
             {
-                var enumUnderlying = Enum.GetUnderlyingType(type);
-                var converter = EnumConverterCache.GetOrAdd(type);
-
-                if (!_baseReaders.TryGetValue(enumUnderlying, out var enumReader))
-                    enumReader = _valueReader;
-
-                return (record, ordinal) =>
-                {
-                    if (record.IsDBNull(ordinal))
-                        return nullValue;
-
-                    var raw = enumReader(record, ordinal);
-
-                    return raw == null
-                        ? nullValue
-                        : converter(raw);
-                };
+                return BaseReaders.TryGetValue(type, out var reader)
+                    ? CreateTypedReader(nullValue, reader)
+                    : CreateTypedReader(nullValue, ValueReader);
             }
 
-            return _baseReaders.TryGetValue(type, out var reader)
-                ? CreateTypedReader(nullValue, reader)
-                : CreateTypedReader(nullValue, _valueReader);
+            var enumUnderlying = Enum.GetUnderlyingType(type);
+            var converter = EnumConverterCache.GetOrAdd(type);
+            var enumReader = BaseReaders.GetValueOrDefault(enumUnderlying, ValueReader);
+
+            return (record, ordinal) =>
+            {
+                if (record.IsDBNull(ordinal))
+                    return nullValue;
+
+                var raw = enumReader?.Invoke(record, ordinal);
+
+                return raw == null
+                    ? nullValue
+                    : converter(raw);
+            };
+
         }
 
         /// <summary>

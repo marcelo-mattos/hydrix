@@ -38,7 +38,7 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -65,7 +65,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -87,7 +87,7 @@ namespace Hydrix.Orchestrator.Materializers
         public object ExecuteScalar(
             string sql,
             int? timeout = null)
-            => this.ExecuteScalar(
+            => ExecuteScalar(
                 sql,
                 (object)null,
                 timeout);
@@ -108,7 +108,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IDbTransaction transaction,
             int? timeout = null)
-            => this.ExecuteScalar(
+            => ExecuteScalar(
                 sql,
                 (object)null,
                 transaction,
@@ -133,7 +133,7 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 null,
@@ -162,7 +162,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                this.DbConnection,
+                DbConnection,
                 sql,
                 parameters,
                 transaction,
@@ -186,7 +186,7 @@ namespace Hydrix.Orchestrator.Materializers
             CommandType commandType,
             string sql,
             int? timeout = null)
-            => this.ExecuteScalar(
+            => ExecuteScalar(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -210,7 +210,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IDbTransaction transaction,
             int? timeout = null)
-            => this.ExecuteScalar(
+            => ExecuteScalar(
                 commandType,
                 sql,
                 (IEnumerable<IDataParameter>)null,
@@ -237,7 +237,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -269,7 +269,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -296,7 +296,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-            => await this.ExecuteScalarAsync(
+            => await ExecuteScalarAsync(
                     sql,
                     (object)null,
                     timeout,
@@ -322,7 +322,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-            => await this.ExecuteScalarAsync(
+            => await ExecuteScalarAsync(
                     sql,
                     (object)null,
                     transaction,
@@ -352,7 +352,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     null,
@@ -386,7 +386,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    this.DbConnection,
+                    DbConnection,
                     sql,
                     parameters,
                     transaction,
@@ -415,7 +415,7 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-            => await this.ExecuteScalarAsync(
+            => await ExecuteScalarAsync(
                     commandType,
                     sql,
                     (IEnumerable<IDataParameter>)null,
@@ -444,7 +444,7 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null,
             CancellationToken cancellationToken = default)
-            => await this.ExecuteScalarAsync(
+            => await ExecuteScalarAsync(
                     commandType,
                     sql,
                     (IEnumerable<IDataParameter>)null,
@@ -474,7 +474,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
             => ExecutionEngine.ExecuteScalar(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 null,
                 timeout,
@@ -503,7 +503,7 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
             => ExecutionEngine.ExecuteScalar(
-                this.DbConnection,
+                DbConnection,
                 procedure,
                 transaction,
                 timeout,
@@ -533,7 +533,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
             => await ExecutionEngine.ExecuteScalarAsync(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     null,
                     timeout,
@@ -567,7 +567,7 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
             => await ExecutionEngine.ExecuteScalarAsync(
-                    this.DbConnection,
+                    DbConnection,
                     procedure,
                     transaction,
                     timeout,

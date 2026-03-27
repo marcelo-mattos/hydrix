@@ -471,7 +471,7 @@ namespace Hydrix.UnitTests.Extensions
             var objectExtensionsType = typeof(ObjectExtensions);
             var flags = BindingFlags.NonPublic | BindingFlags.Static;
 
-            var cacheField = objectExtensionsType.GetField("_converterCache", flags);
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
             var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
             var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
