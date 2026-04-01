@@ -1,6 +1,6 @@
 using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Metadata.Materializers;
+using Hydrix.Orchestrator.Resolvers;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ namespace Hydrix.Extensions
     /// <remarks>These extension methods are intended to simplify the process of materializing entities from
     /// data readers and to facilitate efficient schema mapping. The methods are designed for use with types
     /// implementing the ITable interface and support scenarios where a limited number of entities need to be
-    /// materialized from a data reader.</remarks>
+    /// materialized from data readers.</remarks>
     internal static class DataReaderExtensions
     {
         /// <summary>
@@ -40,24 +40,20 @@ namespace Hydrix.Extensions
             if (dataReader == null)
                 throw new ArgumentNullException(nameof(dataReader));
 #endif
-            CreateMapContext<TEntity>(
-                dataReader,
-                out var entities,
-                out var metadata,
-                out var ordinals,
-                out var schemaHash);
-
+            var entities = limit > 0 ? new List<TEntity>(limit) : new List<TEntity>();
+            ResolvedTableBindings bindings = null;
             var count = 0;
+
             while (dataReader.Read())
             {
                 if (limit > 0 && count >= limit)
                     break;
 
+                bindings ??= CreateBindings<TEntity>(dataReader);
+
                 MapCurrentEntity(
                     dataReader,
-                    metadata,
-                    ordinals,
-                    schemaHash,
+                    bindings,
                     entities);
                 count++;
             }
@@ -90,14 +86,10 @@ namespace Hydrix.Extensions
             if (!(dataReader is DbDataReader dbDataReader))
                 throw new InvalidOperationException("Asynchronous mapping requires a DbDataReader instance.");
 
-            CreateMapContext<TEntity>(
-                dataReader,
-                out var entities,
-                out var metadata,
-                out var ordinals,
-                out var schemaHash);
-
+            var entities = limit > 0 ? new List<TEntity>(limit) : new List<TEntity>();
+            ResolvedTableBindings bindings = null;
             var count = 0;
+
             while (await dbDataReader
                 .ReadAsync(cancellationToken)
                 .ConfigureAwait(false))
@@ -105,11 +97,11 @@ namespace Hydrix.Extensions
                 if (limit > 0 && count >= limit)
                     break;
 
+                bindings ??= CreateBindings<TEntity>(dbDataReader);
+
                 MapCurrentEntity(
                     dbDataReader,
-                    metadata,
-                    ordinals,
-                    schemaHash,
+                    bindings,
                     entities);
                 count++;
             }
@@ -118,28 +110,26 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
-        /// Creates and returns the shared mapping context used by synchronous and asynchronous materialization.
+        /// Creates the schema-bound mapping plan for the current reader state.
         /// </summary>
         /// <typeparam name="TEntity">The target entity type.</typeparam>
-        /// <param name="dataReader">The data reader used to inspect schema and ordinals.</param>
-        /// <param name="entities">The output list where materialized entities are stored.</param>
-        /// <param name="metadata">The metadata describing how to map the target entity.</param>
-        /// <param name="ordinals">The ordinal map for efficient column lookup.</param>
-        /// <param name="schemaHash">The current schema hash used during mapping.</param>
-        private static void CreateMapContext<TEntity>(
-            IDataReader dataReader,
-            out List<TEntity> entities,
-            out TableMaterializeMetadata metadata,
-            out IReadOnlyDictionary<string, int> ordinals,
-            out int schemaHash)
+        /// <param name="dataReader">The data reader positioned on a valid current row.</param>
+        /// <returns>The resolved binding plan for the current schema.</returns>
+        private static ResolvedTableBindings CreateBindings<TEntity>(
+            IDataReader dataReader)
             where TEntity : ITable, new()
         {
-            entities = new List<TEntity>();
-            metadata = EntityMetadataCache.GetOrAdd(typeof(TEntity));
-
+            var metadata = EntityMetadataCache.GetOrAdd(typeof(TEntity));
             var ordinalMap = dataReader.BuildOrdinals();
-            ordinals = ordinalMap.Ordinals;
-            schemaHash = ordinalMap.SchemaHash;
+
+            return metadata.GetOrAddBindings(
+                ordinalMap.SchemaHash,
+                _ => TableMap.Bind(
+                    dataReader,
+                    metadata,
+                    string.Empty,
+                    ordinalMap.Ordinals,
+                    ordinalMap.SchemaHash));
         }
 
         /// <summary>
@@ -147,15 +137,11 @@ namespace Hydrix.Extensions
         /// </summary>
         /// <typeparam name="TEntity">The target entity type.</typeparam>
         /// <param name="record">The current data record.</param>
-        /// <param name="metadata">The mapping metadata for <typeparamref name="TEntity"/>.</param>
-        /// <param name="ordinals">The ordinal map for efficient column lookup.</param>
-        /// <param name="schemaHash">The schema hash associated with the current reader.</param>
+        /// <param name="bindings">The pre-resolved binding plan for the current schema.</param>
         /// <param name="entities">The destination list to receive the mapped entity.</param>
         private static void MapCurrentEntity<TEntity>(
             IDataRecord record,
-            TableMaterializeMetadata metadata,
-            IReadOnlyDictionary<string, int> ordinals,
-            int schemaHash,
+            ResolvedTableBindings bindings,
             ICollection<TEntity> entities)
             where TEntity : ITable, new()
         {
@@ -164,10 +150,7 @@ namespace Hydrix.Extensions
             TableMap.SetEntity(
                 entity,
                 record,
-                metadata,
-                string.Empty,
-                ordinals,
-                schemaHash);
+                bindings);
 
             entities.Add(entity);
         }
@@ -188,12 +171,14 @@ namespace Hydrix.Extensions
                 for (var index = 0; index < reader.FieldCount; index++)
                 {
                     var name = reader.GetName(index) ?? string.Empty;
+                    var fieldType = GetFieldType(reader, index);
 
                     ordinals[name] = index;
 
                     hash = (hash * 31) + index;
                     hash = (hash * 31) + name.Length;
                     hash = (hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(name);
+                    hash = (hash * 31) + (fieldType?.GetHashCode() ?? 0);
                 }
 
                 hash = (hash * 31) + reader.FieldCount;
@@ -201,6 +186,27 @@ namespace Hydrix.Extensions
                 return new OrdinalMap(
                     ordinals,
                     hash);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the provider CLR type for the specified ordinal when the reader supports it.
+        /// </summary>
+        private static Type GetFieldType(
+            IDataReader reader,
+            int ordinal)
+        {
+            try
+            {
+                return reader.GetFieldType(ordinal);
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+            catch (NotSupportedException)
+            {
+                return null;
             }
         }
     }

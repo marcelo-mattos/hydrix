@@ -1,4 +1,5 @@
-﻿using Hydrix.Orchestrator.Caching;
+using Hydrix.Extensions;
+using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Mapping;
 using System;
 using System.Collections.Generic;
@@ -56,6 +57,19 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         /// <returns>A FieldReader delegate that reads values from a data record based on the specified target type.</returns>
         public static FieldReader Create(
             Type targetType)
+            => Create(
+                targetType,
+                null);
+
+        /// <summary>
+        /// Creates a FieldReader delegate for the specified target type using the provider CLR type when available.
+        /// </summary>
+        /// <param name="targetType">The property type being materialized.</param>
+        /// <param name="sourceType">The CLR type reported by the data provider for the source column.</param>
+        /// <returns>A FieldReader delegate optimized for the provider/source type combination.</returns>
+        public static FieldReader Create(
+            Type targetType,
+            Type sourceType)
         {
             var underlying = Nullable.GetUnderlyingType(targetType);
             var isNullable = underlying != null || !targetType.IsValueType;
@@ -70,28 +84,47 @@ namespace Hydrix.Orchestrator.Metadata.Internals
 
             if (!type.IsEnum)
             {
-                return BaseReaders.TryGetValue(type, out var reader)
-                    ? CreateTypedReader(nullValue, reader)
-                    : CreateTypedReader(nullValue, ValueReader);
+                if (CanUseTypedReader(type, sourceType) &&
+                    BaseReaders.TryGetValue(type, out var reader) &&
+                    reader != null)
+                {
+                    return CreateTypedReader(nullValue, reader);
+                }
+
+                return CreateConvertingReader(
+                    nullValue,
+                    ValueReader,
+                    ObjectExtensions.GetConverter(type));
             }
 
             var enumUnderlying = Enum.GetUnderlyingType(type);
-            var converter = EnumConverterCache.GetOrAdd(type);
-            var enumReader = BaseReaders.GetValueOrDefault(enumUnderlying, ValueReader);
+            var enumConverter = EnumConverterCache.GetOrAdd(type);
 
-            return (record, ordinal) =>
+            if (CanUseTypedReader(enumUnderlying, sourceType))
             {
-                if (record.IsDBNull(ordinal))
-                    return nullValue;
+                var enumReader = BaseReaders.GetValueOrDefault(enumUnderlying, ValueReader) ?? ValueReader;
+                return CreateConvertingReader(
+                    nullValue,
+                    enumReader,
+                    enumConverter);
+            }
 
-                var raw = enumReader?.Invoke(record, ordinal);
-
-                return raw == null
-                    ? nullValue
-                    : converter(raw);
-            };
-
+            return CreateConvertingReader(
+                nullValue,
+                ValueReader,
+                ObjectExtensions.GetConverter(type));
         }
+
+        /// <summary>
+        /// Determines whether a provider-reported source type can safely use a typed IDataRecord getter.
+        /// </summary>
+        /// <param name="targetType">The CLR type expected by the typed reader.</param>
+        /// <param name="sourceType">The CLR type reported by the data provider.</param>
+        /// <returns><see langword="true"/> when the typed getter is safe to use; otherwise, <see langword="false"/>.</returns>
+        private static bool CanUseTypedReader(
+            Type targetType,
+            Type sourceType)
+            => sourceType == null || sourceType == targetType;
 
         /// <summary>
         /// Creates a delegate that reads a typed value from an IDataRecord, returning a specified value when the
@@ -109,5 +142,28 @@ namespace Hydrix.Orchestrator.Metadata.Internals
                 record.IsDBNull(ordinal)
                     ? nullValue
                     : valueReader(record, ordinal);
+
+        /// <summary>
+        /// Creates a delegate that reads a raw value and converts it to the requested CLR target type.
+        /// </summary>
+        /// <param name="nullValue">The value to return when the database field is null.</param>
+        /// <param name="valueReader">A function that retrieves the raw provider value.</param>
+        /// <param name="converter">A cached converter delegate for the target property type.</param>
+        /// <returns>A FieldReader that converts raw values into the requested target type.</returns>
+        private static FieldReader CreateConvertingReader(
+            object nullValue,
+            Func<IDataRecord, int, object> valueReader,
+            Func<object, object> converter)
+            => (record, ordinal) =>
+            {
+                if (record.IsDBNull(ordinal))
+                    return nullValue;
+
+                var raw = valueReader(record, ordinal);
+
+                return raw == null
+                    ? nullValue
+                    : converter(raw);
+            };
     }
 }

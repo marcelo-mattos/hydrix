@@ -575,6 +575,11 @@ namespace Hydrix.UnitTests.Engines
             public DbDataReader ReaderAsyncResult { get; set; }
 
             /// <summary>
+            /// Gets a value indicating whether the command has been disposed.
+            /// </summary>
+            public bool IsDisposed { get; private set; }
+
+            /// <summary>
             /// Gets or sets the SQL statement to execute at the data source.
             /// </summary>
             public override string CommandText { get; set; }
@@ -703,6 +708,21 @@ namespace Hydrix.UnitTests.Engines
             /// command results.</returns>
             protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
                 => Task.FromResult(ReaderAsyncResult);
+
+            /// <summary>
+            /// Releases the unmanaged resources used by the object and optionally releases the managed resources.
+            /// </summary>
+            /// <remarks>This method is called by the public Dispose method and the finalizer. When
+            /// disposing is true, this method releases all resources held by managed objects. When disposing is false,
+            /// only unmanaged resources are released.</remarks>
+            /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                    IsDisposed = true;
+
+                base.Dispose(disposing);
+            }
         }
 
         /// <summary>
@@ -943,25 +963,32 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
-        /// Verifies ExecuteReader returns the reader provided by command execution.
+        /// Verifies ExecuteReader keeps the command alive until the returned reader is disposed.
         /// </summary>
         [Fact]
-        public void ExecuteReader_ReturnsReader()
+        public void ExecuteReader_DisposesCommandWhenReturnedReaderIsDisposed()
         {
-            var reader = new Mock<IDataReader>().Object;
-            var command = new TestCommand { ReaderResult = reader };
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.Dispose());
+            var command = new TestCommand { ReaderResult = reader.Object };
             var connection = CreateOpenConnection(command);
 
             var result = ExecutionEngine.ExecuteReader(connection.Object, "select 1");
 
-            Assert.Same(reader, result);
+            Assert.NotSame(reader.Object, result);
+            Assert.False(command.IsDisposed);
+
+            result.Dispose();
+
+            Assert.True(command.IsDisposed);
+            reader.Verify(r => r.Dispose(), Times.Once);
         }
 
         /// <summary>
-        /// Verifies async reader uses DbCommand async execution path.
+        /// Verifies async reader keeps the DbCommand alive until the returned reader is disposed.
         /// </summary>
         [Fact]
-        public async Task ExecuteReaderAsync_DbCommand_UsesAsyncPath()
+        public async Task ExecuteReaderAsync_DbCommand_DisposesCommandWhenReturnedReaderIsDisposed()
         {
             var dataReader = new Mock<DbDataReader>().Object;
             var dbCommand = new TestAsyncDbCommand { ReaderAsyncResult = dataReader };
@@ -969,7 +996,12 @@ namespace Hydrix.UnitTests.Engines
 
             var result = await ExecutionEngine.ExecuteReaderAsync(connection.Object, "select 1");
 
-            Assert.Same(dataReader, result);
+            Assert.IsAssignableFrom<DbDataReader>(result);
+            Assert.False(dbCommand.IsDisposed);
+
+            result.Dispose();
+
+            Assert.True(dbCommand.IsDisposed);
         }
 
         /// <summary>
@@ -991,28 +1023,34 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
-        /// Verifies ExecuteReader procedure overload returns reader.
+        /// Verifies ExecuteReader procedure overload also disposes the command when the reader is disposed.
         /// </summary>
         [Fact]
-        public void ExecuteReader_Procedure_ReturnsReader()
+        public void ExecuteReader_Procedure_DisposesCommandWhenReturnedReaderIsDisposed()
         {
-            var reader = new Mock<IDataReader>().Object;
-            var command = new TestCommand { ReaderResult = reader };
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.Dispose());
+            var command = new TestCommand { ReaderResult = reader.Object };
             var connection = CreateOpenConnection(command);
 
             var result = ExecutionEngine.ExecuteReader(
                 connection.Object,
                 new TestProcedure());
 
-            Assert.Same(reader, result);
             Assert.Equal(CommandType.StoredProcedure, command.CommandType);
+            Assert.False(command.IsDisposed);
+
+            result.Dispose();
+
+            Assert.True(command.IsDisposed);
+            reader.Verify(r => r.Dispose(), Times.Once);
         }
 
         /// <summary>
-        /// Verifies async procedure reader uses DbCommand async execution path.
+        /// Verifies async procedure reader also keeps the command alive until reader disposal.
         /// </summary>
         [Fact]
-        public async Task ExecuteReaderAsync_Procedure_DbCommand_UsesAsyncPath()
+        public async Task ExecuteReaderAsync_Procedure_DbCommand_DisposesCommandWhenReturnedReaderIsDisposed()
         {
             var dataReader = new Mock<DbDataReader>().Object;
             var dbCommand = new TestAsyncDbCommand { ReaderAsyncResult = dataReader };
@@ -1022,7 +1060,12 @@ namespace Hydrix.UnitTests.Engines
                 connection.Object,
                 new TestProcedure());
 
-            Assert.Same(dataReader, result);
+            Assert.IsAssignableFrom<DbDataReader>(result);
+            Assert.False(dbCommand.IsDisposed);
+
+            result.Dispose();
+
+            Assert.True(dbCommand.IsDisposed);
         }
 
         /// <summary>
@@ -1054,6 +1097,37 @@ namespace Hydrix.UnitTests.Engines
 
             Assert.Throws<InvalidOperationException>(() =>
                 ExecutionEngine.ExecuteNonQuery(connection.Object, "update x set y = 1"));
+        }
+
+        /// <summary>
+        /// Verifies that when command execution throws an exception, the command is disposed and the exception is
+        /// rethrown.
+        /// </summary>
+        /// <remarks>This test ensures that the execution engine properly disposes the command object even
+        /// if an exception occurs during execution, and that the original exception is propagated to the
+        /// caller.</remarks>
+        [Fact]
+        public void ExecuteReader_WhenCommandExecutionThrows_DisposesCommandAndRethrows()
+        {
+            var command = new Mock<IDbCommand>();
+            command.SetupAllProperties();
+            command.SetupGet(c => c.Parameters).Returns(new Mock<IDataParameterCollection>().Object);
+            command.Setup(c => c.ExecuteReader(CommandBehavior.SingleResult)).Throws(new InvalidOperationException("boom"));
+            var disposed = 0;
+            command.Setup(c => c.Dispose()).Callback(() => disposed++);
+
+            var connection = new Mock<IDbConnection>();
+            connection.Setup(c => c.State).Returns(ConnectionState.Open);
+            connection.Setup(c => c.CreateCommand()).Returns(command.Object);
+
+            var exception = Assert.Throws<InvalidOperationException>(() =>
+                ExecutionEngine.ExecuteReader(
+                    connection.Object,
+                    "select 1",
+                    behavior: CommandBehavior.SingleResult));
+
+            Assert.Equal("boom", exception.Message);
+            Assert.Equal(1, disposed);
         }
 
         /// <summary>

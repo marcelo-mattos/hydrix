@@ -1,4 +1,4 @@
-﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
@@ -106,7 +106,9 @@ namespace Hydrix.Orchestrator.Caching
                 fields.Add(new ColumnMap(
                     columnName,
                     setter,
-                    reader));
+                    reader,
+                    property.PropertyType,
+                    property));
             }
 
             return MetadataFactory.CreateEntity(

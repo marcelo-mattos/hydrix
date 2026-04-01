@@ -74,6 +74,46 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that schema inspection is deferred until the reader is positioned on the first row.
+        /// </summary>
+        [Fact]
+        public void MapTo_ReaderThatExposesSchemaOnlyAfterRead_MapsSuccessfully()
+        {
+            var mockReader = new Mock<IDataReader>();
+            var currentRowAvailable = false;
+            var readCount = 0;
+
+            mockReader.Setup(r => r.Read()).Returns(() =>
+            {
+                if (readCount++ > 0)
+                    return false;
+
+                currentRowAvailable = true;
+                return true;
+            });
+
+            mockReader.Setup(r => r.FieldCount).Returns(() =>
+                currentRowAvailable
+                    ? 2
+                    : throw new InvalidOperationException("Schema is unavailable before the first row is read."));
+
+            mockReader.Setup(r => r.GetName(0)).Returns("Id");
+            mockReader.Setup(r => r.GetName(1)).Returns("Name");
+            mockReader.Setup(r => r.IsDBNull(0)).Returns(false);
+            mockReader.Setup(r => r.IsDBNull(1)).Returns(false);
+            mockReader.Setup(r => r.GetInt32(0)).Returns(7);
+            mockReader.Setup(r => r.GetString(1)).Returns("Deferred");
+            mockReader.Setup(r => r.GetValue(0)).Returns(7);
+            mockReader.Setup(r => r.GetValue(1)).Returns("Deferred");
+
+            var entities = mockReader.Object.MapTo<TestEntity>();
+
+            var entity = Assert.Single(entities);
+            Assert.Equal(7, entity.Id);
+            Assert.Equal("Deferred", entity.Name);
+        }
+
+        /// <summary>
         /// Verifies that the MapTo method returns only the specified number of entities when a positive limit is
         /// provided.
         /// </summary>
@@ -161,6 +201,7 @@ namespace Hydrix.UnitTests.Extensions
         /// </summary>
         /// <remarks>This test uses a DataTable reader (which is a DbDataReader implementation) to validate
         /// the asynchronous execution path and property materialization.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
         public async Task MapToAsync_ReturnsEntities()
         {
@@ -207,6 +248,7 @@ namespace Hydrix.UnitTests.Extensions
         /// Verifies that the asynchronous mapping method respects a positive row limit and returns only the requested
         /// number of entities.
         /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
         public async Task MapToAsync_WithPositiveLimit_ReturnsLimitedEntities()
         {
@@ -228,6 +270,7 @@ namespace Hydrix.UnitTests.Extensions
         /// <summary>
         /// Verifies that the asynchronous mapping method throws when the provided IDataReader is not a DbDataReader.
         /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
         public async Task MapToAsync_WithNonDbDataReader_Throws()
         {
@@ -241,6 +284,7 @@ namespace Hydrix.UnitTests.Extensions
         /// Verifies that the asynchronous mapping method throws an ArgumentNullException when called with a null
         /// reader.
         /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
         public async Task MapToAsync_Null_Throws()
         {
@@ -248,6 +292,117 @@ namespace Hydrix.UnitTests.Extensions
 
             await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                 await reader.MapToAsync<TestEntity>());
+        }
+
+        /// <summary>
+        /// Verifies that mapping converts compatible provider CLR types into the destination property type.
+        /// </summary>
+        [Fact]
+        public void MapTo_ConvertsCompatibleProviderTypes()
+        {
+            var table = new DataTable();
+            table.Columns.Add("Id", typeof(long));
+            table.Columns.Add("Name", typeof(string));
+            table.Rows.Add(42L, "Converted");
+
+            using var reader = table.CreateDataReader();
+
+            var entities = reader.MapTo<TestEntity>();
+
+            var entity = Assert.Single(entities);
+            Assert.Equal(42, entity.Id);
+            Assert.Equal("Converted", entity.Name);
+        }
+
+        /// <summary>
+        /// Verifies that mapping handles null column names on a materialized row by applying an empty-string fallback
+        /// during schema processing.
+        /// </summary>
+        [Fact]
+        public void MapTo_WhenNullNamedColumnExistsOnMaterializedRow_UsesEmptyStringFallback()
+        {
+            var reader = CreateReader();
+            reader.Setup(r => r.FieldCount).Returns(3);
+            reader.Setup(r => r.GetName(0)).Returns((string)null);
+            reader.Setup(r => r.GetName(1)).Returns("Id");
+            reader.Setup(r => r.GetName(2)).Returns("Name");
+            reader.Setup(r => r.GetFieldType(0)).Returns(typeof(string));
+            reader.Setup(r => r.GetFieldType(1)).Returns(typeof(int));
+            reader.Setup(r => r.GetFieldType(2)).Returns(typeof(string));
+            reader.Setup(r => r.IsDBNull(1)).Returns(false);
+            reader.Setup(r => r.IsDBNull(2)).Returns(false);
+            reader.Setup(r => r.GetInt32(1)).Returns(9);
+            reader.Setup(r => r.GetString(2)).Returns("NullName");
+
+            var entities = reader.Object.MapTo<TestEntity>();
+
+            var entity = Assert.Single(entities);
+            Assert.Equal(9, entity.Id);
+            Assert.Equal("NullName", entity.Name);
+        }
+
+        /// <summary>
+        /// Verifies that the mapping operation completes successfully even when the data reader's GetFieldType method
+        /// throws an InvalidOperationException.
+        /// </summary>
+        /// <remarks>This test ensures that the MapTo method can handle scenarios where schema information
+        /// is unavailable and still correctly maps data to the target entity type.</remarks>
+        [Fact]
+        public void MapTo_WhenGetFieldTypeThrowsInvalidOperationException_StillMaps()
+        {
+            var reader = CreateReader();
+            reader.Setup(r => r.FieldCount).Returns(2);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetName(1)).Returns("Name");
+            reader.Setup(r => r.GetFieldType(It.IsAny<int>())).Throws(new InvalidOperationException("schema unavailable"));
+            reader.Setup(r => r.IsDBNull(0)).Returns(false);
+            reader.Setup(r => r.IsDBNull(1)).Returns(false);
+            reader.Setup(r => r.GetInt32(0)).Returns(7);
+            reader.Setup(r => r.GetString(1)).Returns("InvalidOperation");
+
+            var entities = reader.Object.MapTo<TestEntity>();
+
+            var entity = Assert.Single(entities);
+            Assert.Equal(7, entity.Id);
+            Assert.Equal("InvalidOperation", entity.Name);
+        }
+
+        /// <summary>
+        /// Verifies that the mapping operation completes successfully even when the data reader's GetFieldType method
+        /// throws a NotSupportedException.
+        /// </summary>
+        /// <remarks>This test ensures that the MapTo method can handle scenarios where schema information
+        /// is unavailable from the data reader, and still correctly maps data to the target entity type.</remarks>
+        [Fact]
+        public void MapTo_WhenGetFieldTypeThrowsNotSupportedException_StillMaps()
+        {
+            var reader = CreateReader();
+            reader.Setup(r => r.FieldCount).Returns(2);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetName(1)).Returns("Name");
+            reader.Setup(r => r.GetFieldType(It.IsAny<int>())).Throws(new NotSupportedException("schema unavailable"));
+            reader.Setup(r => r.IsDBNull(0)).Returns(false);
+            reader.Setup(r => r.IsDBNull(1)).Returns(false);
+            reader.Setup(r => r.GetInt32(0)).Returns(11);
+            reader.Setup(r => r.GetString(1)).Returns("NotSupported");
+
+            var entities = reader.Object.MapTo<TestEntity>();
+
+            var entity = Assert.Single(entities);
+            Assert.Equal(11, entity.Id);
+            Assert.Equal("NotSupported", entity.Name);
+        }
+
+        /// <summary>
+        /// Creates a configured <see cref="Mock{IDataReader}"/> that returns a single readable row.
+        /// </summary>
+        /// <returns>A mock data reader configured for one successful <see cref="IDataReader.Read"/> call.</returns>
+        private static Mock<IDataReader> CreateReader()
+        {
+            var readCount = 0;
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.Read()).Returns(() => readCount++ == 0);
+            return reader;
         }
     }
 }

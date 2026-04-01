@@ -96,7 +96,7 @@ namespace Hydrix.Benchmarks.Benchmarks
                 FROM Users u
                 LEFT JOIN Orders o ON o.UserId = u.Id
                 ORDER BY u.Id
-                LIMIT $take";
+                LIMIT @take";
 
             _sqlHydrix = @"
                 SELECT
@@ -109,7 +109,7 @@ namespace Hydrix.Benchmarks.Benchmarks
                 FROM Users u
                 LEFT JOIN Orders o ON o.UserId = u.Id
                 ORDER BY u.Id
-                LIMIT $take";
+                LIMIT @take";
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace Hydrix.Benchmarks.Benchmarks
             cmd.CommandText = _sqlDapper;
 
             var p = cmd.CreateParameter();
-            p.ParameterName = "$take";
+            p.ParameterName = "@take";
             p.Value = Take;
             cmd.Parameters.Add(p);
 

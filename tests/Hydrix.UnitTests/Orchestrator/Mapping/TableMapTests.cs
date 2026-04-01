@@ -2,9 +2,11 @@
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
+using Hydrix.Orchestrator.Resolvers;
 using Hydrix.Schemas.Contract;
 using Moq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
@@ -1530,6 +1532,267 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             });
             Assert.Same(expected, result2);
             Assert.True(enteredLock);
+        }
+
+        /// <summary>
+        /// Verifies that the ResolveFieldAssigner method returns null when the data reader is missing.
+        /// </summary>
+        /// <remarks>This test ensures that the field assigner resolution logic correctly handles the case
+        /// where the required data reader is not provided, returning null as expected. This behavior is important for
+        /// preventing assignment operations when necessary dependencies are absent.</remarks>
+        [Fact]
+        public void ResolveFieldAssigner_ReturnsNull_WhenReaderIsMissing()
+        {
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                null);
+
+            var result = InvokePrivate<Action<object, IDataRecord>>(
+                "ResolveFieldAssigner",
+                new Mock<IDataRecord>().Object,
+                field,
+                0);
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that ResolveFieldBindings skips fields whose resolved assigner is null and returns an empty
+        /// bindings array in this scenario.
+        /// </summary>
+        [Fact]
+        public void ResolveFieldBindings_SkipsField_WhenResolvedAssignerIsNull()
+        {
+            var record = new Mock<IDataRecord>().Object;
+            var field = new ColumnMap(
+                "Id",
+                null,
+                (dataRecord, ordinal) => 123);
+            var metadata = MetadataFactory.CreateEntity(new[] { field }, Array.Empty<TableMap>());
+            var ordinals = new Dictionary<string, int>
+            {
+                { "Id", 0 }
+            };
+
+            var result = InvokePrivate<ResolvedFieldBinding[]>(
+                "ResolveFieldBindings",
+                record,
+                metadata,
+                string.Empty,
+                ordinals);
+
+            Assert.Empty(result);
+        }
+
+        /// <summary>
+        /// Verifies that the ResolveFieldAssigner method returns null when the field does not have a setter.
+        /// </summary>
+        /// <remarks>This test ensures that the field assigner resolution logic correctly handles cases
+        /// where a setter is missing, returning null as expected. This behavior is important for scenarios where only
+        /// read access is available for a mapped field.</remarks>
+        [Fact]
+        public void ResolveFieldAssigner_ReturnsNull_WhenSetterIsMissing()
+        {
+            var field = new ColumnMap(
+                "Id",
+                null,
+                (record, ordinal) => 5);
+
+            var result = InvokePrivate<Action<object, IDataRecord>>(
+                "ResolveFieldAssigner",
+                new Mock<IDataRecord>().Object,
+                field,
+                0);
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that the field reader resolution uses a provider-type-aware reader when a target type is specified.
+        /// </summary>
+        /// <remarks>This test ensures that when resolving a field reader for a column with a specified
+        /// target type, the reader correctly handles type conversion based on the provider's field type. It validates
+        /// that the resolved reader returns the expected value when the data record provides a value of a different
+        /// type than the target.</remarks>
+        [Fact]
+        public void ResolveFieldReader_WithTargetType_UsesProviderTypeAwareReader()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Returns(typeof(long));
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetValue(0)).Returns(12L);
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                (reader, ordinal) => 1,
+                typeof(int));
+
+            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+            var value = reader(record.Object, 0);
+
+            Assert.Equal(12, value);
+        }
+
+        /// <summary>
+        /// Verifies that the field reader resolution logic falls back to using a null source type when an
+        /// InvalidOperationException is thrown by GetFieldType, ensuring the field value can still be read
+        /// successfully.
+        /// </summary>
+        /// <remarks>This test simulates a scenario where schema information is unavailable and
+        /// GetFieldType throws an exception. It ensures that the fallback mechanism allows the field reader to retrieve
+        /// the value without relying on the field type metadata.</remarks>
+        [Fact]
+        public void ResolveFieldReader_WhenGetFieldTypeThrowsInvalidOperationException_FallsBackToNullSourceType()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Throws(new InvalidOperationException("schema unavailable"));
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(7);
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                (reader, ordinal) => 1,
+                typeof(int));
+
+            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+
+            Assert.Equal(7, reader(record.Object, 0));
+        }
+
+        /// <summary>
+        /// Verifies that the field reader resolution logic falls back to a null source type when the data record's
+        /// GetFieldType method throws a NotSupportedException.
+        /// </summary>
+        /// <remarks>This test ensures that the field reader can handle cases where schema information is
+        /// unavailable, such as when GetFieldType is not supported by the data source. It confirms that the fallback
+        /// mechanism allows value retrieval to proceed without schema type information.</remarks>
+        [Fact]
+        public void ResolveFieldReader_WhenGetFieldTypeThrowsNotSupportedException_FallsBackToNullSourceType()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Throws(new NotSupportedException("schema unavailable"));
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(8);
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                (reader, ordinal) => 1,
+                typeof(int));
+
+            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+
+            Assert.Equal(8, reader(record.Object, 0));
+        }
+
+        /// <summary>
+        /// Verifies that the ResolveNestedBindings method returns an empty array when the count is positive but the
+        /// enumeration is empty.
+        /// </summary>
+        /// <remarks>This test ensures that when provided with metadata containing a positive count and an
+        /// empty enumeration, the ResolveNestedBindings method produces an empty result, confirming correct handling of
+        /// this edge case.</remarks>
+        [Fact]
+        public void ResolveNestedBindings_ReturnsEmptyArray_WhenCountIsPositiveButEnumerationIsEmpty()
+        {
+            var metadata = new TableMaterializeMetadata(
+                Array.Empty<ColumnMap>(),
+                new CountedEmptyReadOnlyList<TableMap>());
+
+            var result = InvokePrivate<ResolvedNestedBinding[]>(
+                "ResolveNestedBindings",
+                new Mock<IDataRecord>().Object,
+                metadata,
+                string.Empty,
+                new Dictionary<string, int>(),
+                0);
+
+            Assert.Empty(result);
+        }
+
+        /// <summary>
+        /// Verifies that the constructors for resolved bindings normalize null array parameters to empty arrays.
+        /// </summary>
+        /// <remarks>This test ensures that when null arrays are passed to the constructors of
+        /// ResolvedTableBindings and ResolvedNestedBinding, the resulting properties are initialized as empty arrays
+        /// rather than remaining null. This behavior helps prevent null reference exceptions when accessing these
+        /// properties.</remarks>
+        [Fact]
+        public void ResolvedBindings_Constructors_NormalizeNullArrays()
+        {
+            var tableBindings = new ResolvedTableBindings(null, null);
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                factory: () => new Child(),
+                setter: (entity, value) => ((Parent)entity).Child = (Child)value,
+                bindings: tableBindings);
+
+            Assert.NotNull(tableBindings.Fields);
+            Assert.NotNull(tableBindings.Entities);
+            Assert.Empty(tableBindings.Fields);
+            Assert.Empty(tableBindings.Entities);
+            Assert.NotNull(nestedBinding.CandidateOrdinals);
+            Assert.Empty(nestedBinding.CandidateOrdinals);
+        }
+
+        /// <summary>
+        /// Invokes a non-public static method of the TableMap type by name and returns its result cast to the specified
+        /// type.
+        /// </summary>
+        /// <remarks>This method uses reflection to access and invoke non-public static methods. Use with
+        /// caution, as changes to method signatures or access modifiers may cause runtime errors.</remarks>
+        /// <typeparam name="T">The type to which the result of the invoked method will be cast.</typeparam>
+        /// <param name="methodName">The name of the non-public static method to invoke on the TableMap type.</param>
+        /// <param name="args">An array of arguments to pass to the method being invoked.</param>
+        /// <returns>The result of the invoked method, cast to the specified type parameter T.</returns>
+        private static T InvokePrivate<T>(
+            string methodName,
+            params object[] args)
+            => (T)typeof(TableMap)
+                .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, args);
+
+        /// <summary>
+        /// Represents a read-only list with a fixed count and no accessible elements.
+        /// </summary>
+        /// <remarks>This implementation of IReadOnlyList&lt;T&gt; always reports a count of one, but does not
+        /// provide access to any elements. Attempting to access an element by index will result in an exception. The
+        /// enumerator returned by this list yields no elements.</remarks>
+        /// <typeparam name="T">The type of elements in the list.</typeparam>
+        private sealed class CountedEmptyReadOnlyList<T> :
+            IReadOnlyList<T>
+        {
+            /// <summary>
+            /// Gets the number of elements contained in the collection.
+            /// </summary>
+            public int Count => 1;
+
+            /// <summary>
+            /// Gets the element at the specified index.
+            /// </summary>
+            /// <param name="index">The zero-based index of the element to retrieve.</param>
+            /// <returns>The element at the specified index.</returns>
+            /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is less than 0 or greater than or equal to the number of elements.</exception>
+            public T this[int index]
+                => throw new ArgumentOutOfRangeException(nameof(index));
+
+            /// <summary>
+            /// Returns an enumerator that iterates through the collection.
+            /// </summary>
+            /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+            public IEnumerator<T> GetEnumerator()
+            {
+                yield break;
+            }
+
+            /// <summary>
+            /// Returns an enumerator that iterates through the collection.
+            /// </summary>
+            /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+            IEnumerator IEnumerable.GetEnumerator()
+                => GetEnumerator();
         }
 
         /// <summary>

@@ -520,5 +520,38 @@ namespace Hydrix.UnitTests.Extensions
                 lastConverterField.SetValue(null, previousLastConverter);
             }
         }
+
+        /// <summary>
+        /// Verifies that the BuildConverter method returns the same enum instance when the input value already matches
+        /// the target enum type.
+        /// </summary>
+        /// <remarks>This test ensures that the converter delegate produced by BuildConverter does not
+        /// create a new enum instance if the input is already of the correct enum type. This behavior is important for
+        /// preserving reference equality and avoiding unnecessary allocations when converting enum values.</remarks>
+        [Fact]
+        public void BuildConverter_EnumDelegate_ReturnsSameEnumInstance_WhenValueAlreadyMatchesTargetEnumType()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildConverter",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(TestStatus) });
+            var result = converter(TestStatus.Active);
+
+            Assert.Equal(TestStatus.Active, result);
+        }
+
+        /// <summary>
+        /// Verifies that the GetConverter method throws an ArgumentNullException when the target type parameter is
+        /// null.
+        /// </summary>
+        /// <remarks>This test ensures that ObjectExtensions.GetConverter enforces its contract by
+        /// validating input parameters and throwing the appropriate exception when a null target type is
+        /// provided.</remarks>
+        [Fact]
+        public void GetConverter_ThrowsArgumentNullException_WhenTargetTypeIsNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => ObjectExtensions.GetConverter(null));
+        }
     }
 }

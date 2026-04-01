@@ -71,7 +71,7 @@ namespace Hydrix.Benchmarks.Benchmarks
 
             _conn = _db.Connection;
 
-            _sql = "SELECT Id, Name, Age, Status FROM Users ORDER BY Id LIMIT $take";
+            _sql = "SELECT Id, Name, Age, Status FROM Users ORDER BY Id LIMIT @take";
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace Hydrix.Benchmarks.Benchmarks
             cmd.CommandText = _sql;
 
             var p = cmd.CreateParameter();
-            p.ParameterName = "$take";
+            p.ParameterName = "@take";
             p.Value = Take;
             cmd.Parameters.Add(p);
 

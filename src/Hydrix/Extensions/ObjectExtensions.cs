@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Threading;
@@ -56,19 +56,37 @@ namespace Hydrix.Extensions
             if (value is T typedValue)
                 return typedValue;
 
+            return (T)GetConverter(targetType)(value);
+        }
+
+        /// <summary>
+        /// Retrieves or creates a cached converter delegate for the specified target type.
+        /// </summary>
+        /// <param name="targetType">The type that conversion results should match.</param>
+        /// <returns>A cached converter delegate for the requested target type.</returns>
+        internal static Func<object, object> GetConverter(
+            Type targetType)
+        {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(targetType);
+#else
+            if (targetType == null)
+                throw new ArgumentNullException(nameof(targetType));
+#endif
             var cachedTargetType = Volatile.Read(ref _lastConverterTargetType);
             var cachedConverter = Volatile.Read(ref _lastConverter);
 
             if (ReferenceEquals(
-                cachedTargetType,
-                targetType) && cachedConverter != null)
+                    cachedTargetType,
+                    targetType) &&
+                cachedConverter != null)
             {
-                return (T)cachedConverter(value);
+                return cachedConverter;
             }
 
             if (!ConverterCache.TryGetValue(
-                targetType,
-                out var converter))
+                    targetType,
+                    out var converter))
             {
                 converter = ConverterCache.Count < MaxConverterCacheSize
                     ? ConverterCache.GetOrAdd(
@@ -86,7 +104,7 @@ namespace Hydrix.Extensions
                 ref _lastConverterTargetType,
                 targetType);
 
-            return (T)converter(value);
+            return converter;
         }
 
         /// <summary>
@@ -128,10 +146,13 @@ namespace Hydrix.Extensions
             if (!flowControl)
                 return value;
 
-            return data => Convert.ChangeType(
-                data,
-                conversionType,
-                CultureInfo.InvariantCulture);
+            return data =>
+                conversionType.IsInstanceOfType(data)
+                    ? data
+                    : Convert.ChangeType(
+                        data,
+                        conversionType,
+                        CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -151,21 +172,37 @@ namespace Hydrix.Extensions
                 return (
                     flowControl: false,
                     value: value =>
-                    value is string text
-                    ? Enum.Parse(
-                        conversionType,
-                        text,
-                        ignoreCase: true)
-                    : Enum.ToObject(
-                        conversionType,
-                        value)
-                );
+                        conversionType.IsInstanceOfType(value)
+                            ? value
+                            : value.ParseEnumValue(conversionType));
             }
 
             return (
                 flowControl: true,
                 value: null);
         }
+
+        /// <summary>
+        /// Converts the specified value to an enumeration object of the given type, supporting both string and numeric
+        /// representations.
+        /// </summary>
+        /// <remarks>If the value is a string, the comparison is case-insensitive. If the value is not a
+        /// string, it is treated as a numeric value and converted to the corresponding enum value.</remarks>
+        /// <param name="value">The value to convert. Can be a string representing the name of an enum member or a numeric value
+        /// <param name="conversionType">The type of enumeration to convert the value to. Must be a valid enum type.</param>
+        /// corresponding to an enum value.</param>
+        /// <returns>An object representing the enumeration value of the specified type that corresponds to the provided value.</returns>
+        private static object ParseEnumValue(
+            this object value,
+            Type conversionType)
+            => value is string text
+                ? Enum.Parse(
+                    conversionType,
+                    text,
+                    ignoreCase: true)
+                : Enum.ToObject(
+                    conversionType,
+                    value);
 
         /// <summary>
         /// Attempts to create a delegate that converts an object to a Guid if the specified type is Guid.

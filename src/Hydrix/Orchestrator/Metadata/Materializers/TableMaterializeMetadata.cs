@@ -1,4 +1,7 @@
-﻿using Hydrix.Orchestrator.Mapping;
+using Hydrix.Orchestrator.Mapping;
+using Hydrix.Orchestrator.Resolvers;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Hydrix.Orchestrator.Metadata.Materializers
@@ -14,6 +17,14 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
     /// mapping operations for performance and consistency.</remarks>
     internal sealed class TableMaterializeMetadata
     {
+        /// <summary>
+        /// Stores resolved table bindings indexed by the schema hash value.
+        /// </summary>
+        /// <remarks>This dictionary enables efficient retrieval of table binding information based on a
+        /// computed schema hash. It is thread-safe for concurrent read and write operations.</remarks>
+        private readonly ConcurrentDictionary<int, ResolvedTableBindings> _bindingsBySchemaHash =
+            new ConcurrentDictionary<int, ResolvedTableBindings>();
+
         /// <summary>
         /// Gets the collection of column mappings that define the structure of the data.
         /// </summary>
@@ -46,5 +57,15 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
             Fields = fields;
             Entities = entities;
         }
+
+        /// <summary>
+        /// Retrieves a cached schema-bound binding plan or materializes it once for future reuse.
+        /// </summary>
+        public ResolvedTableBindings GetOrAddBindings(
+            int schemaHash,
+            Func<int, ResolvedTableBindings> factory)
+            => _bindingsBySchemaHash.GetOrAdd(
+                schemaHash,
+                factory);
     }
 }

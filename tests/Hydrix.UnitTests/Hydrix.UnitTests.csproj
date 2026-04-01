@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
 
   <PropertyGroup>
     <TargetFrameworks>net10.0;net8.0;net6.0;netcoreapp3.1</TargetFrameworks>
@@ -8,6 +8,10 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="6.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -36,7 +40,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\..\dbg\Hydrix.UnitTests\Hydrix.UnitTests.xml</DocumentationFile>
-    <NoWarn>NETSDK1138;NU1701;CS0618</NoWarn>
+    <NoWarn>NETSDK1138;NU1701;CS0618;CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -49,7 +53,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\..\bin\Hydrix.UnitTests\Hydrix.UnitTests.xml</DocumentationFile>
-    <NoWarn>NETSDK1138;NU1701</NoWarn>
+    <NoWarn>NETSDK1138;NU1701;CS0618;CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -62,6 +66,13 @@
     <Compile Remove="TestResults\**" />
     <EmbeddedResource Remove="TestResults\**" />
     <None Remove="TestResults\**" />
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="obj\**" />
+    <Compile Remove="bin\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <None Remove="bin\**" />
   </ItemGroup>
 
 </Project>
+

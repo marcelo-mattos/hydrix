@@ -1,5 +1,6 @@
 using Hydrix.Configuration;
 using Hydrix.Schemas.Contract;
+using Hydrix.Wrappers;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -324,7 +325,7 @@ namespace Hydrix.Engines
             CommandBehavior behavior = CommandBehavior.Default,
             string parameterPrefix = null)
         {
-            using var command = CommandEngine.CreateCommand(
+            var command = CommandEngine.CreateCommand(
                 connection,
                 transaction,
                 commandType,
@@ -334,7 +335,9 @@ namespace Hydrix.Engines
                 commandTimeout,
                 HydrixConfiguration.Options.Logger);
 
-            return command.ExecuteReader(behavior);
+            return ExecuteReaderAndOwnCommand(
+                command,
+                behavior);
         }
 
         /// <summary>
@@ -357,7 +360,7 @@ namespace Hydrix.Engines
             string parameterPrefix = null)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using var command = CommandEngine.CreateCommand(
+            var command = CommandEngine.CreateCommand(
                 connection,
                 transaction,
                 procedure,
@@ -365,7 +368,9 @@ namespace Hydrix.Engines
                 commandTimeout,
                 HydrixConfiguration.Options.Logger);
 
-            return command.ExecuteReader(behavior);
+            return ExecuteReaderAndOwnCommand(
+                command,
+                behavior);
         }
 
         /// <summary>
@@ -392,7 +397,7 @@ namespace Hydrix.Engines
             string parameterPrefix = null,
             CancellationToken cancellationToken = default)
         {
-            using var command = CommandEngine.CreateCommand(
+            var command = CommandEngine.CreateCommand(
                 connection,
                 transaction,
                 commandType,
@@ -402,13 +407,9 @@ namespace Hydrix.Engines
                 commandTimeout,
                 HydrixConfiguration.Options.Logger);
 
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(behavior, cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                    () => command.ExecuteReader(behavior),
+            return await ExecuteReaderAsyncAndOwnCommand(
+                    command,
+                    behavior,
                     cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -435,7 +436,7 @@ namespace Hydrix.Engines
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
-            using var command = CommandEngine.CreateCommand(
+            var command = CommandEngine.CreateCommand(
                 connection,
                 transaction,
                 procedure,
@@ -443,15 +444,69 @@ namespace Hydrix.Engines
                 commandTimeout,
                 HydrixConfiguration.Options.Logger);
 
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(behavior, cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                    () => command.ExecuteReader(behavior),
+            return await ExecuteReaderAsyncAndOwnCommand(
+                    command,
+                    behavior,
                     cancellationToken)
                 .ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Executes a reader-producing command and transfers command disposal to the returned reader.
+        /// </summary>
+        private static IDataReader ExecuteReaderAndOwnCommand(
+            IDbCommand command,
+            CommandBehavior behavior)
+        {
+            try
+            {
+                return CommandOwningReader.Wrap(
+                    command,
+                    command.ExecuteReader(behavior));
+            }
+            catch
+            {
+                command.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Executes a reader-producing command asynchronously and transfers command disposal to the returned reader.
+        /// </summary>
+        private static async Task<IDataReader> ExecuteReaderAsyncAndOwnCommand(
+            IDbCommand command,
+            CommandBehavior behavior,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (command is DbCommand dbCommand)
+                {
+                    var dbDataReader = await dbCommand
+                        .ExecuteReaderAsync(behavior, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    return CommandOwningReader.Wrap(
+                        command,
+                        dbDataReader);
+                }
+
+                var reader = await Task.Run(
+                        () => command.ExecuteReader(behavior),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                return CommandOwningReader.Wrap(
+                    command,
+                    reader);
+            }
+            catch
+            {
+                command.Dispose();
+                throw;
+            }
+        }
     }
 }
+
