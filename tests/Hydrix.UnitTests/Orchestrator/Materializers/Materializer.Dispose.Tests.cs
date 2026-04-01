@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Data;
+using Moq;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers
@@ -77,6 +79,47 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Assert.True(mat.IsDisposing);
             Assert.True(mat.IsDisposed);
             Assert.Null(mat.DbConnection);
+        }
+
+        [Fact]
+        public void Dispose_RollsBackClosesAndDisposesConnection()
+        {
+            var connection = new TrackingDbConnection();
+            var transaction = new TrackingDbTransaction();
+            var materializer = new TestMaterializerDispose();
+            materializer.SetDbConnection(connection);
+            materializer.SetDbTransaction(transaction);
+
+            materializer.Dispose();
+
+            Assert.True(materializer.RollbackCalled);
+            Assert.True(materializer.CloseCalled);
+            Assert.True(transaction.RollbackCalled);
+            Assert.True(connection.CloseCalled);
+            Assert.True(connection.DisposeCalled);
+            Assert.Null(materializer.DbConnection);
+        }
+
+        /// <summary>
+        /// Verifies that disposing the materializer swallows exceptions thrown by the connection dispose call and
+        /// still clears the connection reference.
+        /// </summary>
+        [Fact]
+        public void Dispose_WhenConnectionDisposeThrows_DoesNotThrowAndClearsConnection()
+        {
+            var connection = new Mock<IDbConnection>();
+            connection.Setup(c => c.Dispose()).Throws(new Exception("Simulated dispose exception"));
+
+            var materializer = new TestMaterializerDispose();
+            materializer.SetDbConnection(connection.Object);
+
+            var exception = Record.Exception(() => materializer.Dispose());
+
+            Assert.Null(exception);
+            Assert.True(materializer.IsDisposed);
+            Assert.True(materializer.IsDisposing);
+            Assert.True(materializer.CloseCalled);
+            Assert.Null(materializer.DbConnection);
         }
     }
 }

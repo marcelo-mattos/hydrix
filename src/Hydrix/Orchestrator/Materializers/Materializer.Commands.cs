@@ -1,4 +1,4 @@
-﻿using Hydrix.Configuration;
+using Hydrix.Configuration;
 using Hydrix.Engines;
 using Hydrix.Schemas.Contract;
 using System;
@@ -129,7 +129,7 @@ namespace Hydrix.Orchestrator.Materializers
                 commandType,
                 sql,
                 parameters,
-                HydrixConfiguration.Options.ParameterPrefix,
+                _parameterPrefix,
                 timeout,
                 _logger);
 
@@ -169,7 +169,7 @@ namespace Hydrix.Orchestrator.Materializers
                 commandType,
                 sql,
                 parameters,
-                HydrixConfiguration.Options.ParameterPrefix,
+                _parameterPrefix,
                 timeout,
                 _logger);
         }

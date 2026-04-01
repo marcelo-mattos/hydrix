@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Hydrix.Orchestrator.Materializers
 {
@@ -23,9 +23,35 @@ namespace Hydrix.Orchestrator.Materializers
 
             IsDisposing = true;
 
-            // Dispose managed state (managed objects).
             if (disposing)
-            { }
+            {
+                try
+                {
+                    RollbackTransaction();
+                }
+                catch
+                { }
+
+                var connection = DbConnection;
+                if (connection != null)
+                {
+                    try
+                    {
+                        CloseConnection();
+                    }
+                    catch
+                    { }
+
+                    try
+                    {
+                        connection.Dispose();
+                    }
+                    catch
+                    { }
+
+                    DbConnection = null;
+                }
+            }
 
             IsDisposed = true;
         }

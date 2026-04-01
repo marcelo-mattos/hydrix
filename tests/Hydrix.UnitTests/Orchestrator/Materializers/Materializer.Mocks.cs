@@ -2287,5 +2287,139 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             return new Materializer(connectionMock.Object, timeout: 30, parameterPrefix: "@");
         }
+
+        /// <summary>
+        /// Represents a tracking implementation of <see cref="IDbConnection"/> used to validate lifecycle behavior in
+        /// tests.
+        /// </summary>
+        private sealed class TrackingDbConnection :
+            IDbConnection
+        {
+            /// <summary>
+            /// Gets or sets the connection string used by the connection.
+            /// </summary>
+            public string ConnectionString { get; set; }
+
+            /// <summary>
+            /// Gets the time to wait while trying to establish a connection before terminating the attempt.
+            /// </summary>
+            public int ConnectionTimeout => 0;
+
+            /// <summary>
+            /// Gets the name of the current database.
+            /// </summary>
+            public string Database => "Tracking";
+
+            /// <summary>
+            /// Gets the current state of the connection.
+            /// </summary>
+            public ConnectionState State { get; private set; } = ConnectionState.Open;
+
+            /// <summary>
+            /// Gets a value indicating whether <see cref="Close"/> was called.
+            /// </summary>
+            public bool CloseCalled { get; private set; }
+
+            /// <summary>
+            /// Gets a value indicating whether <see cref="Dispose"/> was called.
+            /// </summary>
+            public bool DisposeCalled { get; private set; }
+
+            /// <summary>
+            /// Begins a database transaction.
+            /// </summary>
+            /// <returns>An <see cref="IDbTransaction"/> object.</returns>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public IDbTransaction BeginTransaction() => throw new NotImplementedException();
+
+            /// <summary>
+            /// Begins a database transaction with the specified isolation level.
+            /// </summary>
+            /// <param name="il">The isolation level for the transaction.</param>
+            /// <returns>An <see cref="IDbTransaction"/> object.</returns>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public IDbTransaction BeginTransaction(IsolationLevel il) => throw new NotImplementedException();
+
+            /// <summary>
+            /// Changes the current database for an open connection.
+            /// </summary>
+            /// <param name="databaseName">The name of the database to use.</param>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public void ChangeDatabase(string databaseName) => throw new NotImplementedException();
+
+            /// <summary>
+            /// Closes the connection.
+            /// </summary>
+            public void Close()
+            {
+                CloseCalled = true;
+                State = ConnectionState.Closed;
+            }
+
+            /// <summary>
+            /// Creates and returns a command object associated with the connection.
+            /// </summary>
+            /// <returns>An <see cref="IDbCommand"/> object.</returns>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public IDbCommand CreateCommand() => throw new NotImplementedException();
+
+            /// <summary>
+            /// Opens the database connection.
+            /// </summary>
+            public void Open()
+            {
+                State = ConnectionState.Open;
+            }
+
+            /// <summary>
+            /// Releases all resources used by the current connection instance.
+            /// </summary>
+            public void Dispose()
+            {
+                DisposeCalled = true;
+            }
+        }
+
+        /// <summary>
+        /// Represents a tracking implementation of <see cref="IDbTransaction"/> used by disposal and rollback tests.
+        /// </summary>
+        private sealed class TrackingDbTransaction :
+            IDbTransaction
+        {
+            /// <summary>
+            /// Gets the connection object associated with the transaction.
+            /// </summary>
+            public IDbConnection Connection => null;
+
+            /// <summary>
+            /// Gets the isolation level for the transaction.
+            /// </summary>
+            public IsolationLevel IsolationLevel => IsolationLevel.ReadCommitted;
+
+            /// <summary>
+            /// Gets a value indicating whether <see cref="Rollback"/> was called.
+            /// </summary>
+            public bool RollbackCalled { get; private set; }
+
+            /// <summary>
+            /// Commits the database transaction.
+            /// </summary>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public void Commit() => throw new NotImplementedException();
+
+            /// <summary>
+            /// Rolls back a transaction from a pending state.
+            /// </summary>
+            public void Rollback()
+            {
+                RollbackCalled = true;
+            }
+
+            /// <summary>
+            /// Releases resources used by the transaction.
+            /// </summary>
+            public void Dispose()
+            { }
+        }
     }
 }

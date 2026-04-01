@@ -1,4 +1,4 @@
-﻿using Hydrix.Orchestrator.Caching;
+using Hydrix.Orchestrator.Caching;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
@@ -9,7 +9,7 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
     /// Contains unit tests for validating entity request attributes in the EntityRequestValidationCache class.
     /// </summary>
     /// <remarks>This class tests various scenarios for entity validation, including the presence of table and
-    /// column attributes, and caching behavior for repeated validations.</remarks>
+    /// mappable members, and caching behavior for repeated validations.</remarks>
     public class EntityRequestValidationCacheTests
     {
         /// <summary>
@@ -26,10 +26,8 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
-        /// Represents an entity that is mapped to the 'NoColumnEntity' table in the database.
+        /// Represents an entity mapped by convention through its public properties.
         /// </summary>
-        /// <remarks>This class contains only an identifier property and does not define additional
-        /// columns. It can be used as a placeholder or for scenarios where only the primary key is required.</remarks>
         [Table("NoColumnEntity")]
         private class NoColumnEntity
         {
@@ -40,12 +38,22 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
+        /// Represents an entity that has no properties eligible for mapping.
+        /// </summary>
+        [Table("NoMappedMembersEntity")]
+        private class NoMappedMembersEntity
+        {
+            /// <summary>
+            /// Gets or sets a value ignored by Hydrix mapping.
+            /// </summary>
+            [NotMapped]
+            public int Ignored { get; set; }
+        }
+
+        /// <summary>
         /// Represents an entity that does not correspond to a database table, intended for in-memory operations or
         /// scenarios where persistence is not required.
         /// </summary>
-        /// <remarks>This class is useful for modeling data that needs to be processed or validated
-        /// without being stored in a database. The Id property uniquely identifies each instance of the
-        /// entity.</remarks>
         private class NoTableEntity
         {
             /// <summary>
@@ -56,12 +64,8 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
-        /// Verifies that the entity validation returns true when both the specified table and column are present in the
-        /// model.
+        /// Verifies that the entity validation returns true when a mapped member is present.
         /// </summary>
-        /// <remarks>This test ensures that the Validate method of EntityRequestValidationCache correctly
-        /// identifies a valid entity configuration. It is intended to confirm that the validation logic works as
-        /// expected when all required schema elements exist.</remarks>
         [Fact]
         public void Validate_ReturnsTrue_WhenTableAndColumnPresent()
         {
@@ -69,12 +73,26 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
+        /// Verifies that convention-based properties still count as valid mapped members.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsTrue_WhenTableAndConventionMappedPropertyPresent()
+        {
+            Assert.True(EntityRequestValidationCache.Validate(typeof(NoColumnEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when the entity has no mappable properties.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenNoMappablePropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(NoMappedMembersEntity)));
+        }
+
+        /// <summary>
         /// Validates that an exception is thrown when the specified entity type lacks a TableAttribute.
         /// </summary>
-        /// <remarks>This test verifies that the EntityRequestValidationCache.Validate method throws a
-        /// MissingMemberException if the provided entity type does not have a TableAttribute. This ensures that entity
-        /// types are properly configured for database mapping and that missing attributes are detected at validation
-        /// time.</remarks>
         [Fact]
         public void Validate_Throws_WhenNoTableAttribute()
         {
@@ -87,10 +105,6 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         /// Verifies that the EntityRequestValidationCache returns cached validation results for repeated requests of
         /// the same entity type.
         /// </summary>
-        /// <remarks>This test ensures that after the initial validation of a specific entity type,
-        /// subsequent validations for the same type utilize the cache rather than re-evaluating the entity. This
-        /// behavior is important for performance and consistency in scenarios where entity validation is requested
-        /// multiple times.</remarks>
         [Fact]
         public void Validate_UsesCache_ForSameType()
         {

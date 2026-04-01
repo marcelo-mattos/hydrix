@@ -1,4 +1,4 @@
-﻿using Hydrix.DependencyInjection;
+using Hydrix.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -26,13 +26,7 @@ namespace Hydrix.Tests
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddHydrix(options =>
-                    {
-                        options.Logger = services
-                            .BuildServiceProvider()
-                            .GetRequiredService<ILogger<App>>();
-                    });
-
+                    services.AddHydrix();
                     services.AddTransient<App>();
                 })
                 .Build();

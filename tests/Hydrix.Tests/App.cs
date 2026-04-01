@@ -1,4 +1,4 @@
-﻿using Hydrix.Orchestrator.Builders.Query.Conditions;
+using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
 using Hydrix.Tests.Resources;
@@ -37,9 +37,8 @@ namespace Hydrix.Tests
             var assemblyName = new AssemblyName(typeof(Shared).GetTypeInfo().Assembly.FullName);
             var localizer = factory.Create(nameof(Shared), assemblyName.Name);
 
-            var connection = new SqlConnection("Data Source=localhost;Database=HydrixTest;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
-            connection.Open();
-
+            await using var connection = new SqlConnection("Data Source=localhost;Database=HydrixTest;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
+            await connection.OpenAsync();
             // ----------------- INSERT DATA -----------------
 
             for (var i = 0; i < 10; i++)

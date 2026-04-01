@@ -1,13 +1,10 @@
-$paths = @(
-    "obj",
-    "dbg",
-    "bin",
-    "tests/TestResults"
-)
+$root = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 
-foreach ($path in $paths) {
-    if (Test-Path $path) {
-        Write-Host "Removing $path"
-        Remove-Item $path -Recurse -Force
-    }
+@("obj","dbg","bin") | ForEach-Object {
+    $p = Join-Path $root $_
+    if (Test-Path $p) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue }
 }
+
+Get-ChildItem -Path (Join-Path $root "src"), (Join-Path $root "tests") -Directory -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -in @("bin","obj","dbg","TestResults","BenchmarkDotNet.Artifacts") } |
+    ForEach-Object { Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }

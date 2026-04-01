@@ -19,7 +19,6 @@ namespace Hydrix.UnitTests.Configuration
         [Fact]
         public void Options_ReturnsDefaultInstance()
         {
-            // O valor padrão deve ser uma instância de HydrixOptions
             var options = HydrixConfiguration.Options;
             Assert.IsType<HydrixOptions>(options);
         }
@@ -34,10 +33,19 @@ namespace Hydrix.UnitTests.Configuration
         [Fact]
         public void Configure_ChangesOptionsInstance()
         {
+            var originalOptions = HydrixConfiguration.Options;
             var newOptions = new HydrixOptions();
-            HydrixConfiguration.Configure(newOptions);
 
-            Assert.IsType<HydrixOptions>(newOptions);
+            try
+            {
+                HydrixConfiguration.Configure(newOptions);
+
+                Assert.Same(newOptions, HydrixConfiguration.Options);
+            }
+            finally
+            {
+                HydrixConfiguration.Configure(originalOptions);
+            }
         }
     }
 }
