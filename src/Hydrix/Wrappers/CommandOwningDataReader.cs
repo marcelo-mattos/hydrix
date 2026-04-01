@@ -48,11 +48,11 @@ namespace Hydrix.Wrappers
         /// </summary>
         /// <remarks>If the specified index is out of range, an exception may be thrown. Use this indexer
         /// to access column values by their ordinal position in the result set.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal whose value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal whose value to retrieve.</param>
         /// <returns>The value of the column at the specified index. The type of the returned object depends on the underlying
         /// data source.</returns>
-        public object this[int ordinal]
-            => _reader[ordinal];
+        public object this[int i]
+            => _reader[i];
 
         /// <summary>
         /// Gets the value of the column with the specified name from the underlying data reader.
@@ -138,21 +138,21 @@ namespace Hydrix.Wrappers
         /// <summary>
         /// Gets the value of the specified column as a Boolean.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <param name="i">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column as a Boolean. Returns <see langword="true"/> if the value is true;
         /// otherwise, <see langword="false"/>.</returns>
         public bool GetBoolean(
-            int ordinal)
-            => _reader.GetBoolean(ordinal);
+            int i)
+            => _reader.GetBoolean(i);
 
         /// <summary>
         /// Gets the value of the specified column as a byte.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>The value of the specified column as a byte.</returns>
         public byte GetByte(
-            int ordinal)
-            => _reader.GetByte(ordinal);
+            int i)
+            => _reader.GetByte(i);
 
         /// <summary>
         /// Reads a stream of bytes from the specified column offset into the provided buffer as an array, starting at
@@ -160,7 +160,7 @@ namespace Hydrix.Wrappers
         /// </summary>
         /// <remarks>If the buffer parameter is null, this method returns the total length of the field in
         /// bytes rather than reading data. This method can be used to read large binary values in chunks.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal from which to read the bytes.</param>
+        /// <param name="i">The zero-based column ordinal from which to read the bytes.</param>
         /// <param name="fieldOffset">The index within the field from which to begin reading bytes.</param>
         /// <param name="buffer">The buffer into which the bytes will be read. If null, the method returns the total number of bytes
         /// available in the field.</param>
@@ -169,13 +169,13 @@ namespace Hydrix.Wrappers
         /// <returns>The actual number of bytes read into the buffer. Returns 0 if no bytes are available or if the end of the
         /// field is reached.</returns>
         public long GetBytes(
-            int ordinal,
+            int i,
             long fieldOffset,
             byte[] buffer,
             int bufferoffset,
             int length)
             => _reader.GetBytes(
-                ordinal,
+                i,
                 fieldOffset,
                 buffer,
                 bufferoffset,
@@ -184,11 +184,11 @@ namespace Hydrix.Wrappers
         /// <summary>
         /// Gets the value of the specified column as a Unicode character.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <param name="i">The zero-based column ordinal.</param>
         /// <returns>A Unicode character representing the value of the specified column.</returns>
         public char GetChar(
-            int ordinal)
-            => _reader.GetChar(ordinal);
+            int i)
+            => _reader.GetChar(i);
 
         /// <summary>
         /// Reads a stream of characters from the specified column offset into the provided buffer as an array, starting
@@ -196,7 +196,7 @@ namespace Hydrix.Wrappers
         /// </summary>
         /// <remarks>If the buffer parameter is null, this method returns the total number of characters
         /// available in the field. This method can be used to retrieve large character data in chunks.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal from which to read the characters.</param>
+        /// <param name="i">The zero-based column ordinal from which to read the characters.</param>
         /// <param name="fieldoffset">The index within the field from which to start reading characters.</param>
         /// <param name="buffer">The buffer into which the characters are read. Can be null to obtain the length of the field.</param>
         /// <param name="bufferoffset">The index within the buffer at which to start placing the data.</param>
@@ -204,13 +204,13 @@ namespace Hydrix.Wrappers
         /// <returns>The actual number of characters read into the buffer. Returns the total length of the field in characters if
         /// the buffer is null.</returns>
         public long GetChars(
-            int ordinal,
+            int i,
             long fieldoffset,
             char[] buffer,
             int bufferoffset,
             int length)
             => _reader.GetChars(
-                ordinal,
+                i,
                 fieldoffset,
                 buffer,
                 bufferoffset,
@@ -219,42 +219,42 @@ namespace Hydrix.Wrappers
         /// <summary>
         /// Gets an IDataReader to access the data at the specified column ordinal.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal indicating which column's data to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal indicating which column's data to retrieve.</param>
         /// <returns>An IDataReader for the specified column, allowing access to its data.</returns>
         public IDataReader GetData(
-            int ordinal)
-            => _reader.GetData(ordinal);
+            int i)
+            => _reader.GetData(i);
 
         /// <summary>
         /// Gets the data type information for the specified column ordinal as a string.
         /// </summary>
         /// <remarks>The returned data type name is provider-specific and may not correspond directly to a
         /// .NET type. Use this method to obtain the database type as defined by the underlying data source.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal for which to retrieve the data type name.</param>
+        /// <param name="i">The zero-based column ordinal for which to retrieve the data type name.</param>
         /// <returns>A string representing the data type of the specified column.</returns>
         public string GetDataTypeName(
-            int ordinal)
-            => _reader.GetDataTypeName(ordinal);
+            int i)
+            => _reader.GetDataTypeName(i);
 
         /// <summary>
         /// Gets the value of the specified column as a DateTime object.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>A DateTime value representing the data in the specified column.</returns>
         public DateTime GetDateTime(
-            int ordinal)
-            => _reader.GetDateTime(ordinal);
+            int i)
+            => _reader.GetDateTime(i);
 
         /// <summary>
         /// Gets the value of the specified column as a decimal number.
         /// </summary>
         /// <remarks>Use this method when the column value is expected to be a decimal. An exception is
         /// thrown if the value cannot be cast to decimal or if the column is null.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>The value of the specified column as a decimal.</returns>
         public decimal GetDecimal(
-            int ordinal)
-            => _reader.GetDecimal(ordinal);
+            int i)
+            => _reader.GetDecimal(i);
 
         /// <summary>
         /// Gets the value of the specified column as a double-precision floating-point number.
@@ -262,11 +262,11 @@ namespace Hydrix.Wrappers
         /// <remarks>No conversions are performed; the data must already be a double-precision
         /// floating-point number or convertible to one. Use IsDBNull to check for null values before calling this
         /// method to avoid exceptions.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>The value of the specified column as a double-precision floating-point number.</returns>
         public double GetDouble(
-            int ordinal)
-            => _reader.GetDouble(ordinal);
+            int i)
+            => _reader.GetDouble(i);
 
         /// <summary>
         /// Gets the data type of the specified column.
@@ -274,11 +274,11 @@ namespace Hydrix.Wrappers
         /// <remarks>Use this method to determine the .NET type that corresponds to the data stored in the
         /// column at the given ordinal. This can be useful for dynamic data processing or when working with columns of
         /// unknown types.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal for which to retrieve the data type.</param>
+        /// <param name="i">The zero-based column ordinal for which to retrieve the data type.</param>
         /// <returns>A Type object that represents the data type of the specified column.</returns>
         public Type GetFieldType(
-            int ordinal)
-            => _reader.GetFieldType(ordinal);
+            int i)
+            => _reader.GetFieldType(i);
 
         /// <summary>
         /// Gets the value of the specified column as a single-precision floating-point number.
@@ -286,61 +286,61 @@ namespace Hydrix.Wrappers
         /// <remarks>If the column value is not already a single-precision floating-point number, an
         /// attempt is made to convert it. Use IsDBNull to check for null values before calling this method to avoid
         /// exceptions.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>The value of the specified column as a single-precision floating-point number.</returns>
         public float GetFloat(
-            int ordinal)
-            => _reader.GetFloat(ordinal);
+            int i)
+            => _reader.GetFloat(i);
 
         /// <summary>
         /// Gets the value of the specified column as a GUID.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>A GUID representing the value of the specified column.</returns>
         public Guid GetGuid(
-            int ordinal)
-            => _reader.GetGuid(ordinal);
+            int i)
+            => _reader.GetGuid(i);
 
         /// <summary>
         /// Gets the value of the specified column as a 16-bit signed integer.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>The 16-bit signed integer value of the specified column.</returns>
         public short GetInt16(
-            int ordinal)
-            => _reader.GetInt16(ordinal);
+            int i)
+            => _reader.GetInt16(i);
 
         /// <summary>
         /// Gets the value of the specified column as a 32-bit signed integer.
         /// </summary>
         /// <remarks>If the column value is equivalent to DBNull, an exception is thrown. Ensure that the
         /// column contains a valid 32-bit integer value before calling this method.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal indicating which column's value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal indicating which column's value to retrieve.</param>
         /// <returns>The 32-bit signed integer value of the specified column.</returns>
         public int GetInt32(
-            int ordinal)
-            => _reader.GetInt32(ordinal);
+            int i)
+            => _reader.GetInt32(i);
 
         /// <summary>
         /// Gets the value of the specified column as a 64-bit signed integer.
         /// </summary>
         /// <remarks>Use this method when you are certain that the column contains a 64-bit signed integer
         /// value; otherwise, an exception may be thrown if the value cannot be cast to Int64.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal of the value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal of the value to retrieve.</param>
         /// <returns>The 64-bit signed integer value of the specified column.</returns>
         public long GetInt64(
-            int ordinal)
-            => _reader.GetInt64(ordinal);
+            int i)
+            => _reader.GetInt64(i);
 
         /// <summary>
         /// Gets the name of the column at the specified zero-based ordinal position.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal whose name is to be retrieved. Must be greater than or equal to 0 and less
+        /// <param name="i">The zero-based column ordinal whose name is to be retrieved. Must be greater than or equal to 0 and less
         /// than the total number of columns.</param>
         /// <returns>The name of the column at the specified ordinal position.</returns>
         public string GetName(
-            int ordinal)
-            => _reader.GetName(ordinal);
+            int i)
+            => _reader.GetName(i);
 
         /// <summary>
         /// Returns the zero-based column ordinal given the name of the column.
@@ -369,23 +369,23 @@ namespace Hydrix.Wrappers
         /// <summary>
         /// Gets the value of the specified column as a string.
         /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal indicating which column's value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal indicating which column's value to retrieve.</param>
         /// <returns>The string value of the specified column.</returns>
         public string GetString(
-            int ordinal)
-            => _reader.GetString(ordinal);
+            int i)
+            => _reader.GetString(i);
 
         /// <summary>
         /// Gets the value of the specified column in its native format given the column ordinal.
         /// </summary>
         /// <remarks>Use this method to retrieve the value of a column without type conversion. To obtain
         /// a value of a specific type, use the appropriate typed accessor method.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal indicating which column's value to retrieve.</param>
+        /// <param name="i">The zero-based column ordinal indicating which column's value to retrieve.</param>
         /// <returns>An object representing the value of the specified column. Returns DBNull if the column value is database
         /// null.</returns>
         public object GetValue(
-            int ordinal)
-            => _reader.GetValue(ordinal);
+            int i)
+            => _reader.GetValue(i);
 
         /// <summary>
         /// Copies the column values of the current row into the provided array.
@@ -404,11 +404,11 @@ namespace Hydrix.Wrappers
         /// </summary>
         /// <remarks>Use this method to check for database null values before retrieving data from the
         /// specified column to avoid runtime exceptions.</remarks>
-        /// <param name="ordinal">The zero-based column ordinal to check for a database null value.</param>
+        /// <param name="i">The zero-based column ordinal to check for a database null value.</param>
         /// <returns>true if the specified column value is equivalent to DBNull; otherwise, false.</returns>
         public bool IsDBNull(
-            int ordinal)
-            => _reader.IsDBNull(ordinal);
+            int i)
+            => _reader.IsDBNull(i);
 
         /// <summary>
         /// Advances the data reader to the next result set, if any exist.

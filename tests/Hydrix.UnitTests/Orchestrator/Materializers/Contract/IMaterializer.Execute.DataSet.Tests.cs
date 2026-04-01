@@ -167,10 +167,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteDataSetAsync_WithoutSqlParametersAndTransaction_ReturnsDataSet()
         {
-            var transaction = new Mock<IDbTransaction>().Object;
             _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
             var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>());
+            Assert.NotNull(result);
         }
 
         /// <summary>

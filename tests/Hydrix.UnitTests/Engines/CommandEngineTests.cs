@@ -768,9 +768,11 @@ namespace Hydrix.UnitTests.Engines
                 null,
                 null,
                 null);
-            // Should not throw
             var logMethod = typeof(CommandEngine).GetMethod("LogCommand", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            logMethod.Invoke(null, new object[] { null, cmd });
+            var exception = Record.Exception(() =>
+                logMethod.Invoke(null, new object[] { null, cmd }));
+
+            Assert.Null(exception);
         }
 
         /// <summary>

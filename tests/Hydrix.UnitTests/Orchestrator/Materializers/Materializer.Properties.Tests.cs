@@ -154,13 +154,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
-        /// Verifies that the EnableSqlLogging property is set to false by default.
+        /// Verifies that the EnableSqlLogging property is set to true by default.
         /// </summary>
         [Fact]
-        public void EnableSqlLogging_DefaultsFalse()
+        public void EnableSqlLogging_DefaultsTrue()
         {
             var mat = CreateMaterializer();
-            Assert.False(mat.EnableSqlLogging);
+            Assert.True(mat.EnableSqlLogging);
         }
 
         /// <summary>

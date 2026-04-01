@@ -9,7 +9,7 @@ namespace Hydrix.Tests
     /// <summary>
     /// TLS Data SQL DbClient Test Program
     /// </summary>
-    internal class Program
+    internal static class Program
     {
         /// <summary>
         /// Program Entry point

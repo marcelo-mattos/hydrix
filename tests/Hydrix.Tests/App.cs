@@ -10,7 +10,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -66,7 +68,15 @@ namespace Hydrix.Tests
                 };
 
                 var productValidator = new ProductValidator(localizer);
-                if (!product.IsValid(out var validationResults, productValidator))
+                if (!product.IsValid<Product>(
+                    out var validationResults,
+                    entity => productValidator
+                        .Validate(entity)
+                        .Errors
+                        .Select(error =>
+                            new ValidationResult(
+                                error.ErrorMessage,
+                                new[] { error.PropertyName }))))
                 {
                     _logger.LogError(
                         "Product validation failed: {Errors}",
@@ -138,9 +148,11 @@ namespace Hydrix.Tests
             // ----------------- SELECT DATA -----------------
 
             bool? isActive = true;
-            DateTime? startDate = new DateTime(1980, 1, 1);
-            DateTime? endDate = new DateTime(1999, 12, 31);
-            int[] levels = new int[] { 3, 5, 7 };
+            DateTime? startDate = new DateTime(1980, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            DateTime? endDate = new DateTime(1999, 12, 31, 0, 0, 0, DateTimeKind.Unspecified);
+            int[] levels = new Random().Next(1, 8) == 1
+                ? new int[] { 3, 5, 7 }
+                : (int[])null;
 
             var builder = WhereBuilder.Create();
             var where = builder
@@ -150,6 +162,7 @@ namespace Hydrix.Tests
                 .AndIf(levels != null && levels.Length > 0, "c.Level IN (@Levels)")
                 .Build();
 
+            levels = new int[] { 3, 5, 7 };
             where = builder
                 .Clear()
                     .Where("1 = 1")
@@ -169,7 +182,7 @@ namespace Hydrix.Tests
                         new[]
                         {
                             startDate.HasValue,
-                            endDate.HasValue,
+                            endDate.HasValue
                         },
                         new[]
                         {

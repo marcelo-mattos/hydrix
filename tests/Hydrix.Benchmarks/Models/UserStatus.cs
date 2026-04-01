@@ -6,8 +6,7 @@ namespace Hydrix.Benchmarks.Models
     /// <remarks>Use this enumeration to represent and manage the current state of a user, such as whether the
     /// user is active, blocked, or deleted. This can be useful for controlling access, displaying user information, or
     /// enforcing business rules based on user status.</remarks>
-    public enum UserStatus :
-        int
+    public enum UserStatus
     {
         /// <summary>
         /// Indicates that the entity is currently active.

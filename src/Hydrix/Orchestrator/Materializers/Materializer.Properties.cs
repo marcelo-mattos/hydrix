@@ -121,7 +121,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// can be useful for debugging or auditing purposes, but may expose sensitive information
         /// and impact performance in production environments.
         /// </remarks>
-        public bool EnableSqlLogging { get; set; }
+        public bool EnableSqlLogging { get; set; } = true;
 
         /// <summary>
         /// Gets a value that determines freeing, releasing, or resetting condition of unmanaged resources.

@@ -1,5 +1,4 @@
-﻿using FluentValidation;
-using Hydrix.Orchestrator.Builders.Query;
+﻿using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Metadata.Builders;
@@ -8,7 +7,6 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Threading;
 
 namespace Hydrix.Schemas
@@ -37,29 +35,23 @@ namespace Hydrix.Schemas
         /// found.</remarks>
         /// <param name="results">When this method returns, contains a list of <see cref="ValidationResult"/> objects that describe any
         /// validation errors encountered. The list is empty if the object is valid.</param>
-        /// <param name="fluentValidator">An FluentValidation validator to use for additional validation logic.</param>
+        /// <param name="externalValidator">An external validator delegate to execute additional validation logic.</param>
         /// <returns>true if the object passes all validation checks; otherwise, false.</returns>
         public virtual bool IsValid<T>(
             out List<ValidationResult> results,
-            AbstractValidator<T> fluentValidator)
+            Func<T, IEnumerable<ValidationResult>> externalValidator)
             where T : IEntity
         {
             IsValid(out results);
 
-            if (fluentValidator == null || !(this is T entity))
+            if (externalValidator == null)
                 return results.Count == 0;
 
-            var fluentResult = fluentValidator.Validate(entity);
+            var entity = (T)(object)this;
 
-            results.AddRange(fluentResult
-                .Errors
-                .Select(
-                    error => new ValidationResult(
-                        error.ErrorMessage,
-                        new string[]
-                        {
-                            error.PropertyName
-                        })));
+            var externalResults = externalValidator(entity);
+            if (externalResults != null)
+                results.AddRange(externalResults);
 
             return results.Count == 0;
         }
