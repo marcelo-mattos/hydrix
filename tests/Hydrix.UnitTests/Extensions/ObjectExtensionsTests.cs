@@ -440,7 +440,7 @@ namespace Hydrix.UnitTests.Extensions
 
             var result = converter(true);
 
-            Assert.Equal(true, result);
+            Assert.True((bool)result);
         }
 
         /// <summary>
@@ -472,18 +472,21 @@ namespace Hydrix.UnitTests.Extensions
             var flags = BindingFlags.NonPublic | BindingFlags.Static;
 
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
             var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
             var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
             var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
             var previousLastType = lastConverterTargetTypeField.GetValue(null);
             var previousLastConverter = lastConverterField.GetValue(null);
 
             try
             {
                 cache.Clear();
+                cacheSizeField.SetValue(null, 0);
                 lastConverterTargetTypeField.SetValue(null, null);
                 lastConverterField.SetValue(null, null);
 
@@ -503,6 +506,8 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(dynamicType, converter);
                 }
 
+                cacheSizeField.SetValue(null, maxConverterCacheSize);
+
                 var countBefore = cache.Count;
                 var result = "A".As<char>();
 
@@ -516,6 +521,132 @@ namespace Hydrix.UnitTests.Extensions
                 foreach (var entry in previousEntries)
                     cache.TryAdd(entry.Key, entry.Value);
 
+                cacheSizeField.SetValue(null, previousCacheSize);
+                lastConverterTargetTypeField.SetValue(null, previousLastType);
+                lastConverterField.SetValue(null, previousLastConverter);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that cache fallback returns the existing cached converter when one is available for the target
+        /// type.
+        /// </summary>
+        [Fact]
+        public void GetCachedConverterOrCurrent_ReturnsCachedConverter_WhenExists()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var method = objectExtensionsType.GetMethod("GetCachedConverterOrCurrent", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+
+            try
+            {
+                cache.Clear();
+
+                Func<object, object> cached = _ => "cached";
+                Func<object, object> current = _ => "current";
+                cache.TryAdd(typeof(char), cached);
+
+                var result = (Func<object, object>)method.Invoke(
+                    null,
+                    new object[] { typeof(char), current });
+
+                Assert.Same(cached, result);
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that cache fallback returns the current converter when no cached converter exists for the target
+        /// type.
+        /// </summary>
+        [Fact]
+        public void GetCachedConverterOrCurrent_ReturnsCurrentConverter_WhenCacheMisses()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var method = objectExtensionsType.GetMethod("GetCachedConverterOrCurrent", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+
+            try
+            {
+                cache.Clear();
+
+                Func<object, object> current = _ => "current";
+
+                var result = (Func<object, object>)method.Invoke(
+                    null,
+                    new object[] { typeof(char), current });
+
+                Assert.Same(current, result);
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that GetConverter returns an already cached converter when cache insertion is skipped and the
+        /// target type is already present in the dictionary.
+        /// </summary>
+        [Fact]
+        public void GetConverter_UsesExistingCachedConverter_WhenCacheLimitReachedAndTypeAlreadyCached()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
+            var maxCacheSizeField = objectExtensionsType.GetField("MaxConverterCacheSize", flags);
+            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
+            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
+            var previousLastType = lastConverterTargetTypeField.GetValue(null);
+            var previousLastConverter = lastConverterField.GetValue(null);
+
+            try
+            {
+                cache.Clear();
+                lastConverterTargetTypeField.SetValue(null, null);
+                lastConverterField.SetValue(null, null);
+
+                var maxCacheSize = (int)maxCacheSizeField.GetValue(null);
+                cacheSizeField.SetValue(null, maxCacheSize);
+
+                var existingConverter = new Func<object, object>(_ => "from-cache");
+                cache.TryAdd(typeof(char), existingConverter);
+
+                var converter = ObjectExtensions.GetConverter(typeof(char));
+
+                Assert.Same(existingConverter, converter);
+                Assert.Equal("from-cache", converter("ignored"));
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+
+                cacheSizeField.SetValue(null, previousCacheSize);
                 lastConverterTargetTypeField.SetValue(null, previousLastType);
                 lastConverterField.SetValue(null, previousLastConverter);
             }

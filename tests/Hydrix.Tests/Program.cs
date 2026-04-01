@@ -16,6 +16,13 @@ namespace Hydrix.Tests
         /// </summary>
         private static async Task Main(string[] args)
         {
+            var hydrixLoggerFactory = LoggerFactory.Create(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+                logging.SetMinimumLevel(LogLevel.Debug);
+            });
+
             var host = Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(logging =>
                 {
@@ -26,7 +33,10 @@ namespace Hydrix.Tests
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddHydrix();
+                    services.AddHydrix(options =>
+                    {
+                        options.Logger = hydrixLoggerFactory.CreateLogger("Hydrix");
+                    });
                     services.AddTransient<App>();
                 })
                 .Build();

@@ -14,6 +14,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace Hydrix.Tests
@@ -150,7 +151,7 @@ namespace Hydrix.Tests
             bool? isActive = true;
             DateTime? startDate = new DateTime(1980, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
             DateTime? endDate = new DateTime(1999, 12, 31, 0, 0, 0, DateTimeKind.Unspecified);
-            int[] levels = new Random().Next(1, 8) == 1
+            int[] levels = RandomNumberGenerator.GetInt32(1, 8) == 1
                 ? new int[] { 3, 5, 7 }
                 : (int[])null;
 

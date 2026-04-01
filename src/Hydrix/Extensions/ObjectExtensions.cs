@@ -23,6 +23,11 @@ namespace Hydrix.Extensions
         private static Func<object, object> _lastConverter;
 
         /// <summary>
+        /// Tracks the number of cached converters without calling ConcurrentDictionary.Count on the hot path.
+        /// </summary>
+        private static int _converterCacheSize;
+
+        /// <summary>
         /// Caches conversion delegates by target type to reduce repeated branch evaluation in hot paths.
         /// </summary>
         private static readonly ConcurrentDictionary<Type, Func<object, object>> ConverterCache =
@@ -88,12 +93,24 @@ namespace Hydrix.Extensions
                     targetType,
                     out var converter))
             {
-                converter = ConverterCache.Count < MaxConverterCacheSize
-                    ? ConverterCache.GetOrAdd(
+                converter = BuildConverter(targetType);
+
+                var shouldCache = Volatile.Read(
+                    ref _converterCacheSize) < MaxConverterCacheSize;
+
+                if (shouldCache &&
+                    ConverterCache.TryAdd(
                         targetType,
-                        BuildConverter)
-                    : BuildConverter(
-                        targetType);
+                        converter))
+                {
+                    Interlocked.Increment(ref _converterCacheSize);
+                }
+                else
+                {
+                    converter = GetCachedConverterOrCurrent(
+                        targetType,
+                        converter);
+                }
             }
 
             Volatile.Write(
@@ -106,6 +123,22 @@ namespace Hydrix.Extensions
 
             return converter;
         }
+
+        /// <summary>
+        /// Returns the cached converter for the specified target type when present; otherwise, returns the current
+        /// converter instance.
+        /// </summary>
+        /// <param name="targetType">The type whose converter is being resolved from cache.</param>
+        /// <param name="currentConverter">The converter to use when no cached converter exists.</param>
+        /// <returns>The cached converter when found; otherwise, <paramref name="currentConverter"/>.</returns>
+        private static Func<object, object> GetCachedConverterOrCurrent(
+            Type targetType,
+            Func<object, object> currentConverter)
+            => ConverterCache.TryGetValue(
+                targetType,
+                out var existingConverter)
+                ? existingConverter
+                : currentConverter;
 
         /// <summary>
         /// Creates a delegate that converts an input object to the specified target type, handling common type
