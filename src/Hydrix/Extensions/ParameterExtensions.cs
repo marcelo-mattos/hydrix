@@ -25,28 +25,30 @@ namespace Hydrix.Extensions
         public static IEnumerable<IDataParameter> AsIDataParameters(
             this object parameters)
         {
-            switch (parameters)
-            {
-                case null:
-                    yield break;
+            if (parameters == null)
+                return Array.Empty<IDataParameter>();
 
-                case IEnumerable<IDataParameter> dbParams:
-                    {
-                        foreach (var dbParam in dbParams)
-                            yield return dbParam;
+            if (parameters is IDataParameter single)
+                return EnumerateParameters(new[] { single });
 
-                        yield break;
-                    }
+            if (parameters is IEnumerable<IDataParameter> dbParams)
+                return EnumerateParameters(dbParams);
 
-                case IDataParameter single:
-                    yield return single;
-                    yield break;
+            throw new ArgumentException(
+                $"Parameter type '{parameters.GetType().FullName}' is not supported.",
+                nameof(parameters));
+        }
 
-                default:
-                    throw new ArgumentException(
-                        $"Parameter type '{parameters.GetType().FullName}' is not supported.",
-                        nameof(parameters));
-            }
+        /// <summary>
+        /// Iterates through a sequence of database parameters and yields each element.
+        /// </summary>
+        /// <param name="parameters">The parameter sequence to enumerate.</param>
+        /// <returns>An iterator that yields each <see cref="IDataParameter"/> from <paramref name="parameters"/>.</returns>
+        private static IEnumerable<IDataParameter> EnumerateParameters(
+            IEnumerable<IDataParameter> parameters)
+        {
+            foreach (var parameter in parameters)
+                yield return parameter;
         }
     }
 }

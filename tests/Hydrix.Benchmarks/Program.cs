@@ -1,7 +1,6 @@
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using Hydrix.Benchmarks.Infrastructure;
-using System.Threading.Tasks;
 
 namespace Hydrix.Benchmarks
 {
@@ -11,7 +10,7 @@ namespace Hydrix.Benchmarks
     /// <remarks>This class is intended for internal use and is responsible for setting up the benchmark
     /// configuration, including memory diagnostics and disabling optimization validation. It launches the benchmark
     /// suite using the current assembly and the provided command-line arguments.</remarks>
-    internal class Program
+    internal static class Program
     {
         /// <summary>
         /// Runs the benchmark tests defined in the assembly using the specified configuration.
@@ -20,7 +19,7 @@ namespace Hydrix.Benchmarks
         /// disables optimizations validation to ensure accurate benchmarking results.</remarks>
         /// <param name="args">An array of command-line arguments that can be used to customize the benchmark execution.</param>
         /// <returns>A task that represents the asynchronous operation of running the benchmarks.</returns>
-        private static async Task Main(
+        private static void Main(
             string[] args)
         {
             // NOTE:
@@ -32,7 +31,8 @@ namespace Hydrix.Benchmarks
                 .AddDiagnoser(BenchmarkConfig.Memory)
                 .WithOptions(ConfigOptions.DisableOptimizationsValidator);
 
-            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly)
+            BenchmarkSwitcher
+                .FromAssembly(typeof(Program).Assembly)
                 .Run(args, config);
         }
     }
