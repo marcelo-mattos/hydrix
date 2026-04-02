@@ -528,6 +528,57 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that GetConverter returns the newly built converter when cache insertion is skipped and no
+        /// converter exists in the dictionary for the target type.
+        /// </summary>
+        [Fact]
+        public void GetConverter_ReturnsCurrentConverter_WhenCacheLimitReachedAndTypeIsNotCached()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
+            var maxCacheSizeField = objectExtensionsType.GetField("MaxConverterCacheSize", flags);
+            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
+            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
+            var previousLastType = lastConverterTargetTypeField.GetValue(null);
+            var previousLastConverter = lastConverterField.GetValue(null);
+
+            try
+            {
+                cache.Clear();
+                lastConverterTargetTypeField.SetValue(null, null);
+                lastConverterField.SetValue(null, null);
+
+                var maxCacheSize = (int)maxCacheSizeField.GetValue(null);
+                cacheSizeField.SetValue(null, maxCacheSize);
+
+                var targetType = typeof(DateTimeOffset);
+                var converter = ObjectExtensions.GetConverter(targetType);
+
+                Assert.NotNull(converter);
+                Assert.False(cache.ContainsKey(targetType));
+                Assert.Equal(targetType, lastConverterTargetTypeField.GetValue(null));
+                Assert.Same(converter, lastConverterField.GetValue(null));
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+
+                cacheSizeField.SetValue(null, previousCacheSize);
+                lastConverterTargetTypeField.SetValue(null, previousLastType);
+                lastConverterField.SetValue(null, previousLastConverter);
+            }
+        }
+
+        /// <summary>
         /// Verifies that cache fallback returns the existing cached converter when one is available for the target
         /// type.
         /// </summary>

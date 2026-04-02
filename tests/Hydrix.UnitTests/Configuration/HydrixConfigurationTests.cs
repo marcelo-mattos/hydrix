@@ -7,7 +7,7 @@ namespace Hydrix.UnitTests.Configuration
     /// Provides unit tests for the HydrixConfiguration class, ensuring correct behavior of configuration options.
     /// </summary>
     /// <remarks>This class contains tests that verify the default instance of HydrixOptions is returned, that
-    /// the configuration can be changed, and that null values are allowed in the configuration method.</remarks>
+    /// the configuration can be changed, and that null values are rejected in the configuration method.</remarks>
     public class HydrixConfigurationTests
     {
         /// <summary>
@@ -41,6 +41,25 @@ namespace Hydrix.UnitTests.Configuration
                 HydrixConfiguration.Configure(newOptions);
 
                 Assert.Same(newOptions, HydrixConfiguration.Options);
+            }
+            finally
+            {
+                HydrixConfiguration.Configure(originalOptions);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that Configure throws <see cref="System.ArgumentNullException"/> when options is null.
+        /// </summary>
+        [Fact]
+        public void Configure_ThrowsArgumentNullException_WhenOptionsIsNull()
+        {
+            var originalOptions = HydrixConfiguration.Options;
+
+            try
+            {
+                Assert.Throws<System.ArgumentNullException>(() =>
+                    HydrixConfiguration.Configure(null));
             }
             finally
             {

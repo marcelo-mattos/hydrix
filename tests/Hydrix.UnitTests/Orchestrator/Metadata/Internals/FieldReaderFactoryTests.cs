@@ -524,5 +524,25 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
 
             Assert.Equal(value, result);
         }
+
+        /// <summary>
+        /// Verifies that the field reader falls back to using an enum converter when the source type does not match the
+        /// enum type, ensuring correct conversion from a string value to the corresponding enum value.
+        /// </summary>
+        /// <remarks>This test ensures that when a field reader is created for an enum type but receives a
+        /// value of a mismatched source type, such as a string, it correctly uses a fallback mechanism to convert the
+        /// value to the appropriate enum member.</remarks>
+        [Fact]
+        public void Create_WithEnumAndMismatchedSourceType_FallsBackToEnumConverter()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetValue(0)).Returns("One");
+
+            var reader = FieldReaderFactory.Create(typeof(MyEnum), typeof(string));
+            var result = reader(record.Object, 0);
+
+            Assert.Equal(MyEnum.One, result);
+        }
     }
 }

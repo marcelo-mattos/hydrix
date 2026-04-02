@@ -37,18 +37,26 @@ namespace Hydrix.UnitTests.DependencyInjection
         [Fact]
         public void AddHydrix_ConfiguresOptionsWithDelegate()
         {
+            var originalOptions = HydrixConfiguration.Options;
             var services = new ServiceCollection();
             HydrixOptions captured = null;
 
-            services.AddHydrix(options =>
+            try
             {
-                options.CommandTimeout = 99;
-                captured = options;
-            });
+                services.AddHydrix(options =>
+                {
+                    options.CommandTimeout = 99;
+                    captured = options;
+                });
 
-            Assert.NotNull(captured);
-            Assert.Equal(99, captured.CommandTimeout);
-            Assert.Same(captured, HydrixConfiguration.Options);
+                Assert.NotNull(captured);
+                Assert.Equal(99, captured.CommandTimeout);
+                Assert.Same(captured, HydrixConfiguration.Options);
+            }
+            finally
+            {
+                HydrixConfiguration.Configure(originalOptions);
+            }
         }
 
         /// <summary>

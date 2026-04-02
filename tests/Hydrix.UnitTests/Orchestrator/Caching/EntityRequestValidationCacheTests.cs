@@ -51,6 +51,36 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
+        /// Represents an entity that only exposes static properties and therefore has no mappable instance members.
+        /// </summary>
+        [Table("StaticOnlyEntity")]
+        private class StaticOnlyEntity
+        {
+            /// <summary>
+            /// Gets or sets a static value that should not be considered mappable.
+            /// </summary>
+            public static int StaticValue { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that only exposes an indexer and therefore has no regular mappable instance members.
+        /// </summary>
+        [Table("IndexerOnlyEntity")]
+        private class IndexerOnlyEntity
+        {
+            /// <summary>
+            /// Gets or sets a value by index. This indexer should not be considered mappable.
+            /// </summary>
+            /// <param name="index">The index position to access.</param>
+            /// <returns>The value at the specified index.</returns>
+            public string this[int index]
+            {
+                get => string.Empty;
+                set { }
+            }
+        }
+
+        /// <summary>
         /// Represents an entity that does not correspond to a database table, intended for in-memory operations or
         /// scenarios where persistence is not required.
         /// </summary>
@@ -88,6 +118,24 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         public void Validate_ReturnsFalse_WhenNoMappablePropertiesExist()
         {
             Assert.False(EntityRequestValidationCache.Validate(typeof(NoMappedMembersEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when only static properties exist.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenOnlyStaticPropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(StaticOnlyEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when only indexer properties exist.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenOnlyIndexerPropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(IndexerOnlyEntity)));
         }
 
         /// <summary>

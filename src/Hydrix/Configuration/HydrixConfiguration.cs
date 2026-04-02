@@ -1,4 +1,6 @@
-﻿namespace Hydrix.Configuration
+﻿using System;
+
+namespace Hydrix.Configuration
 {
     /// <summary>
     /// Provides static methods and properties for configuring and accessing Hydrix framework options.
@@ -29,8 +31,10 @@
         /// Configures the application with the specified options.
         /// </summary>
         /// <param name="options">The options to configure the application. This parameter cannot be null.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
         public static void Configure(
             HydrixOptions options)
-            => _options = options;
+            => _options = options
+                ?? throw new ArgumentNullException(nameof(options));
     }
 }
