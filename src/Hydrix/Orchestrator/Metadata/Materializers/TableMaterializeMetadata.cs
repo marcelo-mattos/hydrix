@@ -3,6 +3,7 @@ using Hydrix.Orchestrator.Resolvers;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Hydrix.Orchestrator.Metadata.Materializers
 {
@@ -24,6 +25,18 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
         /// computed schema hash. It is thread-safe for concurrent read and write operations.</remarks>
         private readonly ConcurrentDictionary<int, ResolvedTableBindings> _bindingsBySchemaHash =
             new ConcurrentDictionary<int, ResolvedTableBindings>();
+
+        /// <summary>
+        /// Tracks the number of cached schema-bound binding plans without using dictionary count on hot paths.
+        /// </summary>
+        private int _bindingsCacheSize;
+
+        /// <summary>
+        /// Defines the maximum number of cached schema-bound binding plans.
+        /// </summary>
+        /// <remarks>When the cap is reached, new binding plans are materialized on demand without being added to the
+        /// cache, preventing unbounded memory growth in long-running processes with high schema variation.</remarks>
+        private const int MaxBindingsCacheSize = 256;
 
         /// <summary>
         /// Gets the collection of column mappings that define the structure of the data.
@@ -64,9 +77,34 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
         public ResolvedTableBindings GetOrAddBindings(
             int schemaHash,
             Func<int, ResolvedTableBindings> factory)
-            => _bindingsBySchemaHash.GetOrAdd(
+        {
+            if (_bindingsBySchemaHash.TryGetValue(
                 schemaHash,
-                factory);
+                out var cachedBindings))
+            {
+                return cachedBindings;
+            }
+
+            var currentBindings = factory(schemaHash);
+
+            if (TryReserveBindingsCacheSlot())
+            {
+                if (_bindingsBySchemaHash.TryAdd(
+                    schemaHash,
+                    currentBindings))
+                {
+                    return currentBindings;
+                }
+
+                Interlocked.Decrement(ref _bindingsCacheSize);
+            }
+
+            return _bindingsBySchemaHash.TryGetValue(
+                schemaHash,
+                out cachedBindings)
+                ? cachedBindings
+                : currentBindings;
+        }
 
         /// <summary>
         /// Attempts to retrieve a cached schema-bound binding plan.
@@ -77,5 +115,54 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
             => _bindingsBySchemaHash.TryGetValue(
                 schemaHash,
                 out bindings);
+
+        /// <summary>
+        /// Attempts to reserve a cache slot while enforcing the maximum bindings cache size under concurrency.
+        /// </summary>
+        /// <returns><see langword="true"/> when a cache slot is reserved; otherwise, <see langword="false"/>.</returns>
+        private bool TryReserveBindingsCacheSlot()
+            => TryReserveBindingsCacheSlotCore(
+                () => Volatile.Read(ref _bindingsCacheSize),
+                TryUpdateBindingsCacheSize);
+
+        /// <summary>
+        /// Attempts to reserve a cache slot using pluggable read and update delegates.
+        /// </summary>
+        /// <param name="readCacheSize">Delegate used to read the current cache size.</param>
+        /// <param name="tryUpdate">Delegate used to atomically attempt the cache size update.</param>
+        /// <returns><see langword="true"/> when a cache slot is reserved; otherwise, <see langword="false"/>.</returns>
+        private static bool TryReserveBindingsCacheSlotCore(
+            Func<int> readCacheSize,
+            Func<int, int, bool> tryUpdate)
+        {
+            while (true)
+            {
+                var currentSize = readCacheSize();
+                if (currentSize >= MaxBindingsCacheSize)
+                    return false;
+
+                var updatedSize = currentSize + 1;
+                if (tryUpdate(
+                    currentSize,
+                    updatedSize))
+                {
+                    return true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Attempts to update bindings cache size atomically for a single reservation attempt.
+        /// </summary>
+        /// <param name="currentSize">The expected current cache size value.</param>
+        /// <param name="updatedSize">The cache size value to set when the expected value matches.</param>
+        /// <returns><see langword="true"/> when the update succeeds; otherwise, <see langword="false"/>.</returns>
+        private bool TryUpdateBindingsCacheSize(
+            int currentSize,
+            int updatedSize)
+            => Interlocked.CompareExchange(
+                ref _bindingsCacheSize,
+                updatedSize,
+                currentSize) == currentSize;
     }
 }

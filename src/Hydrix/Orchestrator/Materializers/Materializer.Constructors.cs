@@ -56,11 +56,10 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             string parameterPrefix = null)
         {
-            _logger = logger;
-
             lock (_lockConnection)
                 DbConnection = connection;
 
+            _logger = logger;
             Timeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             _parameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
         }

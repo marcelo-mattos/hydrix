@@ -37,7 +37,8 @@ namespace Hydrix.Extensions
         /// Defines the maximum number of converter delegates stored in the shared cache.
         /// </summary>
         /// <remarks>When the limit is reached, new converters are created on demand without being added to the
-        /// dictionary, avoiding unbounded memory growth while keeping hot-path performance through the volatile cache.</remarks>
+        /// dictionary, avoiding unbounded memory growth while keeping hot-path performance through the volatile cache.
+        /// The limit is enforced under concurrency using atomic slot reservation.</remarks>
         private const int MaxConverterCacheSize = 256;
 
         /// <summary>
@@ -90,20 +91,16 @@ namespace Hydrix.Extensions
             }
 
             if (!ConverterCache.TryGetValue(
-                    targetType,
-                    out var converter))
+                targetType,
+                out var converter))
             {
                 converter = BuildConverter(targetType);
 
-                var shouldCache = Volatile.Read(
-                    ref _converterCacheSize) < MaxConverterCacheSize;
-
-                if (shouldCache &&
-                    ConverterCache.TryAdd(
-                        targetType,
-                        converter))
+                if (TryReserveConverterCacheSlot())
                 {
-                    Interlocked.Increment(ref _converterCacheSize);
+                    converter = AddConverterOrReuseCached(
+                        targetType,
+                        converter);
                 }
                 else
                 {
@@ -123,6 +120,80 @@ namespace Hydrix.Extensions
 
             return converter;
         }
+
+        /// <summary>
+        /// Adds the converter to cache when possible; otherwise, reuses the cached converter and rolls back the
+        /// reserved cache slot.
+        /// </summary>
+        /// <param name="targetType">The conversion target type used as cache key.</param>
+        /// <param name="currentConverter">The current converter instance materialized for the target type.</param>
+        /// <returns>The cached converter when cache insertion loses a race; otherwise, <paramref name="currentConverter"/>.</returns>
+        private static Func<object, object> AddConverterOrReuseCached(
+            Type targetType,
+            Func<object, object> currentConverter)
+        {
+            if (ConverterCache.TryAdd(
+                targetType,
+                currentConverter))
+            {
+                return currentConverter;
+            }
+
+            Interlocked.Decrement(ref _converterCacheSize);
+
+            return GetCachedConverterOrCurrent(
+                targetType,
+                currentConverter);
+        }
+
+        /// <summary>
+        /// Attempts to reserve a cache slot while enforcing the maximum converter cache size under concurrency.
+        /// </summary>
+        /// <returns><see langword="true"/> when a slot is reserved; otherwise, <see langword="false"/>.</returns>
+        private static bool TryReserveConverterCacheSlot()
+            => TryReserveConverterCacheSlotCore(
+                () => Volatile.Read(ref _converterCacheSize),
+                TryUpdateConverterCacheSize);
+
+        /// <summary>
+        /// Attempts to reserve a cache slot using pluggable read and update delegates.
+        /// </summary>
+        /// <param name="readCacheSize">Delegate used to read the current cache size.</param>
+        /// <param name="tryUpdate">Delegate used to atomically attempt the cache size update.</param>
+        /// <returns><see langword="true"/> when a slot is reserved; otherwise, <see langword="false"/>.</returns>
+        private static bool TryReserveConverterCacheSlotCore(
+            Func<int> readCacheSize,
+            Func<int, int, bool> tryUpdate)
+        {
+            while (true)
+            {
+                var currentSize = readCacheSize();
+                if (currentSize >= MaxConverterCacheSize)
+                    return false;
+
+                var updatedSize = currentSize + 1;
+                if (tryUpdate(
+                    currentSize,
+                    updatedSize))
+                {
+                    return true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Attempts to update converter cache size atomically for a single reservation attempt.
+        /// </summary>
+        /// <param name="currentSize">The expected current cache size value.</param>
+        /// <param name="updatedSize">The cache size value to set when the expected value matches.</param>
+        /// <returns><see langword="true"/> when the update succeeds; otherwise, <see langword="false"/>.</returns>
+        private static bool TryUpdateConverterCacheSize(
+            int currentSize,
+            int updatedSize)
+            => Interlocked.CompareExchange(
+                ref _converterCacheSize,
+                updatedSize,
+                currentSize) == currentSize;
 
         /// <summary>
         /// Returns the cached converter for the specified target type when present; otherwise, returns the current

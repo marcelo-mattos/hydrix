@@ -7,6 +7,7 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -465,6 +466,10 @@ namespace Hydrix
         /// mapped from the query results.</returns>
         /// <exception cref="ArgumentNullException">Thrown if the connection parameter is null.</exception>
         /// <exception cref="ArgumentException">Thrown if the sql parameter is null or empty.</exception>
+        [SuppressMessage(
+            "Major Code Smell",
+            "S107",
+            Justification = "Low-level API requires explicit parameters to avoid allocations and preserve performance")]
         public static async Task<IList<TEntity>> QueryAsync<TEntity>(
             this IDbConnection connection,
             string sql,

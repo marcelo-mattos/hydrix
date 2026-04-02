@@ -1,5 +1,6 @@
 ﻿using Hydrix.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 
@@ -14,7 +15,8 @@ namespace Hydrix.DependencyInjection
         /// Adds and configures Hydrix services to the specified service collection.
         /// </summary>
         /// <remarks>Call this method during application startup to register Hydrix dependencies with the
-        /// dependency injection container.</remarks>
+        /// dependency injection container. If called multiple times, the Hydrix options registration is replaced and
+        /// the latest configuration wins.</remarks>
         /// <param name="services">The service collection to which Hydrix services will be added. Cannot be null.</param>
         /// <param name="configure">An optional delegate to configure Hydrix options. If null, default options are used.</param>
         /// <returns>The same instance of <see cref="IServiceCollection"/> that was provided, to support method chaining.</returns>
@@ -26,13 +28,13 @@ namespace Hydrix.DependencyInjection
 
             configure?.Invoke(options);
 
-            services.AddSingleton(provider =>
+            services.Replace(ServiceDescriptor.Singleton(provider =>
             {
                 options.Logger ??= provider
                     .GetService<ILoggerFactory>()?
                     .CreateLogger("Hydrix");
                 return options;
-            });
+            }));
 
             HydrixConfiguration.Configure(options);
 

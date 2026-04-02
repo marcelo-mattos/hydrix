@@ -1,4 +1,5 @@
 using Hydrix.Orchestrator.Caching;
+using Hydrix.Attributes.Schemas;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
@@ -48,6 +49,48 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
             /// </summary>
             [NotMapped]
             public int Ignored { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that only exposes foreign table navigation properties.
+        /// </summary>
+        [Table("ForeignOnlyEntity")]
+        private class ForeignOnlyEntity
+        {
+            /// <summary>
+            /// Gets or sets a foreign table navigation property that should not be considered scalar-mappable.
+            /// </summary>
+            [ForeignTable("Child")]
+            public ChildEntity Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity containing both scalar-mappable and foreign table navigation properties.
+        /// </summary>
+        [Table("MixedForeignEntity")]
+        private class MixedForeignEntity
+        {
+            /// <summary>
+            /// Gets or sets the scalar identifier that should be considered mappable.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets a foreign table navigation property that should be ignored by scalar validation.
+            /// </summary>
+            [ForeignTable("Child")]
+            public ChildEntity Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a child entity type used for foreign table navigation properties in tests.
+        /// </summary>
+        private class ChildEntity
+        {
+            /// <summary>
+            /// Gets or sets the child identifier.
+            /// </summary>
+            public int Id { get; set; }
         }
 
         /// <summary>
@@ -118,6 +161,25 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         public void Validate_ReturnsFalse_WhenNoMappablePropertiesExist()
         {
             Assert.False(EntityRequestValidationCache.Validate(typeof(NoMappedMembersEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when only foreign table navigation properties exist.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenOnlyForeignTablePropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(ForeignOnlyEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns true when at least one scalar property exists alongside foreign table
+        /// navigation properties.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsTrue_WhenScalarPropertyExistsAlongsideForeignTableProperty()
+        {
+            Assert.True(EntityRequestValidationCache.Validate(typeof(MixedForeignEntity)));
         }
 
         /// <summary>

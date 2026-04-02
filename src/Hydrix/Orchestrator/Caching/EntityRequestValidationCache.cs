@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
+using Hydrix.Attributes.Schemas;
 
 namespace Hydrix.Orchestrator.Caching
 {
@@ -60,6 +61,7 @@ namespace Hydrix.Orchestrator.Caching
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .Any(property =>
                     property.GetIndexParameters().Length == 0 &&
+                    property.GetCustomAttributes(typeof(ForeignTableAttribute), false).Length == 0 &&
                     property.GetCustomAttributes(typeof(NotMappedAttribute), false).Length == 0);
         }
     }

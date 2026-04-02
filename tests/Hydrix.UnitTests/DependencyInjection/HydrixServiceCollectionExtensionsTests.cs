@@ -1,6 +1,7 @@
 using Hydrix.Configuration;
 using Hydrix.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 using Xunit;
 
 namespace Hydrix.UnitTests.DependencyInjection
@@ -126,6 +127,35 @@ namespace Hydrix.UnitTests.DependencyInjection
 
                 Assert.NotNull(resolved);
                 Assert.NotNull(resolved.Logger);
+            });
+        }
+
+        /// <summary>
+        /// Verifies that AddHydrix keeps HydrixOptions registration idempotent and applies last-call-wins semantics
+        /// when invoked multiple times.
+        /// </summary>
+        [Fact]
+        public void AddHydrix_MultipleCalls_ReplacesHydrixOptionsRegistration()
+        {
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var services = new ServiceCollection();
+
+                services.AddHydrix(options => options.CommandTimeout = 10);
+                services.AddHydrix(options => options.CommandTimeout = 20);
+
+                var hydrixOptionsRegistrations = services
+                    .Where(descriptor => descriptor.ServiceType == typeof(HydrixOptions))
+                    .ToList();
+
+                Assert.Single(hydrixOptionsRegistrations);
+
+                using var serviceProvider = services.BuildServiceProvider();
+                var resolved = serviceProvider.GetService<HydrixOptions>();
+
+                Assert.NotNull(resolved);
+                Assert.Equal(20, resolved.CommandTimeout);
+                Assert.Same(resolved, HydrixConfiguration.Options);
             });
         }
 

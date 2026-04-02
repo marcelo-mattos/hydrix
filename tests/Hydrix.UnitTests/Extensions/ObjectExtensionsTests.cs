@@ -1,6 +1,7 @@
 using Hydrix.Extensions;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using Xunit;
@@ -650,6 +651,220 @@ namespace Hydrix.UnitTests.Extensions
                 foreach (var entry in previousEntries)
                     cache.TryAdd(entry.Key, entry.Value);
             }
+        }
+
+        /// <summary>
+        /// Verifies that cache insertion helper returns the current converter when cache insertion succeeds.
+        /// </summary>
+        [Fact]
+        public void AddConverterOrReuseCached_ReturnsCurrentConverter_WhenTryAddSucceeds()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
+            var method = objectExtensionsType.GetMethod("AddConverterOrReuseCached", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
+
+            try
+            {
+                cache.Clear();
+                cacheSizeField.SetValue(null, 1);
+
+                Func<object, object> current = _ => "current";
+
+                var result = (Func<object, object>)method.Invoke(
+                    null,
+                    new object[] { typeof(char), current });
+
+                Assert.Same(current, result);
+                Assert.True(cache.ContainsKey(typeof(char)));
+                Assert.Equal(1, (int)cacheSizeField.GetValue(null));
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+
+                cacheSizeField.SetValue(null, previousCacheSize);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that cache insertion helper rolls back reserved slot and reuses cached converter when insertion
+        /// loses a race.
+        /// </summary>
+        [Fact]
+        public void AddConverterOrReuseCached_DecrementsCacheSizeAndReturnsCachedConverter_WhenTryAddFails()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
+            var method = objectExtensionsType.GetMethod("AddConverterOrReuseCached", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
+
+            try
+            {
+                cache.Clear();
+
+                Func<object, object> cached = _ => "cached";
+                Func<object, object> current = _ => "current";
+
+                cache.TryAdd(typeof(char), cached);
+                cacheSizeField.SetValue(null, 2);
+
+                var result = (Func<object, object>)method.Invoke(
+                    null,
+                    new object[] { typeof(char), current });
+
+                Assert.Same(cached, result);
+                Assert.Equal(1, (int)cacheSizeField.GetValue(null));
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+
+                cacheSizeField.SetValue(null, previousCacheSize);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that atomic cache-size update succeeds when expected current size matches the actual value.
+        /// </summary>
+        [Fact]
+        public void TryUpdateConverterCacheSize_ReturnsTrue_WhenExpectedSizeMatches()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
+            var method = objectExtensionsType.GetMethod("TryUpdateConverterCacheSize", flags);
+
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
+
+            try
+            {
+                cacheSizeField.SetValue(null, 10);
+
+                var result = (bool)method.Invoke(
+                    null,
+                    new object[] { 10, 11 });
+
+                Assert.True(result);
+                Assert.Equal(11, (int)cacheSizeField.GetValue(null));
+            }
+            finally
+            {
+                cacheSizeField.SetValue(null, previousCacheSize);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that atomic cache-size update fails when expected current size does not match the actual value.
+        /// </summary>
+        [Fact]
+        public void TryUpdateConverterCacheSize_ReturnsFalse_WhenExpectedSizeDiffers()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
+            var method = objectExtensionsType.GetMethod("TryUpdateConverterCacheSize", flags);
+
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
+
+            try
+            {
+                cacheSizeField.SetValue(null, 10);
+
+                var result = (bool)method.Invoke(
+                    null,
+                    new object[] { 9, 10 });
+
+                Assert.False(result);
+                Assert.Equal(10, (int)cacheSizeField.GetValue(null));
+            }
+            finally
+            {
+                cacheSizeField.SetValue(null, previousCacheSize);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that cache slot reservation core retries when atomic update fails and succeeds on a later attempt.
+        /// </summary>
+        [Fact]
+        public void TryReserveConverterCacheSlotCore_RetriesAfterFailedUpdate_AndThenSucceeds()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var method = objectExtensionsType.GetMethod("TryReserveConverterCacheSlotCore", flags);
+
+            Assert.NotNull(method);
+
+            var reads = new Queue<int>(new[] { 0, 0 });
+            Func<int> readCacheSize = () => reads.Dequeue();
+
+            var updateCalls = 0;
+            Func<int, int, bool> tryUpdate = (current, updated) =>
+            {
+                updateCalls++;
+                return updateCalls == 2;
+            };
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { readCacheSize, tryUpdate });
+
+            Assert.True(result);
+            Assert.Equal(2, updateCalls);
+        }
+
+        /// <summary>
+        /// Verifies that cache slot reservation core stops when cache size has reached the configured maximum.
+        /// </summary>
+        [Fact]
+        public void TryReserveConverterCacheSlotCore_ReturnsFalse_WhenCacheIsFull()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var method = objectExtensionsType.GetMethod("TryReserveConverterCacheSlotCore", flags);
+            var maxCacheSizeField = objectExtensionsType.GetField("MaxConverterCacheSize", flags);
+
+            Assert.NotNull(method);
+            Assert.NotNull(maxCacheSizeField);
+
+            var maxCacheSize = (int)maxCacheSizeField.GetRawConstantValue();
+
+            Func<int> readCacheSize = () => maxCacheSize;
+
+            var updateCalls = 0;
+            Func<int, int, bool> tryUpdate = (current, updated) =>
+            {
+                updateCalls++;
+                return true;
+            };
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { readCacheSize, tryUpdate });
+
+            Assert.False(result);
+            Assert.Equal(0, updateCalls);
         }
 
         /// <summary>
