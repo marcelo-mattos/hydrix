@@ -237,6 +237,145 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Creates a delegate that materializes a nested leaf entity in a single compiled action.
+        /// </summary>
+        /// <param name="property">The navigation property that receives the nested entity.</param>
+        /// <param name="usesPrimaryKey">Indicates whether the nested entity uses a primary key to decide instantiation.</param>
+        /// <param name="primaryKeyOrdinal">The ordinal of the primary key column when available.</param>
+        /// <param name="candidateOrdinals">Candidate ordinals used when no explicit primary key alias is configured.</param>
+        /// <param name="fieldAssigners">The resolved scalar field assigners for the nested entity.</param>
+        /// <returns>A compiled delegate that instantiates and populates the nested entity when the current row contains nested data.</returns>
+        internal static Action<object, IDataRecord> CreateNestedEntityMaterializer(
+            PropertyInfo property,
+            bool usesPrimaryKey,
+            int primaryKeyOrdinal,
+            int[] candidateOrdinals,
+            Action<object, IDataRecord>[] fieldAssigners)
+        {
+            var parent = Expression.Parameter(
+                typeof(object),
+                "parent");
+
+            var record = Expression.Parameter(
+                typeof(IDataRecord),
+                "record");
+
+            var child = Expression.Variable(
+                property.PropertyType,
+                "child");
+
+            var propertyAccess = Expression.Property(
+                Expression.Convert(
+                    parent,
+                    property.DeclaringType ?? throw new InvalidOperationException(
+                        $"Property '{property.Name}' does not have a declaring type.")),
+                property);
+
+            var body = new List<Expression>
+            {
+                Expression.Assign(
+                    child,
+                    Expression.New(property.PropertyType)),
+                Expression.Assign(
+                    propertyAccess,
+                    child)
+            };
+
+            var boxedChild = Expression.Convert(
+                child,
+                typeof(object));
+
+            if (fieldAssigners != null)
+            {
+                for (var index = 0; index < fieldAssigners.Length; index++)
+                {
+                    var fieldAssigner = fieldAssigners[index];
+                    if (fieldAssigner == null)
+                        continue;
+
+                    body.Add(
+                        Expression.Invoke(
+                            Expression.Constant(fieldAssigner),
+                            boxedChild,
+                            record));
+                }
+            }
+
+            var materializerBody = Expression.IfThen(
+                CreateNestedInstantiationCondition(
+                    record,
+                    usesPrimaryKey,
+                    primaryKeyOrdinal,
+                    candidateOrdinals),
+                Expression.Block(
+                    new[] { child }.AsEnumerable(),
+                    body));
+
+            return Expression
+                .Lambda<Action<object, IDataRecord>>(
+                    materializerBody,
+                    parent,
+                    record)
+                .Compile();
+        }
+
+        /// <summary>
+        /// Creates an expression that determines whether a nested object should be instantiated based on the presence
+        /// of non-null values in the specified fields of a data record.
+        /// </summary>
+        /// <remarks>If <paramref name="usesPrimaryKey"/> is <see langword="true"/>, the expression checks
+        /// the primary key field for a non-null value. Otherwise, it checks the specified candidate fields and returns
+        /// <see langword="true"/> if any are non-null.</remarks>
+        /// <param name="record">The parameter expression representing the data record to inspect for null values.</param>
+        /// <param name="usesPrimaryKey">A value indicating whether the primary key should be used to determine instantiation.</param>
+        /// <param name="primaryKeyOrdinal">The ordinal position of the primary key field in the data record. Must be non-negative if <paramref
+        /// name="usesPrimaryKey"/> is <see langword="true"/>.</param>
+        /// <param name="candidateOrdinals">An array of ordinal positions for candidate fields to check for non-null values when the primary key is not
+        /// used. Can be null or empty.</param>
+        /// <returns>An expression that evaluates to <see langword="true"/> if the nested object should be instantiated;
+        /// otherwise, <see langword="false"/>.</returns>
+        private static Expression CreateNestedInstantiationCondition(
+            ParameterExpression record,
+            bool usesPrimaryKey,
+            int primaryKeyOrdinal,
+            int[] candidateOrdinals)
+        {
+            if (usesPrimaryKey)
+            {
+                if (primaryKeyOrdinal < 0)
+                    return Expression.Constant(false);
+
+                return Expression.Not(
+                    Expression.Call(
+                        record,
+                        IsDbNullMethod,
+                        Expression.Constant(primaryKeyOrdinal)));
+            }
+
+            if (candidateOrdinals == null)
+                return Expression.Constant(false);
+
+            Expression condition = null;
+
+            for (var index = 0; index < candidateOrdinals.Length; index++)
+            {
+                var notDbNull = Expression.Not(
+                    Expression.Call(
+                        record,
+                        IsDbNullMethod,
+                        Expression.Constant(candidateOrdinals[index])));
+
+                condition = condition == null
+                    ? (Expression)notDbNull
+                    : Expression.OrElse(
+                        condition,
+                        notDbNull);
+            }
+
+            return condition ?? Expression.Constant(false);
+        }
+
+        /// <summary>
         /// Creates a delegate that assigns a value from an IDataRecord to a specified property of an object, using the
         /// given column ordinal and source type.
         /// </summary>

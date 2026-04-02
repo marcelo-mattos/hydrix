@@ -1,4 +1,4 @@
-﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Schemas.Contract;
@@ -352,6 +352,56 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
 
             Assert.Throws<InvalidOperationException>(() =>
                 MetadataFactory.CreateNestedEntityActivator(property.Object));
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityMaterializer instantiates and populates a nested entity when the primary key is present.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_CreatesAndPopulatesNestedEntity_WhenPrimaryKeyIsPresent()
+        {
+            var property = typeof(ActivatorParent).GetProperty(nameof(ActivatorParent.Child));
+            var childProperty = typeof(ActivatorChild).GetProperty(nameof(ActivatorChild.Id));
+            var fieldAssigner = MetadataFactory.CreateRecordAssigner(childProperty, 0, typeof(int));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: null,
+                fieldAssigners: new[] { fieldAssigner });
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(17);
+            var parent = new ActivatorParent();
+
+            materializer(parent, record.Object);
+
+            Assert.NotNull(parent.Child);
+            Assert.Equal(17, parent.Child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityMaterializer skips nested instantiation when the primary key is null.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_SkipsNestedEntity_WhenPrimaryKeyIsDBNull()
+        {
+            var property = typeof(ActivatorParent).GetProperty(nameof(ActivatorParent.Child));
+            var childProperty = typeof(ActivatorChild).GetProperty(nameof(ActivatorChild.Id));
+            var fieldAssigner = MetadataFactory.CreateRecordAssigner(childProperty, 0, typeof(int));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: null,
+                fieldAssigners: new[] { fieldAssigner });
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            var parent = new ActivatorParent();
+
+            materializer(parent, record.Object);
+
+            Assert.Null(parent.Child);
         }
 
         /// <summary>

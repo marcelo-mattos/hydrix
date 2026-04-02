@@ -31,8 +31,7 @@ namespace Hydrix.Orchestrator.Resolvers
         /// is used.</param>
         /// <param name="entities">An array of ResolvedNestedBinding objects representing the nested entity bindings to include. If null, an
         /// empty array is used.</param>
-        /// <param name="columnNames">An array of column names representing the schema layout captured at the time of binding resolution.
-        /// This is used for hot-path schema matching to quickly determine if a cached binding plan can be reused. If null, an empty array is used.</param>
+        /// <param name="columnNames">The captured schema column names used for hot-path schema matching.</param>
         public ResolvedTableBindings(
             ResolvedFieldBinding[] fields,
             ResolvedNestedBinding[] entities,
@@ -44,10 +43,12 @@ namespace Hydrix.Orchestrator.Resolvers
         }
 
         /// <summary>
-        /// Determines whether the provided reader still matches the cached schema layout and mapped provider types.
+        /// Determines whether the specified data reader matches the expected column names and field types.
         /// </summary>
-        /// <param name="reader">The data reader to compare against the cached schema and provider types.</param>
-        /// <returns>true if the reader matches the cached schema and provider types; otherwise, false.</returns>
+        /// <remarks>Column name comparisons are case-insensitive. The method returns false if the number
+        /// of columns does not match or if any column name differs from the expected value.</remarks>
+        /// <param name="reader">The data reader to compare against the expected column schema. Cannot be null.</param>
+        /// <returns>true if the data reader's columns match the expected names and field types; otherwise, false.</returns>
         internal bool Matches(
             IDataReader reader)
         {
@@ -74,10 +75,14 @@ namespace Hydrix.Orchestrator.Resolvers
         }
 
         /// <summary>
-        /// Validates that mapped provider types remain compatible with the cached binding plan.
+        /// Determines whether the field types in the specified data reader match the expected types defined by the
+        /// current bindings.
         /// </summary>
-        /// <param name="reader">The data reader to compare against the cached provider types.</param>
-        /// <returns>true if the provider types match the cached binding plan; otherwise, false.</returns>
+        /// <remarks>This method checks both the type information and the actual runtime values of the
+        /// fields to ensure type consistency. It also recursively validates field types for any nested entity
+        /// bindings.</remarks>
+        /// <param name="reader">The data reader to compare against the expected field types. Must not be null.</param>
+        /// <returns>true if all fields in the data reader match the expected types; otherwise, false.</returns>
         private bool MatchesFieldTypes(
             IDataReader reader)
         {
@@ -97,10 +102,14 @@ namespace Hydrix.Orchestrator.Resolvers
                 var currentFieldType = GetFieldType(
                     reader,
                     field.Ordinal);
-                if (currentFieldType != null &&
-                    currentFieldType != field.SourceType)
+                if (currentFieldType != null)
                 {
-                    return false;
+                    if (currentFieldType != field.SourceType)
+                    {
+                        return false;
+                    }
+
+                    continue;
                 }
 
                 if (!reader.IsDBNull(field.Ordinal) &&
@@ -124,11 +133,15 @@ namespace Hydrix.Orchestrator.Resolvers
         }
 
         /// <summary>
-        /// Retrieves the provider CLR type for the specified ordinal when the reader supports it.
+        /// Retrieves the data type of the specified column in the provided data reader.
         /// </summary>
-        /// <param name="reader">The data reader to inspect.</param>
-        /// <param name="ordinal">The zero-based column ordinal.</param>
-        /// <returns>The CLR type of the field if available; otherwise, null.</returns>
+        /// <remarks>If the data reader does not support retrieving the field type or if the operation is
+        /// invalid for the current state of the reader, the method returns null instead of throwing an
+        /// exception.</remarks>
+        /// <param name="reader">The data reader from which to obtain the column type information. Cannot be null.</param>
+        /// <param name="ordinal">The zero-based column ordinal indicating which column's data type to retrieve. Must be within the range of
+        /// available columns in the reader.</param>
+        /// <returns>A Type object representing the data type of the specified column, or null if the type cannot be determined.</returns>
         private static Type GetFieldType(
             IDataReader reader,
             int ordinal)

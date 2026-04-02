@@ -1,4 +1,4 @@
-﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
@@ -1227,6 +1227,91 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that the fast nested materializer branch is used when it is available on a leaf binding.
+        /// </summary>
+        [Fact]
+        public void SetResolvedEntityNestedEntities_UsesFastMaterializer_WhenAvailable()
+        {
+            var parent = new Parent();
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: null,
+                activator: _ => new Child(),
+                bindings: bindings,
+                materializer: (entity, _) => ((Parent)entity).Child = new Child { Id = 55 });
+
+            typeof(TableMap)
+                .GetMethod("SetResolvedEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, new Mock<IDataRecord>().Object, new[] { nestedBinding } });
+
+            Assert.NotNull(parent.Child);
+            Assert.Equal(55, parent.Child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that leaf nested bindings receive a compiled fast materializer.
+        /// </summary>
+        [Fact]
+        public void ResolveNestedBindings_CreatesFastMaterializer_ForLeafNestedEntity()
+        {
+            var metadata = CreateMetadata(CreateTableMapWithPrimaryKey());
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+
+            var result = InvokePrivate<ResolvedNestedBinding[]>(
+                "ResolveNestedBindings",
+                record.Object,
+                metadata,
+                string.Empty,
+                new Dictionary<string, int> { { "Child.Id", 0 } },
+                321);
+
+            var binding = Assert.Single(result);
+            Assert.NotNull(binding.Materializer);
+        }
+
+        /// <summary>
+        /// Verifies that recursive nested bindings keep using the generic nested path instead of the leaf fast materializer.
+        /// </summary>
+        [Fact]
+        public void ResolveNestedBindings_DoesNotCreateFastMaterializer_WhenNestedEntityHasChildren()
+        {
+            var metadata = MetadataFactory.CreateEntity(
+                Array.Empty<ColumnMap>(),
+                new[]
+                {
+                    new TableMap(
+                        typeof(DeepParent).GetProperty(nameof(DeepParent.LevelOne)),
+                        new ForeignTableAttribute("level_one")
+                        {
+                            PrimaryKeys = new[] { "Id" }
+                        })
+                });
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+            record.Setup(r => r.GetFieldType(1)).Returns(typeof(int));
+
+            var result = InvokePrivate<ResolvedNestedBinding[]>(
+                "ResolveNestedBindings",
+                record.Object,
+                metadata,
+                string.Empty,
+                new Dictionary<string, int>
+                {
+                    { "LevelOne.Id", 0 },
+                    { "LevelOne.LevelTwo.Id", 1 }
+                },
+                654);
+
+            var binding = Assert.Single(result);
+            Assert.Null(binding.Materializer);
+        }
+
+        /// <summary>
         /// Verifies that the GetCandidateOrdinals method returns the correct matching ordinals based on the specified
         /// prefix and that it caches the results for subsequent calls with the same parameters.
         /// </summary>
@@ -1802,6 +1887,54 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that schema matches reuse provider field types without touching the current row value.
+        /// </summary>
+        [Fact]
+        public void ResolvedTableBindings_Matches_DoesNotReadCurrentValue_WhenProviderFieldTypeMatches()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+            reader.Setup(r => r.GetValue(0)).Throws(new InvalidOperationException("GetValue should not be used when GetFieldType matches."));
+            reader.Setup(r => r.IsDBNull(0)).Throws(new InvalidOperationException("IsDBNull should not be used when GetFieldType matches."));
+
+            var bindings = new ResolvedTableBindings(
+                new[]
+                {
+                    new ResolvedFieldBinding((_, __) => { }, 0, typeof(int))
+                },
+                Array.Empty<ResolvedNestedBinding>(),
+                new[] { "Id" });
+
+            Assert.True(bindings.Matches(reader.Object));
+        }
+
+        /// <summary>
+        /// Verifies that schema matches still fall back to the current row value when provider field types are unavailable.
+        /// </summary>
+        [Fact]
+        public void ResolvedTableBindings_Matches_FallsBackToCurrentValue_WhenProviderFieldTypeIsUnavailable()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Throws(new NotSupportedException("Provider field types unavailable."));
+            reader.Setup(r => r.IsDBNull(0)).Returns(false);
+            reader.Setup(r => r.GetValue(0)).Returns(7);
+
+            var bindings = new ResolvedTableBindings(
+                new[]
+                {
+                    new ResolvedFieldBinding((_, __) => { }, 0, typeof(int))
+                },
+                Array.Empty<ResolvedNestedBinding>(),
+                new[] { "Id" });
+
+            Assert.True(bindings.Matches(reader.Object));
+        }
+
+        /// <summary>
         /// Verifies that the constructors for resolved bindings normalize null array parameters to empty arrays.
         /// </summary>
         /// <remarks>This test ensures that when null arrays are passed to the constructors of
@@ -1826,6 +1959,40 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             Assert.Empty(tableBindings.Entities);
             Assert.NotNull(nestedBinding.CandidateOrdinals);
             Assert.Empty(nestedBinding.CandidateOrdinals);
+        }
+
+        /// <summary>
+        /// Verifies that SetResolvedEntityNestedEntities skips activation when materializer is null and
+        /// instantiation preconditions evaluate to false.
+        /// </summary>
+        [Fact]
+        public void SetResolvedEntityNestedEntities_SkipsActivation_WhenShouldInstantiateIsFalse_AndMaterializerIsNull()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            var nestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var activatorCalls = 0;
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: Array.Empty<int>(),
+                activator: _ =>
+                {
+                    activatorCalls++;
+                    return new Child();
+                },
+                bindings: nestedBindings,
+                materializer: null);
+
+            typeof(TableMap)
+                .GetMethod("SetResolvedEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, new[] { nestedBinding } });
+
+            Assert.Equal(0, activatorCalls);
+            Assert.Null(parent.Child);
         }
 
         /// <summary>

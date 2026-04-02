@@ -2,6 +2,7 @@ using Hydrix.Configuration;
 using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
 using Hydrix.Wrappers;
+using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -29,6 +30,7 @@ namespace Hydrix.Engines
             ExecutionCommandOptions options = null)
         {
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -55,6 +57,7 @@ namespace Hydrix.Engines
             where TDataParameterDriver : IDataParameter, new()
         {
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -81,6 +84,7 @@ namespace Hydrix.Engines
             CancellationToken cancellationToken = default)
         {
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -117,6 +121,7 @@ namespace Hydrix.Engines
             where TDataParameterDriver : IDataParameter, new()
         {
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -149,6 +154,7 @@ namespace Hydrix.Engines
             ExecutionCommandOptions options = null)
         {
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -175,6 +181,7 @@ namespace Hydrix.Engines
             where TDataParameterDriver : IDataParameter, new()
         {
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -201,6 +208,7 @@ namespace Hydrix.Engines
             CancellationToken cancellationToken = default)
         {
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -237,6 +245,7 @@ namespace Hydrix.Engines
             where TDataParameterDriver : IDataParameter, new()
         {
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -271,6 +280,7 @@ namespace Hydrix.Engines
             ExecutionCommandOptions options = null)
         {
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -301,6 +311,7 @@ namespace Hydrix.Engines
             where TDataParameterDriver : IDataParameter, new()
         {
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -331,6 +342,7 @@ namespace Hydrix.Engines
             CancellationToken cancellationToken = default)
         {
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -365,6 +377,7 @@ namespace Hydrix.Engines
             where TDataParameterDriver : IDataParameter, new()
         {
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             var command = CommandEngine.CreateCommand(
                 options.Connection,
@@ -454,6 +467,26 @@ namespace Hydrix.Engines
         private static ExecutionOptions ResolveOptions(
             ExecutionOptions options)
             => options ?? new ExecutionOptions();
+
+        /// <summary>
+        /// Validates that execution options include a database connection.
+        /// </summary>
+        /// <param name="options">The execution options to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when <see cref="ExecutionOptions.Connection"/> is null.</exception>
+        private static void EnsureConnectionConfigured(
+            ExecutionOptions options)
+        {
+            if (options == null)
+                throw new ArgumentNullException(
+                    nameof(options),
+                    "Execution options are required. Provide a non-null options instance with Connection configured.");
+
+            if (options.Connection == null)
+                throw new ArgumentException(
+                    "A non-null Connection is required. Provide options.Connection or use an API overload that accepts an explicit connection.",
+                    nameof(options));
+        }
 
         /// <summary>
         /// Resolves the effective parameter prefix for command execution.

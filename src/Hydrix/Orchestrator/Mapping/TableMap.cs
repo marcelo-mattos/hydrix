@@ -197,19 +197,24 @@ namespace Hydrix.Orchestrator.Mapping
             IReadOnlyDictionary<string, int> ordinals,
             int schemaHash,
             string[] columnNames = null)
-            => new ResolvedTableBindings(
-                ResolveFieldBindings(
-                    record,
-                    metadata,
-                    prefix,
-                    ordinals),
-                ResolveNestedBindings(
-                    record,
-                    metadata,
-                    prefix,
-                    ordinals,
-                    schemaHash),
+        {
+            var fields = ResolveFieldBindings(
+                record,
+                metadata,
+                prefix,
+                ordinals);
+            var entities = ResolveNestedBindings(
+                record,
+                metadata,
+                prefix,
+                ordinals,
+                schemaHash);
+
+            return new ResolvedTableBindings(
+                fields,
+                entities,
                 columnNames);
+        }
 
         /// <summary>
         /// Retrieves the ordinals of all entries in the provided dictionary whose keys start with the specified prefix,
@@ -433,18 +438,63 @@ namespace Hydrix.Orchestrator.Mapping
                     nestedPrefix,
                     ordinals,
                     schemaHash);
+                var materializer = CreateNestedMaterializer(
+                    nested,
+                    usesPrimaryKey,
+                    primaryKeyOrdinal,
+                    candidateOrdinals,
+                    nestedBindings);
 
                 entities.Add(new ResolvedNestedBinding(
                     usesPrimaryKey,
                     primaryKeyOrdinal,
                     candidateOrdinals,
                     nested.Activator,
-                    nestedBindings));
+                    nestedBindings,
+                    materializer));
             }
 
             return entities.Count == 0
                 ? Array.Empty<ResolvedNestedBinding>()
                 : entities.ToArray();
+        }
+
+        /// <summary>
+        /// Creates a materializer delegate for a nested entity, enabling assignment of data record fields to the nested
+        /// entity's properties.
+        /// </summary>
+        /// <param name="nested">The mapping information for the nested table, including property and field metadata.</param>
+        /// <param name="usesPrimaryKey">true if the materializer should use the primary key for entity identification; otherwise, false.</param>
+        /// <param name="primaryKeyOrdinal">The ordinal position of the primary key field in the data record. Must be a non-negative integer if primary
+        /// key usage is enabled.</param>
+        /// <param name="candidateOrdinals">An array of ordinal positions for candidate fields in the data record used for materialization.</param>
+        /// <param name="nestedBindings">The resolved bindings for the nested table, including field assigners and entity metadata. Cannot be null.</param>
+        /// <returns>An Action delegate that assigns data record values to the nested entity's properties, or null if the nested
+        /// bindings are not valid for materialization.</returns>
+        private static Action<object, IDataRecord> CreateNestedMaterializer(
+            TableMap nested,
+            bool usesPrimaryKey,
+            int primaryKeyOrdinal,
+            int[] candidateOrdinals,
+            ResolvedTableBindings nestedBindings)
+        {
+            if (nestedBindings == null ||
+                nestedBindings.Entities.Length != 0 ||
+                nested.Property == null)
+            {
+                return null;
+            }
+
+            var fieldAssigners = new Action<object, IDataRecord>[nestedBindings.Fields.Length];
+            for (var index = 0; index < nestedBindings.Fields.Length; index++)
+                fieldAssigners[index] = nestedBindings.Fields[index].Assigner;
+
+            return MetadataFactory.CreateNestedEntityMaterializer(
+                nested.Property,
+                usesPrimaryKey,
+                primaryKeyOrdinal,
+                candidateOrdinals,
+                fieldAssigners);
         }
 
         /// <summary>
@@ -602,6 +652,13 @@ namespace Hydrix.Orchestrator.Mapping
             for (var index = 0; index < nestedEntities.Length; index++)
             {
                 var nested = nestedEntities[index];
+                var materializer = nested.Materializer;
+
+                if (materializer != null)
+                {
+                    materializer(entity, record);
+                    continue;
+                }
 
                 var shouldInstantiate = nested.UsesPrimaryKey
                     ? nested.PrimaryKeyOrdinal >= 0 &&

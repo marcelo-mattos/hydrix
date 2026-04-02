@@ -11,6 +11,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -760,6 +761,20 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies ExecuteNonQuery throws a clear exception when options.Connection is not configured.
+        /// </summary>
+        [Fact]
+        public void ExecuteNonQuery_Text_WithNullConnection_ThrowsArgumentException()
+        {
+            var exception = Assert.Throws<ArgumentException>(() =>
+                ExecutionEngine.ExecuteNonQuery(
+                    "update x set y = 1",
+                    options: new ExecutionCommandOptions()));
+
+            Assert.Equal("options", exception.ParamName);
+        }
+
+        /// <summary>
         /// Verifies ExecuteNonQuery with non-text command and IDataParameter input.
         /// </summary>
         [Fact]
@@ -826,6 +841,20 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies ExecuteScalarAsync throws a clear exception when options.Connection is not configured.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteScalarAsync_Text_WithNullConnection_ThrowsArgumentException()
+        {
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
+                await ExecutionEngine.ExecuteScalarAsync(
+                    "select 1",
+                    options: new ExecutionCommandOptions()));
+
+            Assert.Equal("options", exception.ParamName);
+        }
+
+        /// <summary>
         /// Verifies ExecuteNonQuery procedure overload returns affected rows.
         /// </summary>
         [Fact]
@@ -885,6 +914,20 @@ namespace Hydrix.UnitTests.Engines
                         Connection = connection.Object
                     },
                     cancellationToken: cancellationTokenSource.Token));
+        }
+
+        /// <summary>
+        /// Verifies ExecuteReader procedure overload throws a clear exception when options.Connection is not configured.
+        /// </summary>
+        [Fact]
+        public void ExecuteReader_Procedure_WithNullConnection_ThrowsArgumentException()
+        {
+            var exception = Assert.Throws<ArgumentException>(() =>
+                ExecutionEngine.ExecuteReader(
+                    new TestProcedure(),
+                    options: new ExecutionOptions()));
+
+            Assert.Equal("options", exception.ParamName);
         }
 
         /// <summary>
@@ -1235,6 +1278,39 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies EnsureConnectionConfigured throws ArgumentNullException when options is null.
+        /// </summary>
+        [Fact]
+        public void EnsureConnectionConfigured_ThrowsArgumentNullException_WhenOptionsIsNull()
+        {
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                InvokeExecutionEnginePrivateVoidMethod(
+                    "EnsureConnectionConfigured",
+                    null));
+
+            Assert.Equal("options", exception.ParamName);
+        }
+
+        /// <summary>
+        /// Verifies EnsureConnectionConfigured does not throw when a connection is configured.
+        /// </summary>
+        [Fact]
+        public void EnsureConnectionConfigured_DoesNotThrow_WhenConnectionIsConfigured()
+        {
+            var options = new ExecutionOptions
+            {
+                Connection = new Mock<IDbConnection>().Object
+            };
+
+            var exception = Record.Exception(() =>
+                InvokeExecutionEnginePrivateVoidMethod(
+                    "EnsureConnectionConfigured",
+                    options));
+
+            Assert.Null(exception);
+        }
+
+        /// <summary>
         /// Verifies ResolveOptions returns the same options instance when provided and creates defaults when null.
         /// </summary>
         [Fact]
@@ -1291,6 +1367,33 @@ namespace Hydrix.UnitTests.Engines
             return (TResult)method.Invoke(
                 null,
                 new[] { argument });
+        }
+
+        /// <summary>
+        /// Invokes a private static void method from ExecutionEngine and rethrows inner exceptions.
+        /// </summary>
+        /// <param name="methodName">The private static method name.</param>
+        /// <param name="argument">The method argument.</param>
+        private static void InvokeExecutionEnginePrivateVoidMethod(
+            string methodName,
+            object argument)
+        {
+            var method = typeof(ExecutionEngine).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+
+            try
+            {
+                method.Invoke(
+                    null,
+                    new[] { argument });
+            }
+            catch (TargetInvocationException exception) when (exception.InnerException != null)
+            {
+                ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+            }
         }
     }
 }

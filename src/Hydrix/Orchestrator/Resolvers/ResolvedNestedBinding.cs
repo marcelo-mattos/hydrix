@@ -1,5 +1,6 @@
 using Hydrix.Schemas.Contract;
 using System;
+using System.Data;
 
 namespace Hydrix.Orchestrator.Resolvers
 {
@@ -54,6 +55,11 @@ namespace Hydrix.Orchestrator.Resolvers
         public ResolvedTableBindings Bindings { get; }
 
         /// <summary>
+        /// Gets the optional fast-path materializer for leaf nested entities.
+        /// </summary>
+        public Action<object, IDataRecord> Materializer { get; }
+
+        /// <summary>
         /// Initializes a new instance of the ResolvedNestedBinding class with the specified primary key usage,
         /// ordinals, factory, setter, and table bindings.
         /// </summary>
@@ -96,18 +102,21 @@ namespace Hydrix.Orchestrator.Resolvers
         /// <param name="candidateOrdinals">An array of ordinal positions that are considered as candidates for binding. If null, an empty array is used.</param>
         /// <param name="activator">A delegate that creates and assigns the nested object. Cannot be null.</param>
         /// <param name="bindings">The resolved table bindings that define how nested objects are mapped. Cannot be null.</param>
+        /// <param name="materializer">An optional fast-path materializer for nested leaf entities.</param>
         public ResolvedNestedBinding(
             bool usesPrimaryKey,
             int primaryKeyOrdinal,
             int[] candidateOrdinals,
             Func<object, ITable> activator,
-            ResolvedTableBindings bindings)
+            ResolvedTableBindings bindings,
+            Action<object, IDataRecord> materializer = null)
         {
             UsesPrimaryKey = usesPrimaryKey;
             PrimaryKeyOrdinal = primaryKeyOrdinal;
             CandidateOrdinals = candidateOrdinals ?? Array.Empty<int>();
             Activator = activator;
             Bindings = bindings;
+            Materializer = materializer;
         }
     }
 }
