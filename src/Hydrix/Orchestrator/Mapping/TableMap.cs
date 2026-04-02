@@ -136,6 +136,35 @@ namespace Hydrix.Orchestrator.Mapping
                     schemaHash));
 
         /// <summary>
+        /// Populates the specified entity with values from the provided data record using the given table bindings.
+        /// </summary>
+        /// <param name="entity">The entity to populate with data from the record. Must implement the ITable interface.</param>
+        /// <param name="record">The data record containing the values to assign to the entity's fields and nested entities.</param>
+        /// <param name="bindings">The resolved table bindings that define how fields and nested entities are mapped from the data record to
+        /// the entity.</param>
+        internal static void SetEntity(
+            ITable entity,
+            IDataRecord record,
+            ResolvedTableBindings bindings)
+        {
+            SetResolvedEntityFields(
+                entity,
+                record,
+                bindings.Fields);
+
+            SetResolvedEntityNestedEntities(
+                entity,
+                record,
+                bindings.Entities);
+        }
+
+        /// <summary>
+        /// Retrieves the metadata for the nested entity type associated with the current property.
+        /// </summary>
+        private TableMaterializeMetadata GetNestedMetadata()
+            => _nestedMetadata.Value;
+
+        /// <summary>
         /// Creates a new instance of the ResolvedTableBindings class by resolving field and nested bindings for the
         /// specified data record and table metadata.
         /// </summary>
@@ -164,35 +193,6 @@ namespace Hydrix.Orchestrator.Mapping
                     prefix,
                     ordinals,
                     schemaHash));
-
-        /// <summary>
-        /// Populates the specified entity with values from the provided data record using the given table bindings.
-        /// </summary>
-        /// <param name="entity">The entity to populate with data from the record. Must implement the ITable interface.</param>
-        /// <param name="record">The data record containing the values to assign to the entity's fields and nested entities.</param>
-        /// <param name="bindings">The resolved table bindings that define how fields and nested entities are mapped from the data record to
-        /// the entity.</param>
-        internal static void SetEntity(
-            ITable entity,
-            IDataRecord record,
-            ResolvedTableBindings bindings)
-        {
-            SetResolvedEntityFields(
-                entity,
-                record,
-                bindings.Fields);
-
-            SetResolvedEntityNestedEntities(
-                entity,
-                record,
-                bindings.Entities);
-        }
-
-        /// <summary>
-        /// Retrieves the metadata for the nested entity type associated with the current property.
-        /// </summary>
-        private TableMaterializeMetadata GetNestedMetadata()
-            => _nestedMetadata.Value;
 
         /// <summary>
         /// Retrieves the ordinals of all entries in the provided dictionary whose keys start with the specified prefix,

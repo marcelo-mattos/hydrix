@@ -47,9 +47,17 @@ namespace Hydrix.Schemas
             if (externalValidator == null)
                 return results.Count == 0;
 
-            if (!(this is T entity))
+            T entity;
+            try
+            {
+                entity = (T)(object)this;
+            }
+            catch (InvalidCastException exception)
+            {
                 throw new InvalidCastException(
-                    $"External validator type mismatch. Expected entity assignable to '{typeof(T).FullName}', but actual runtime type is '{GetType().FullName}'.");
+                    $"External validator type mismatch. Expected entity assignable to '{typeof(T).FullName}', but actual runtime type is '{GetType().FullName}'.",
+                    exception);
+            }
 
             var externalResults = externalValidator(entity);
             if (externalResults != null)
