@@ -13,3 +13,5 @@
 /tests/**/TestResults
 /tests/**/.vs/
 /tests/**/coverage/
+*.DotSettings.user
+*.sln.DotSettings.user
