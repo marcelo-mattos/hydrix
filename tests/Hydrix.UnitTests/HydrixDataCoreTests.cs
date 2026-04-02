@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -306,16 +307,15 @@ namespace Hydrix.UnitTests
         }
 
         /// <summary>
-        /// Creates a mock implementation of the IDataReader interface for use in unit tests.
+        /// Creates a mock implementation of the <see cref="DbDataReader"/> class for use in unit tests.
         /// </summary>
-        /// <remarks>The returned mock IDataReader supports common data reader operations such as Read,
-        /// GetValue, GetName, and IsDBNull, based on a predefined in-memory data table. This method is intended for
-        /// testing scenarios where a real database connection is not required.</remarks>
-        /// <returns>A Mock&lt;IDataReader&gt; instance configured to simulate reading from a sample data table.</returns>
-        private static Mock<IDataReader> CreateMockReader(IList<DummyEntity> entities)
+        /// <remarks>The returned mock reader supports common synchronous and asynchronous data reader operations based
+        /// on a predefined in-memory data table.</remarks>
+        /// <returns>A <see cref="Mock{DbDataReader}"/> instance configured to simulate reading from a sample data table.</returns>
+        private static Mock<DbDataReader> CreateMockReader(IList<DummyEntity> entities)
         {
             var table = CreateSampleTable(entities);
-            var reader = new Mock<IDataReader>();
+            var reader = new Mock<DbDataReader>();
             int rowIndex = -1;
 
             reader.Setup(r => r.Read()).Returns(() =>
@@ -323,6 +323,13 @@ namespace Hydrix.UnitTests
                 rowIndex++;
                 return rowIndex < table.Rows.Count;
             });
+
+            reader.Setup(r => r.ReadAsync(It.IsAny<CancellationToken>()))
+                .Returns((CancellationToken _) =>
+                {
+                    rowIndex++;
+                    return Task.FromResult(rowIndex < table.Rows.Count);
+                });
 
             reader.Setup(r => r.FieldCount).Returns(table.Columns.Count);
             reader.Setup(r => r.GetOrdinal(It.IsAny<string>())).Returns((string columnName) =>
@@ -348,7 +355,6 @@ namespace Hydrix.UnitTests
 
                   return table.Columns.Count;
               });
-            reader.Setup(r => r.Dispose());
             reader.Setup(r => r.GetInt32(It.IsAny<int>())).Returns((int i) => Convert.ToInt32(table.Rows[rowIndex][i]));
             reader.Setup(r => r.GetInt64(It.IsAny<int>())).Returns((int i) => Convert.ToInt64(table.Rows[rowIndex][i]));
             reader.Setup(r => r.GetInt16(It.IsAny<int>())).Returns((int i) => Convert.ToInt16(table.Rows[rowIndex][i]));

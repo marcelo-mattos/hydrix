@@ -266,9 +266,9 @@ namespace Hydrix.Orchestrator.Binders.Parameter
 
                 case SqlScanState.BlockComment:
                     builder.Append(@char);
-                    if (@char != '*' || index + 1 >= length || sql[index + 1] != '/') 
+                    if (@char != '*' || index + 1 >= length || sql[index + 1] != '/')
                         return true;
-                    
+
                     builder.Append('/');
                     index++;
                     state = SqlScanState.Normal;
@@ -280,9 +280,9 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     if (@char == '\'' && !(index + 1 < length && sql[index + 1] == '\''))
                         state = SqlScanState.Normal;
 
-                    if (@char != '\'' || index + 1 >= length || sql[index + 1] != '\'') 
+                    if (@char != '\'' || index + 1 >= length || sql[index + 1] != '\'')
                         return true;
-                    
+
                     builder.Append('\'');
                     index++;
                     return true;
@@ -301,15 +301,18 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                             index++;
                             state = SqlScanState.LineComment;
                             return true;
+
                         case '/' when index + 1 < length && sql[index + 1] == '*':
                             builder.Append("/*");
                             index++;
                             state = SqlScanState.BlockComment;
                             return true;
+
                         case '\'':
                             builder.Append(@char);
                             state = SqlScanState.SingleQuote;
                             return true;
+
                         case '"':
                             builder.Append(@char);
                             state = SqlScanState.DoubleQuote;
@@ -317,11 +320,11 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     }
 
                     break;
-                
+
                 default:
                     throw new ArgumentOutOfRangeException(
-                        nameof(state), 
-                        state, 
+                        nameof(state),
+                        state,
                         null);
             }
 

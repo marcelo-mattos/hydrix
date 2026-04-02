@@ -29,19 +29,19 @@ namespace Hydrix.Extensions
             {
                 case null:
                     yield break;
-                
-                case IEnumerable<IDataParameter> dbParams:
-                {
-                    foreach (var dbParam in dbParams)
-                        yield return dbParam;
 
-                    yield break;
-                }
-                
+                case IEnumerable<IDataParameter> dbParams:
+                    {
+                        foreach (var dbParam in dbParams)
+                            yield return dbParam;
+
+                        yield break;
+                    }
+
                 case IDataParameter single:
                     yield return single;
                     yield break;
-                
+
                 default:
                     throw new ArgumentException(
                         $"Parameter type '{parameters.GetType().FullName}' is not supported.",

@@ -1,4 +1,3 @@
-using Hydrix.Configuration;
 using Hydrix.Engines;
 using Hydrix.Schemas.Contract;
 using System;

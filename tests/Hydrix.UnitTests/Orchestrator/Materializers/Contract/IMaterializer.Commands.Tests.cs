@@ -28,7 +28,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             _materializerMock.Setup(m => m.CreateCommand("SELECT 1", It.IsAny<object>(), null, It.IsAny<int>()))
                 .Returns(Mock.Of<IDbCommand>());
-            var cmd = _materializerMock.Object.CreateCommand("SELECT 1", new object(), null, It.IsAny<int>());
+            var cmd = _materializerMock.Object.CreateCommand("SELECT 1", new object(), null, 30);
             Assert.NotNull(cmd);
         }
 
@@ -44,7 +44,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             _materializerMock.Setup(m => m.CreateCommand("SELECT 2", It.IsAny<object>(), It.IsAny<int>()))
                 .Returns(Mock.Of<IDbCommand>());
-            var cmd = _materializerMock.Object.CreateCommand("SELECT 2", new object(), It.IsAny<int>());
+            var cmd = _materializerMock.Object.CreateCommand("SELECT 2", new object(), 30);
             Assert.NotNull(cmd);
         }
 
@@ -61,7 +61,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             _materializerMock.Setup(m => m.CreateCommand(CommandType.Text, "SELECT 3", It.IsAny<IEnumerable<IDataParameter>>(), null, It.IsAny<int>()))
                 .Returns(Mock.Of<IDbCommand>());
-            var cmd = _materializerMock.Object.CreateCommand(CommandType.Text, "SELECT 3", new List<IDataParameter>(), null, It.IsAny<int>());
+            var cmd = _materializerMock.Object.CreateCommand(CommandType.Text, "SELECT 3", new List<IDataParameter>(), null, 30);
             Assert.NotNull(cmd);
         }
 
@@ -77,7 +77,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             _materializerMock.Setup(m => m.CreateCommand(CommandType.StoredProcedure, "sp_test", It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<int>()))
                 .Returns(Mock.Of<IDbCommand>());
-            var cmd = _materializerMock.Object.CreateCommand(CommandType.StoredProcedure, "sp_test", new List<IDataParameter>(), It.IsAny<int>());
+            var cmd = _materializerMock.Object.CreateCommand(CommandType.StoredProcedure, "sp_test", new List<IDataParameter>(), 30);
             Assert.NotNull(cmd);
         }
 
@@ -94,7 +94,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
             var proc = Mock.Of<IProcedure<SqlParameter>>();
             _materializerMock.Setup(m => m.CreateCommand<SqlParameter>(proc, It.IsAny<int>()))
                 .Returns(Mock.Of<IDbCommand>());
-            var cmd = _materializerMock.Object.CreateCommand<SqlParameter>(proc, It.IsAny<int>());
+            var cmd = _materializerMock.Object.CreateCommand<SqlParameter>(proc, 30);
             Assert.NotNull(cmd);
         }
 
@@ -112,7 +112,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
             var proc = Mock.Of<IProcedure<SqlParameter>>();
             _materializerMock.Setup(m => m.CreateCommand<SqlParameter>(proc, null, It.IsAny<int>()))
                 .Returns(Mock.Of<IDbCommand>());
-            var cmd = _materializerMock.Object.CreateCommand<SqlParameter>(proc, null, It.IsAny<int>());
+            var cmd = _materializerMock.Object.CreateCommand<SqlParameter>(proc, null, 30);
             Assert.NotNull(cmd);
         }
 

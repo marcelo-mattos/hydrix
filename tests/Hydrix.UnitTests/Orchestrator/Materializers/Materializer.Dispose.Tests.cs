@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Moq;
+using System;
 using System.Data;
-using Moq;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers

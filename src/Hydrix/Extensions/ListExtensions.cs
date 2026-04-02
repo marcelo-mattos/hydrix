@@ -3,7 +3,6 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Hydrix.Orchestrator.Binders.Entity;
 
 namespace Hydrix.Extensions
 {

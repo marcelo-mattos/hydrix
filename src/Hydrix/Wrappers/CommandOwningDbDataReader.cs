@@ -436,7 +436,7 @@ namespace Hydrix.Wrappers
         /// Releases the unmanaged resources used by this instance and optionally releases managed resources.
         /// </summary>
         /// <param name="disposing">
-        /// <see langword="true"/> to release managed and unmanaged resources; 
+        /// <see langword="true"/> to release managed and unmanaged resources;
         /// <see langword="false"/> to release only unmanaged resources.
         /// </param>
         protected override void Dispose(

@@ -155,8 +155,10 @@ namespace Hydrix.Engines
                     .ConfigureAwait(false);
             }
 
-            return dataReader.MapTo<TEntity>(
-                limit);
+            return await dataReader.MapToAsync<TEntity>(
+                limit,
+                cancellationToken)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -205,8 +207,10 @@ namespace Hydrix.Engines
                     .ConfigureAwait(false);
             }
 
-            return dataReader.MapTo<TEntity>(
-                limit);
+            return await dataReader.MapToAsync<TEntity>(
+                limit,
+                cancellationToken)
+                .ConfigureAwait(false);
         }
 
         /// <summary>

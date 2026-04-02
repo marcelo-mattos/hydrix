@@ -15,6 +15,11 @@ namespace Hydrix.UnitTests.DependencyInjection
     public class HydrixServiceCollectionExtensionsTests
     {
         /// <summary>
+        /// Provides synchronized access to tests that mutate global <see cref="HydrixConfiguration"/> state.
+        /// </summary>
+        private static readonly object ConfigurationSyncRoot = new object();
+
+        /// <summary>
         /// Verifies that the AddHydrix extension method returns the same IServiceCollection instance it was called on.
         /// </summary>
         /// <remarks>This test ensures that the AddHydrix method supports method chaining by returning the
@@ -23,9 +28,13 @@ namespace Hydrix.UnitTests.DependencyInjection
         [Fact]
         public void AddHydrix_ReturnsSameServiceCollection()
         {
-            var services = new ServiceCollection();
-            var result = services.AddHydrix();
-            Assert.Same(services, result);
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var services = new ServiceCollection();
+                var result = services.AddHydrix();
+
+                Assert.Same(services, result);
+            });
         }
 
         /// <summary>
@@ -37,12 +46,11 @@ namespace Hydrix.UnitTests.DependencyInjection
         [Fact]
         public void AddHydrix_ConfiguresOptionsWithDelegate()
         {
-            var originalOptions = HydrixConfiguration.Options;
-            var services = new ServiceCollection();
-            HydrixOptions captured = null;
-
-            try
+            ExecuteWithIsolatedConfiguration(() =>
             {
+                var services = new ServiceCollection();
+                HydrixOptions captured = null;
+
                 services.AddHydrix(options =>
                 {
                     options.CommandTimeout = 99;
@@ -52,11 +60,7 @@ namespace Hydrix.UnitTests.DependencyInjection
                 Assert.NotNull(captured);
                 Assert.Equal(99, captured.CommandTimeout);
                 Assert.Same(captured, HydrixConfiguration.Options);
-            }
-            finally
-            {
-                HydrixConfiguration.Configure(originalOptions);
-            }
+            });
         }
 
         /// <summary>
@@ -69,10 +73,36 @@ namespace Hydrix.UnitTests.DependencyInjection
         [Fact]
         public void AddHydrix_AllowsNullDelegate()
         {
-            var services = new ServiceCollection();
-            var result = services.AddHydrix(null);
-            Assert.Same(services, result);
-            Assert.NotNull(HydrixConfiguration.Options);
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var services = new ServiceCollection();
+                var result = services.AddHydrix(null);
+
+                Assert.Same(services, result);
+                Assert.NotNull(HydrixConfiguration.Options);
+            });
+        }
+
+        /// <summary>
+        /// Executes a test action while isolating and restoring global Hydrix configuration state.
+        /// </summary>
+        /// <param name="action">The test action that may mutate <see cref="HydrixConfiguration.Options"/>.</param>
+        private static void ExecuteWithIsolatedConfiguration(
+            System.Action action)
+        {
+            lock (ConfigurationSyncRoot)
+            {
+                var originalOptions = HydrixConfiguration.Options;
+
+                try
+                {
+                    action();
+                }
+                finally
+                {
+                    HydrixConfiguration.Configure(originalOptions);
+                }
+            }
         }
     }
 }

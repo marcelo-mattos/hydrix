@@ -540,6 +540,44 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies procedure QueryAsync throws when the fallback path returns a non-DbDataReader instance.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_Procedure_WithFallbackNonDbReader_ThrowsInvalidOperationException()
+        {
+            var command = new FallbackReaderCommand
+            {
+                ReaderFactory = () => new Mock<IDataReader>().Object
+            };
+            var connection = CreateOpenConnection(command);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
+                    connection.Object,
+                    new TestProcedure()));
+        }
+
+        /// <summary>
+        /// Verifies QueryAsync throws when the fallback path returns a non-DbDataReader instance.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_WithFallbackNonDbReader_ThrowsInvalidOperationException()
+        {
+            var command = new FallbackReaderCommand
+            {
+                ReaderFactory = () => new Mock<IDataReader>().Object
+            };
+            var connection = CreateOpenConnection(command);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await MaterializationEngine.QueryAsync<TestEntity>(
+                    connection.Object,
+                    "select Id from t"));
+        }
+
+        /// <summary>
         /// Verifies procedure Query overload maps rows to entities.
         /// </summary>
         [Fact]
@@ -673,30 +711,93 @@ namespace Hydrix.UnitTests.Engines
         /// </summary>
         private sealed class FallbackReaderCommand : IDbCommand
         {
+            /// <summary>
+            /// Gets or sets the factory used to create readers returned by this command.
+            /// </summary>
+            public Func<IDataReader> ReaderFactory { get; set; } =
+                () => CreateReader((1, "fallback"));
+
+            /// <summary>
+            /// Gets or sets the SQL text executed by the command.
+            /// </summary>
             public string CommandText { get; set; }
+
+            /// <summary>
+            /// Gets or sets the command timeout, in seconds.
+            /// </summary>
             public int CommandTimeout { get; set; }
+
+            /// <summary>
+            /// Gets or sets the command type.
+            /// </summary>
             public CommandType CommandType { get; set; }
+
+            /// <summary>
+            /// Gets or sets the associated database connection.
+            /// </summary>
             public IDbConnection Connection { get; set; }
+
+            /// <summary>
+            /// Gets the command parameter collection.
+            /// </summary>
             public IDataParameterCollection Parameters { get; } = new TestParameterCollection();
+
+            /// <summary>
+            /// Gets or sets the associated transaction.
+            /// </summary>
             public IDbTransaction Transaction { get; set; }
+
+            /// <summary>
+            /// Gets or sets how command results are applied to a DataRow.
+            /// </summary>
             public UpdateRowSource UpdatedRowSource { get; set; }
 
+            /// <summary>
+            /// Cancels the command execution.
+            /// </summary>
             public void Cancel()
             { }
 
+            /// <summary>
+            /// Creates a parameter object for this command.
+            /// </summary>
+            /// <returns>A new <see cref="IDbDataParameter"/> instance.</returns>
             public IDbDataParameter CreateParameter() => new TestParameter();
 
+            /// <summary>
+            /// Releases resources used by this command instance.
+            /// </summary>
             public void Dispose()
             { }
 
+            /// <summary>
+            /// Executes the command and returns the number of affected rows.
+            /// </summary>
+            /// <returns>Always returns <c>0</c> in this test implementation.</returns>
             public int ExecuteNonQuery() => 0;
 
-            public IDataReader ExecuteReader() => CreateReader((1, "fallback"));
+            /// <summary>
+            /// Executes the command and returns a data reader.
+            /// </summary>
+            /// <returns>An <see cref="IDataReader"/> containing fallback test data.</returns>
+            public IDataReader ExecuteReader() => ReaderFactory();
 
-            public IDataReader ExecuteReader(CommandBehavior behavior) => CreateReader((1, "fallback"));
+            /// <summary>
+            /// Executes the command with the specified behavior and returns a data reader.
+            /// </summary>
+            /// <param name="behavior">The requested command behavior.</param>
+            /// <returns>An <see cref="IDataReader"/> containing fallback test data.</returns>
+            public IDataReader ExecuteReader(CommandBehavior behavior) => ReaderFactory();
 
+            /// <summary>
+            /// Executes the command and returns the first column of the first row.
+            /// </summary>
+            /// <returns>Always returns <see langword="null"/> in this test implementation.</returns>
             public object ExecuteScalar() => null;
 
+            /// <summary>
+            /// Prepares the command for execution.
+            /// </summary>
             public void Prepare()
             { }
         }
@@ -704,6 +805,8 @@ namespace Hydrix.UnitTests.Engines
         /// <summary>
         /// Creates an open connection mock that returns the specified command instance.
         /// </summary>
+        /// <param name="command">The command instance returned by <see cref="IDbConnection.CreateCommand"/>.</param>
+        /// <returns>A mock open connection configured with the provided command.</returns>
         private static Mock<IDbConnection> CreateOpenConnection(IDbCommand command)
         {
             var connection = new Mock<IDbConnection>();
@@ -715,6 +818,8 @@ namespace Hydrix.UnitTests.Engines
         /// <summary>
         /// Creates a DbDataReader from provided row tuples.
         /// </summary>
+        /// <param name="rows">The rows used to populate the in-memory data table backing the reader.</param>
+        /// <returns>A <see cref="DbDataReader"/> over the generated in-memory table.</returns>
         private static DbDataReader CreateReader(params (int Id, string Name)[] rows)
         {
             var table = new DataTable("Entity");

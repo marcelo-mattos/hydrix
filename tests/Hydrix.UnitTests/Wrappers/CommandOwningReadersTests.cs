@@ -284,7 +284,8 @@ namespace Hydrix.UnitTests.Engines
             /// <summary>
             /// Attempts to cancel command execution.
             /// </summary>
-            public void Cancel() { }
+            public void Cancel()
+            { }
 
             /// <summary>
             /// Creates a new parameter instance.
@@ -330,7 +331,8 @@ namespace Hydrix.UnitTests.Engines
             /// <summary>
             /// Creates a prepared version of the command.
             /// </summary>
-            public void Prepare() { }
+            public void Prepare()
+            { }
         }
 
         /// <summary>
@@ -367,7 +369,8 @@ namespace Hydrix.UnitTests.Engines
             /// Removes the parameter with the specified name from the collection.
             /// </summary>
             /// <param name="parameterName">The parameter name to remove.</param>
-            public void RemoveAt(string parameterName) { }
+            public void RemoveAt(string parameterName)
+            { }
         }
 
         /// <summary>
@@ -1065,6 +1068,3 @@ namespace Hydrix.UnitTests.Engines
         }
     }
 }
-
-
-

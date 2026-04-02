@@ -54,30 +54,30 @@ namespace Hydrix.Engines
             {
                 case null:
                     return;
-                
+
                 case IDataParameter dbParam:
                     command.Parameters.Add(dbParam);
                     return;
-                
+
                 case IEnumerable<IDataParameter> dbParams:
-                {
-                    foreach (var parameter in dbParams)
-                        command.Parameters.Add(parameter);
-                    return;
-                }
-                
+                    {
+                        foreach (var parameter in dbParams)
+                            command.Parameters.Add(parameter);
+                        return;
+                    }
+
                 default:
-                {
-                    var binder = GetOrAddBinder(
+                    {
+                        var binder = GetOrAddBinder(
                         parameters.GetType());
 
-                    binder.Bind(
-                        command,
-                        parameters,
-                        parameterPrefix,
-                        AddParameter);
-                    break;
-                }
+                        binder.Bind(
+                            command,
+                            parameters,
+                            parameterPrefix,
+                            AddParameter);
+                        break;
+                    }
             }
         }
 

@@ -1113,8 +1113,11 @@ namespace Hydrix.UnitTests.Schemas
             var entity = new DatabaseEntityTests.TestEntity { Name = "Valid", Value = 5 };
             IEnumerable<ValidationResult> Validator(DatabaseEntityTests.Product _) => Array.Empty<ValidationResult>();
 
-            Assert.Throws<InvalidCastException>(() =>
+            var exception = Assert.Throws<InvalidCastException>(() =>
                 entity.IsValid<DatabaseEntityTests.Product>(out var _, Validator));
+
+            Assert.Contains(typeof(DatabaseEntityTests.Product).FullName, exception.Message);
+            Assert.Contains(typeof(DatabaseEntityTests.TestEntity).FullName, exception.Message);
         }
     }
 }

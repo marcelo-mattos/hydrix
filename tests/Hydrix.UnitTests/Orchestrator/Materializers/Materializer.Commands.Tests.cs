@@ -1,7 +1,6 @@
 ﻿using Hydrix.Orchestrator.Caching;
 using Hydrix.Orchestrator.Materializers.Contract;
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Data;
 using System.Linq;
