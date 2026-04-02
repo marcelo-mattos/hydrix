@@ -221,9 +221,9 @@ namespace Hydrix.Extensions
         /// </summary>
         /// <remarks>If the value is a string, the comparison is case-insensitive. If the value is not a
         /// string, it is treated as a numeric value and converted to the corresponding enum value.</remarks>
-        /// <param name="value">The value to convert. Can be a string representing the name of an enum member or a numeric value
-        /// <param name="conversionType">The type of enumeration to convert the value to. Must be a valid enum type.</param>
+        /// <param name="value">The value to convert. Can be a string representing the name of an enum member or a numeric value 
         /// corresponding to an enum value.</param>
+        /// <param name="conversionType">The type of enumeration to convert the value to. Must be a valid enum type.</param>
         /// <returns>An object representing the enumeration value of the specified type that corresponds to the provided value.</returns>
         private static object ParseEnumValue(
             this object value,

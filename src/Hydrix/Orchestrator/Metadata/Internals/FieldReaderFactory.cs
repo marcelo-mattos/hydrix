@@ -102,7 +102,12 @@ namespace Hydrix.Orchestrator.Metadata.Internals
 
             if (CanUseTypedReader(enumUnderlying, sourceType))
             {
-                var enumReader = BaseReaders.GetValueOrDefault(enumUnderlying, ValueReader) ?? ValueReader;
+                var enumReader = BaseReaders.TryGetValue(
+                    enumUnderlying,
+                    out var typedEnumReader)
+                    ? typedEnumReader ?? ValueReader
+                    : ValueReader;
+
                 return CreateConvertingReader(
                     nullValue,
                     enumReader,

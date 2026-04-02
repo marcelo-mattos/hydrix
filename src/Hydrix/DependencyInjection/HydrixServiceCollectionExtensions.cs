@@ -25,6 +25,8 @@ namespace Hydrix.DependencyInjection
 
             configure?.Invoke(options);
 
+            services.AddSingleton(options);
+
             HydrixConfiguration.Configure(options);
 
             return services;

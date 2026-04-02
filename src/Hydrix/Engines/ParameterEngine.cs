@@ -35,16 +35,17 @@ namespace Hydrix.Engines
         private static ParameterObjectBinder _lastBinder;
 
         /// <summary>
-        /// Binds the properties of the specified parameters object as parameters to the given database command.
+        /// Binds parameters to the specified database command by extracting values from the provided object or
+        /// collection.
         /// </summary>
-        /// <remarks>This method uses a parameter binder appropriate for the type of the provided
-        /// parameters object to map its properties to command parameters. Only public properties of the parameters
-        /// object are considered.</remarks>
+        /// <remarks>If the parameters argument is an object, its public properties are mapped to command
+        /// parameters using the specified prefix. If it is an IDataParameter or a collection of IDataParameter, those
+        /// are added directly to the command. This method does not clear existing parameters from the
+        /// command.</remarks>
         /// <param name="command">The database command to which parameters will be added. Must not be null.</param>
-        /// <param name="parameters">An object whose public properties represent the parameters to bind to the command. If null, no parameters
-        /// are bound.</param>
-        /// <param name="parameterPrefix">The prefix to use for parameter names (e.g., "@").
-        /// This is used to ensure that parameter names are correctly formatted for the target database.</param>
+        /// <param name="parameters">An object containing parameter values, a single IDataParameter, or an enumerable collection of
+        /// IDataParameter instances. If null, no parameters are added.</param>
+        /// <param name="parameterPrefix">The prefix to use for parameter names when binding properties from the object.</param>
         public static void BindParametersFromObject(
             IDbCommand command,
             object parameters,

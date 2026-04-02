@@ -60,6 +60,31 @@ namespace Hydrix.UnitTests.DependencyInjection
                 Assert.NotNull(captured);
                 Assert.Equal(99, captured.CommandTimeout);
                 Assert.Same(captured, HydrixConfiguration.Options);
+
+                using var serviceProvider = services.BuildServiceProvider();
+                var resolved = serviceProvider.GetService<HydrixOptions>();
+
+                Assert.Same(captured, resolved);
+            });
+        }
+
+        /// <summary>
+        /// Verifies that AddHydrix registers <see cref="HydrixOptions"/> in the dependency injection container.
+        /// </summary>
+        [Fact]
+        public void AddHydrix_RegistersHydrixOptionsInContainer()
+        {
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var services = new ServiceCollection();
+
+                services.AddHydrix();
+
+                using var serviceProvider = services.BuildServiceProvider();
+                var resolved = serviceProvider.GetService<HydrixOptions>();
+
+                Assert.NotNull(resolved);
+                Assert.Same(HydrixConfiguration.Options, resolved);
             });
         }
 

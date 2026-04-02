@@ -3,13 +3,11 @@ using BenchmarkDotNet.Order;
 using Dapper;
 using Hydrix.Benchmarks.Infrastructure;
 using Hydrix.Benchmarks.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-#if NET8_0_OR_GREATER
-using Microsoft.EntityFrameworkCore;
-#endif
 
 namespace Hydrix.Benchmarks.Benchmarks
 {
@@ -27,8 +25,6 @@ namespace Hydrix.Benchmarks.Benchmarks
     [Orderer(SummaryOrderPolicy.FastestToSlowest)]
     public class NestedBenchmarks
     {
-#if NET8_0_OR_GREATER
-
         /// <summary>
         /// Compiles a query that retrieves a collection of users with their associated order information, ordered by
         /// user ID and limited to a specified number of results.
@@ -55,7 +51,6 @@ namespace Hydrix.Benchmarks.Benchmarks
                         }
                     })
                     .Take(take));
-#endif
 
         /// <summary>
         /// Gets the database fixture used for testing database interactions.
@@ -69,12 +64,10 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// </summary>
         private IDbConnection _conn = null!;
 
-#if NET8_0_OR_GREATER
         /// <summary>
         /// Stores the Entity Framework options used to create benchmark DbContext instances.
         /// </summary>
         private DbContextOptions<BenchmarkDbContext> _efOptions = null!;
-#endif
 
         /// <summary>
         /// Gets or sets the total number of rows to use as the seed size for database operations in benchmarks.
@@ -153,12 +146,10 @@ namespace Hydrix.Benchmarks.Benchmarks
                 ORDER BY u.Id
                 LIMIT @take";
 
-#if NET8_0_OR_GREATER
             _efOptions = new DbContextOptionsBuilder<BenchmarkDbContext>()
                 .UseSqlite(_db.Connection)
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
                 .Options;
-#endif
         }
 
         /// <summary>
@@ -213,7 +204,6 @@ namespace Hydrix.Benchmarks.Benchmarks
                 .AsList();
         }
 
-#if NET8_0_OR_GREATER
         /// <summary>
         /// Retrieves users and orders through Entity Framework Core without tracking.
         /// </summary>
@@ -221,11 +211,11 @@ namespace Hydrix.Benchmarks.Benchmarks
         public List<UserWithOrder> EntityFramework_Nested()
         {
             using var context = new BenchmarkDbContext(_efOptions);
-            return [.. EntityFrameworkNestedQuery(
-                    context,
-                    Take)];
+            return EntityFrameworkNestedQuery(
+                context,
+                Take)
+                .ToList();
         }
-#endif
 
         /// <summary>
         /// Retrieves a list of users along with their associated orders from the database using ADO.NET.

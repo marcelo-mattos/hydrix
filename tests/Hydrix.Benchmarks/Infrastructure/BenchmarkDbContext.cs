@@ -1,4 +1,3 @@
-#if NET8_0_OR_GREATER
 using Hydrix.Benchmarks.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -118,4 +117,3 @@ namespace Hydrix.Benchmarks.Infrastructure
         public BenchmarkUserEntity User { get; set; } = null!;
     }
 }
-#endif
