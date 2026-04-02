@@ -7,6 +7,7 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 
@@ -37,6 +38,11 @@ namespace Hydrix.Orchestrator.Mapping
         /// Compiled setter delegate for assigning the nested entity.
         /// </summary>
         public Action<object, object> Setter { get; }
+
+        /// <summary>
+        /// Compiled activator that creates and assigns the nested entity in a single delegate call.
+        /// </summary>
+        public Func<object, ITable> Activator { get; }
 
         /// <summary>
         /// Gets the prefix and suffix used for formatting string values.
@@ -93,6 +99,7 @@ namespace Hydrix.Orchestrator.Mapping
             Attribute = attribute;
             Factory = MetadataFactory.CreateFactory(property.PropertyType);
             Setter = MetadataFactory.CreateSetter(property);
+            Activator = MetadataFactory.CreateNestedEntityActivator(property);
             PrefixSuffix = string.Concat(property.Name, ".");
             PrimaryKey = attribute.PrimaryKeys != null && attribute.PrimaryKeys.Length > 0
                 ? attribute.PrimaryKeys[0]
@@ -179,6 +186,8 @@ namespace Hydrix.Orchestrator.Mapping
         /// <param name="prefix">A string prefix used to match column names in the data record.</param>
         /// <param name="ordinals">A read-only dictionary mapping column names to their ordinal positions in the data record.</param>
         /// <param name="schemaHash">An integer representing the hash of the schema, used to identify the current schema version.</param>
+        /// <param name="columnNames">An optional array of column names corresponding to the ordinals, used for hot-path schema matching.
+        /// Can be null if not provided.</param>
         /// <returns>A ResolvedTableBindings instance containing the resolved field and nested bindings for the specified record
         /// and metadata.</returns>
         internal static ResolvedTableBindings Bind(
@@ -186,7 +195,8 @@ namespace Hydrix.Orchestrator.Mapping
             TableMaterializeMetadata metadata,
             string prefix,
             IReadOnlyDictionary<string, int> ordinals,
-            int schemaHash)
+            int schemaHash,
+            string[] columnNames = null)
             => new ResolvedTableBindings(
                 ResolveFieldBindings(
                     record,
@@ -198,7 +208,8 @@ namespace Hydrix.Orchestrator.Mapping
                     metadata,
                     prefix,
                     ordinals,
-                    schemaHash));
+                    schemaHash),
+                columnNames);
 
         /// <summary>
         /// Retrieves the ordinals of all entries in the provided dictionary whose keys start with the specified prefix,
@@ -224,12 +235,10 @@ namespace Hydrix.Orchestrator.Mapping
                 if (_candidateOrdinalsInitialized && _candidateOrdinalsSchemaHash == schemaHash)
                     return _candidateOrdinals;
 
-                var list = new List<int>(8);
-                foreach (var ordinal in ordinals)
-                {
-                    if (ordinal.Key.StartsWith(fullPrefix, StringComparison.OrdinalIgnoreCase))
-                        list.Add(ordinal.Value);
-                }
+                var list = ordinals
+                    .Where(ordinal => ordinal.Key.StartsWith(fullPrefix, StringComparison.OrdinalIgnoreCase))
+                    .Select(ordinal => ordinal.Value)
+                    .ToList();
 
                 _candidateOrdinals = list.Count == 0
                     ? Array.Empty<int>()
@@ -275,21 +284,92 @@ namespace Hydrix.Orchestrator.Mapping
                 if (!ordinals.TryGetValue(columnName, out var ordinal))
                     continue;
 
-                var assigner = ResolveFieldAssigner(
+                var sourceType = GetFieldType(
                     record,
-                    field,
                     ordinal);
+
+                var assigner = ResolveFieldAssignerWithSourceType(
+                    field,
+                    ordinal,
+                    sourceType);
 
                 if (assigner == null)
                     continue;
 
                 fields.Add(new ResolvedFieldBinding(
-                    assigner));
+                    assigner,
+                    ordinal,
+                    sourceType));
             }
 
             return fields.Count == 0
                 ? Array.Empty<ResolvedFieldBinding>()
                 : fields.ToArray();
+        }
+
+        /// <summary>
+        /// Resolves a field assigner for the specified field using source type information from the record.
+        /// </summary>
+        /// <param name="record">The data record used to infer the source type at the provided ordinal.</param>
+        /// <param name="field">The field mapping for which to resolve an assigner.</param>
+        /// <param name="ordinal">The zero-based column ordinal in the data record.</param>
+        /// <returns>An assigner action when resolution succeeds; otherwise, <see langword="null"/>.</returns>
+        private static Action<object, IDataRecord> ResolveFieldAssigner(
+            IDataRecord record,
+            ColumnMap field,
+            int ordinal)
+            => ResolveFieldAssignerWithSourceType(
+                field,
+                ordinal,
+                GetFieldType(
+                    record,
+                    ordinal));
+
+        /// <summary>
+        /// Resolves a field reader for the specified field using source type information from the record.
+        /// </summary>
+        /// <param name="record">The data record used to infer the source type at the provided ordinal.</param>
+        /// <param name="field">The field mapping for which to resolve a reader.</param>
+        /// <param name="ordinal">The zero-based column ordinal in the data record.</param>
+        /// <returns>A resolved field reader delegate, or <see langword="null"/> when no reader is available.</returns>
+        private static FieldReader ResolveFieldReader(
+            IDataRecord record,
+            ColumnMap field,
+            int ordinal)
+            => ResolveFieldReaderWithSourceType(
+                field,
+                GetFieldType(
+                    record,
+                    ordinal));
+
+        /// <summary>
+        /// Assigns scalar fields to the target entity using metadata and ordinal mappings.
+        /// </summary>
+        /// <param name="entity">The entity instance to populate.</param>
+        /// <param name="record">The data record containing source values.</param>
+        /// <param name="metadata">The table metadata containing scalar field mappings.</param>
+        /// <param name="prefix">The field prefix used when resolving column names.</param>
+        /// <param name="ordinals">A mapping between column names and ordinals.</param>
+        private static void SetEntityFields(
+            ITable entity,
+            IDataRecord record,
+            TableMaterializeMetadata metadata,
+            string prefix,
+            IReadOnlyDictionary<string, int> ordinals)
+        {
+            var fields = ResolveFieldBindings(
+                record,
+                metadata,
+                prefix,
+                ordinals);
+
+            if (fields.Length == 0)
+                return;
+
+            SetResolvedEntityFields(
+                entity,
+                record,
+                fields);
         }
 
         /// <summary>
@@ -358,8 +438,7 @@ namespace Hydrix.Orchestrator.Mapping
                     usesPrimaryKey,
                     primaryKeyOrdinal,
                     candidateOrdinals,
-                    nested.Factory,
-                    nested.Setter,
+                    nested.Activator,
                     nestedBindings));
             }
 
@@ -369,36 +448,67 @@ namespace Hydrix.Orchestrator.Mapping
         }
 
         /// <summary>
-        /// Resolves an assigner action that sets a property value on an entity from a data record field at the
-        /// specified ordinal position.
+        /// Assigns nested entities to the target entity using metadata and ordinal mappings.
         /// </summary>
-        /// <remarks>The returned action can be used to efficiently populate entity properties from data
-        /// records during materialization. If the field mapping or setter is not available, the method returns
-        /// null.</remarks>
-        /// <param name="record">The data record providing access to the field values to be assigned.</param>
-        /// <param name="field">The column mapping information describing the target property and how to assign its value.</param>
-        /// <param name="ordinal">The zero-based ordinal position of the field within the data record.</param>
-        /// <returns>An action that assigns the value from the specified field in the data record to the corresponding property
-        /// on the entity, or null if assignment is not possible.</returns>
-        private static Action<object, IDataRecord> ResolveFieldAssigner(
+        /// <param name="entity">The root entity instance to populate with nested entities.</param>
+        /// <param name="record">The data record containing source values.</param>
+        /// <param name="metadata">The table metadata containing nested entity mappings.</param>
+        /// <param name="prefix">The field prefix used when resolving column names.</param>
+        /// <param name="ordinals">A mapping between column names and ordinals.</param>
+        /// <param name="schemaHash">The schema hash used for candidate-ordinal cache resolution.</param>
+        private static void SetEntityNestedEntities(
+            ITable entity,
             IDataRecord record,
+            TableMaterializeMetadata metadata,
+            string prefix,
+            IReadOnlyDictionary<string, int> ordinals,
+            int schemaHash)
+        {
+            var nestedEntities = ResolveNestedBindings(
+                record,
+                metadata,
+                prefix,
+                ordinals,
+                schemaHash);
+
+            if (nestedEntities.Length == 0)
+                return;
+
+            SetResolvedEntityNestedEntities(
+                entity,
+                record,
+                nestedEntities);
+        }
+
+        /// <summary>
+        /// Resolves an assigner action that sets a field value on an entity from an IDataRecord, using the specified
+        /// source type for type conversion.
+        /// </summary>
+        /// <remarks>If the field mapping does not provide a property or a compatible setter, the method
+        /// returns null. The returned action performs type conversion as needed based on the provided source
+        /// type.</remarks>
+        /// <param name="field">The column mapping information that describes the target property or field to assign.</param>
+        /// <param name="ordinal">The zero-based column ordinal in the data record from which to read the value.</param>
+        /// <param name="sourceType">The type of the source value in the data record, used to determine the appropriate conversion or assignment
+        /// logic.</param>
+        /// <returns>An action that assigns a value from the specified ordinal in the data record to the target entity's field or
+        /// property, or null if assignment is not possible.</returns>
+        private static Action<object, IDataRecord> ResolveFieldAssignerWithSourceType(
             ColumnMap field,
-            int ordinal)
+            int ordinal,
+            Type sourceType)
         {
             if (field.Property != null)
             {
                 return MetadataFactory.CreateRecordAssigner(
                     field.Property,
                     ordinal,
-                    GetFieldType(
-                        record,
-                        ordinal));
+                    sourceType);
             }
 
-            var reader = ResolveFieldReader(
-                record,
+            var reader = ResolveFieldReaderWithSourceType(
                 field,
-                ordinal);
+                sourceType);
 
             if (reader == null || field.Setter == null)
                 return null;
@@ -411,28 +521,22 @@ namespace Hydrix.Orchestrator.Mapping
         }
 
         /// <summary>
-        /// Resolves the appropriate field reader for a given data record and column mapping at the specified ordinal
-        /// position.
+        /// Resolves the appropriate field reader for a given column map and source type.
         /// </summary>
-        /// <remarks>If the column mapping specifies a target type, a new field reader is created for that
-        /// type; otherwise, the existing reader from the column mapping is returned.</remarks>
-        /// <param name="record">The data record containing the field to be read.</param>
-        /// <param name="field">The column mapping that describes the field and its target type.</param>
-        /// <param name="ordinal">The zero-based column ordinal indicating the position of the field within the data record.</param>
-        /// <returns>A field reader instance capable of reading the specified field from the data record.</returns>
-        private static FieldReader ResolveFieldReader(
-            IDataRecord record,
+        /// <param name="field">The column map that defines the field and its associated target type and reader.</param>
+        /// <param name="sourceType">The type of the source object from which the field value will be read.</param>
+        /// <returns>A field reader suitable for reading the field from the specified source type. Returns the column map's
+        /// existing reader if the target type is not specified.</returns>
+        private static FieldReader ResolveFieldReaderWithSourceType(
             ColumnMap field,
-            int ordinal)
+            Type sourceType)
         {
             if (field.TargetType == null)
                 return field.Reader;
 
             return FieldReaderFactory.Create(
                 field.TargetType,
-                GetFieldType(
-                    record,
-                    ordinal));
+                sourceType);
         }
 
         /// <summary>
@@ -441,9 +545,9 @@ namespace Hydrix.Orchestrator.Mapping
         /// <remarks>If the underlying data record does not support retrieving the field type or is in an
         /// invalid state, this method returns null instead of throwing an exception.</remarks>
         /// <param name="record">The data record from which to obtain the field type. Cannot be null.</param>
-        /// <param name="ordinal">The zero-based column ordinal identifying the field whose type is to be retrieved.</param>
-        /// <returns>A Type object representing the data type of the specified field; or null if the field type cannot be
-        /// determined.</returns>
+        /// <param name="ordinal">The zero-based column ordinal indicating which field's type to retrieve. Must be within the valid range of
+        /// field indices for the record.</param>
+        /// <returns>A Type object representing the data type of the specified field, or null if the type cannot be determined.</returns>
         private static Type GetFieldType(
             IDataRecord record,
             int ordinal)
@@ -461,58 +565,6 @@ namespace Hydrix.Orchestrator.Mapping
                 return null;
             }
         }
-
-        /// <summary>
-        /// Populates the fields of the specified entity with values from the provided data record using the given
-        /// metadata and field mapping information.
-        /// </summary>
-        /// <param name="entity">The entity instance whose fields are to be set with values from the data record.</param>
-        /// <param name="record">The data record containing the values to assign to the entity's fields.</param>
-        /// <param name="metadata">The metadata describing the mapping between the entity's fields and the data record columns.</param>
-        /// <param name="prefix">The prefix to apply when matching field names to data record columns. Can be null or empty if no prefix is
-        /// required.</param>
-        /// <param name="ordinals">A read-only dictionary mapping column names to their ordinal positions in the data record.</param>
-        private static void SetEntityFields(
-            ITable entity,
-            IDataRecord record,
-            TableMaterializeMetadata metadata,
-            string prefix,
-            IReadOnlyDictionary<string, int> ordinals)
-            => SetResolvedEntityFields(
-                entity,
-                record,
-                ResolveFieldBindings(
-                    record,
-                    metadata,
-                    prefix,
-                    ordinals));
-
-        /// <summary>
-        /// Populates the nested entity properties of the specified table entity using data from the provided data
-        /// record and metadata.
-        /// </summary>
-        /// <param name="entity">The table entity whose nested entities are to be set.</param>
-        /// <param name="record">The data record containing the values to populate the nested entities.</param>
-        /// <param name="metadata">The metadata describing the structure and bindings of the table entity.</param>
-        /// <param name="prefix">The prefix used to identify nested entity fields within the data record.</param>
-        /// <param name="ordinals">A read-only dictionary mapping field names to their ordinal positions in the data record.</param>
-        /// <param name="schemaHash">A hash value representing the schema of the data record, used to ensure consistency when resolving bindings.</param>
-        private static void SetEntityNestedEntities(
-            ITable entity,
-            IDataRecord record,
-            TableMaterializeMetadata metadata,
-            string prefix,
-            IReadOnlyDictionary<string, int> ordinals,
-            int schemaHash)
-            => SetResolvedEntityNestedEntities(
-                entity,
-                record,
-                ResolveNestedBindings(
-                    record,
-                    metadata,
-                    prefix,
-                    ordinals,
-                    schemaHash));
 
         /// <summary>
         /// Assigns values from a data record to the specified entity using the provided field bindings.
@@ -562,10 +614,7 @@ namespace Hydrix.Orchestrator.Mapping
                     continue;
 
                 var nestedBindings = nested.Bindings;
-                var nestedEntity = (ITable)nested.Factory();
-                nested.Setter(
-                    entity,
-                    nestedEntity);
+                var nestedEntity = nested.Activator(entity);
 
                 if (nestedBindings.Fields.Length != 0)
                 {

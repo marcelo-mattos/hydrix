@@ -1,9 +1,9 @@
+using Hydrix.Attributes.Schemas;
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using Hydrix.Attributes.Schemas;
 
 namespace Hydrix.Orchestrator.Caching
 {

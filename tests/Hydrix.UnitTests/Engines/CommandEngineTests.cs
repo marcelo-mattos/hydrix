@@ -1261,7 +1261,6 @@ namespace Hydrix.UnitTests.Engines
             Assert.Same(first, second);
         }
 
-
         /// <summary>
         /// Executes a test action while isolating and restoring mutable global Hydrix configuration state.
         /// </summary>

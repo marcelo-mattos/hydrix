@@ -1,5 +1,5 @@
-using Hydrix.Orchestrator.Caching;
 using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Caching;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;

@@ -3,6 +3,7 @@ using Hydrix.Orchestrator.Resolvers;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading;
 
 namespace Hydrix.Orchestrator.Metadata.Materializers
@@ -25,6 +26,11 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
         /// computed schema hash. It is thread-safe for concurrent read and write operations.</remarks>
         private readonly ConcurrentDictionary<int, ResolvedTableBindings> _bindingsBySchemaHash =
             new ConcurrentDictionary<int, ResolvedTableBindings>();
+
+        /// <summary>
+        /// Stores the most recently reused binding plan for fast schema matches.
+        /// </summary>
+        private ResolvedTableBindings _hotBindings;
 
         /// <summary>
         /// Tracks the number of cached schema-bound binding plans without using dictionary count on hot paths.
@@ -82,6 +88,7 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
                 schemaHash,
                 out var cachedBindings))
             {
+                RememberBindings(cachedBindings);
                 return cachedBindings;
             }
 
@@ -93,17 +100,21 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
                     schemaHash,
                     currentBindings))
                 {
+                    RememberBindings(currentBindings);
                     return currentBindings;
                 }
 
                 Interlocked.Decrement(ref _bindingsCacheSize);
             }
 
-            return _bindingsBySchemaHash.TryGetValue(
+            var bindings = _bindingsBySchemaHash.TryGetValue(
                 schemaHash,
                 out cachedBindings)
                 ? cachedBindings
                 : currentBindings;
+
+            RememberBindings(bindings);
+            return bindings;
         }
 
         /// <summary>
@@ -115,6 +126,44 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
             => _bindingsBySchemaHash.TryGetValue(
                 schemaHash,
                 out bindings);
+
+        /// <summary>
+        /// Attempts to reuse the most recently matched binding plan without recomputing schema hashes.
+        /// </summary>
+        /// <param name="reader">The data reader for which to match the hot bindings.</param>
+        /// <param name="bindings">When this method returns, contains the hot bindings if a match is found; otherwise, null.</param>
+        /// <returns><see langword="true"/> if the hot bindings match the provided data reader; otherwise, <see langword="false"/>.</returns>
+        public bool TryGetHotBindings(
+            IDataReader reader,
+            out ResolvedTableBindings bindings)
+        {
+            var hotBindings = Volatile.Read(ref _hotBindings);
+            if (hotBindings != null &&
+                hotBindings.Matches(reader))
+            {
+                bindings = hotBindings;
+                return true;
+            }
+
+            bindings = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Records the most recently reused binding plan for later hot-path matches.
+        /// </summary>
+        /// <param name="bindings">The binding plan to remember as hot bindings.</param>
+        public void RememberBindings(
+            ResolvedTableBindings bindings)
+        {
+            if (bindings == null ||
+                bindings.ColumnNames.Length == 0)
+            {
+                return;
+            }
+
+            Volatile.Write(ref _hotBindings, bindings);
+        }
 
         /// <summary>
         /// Attempts to reserve a cache slot while enforcing the maximum bindings cache size under concurrency.

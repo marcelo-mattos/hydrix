@@ -120,25 +120,46 @@ namespace Hydrix.Extensions
             where TEntity : ITable, new()
         {
             var metadata = EntityMetadataCache.GetOrAdd(typeof(TEntity));
-            var schemaHash = dataReader.ComputeSchemaHash();
 
-            if (metadata.TryGetBindings(
-                schemaHash,
+            if (metadata.TryGetHotBindings(
+                dataReader,
                 out var bindings))
             {
                 return bindings;
             }
 
-            var ordinals = dataReader.BuildOrdinals();
+            var ordinalMap = dataReader.BuildOrdinalMap(out var columnNames);
+
+            var hasCachedBinding = metadata.TryGetBindings(
+                ordinalMap.SchemaHash,
+                out bindings);
+            if (hasCachedBinding &&
+                bindings.Matches(dataReader))
+            {
+                metadata.RememberBindings(bindings);
+                return bindings;
+            }
+
+            if (hasCachedBinding)
+            {
+                return TableMap.Bind(
+                    dataReader,
+                    metadata,
+                    string.Empty,
+                    ordinalMap.Ordinals,
+                    ordinalMap.SchemaHash,
+                    columnNames);
+            }
 
             return metadata.GetOrAddBindings(
-                schemaHash,
+                ordinalMap.SchemaHash,
                 _ => TableMap.Bind(
                     dataReader,
                     metadata,
                     string.Empty,
-                    ordinals,
-                    schemaHash));
+                    ordinalMap.Ordinals,
+                    ordinalMap.SchemaHash,
+                    columnNames));
         }
 
         /// <summary>
@@ -165,57 +186,46 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
-        /// Computes the schema hash for the current <see cref="IDataReader"/>.
+        /// Builds the ordinal map and schema hash for the current <see cref="IDataReader"/> in a single pass.
         /// </summary>
         /// <param name="reader">The data reader to inspect.</param>
-        /// <returns>The hash that represents the current schema.</returns>
-        private static int ComputeSchemaHash(
-            this IDataReader reader)
+        /// <param name="columnNames">Receives the ordered column names for hot-path schema matching.</param>
+        /// <returns>An immutable ordinal map with the computed schema hash.</returns>
+        private static OrdinalMap BuildOrdinalMap(
+            this IDataReader reader,
+            out string[] columnNames)
         {
-            unchecked
-            {
-                var hash = 17;
-                for (var index = 0; index < reader.FieldCount; index++)
-                {
-                    var name = reader.GetName(index) ?? string.Empty;
-                    var fieldType = GetFieldType(reader, index);
-
-                    hash = (hash * 31) + index;
-                    hash = (hash * 31) + name.Length;
-                    hash = (hash * 31) + StringComparer.OrdinalIgnoreCase.GetHashCode(name);
-                    hash = (hash * 31) + (fieldType?.GetHashCode() ?? 0);
-                }
-
-                hash = (hash * 31) + reader.FieldCount;
-
-                return hash;
-            }
-        }
-
-        /// <summary>
-        /// Builds the ordinal map for the current <see cref="IDataReader"/> schema.
-        /// </summary>
-        /// <param name="reader">The data reader to inspect.</param>
-        /// <returns>A dictionary that maps column names to ordinals.</returns>
-        private static Dictionary<string, int> BuildOrdinals(
-            this IDataReader reader)
-        {
+            columnNames = new string[reader.FieldCount];
             var ordinals = new Dictionary<string, int>(
                 reader.FieldCount,
                 StringComparer.OrdinalIgnoreCase);
+            var hash = new HashCode();
+            hash.Add(reader.FieldCount);
 
             for (var index = 0; index < reader.FieldCount; index++)
             {
                 var name = reader.GetName(index) ?? string.Empty;
+                var fieldType = GetFieldType(reader, index);
+
+                columnNames[index] = name;
                 ordinals[name] = index;
+
+                hash.Add(index);
+                hash.Add(name, StringComparer.OrdinalIgnoreCase);
+                hash.Add(fieldType);
             }
 
-            return ordinals;
+            return new OrdinalMap(
+                ordinals,
+                hash.ToHashCode());
         }
 
         /// <summary>
         /// Retrieves the provider CLR type for the specified ordinal when the reader supports it.
         /// </summary>
+        /// <param name="reader">The data reader to inspect.</param>
+        /// <param name="ordinal">The target field ordinal.</param>
+        /// <returns>The provider CLR type for the specified ordinal, or null if the reader does not support retrieving field types.</returns>
         private static Type GetFieldType(
             IDataReader reader,
             int ordinal)

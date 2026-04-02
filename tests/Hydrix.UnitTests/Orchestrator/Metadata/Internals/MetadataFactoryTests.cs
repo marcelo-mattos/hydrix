@@ -1,6 +1,7 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
+using Hydrix.Schemas.Contract;
 using Moq;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -118,6 +119,30 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             /// Gets or sets a textual value.
             /// </summary>
             public string Value { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a parent entity used to validate nested entity activator behavior.
+        /// </summary>
+        private sealed class ActivatorParent
+        {
+            /// <summary>
+            /// Gets or sets the nested child entity.
+            /// </summary>
+            public ActivatorChild Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a child entity that can be created through nested activator delegates.
+        /// </summary>
+        [Table("ActivatorChild")]
+        private sealed class ActivatorChild : ITable
+        {
+            /// <summary>
+            /// Gets or sets the identifier.
+            /// </summary>
+            [Column]
+            public int Id { get; set; }
         }
 
         /// <summary>
@@ -294,6 +319,39 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
 
             Assert.Throws<InvalidOperationException>(() =>
                 MetadataFactory.CreateRecordAssigner(property.Object, 0, typeof(int)));
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityActivator creates and assigns a nested entity instance.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityActivator_CreatesAndAssignsNestedEntity()
+        {
+            var property = typeof(ActivatorParent).GetProperty(nameof(ActivatorParent.Child));
+
+            var activator = MetadataFactory.CreateNestedEntityActivator(property);
+            var parent = new ActivatorParent();
+
+            var child = activator(parent);
+
+            Assert.NotNull(child);
+            Assert.IsType<ActivatorChild>(child);
+            Assert.Same(child, parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityActivator throws when property metadata has no declaring type.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityActivator_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("OrphanNested");
+            property.SetupGet(p => p.PropertyType).Returns(typeof(ActivatorChild));
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateNestedEntityActivator(property.Object));
         }
 
         /// <summary>

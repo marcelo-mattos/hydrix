@@ -315,6 +315,47 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that a binding plan created from a reader without provider type information does not poison a
+        /// later mapping that relies on a compatible provider CLR type.
+        /// </summary>
+        [Fact]
+        public void MapTo_ReusesUnknownProviderBindingWithoutBreakingCompatibleProviderConversions()
+        {
+            var mockReader = new Mock<IDataReader>();
+            var mockReadCount = 0;
+
+            mockReader.Setup(r => r.Read()).Returns(() => mockReadCount++ < 1);
+            mockReader.Setup(r => r.FieldCount).Returns(2);
+            mockReader.Setup(r => r.GetName(0)).Returns("Id");
+            mockReader.Setup(r => r.GetName(1)).Returns("Name");
+            mockReader.Setup(r => r.GetValue(0)).Returns(7);
+            mockReader.Setup(r => r.GetValue(1)).Returns("Warmup");
+            mockReader.Setup(r => r.IsDBNull(0)).Returns(false);
+            mockReader.Setup(r => r.IsDBNull(1)).Returns(false);
+            mockReader.Setup(r => r.GetInt32(0)).Returns(7);
+            mockReader.Setup(r => r.GetString(1)).Returns("Warmup");
+
+            var warmupEntities = mockReader.Object.MapTo<TestEntity>();
+
+            var warmupEntity = Assert.Single(warmupEntities);
+            Assert.Equal(7, warmupEntity.Id);
+            Assert.Equal("Warmup", warmupEntity.Name);
+
+            var table = new DataTable();
+            table.Columns.Add("Id", typeof(long));
+            table.Columns.Add("Name", typeof(string));
+            table.Rows.Add(42L, "Converted");
+
+            using var reader = table.CreateDataReader();
+
+            var convertedEntities = reader.MapTo<TestEntity>();
+
+            var convertedEntity = Assert.Single(convertedEntities);
+            Assert.Equal(42, convertedEntity.Id);
+            Assert.Equal("Converted", convertedEntity.Name);
+        }
+
+        /// <summary>
         /// Verifies that mapping handles null column names on a materialized row by applying an empty-string fallback
         /// during schema processing.
         /// </summary>

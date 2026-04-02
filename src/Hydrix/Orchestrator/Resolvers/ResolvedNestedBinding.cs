@@ -1,10 +1,11 @@
-﻿using System;
+using Hydrix.Schemas.Contract;
+using System;
 
 namespace Hydrix.Orchestrator.Resolvers
 {
     /// <summary>
     /// Represents the resolved binding information for a nested object within a table mapping, including primary key
-    /// usage, candidate ordinals, object factory, property setter, and associated table bindings.
+    /// usage, candidate ordinals, activation delegates, and associated table bindings.
     /// </summary>
     /// <remarks>This type is used internally to encapsulate the metadata and delegates required to
     /// materialize and assign nested objects during data mapping operations. It provides details about how the nested
@@ -33,17 +34,19 @@ namespace Hydrix.Orchestrator.Resolvers
         /// <summary>
         /// Gets the factory function used to create new instances of the associated object type.
         /// </summary>
-        /// <remarks>The returned delegate encapsulates the logic for constructing objects, which may be
-        /// used for dependency injection, object pooling, or other scenarios requiring dynamic instantiation.</remarks>
+        /// <remarks>This property is retained for compatibility with existing tests and helper call sites.</remarks>
         public Func<object> Factory { get; }
 
         /// <summary>
         /// Gets the delegate used to set the value of a property or field on a target object.
         /// </summary>
-        /// <remarks>The delegate accepts two parameters: the target object whose property or field is to
-        /// be set, and the value to assign. This is typically used for dynamic property or field assignment scenarios,
-        /// such as serialization or object mapping.</remarks>
+        /// <remarks>This property is retained for compatibility with existing tests and helper call sites.</remarks>
         public Action<object, object> Setter { get; }
+
+        /// <summary>
+        /// Gets the compiled activator that creates and assigns the nested entity in a single delegate call.
+        /// </summary>
+        public Func<object, ITable> Activator { get; }
 
         /// <summary>
         /// Gets the resolved table bindings associated with the current context.
@@ -69,12 +72,41 @@ namespace Hydrix.Orchestrator.Resolvers
             Func<object> factory,
             Action<object, object> setter,
             ResolvedTableBindings bindings)
+            : this(
+                usesPrimaryKey,
+                primaryKeyOrdinal,
+                candidateOrdinals,
+                parent =>
+                {
+                    var child = (ITable)factory();
+                    setter(parent, child);
+                    return child;
+                },
+                bindings)
+        {
+            Factory = factory;
+            Setter = setter;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the ResolvedNestedBinding class with a composed activator that creates and assigns the nested entity.
+        /// </summary>
+        /// <param name="usesPrimaryKey">true to indicate that the primary key is used for binding; otherwise, false.</param>
+        /// <param name="primaryKeyOrdinal">The ordinal position of the primary key within the data source. Must be non-negative if usesPrimaryKey is true.</param>
+        /// <param name="candidateOrdinals">An array of ordinal positions that are considered as candidates for binding. If null, an empty array is used.</param>
+        /// <param name="activator">A delegate that creates and assigns the nested object. Cannot be null.</param>
+        /// <param name="bindings">The resolved table bindings that define how nested objects are mapped. Cannot be null.</param>
+        public ResolvedNestedBinding(
+            bool usesPrimaryKey,
+            int primaryKeyOrdinal,
+            int[] candidateOrdinals,
+            Func<object, ITable> activator,
+            ResolvedTableBindings bindings)
         {
             UsesPrimaryKey = usesPrimaryKey;
             PrimaryKeyOrdinal = primaryKeyOrdinal;
             CandidateOrdinals = candidateOrdinals ?? Array.Empty<int>();
-            Factory = factory;
-            Setter = setter;
+            Activator = activator;
             Bindings = bindings;
         }
     }

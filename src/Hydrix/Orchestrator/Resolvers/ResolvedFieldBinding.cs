@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 
 namespace Hydrix.Orchestrator.Resolvers
@@ -21,13 +21,29 @@ namespace Hydrix.Orchestrator.Resolvers
         public Action<object, IDataRecord> Assigner { get; }
 
         /// <summary>
+        /// Gets the ordinal used by this binding.
+        /// </summary>
+        public int Ordinal { get; }
+
+        /// <summary>
+        /// Gets the provider CLR type captured when this binding was resolved.
+        /// </summary>
+        public Type SourceType { get; }
+
+        /// <summary>
         /// Initializes a new instance of the ResolvedFieldBinding class with the specified field assignment action.
         /// </summary>
         /// <param name="assigner">An action that assigns a value to an object based on data from an IDataRecord. Cannot be null.</param>
+        /// <param name="ordinal">The ordinal used by this binding, or -1 if not applicable.</param>
+        /// <param name="sourceType">The provider CLR type captured when this binding was resolved or null if not applicable.</param>
         public ResolvedFieldBinding(
-            Action<object, IDataRecord> assigner)
+            Action<object, IDataRecord> assigner,
+            int ordinal = -1,
+            Type sourceType = null)
         {
             Assigner = assigner;
+            Ordinal = ordinal;
+            SourceType = sourceType;
         }
     }
 }

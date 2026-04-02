@@ -2,10 +2,12 @@ using Hydrix.Attributes.Schemas;
 using Hydrix.Extensions;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Materializers;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -187,6 +189,50 @@ namespace Hydrix.Orchestrator.Metadata.Internals
                     assign,
                     instance,
                     value)
+                .Compile();
+        }
+
+        /// <summary>
+        /// Creates a delegate that instantiates a nested entity and assigns it to the parent in a single invocation.
+        /// </summary>
+        /// <param name="property">The navigation property that receives the nested entity.</param>
+        /// <returns>A delegate that creates the nested entity, assigns it to the parent, and returns it as <see cref="ITable"/>.</returns>
+        internal static Func<object, ITable> CreateNestedEntityActivator(
+            PropertyInfo property)
+        {
+            var parent = Expression.Parameter(
+                typeof(object),
+                "parent");
+
+            var child = Expression.Variable(
+                property.PropertyType,
+                "child");
+
+            var assignChild = Expression.Assign(
+                child,
+                Expression.New(property.PropertyType));
+
+            var assignProperty = Expression.Assign(
+                Expression.Property(
+                    Expression.Convert(
+                        parent,
+                        property.DeclaringType ?? throw new InvalidOperationException(
+                            $"Property '{property.Name}' does not have a declaring type.")),
+                    property),
+                child);
+
+            var body = Expression.Block(
+                new[] { child }.AsEnumerable(),
+                assignChild,
+                assignProperty,
+                Expression.Convert(
+                    child,
+                    typeof(ITable)));
+
+            return Expression
+                .Lambda<Func<object, ITable>>(
+                    body,
+                    parent)
                 .Compile();
         }
 

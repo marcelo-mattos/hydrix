@@ -3,10 +3,12 @@ using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Materializers;
 using Hydrix.Orchestrator.Resolvers;
 using Hydrix.Schemas.Contract;
+using Moq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Reflection;
 using Xunit;
 
@@ -401,6 +403,92 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
 
             Assert.False(result);
             Assert.Equal(0, updateCalls);
+        }
+
+        /// <summary>
+        /// Verifies that RememberBindings ignores null bindings and keeps hot bindings unset.
+        /// </summary>
+        [Fact]
+        public void RememberBindings_DoesNothing_WhenBindingsIsNull()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(null);
+
+            var reader = new Mock<IDataReader>().Object;
+            Assert.False(metadata.TryGetHotBindings(reader, out var hotBindings));
+            Assert.Null(hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that RememberBindings ignores bindings with empty schema snapshots.
+        /// </summary>
+        [Fact]
+        public void RememberBindings_DoesNothing_WhenBindingsHasEmptyColumnNames()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(new ResolvedTableBindings(null, null, Array.Empty<string>()));
+
+            var reader = new Mock<IDataReader>().Object;
+            Assert.False(metadata.TryGetHotBindings(reader, out var hotBindings));
+            Assert.Null(hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that TryGetHotBindings returns true when remembered bindings match the reader schema.
+        /// </summary>
+        [Fact]
+        public void TryGetHotBindings_ReturnsTrue_WhenRememberedBindingsMatchReader()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            var remembered = new ResolvedTableBindings(
+                null,
+                null,
+                new[] { "Id", "Name" });
+
+            metadata.RememberBindings(remembered);
+
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(2);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetName(1)).Returns("Name");
+
+            var found = metadata.TryGetHotBindings(reader.Object, out var hotBindings);
+
+            Assert.True(found);
+            Assert.Same(remembered, hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that TryGetHotBindings returns false when remembered bindings do not match the reader schema.
+        /// </summary>
+        [Fact]
+        public void TryGetHotBindings_ReturnsFalse_WhenRememberedBindingsDoNotMatchReader()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(new ResolvedTableBindings(
+                null,
+                null,
+                new[] { "Id", "Name" }));
+
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(1);
+
+            var found = metadata.TryGetHotBindings(reader.Object, out var hotBindings);
+
+            Assert.False(found);
+            Assert.Null(hotBindings);
         }
     }
 }
