@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace Hydrix.Configuration
 {
@@ -25,7 +26,7 @@ namespace Hydrix.Configuration
         /// application. Modifications to the options may affect the application's performance and
         /// functionality.</remarks>
         public static HydrixOptions Options =>
-            _options;
+            Volatile.Read(ref _options);
 
         /// <summary>
         /// Configures the application with the specified options.
@@ -34,7 +35,16 @@ namespace Hydrix.Configuration
         /// <exception cref="System.ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
         public static void Configure(
             HydrixOptions options)
-            => _options = options
-                ?? throw new ArgumentNullException(nameof(options));
+        {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(options);
+#else
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+#endif
+            Volatile.Write(
+                ref _options,
+                options);
+        }
     }
 }

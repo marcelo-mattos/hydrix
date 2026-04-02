@@ -3,9 +3,11 @@ using Hydrix.Engines.Options;
 using Hydrix.Extensions;
 using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,6 +42,7 @@ namespace Hydrix.Engines
         {
             EnsureValidEntityRequest<TEntity>();
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var dataReader = ExecutionEngine.ExecuteReader(
                 sql,
@@ -67,6 +70,7 @@ namespace Hydrix.Engines
         {
             EnsureValidEntityRequest<TEntity>();
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var dataReader = ExecutionEngine.ExecuteReader(
                 procedure,
@@ -90,6 +94,10 @@ namespace Hydrix.Engines
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains a list of entities of type TEntity
         /// mapped from the query results. The list is empty if no rows are returned.</returns>
+        [SuppressMessage(
+            "Major Code Smell",
+            "S6966",
+            Justification = "Synchronous execution is required in materialization pipeline for performance and allocation control")]
         public static async Task<IList<TEntity>> QueryAsync<TEntity>(
             string sql,
             object parameters = null,
@@ -99,6 +107,7 @@ namespace Hydrix.Engines
         {
             EnsureValidEntityRequest<TEntity>();
             options = ResolveCommandOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var dataReader = await ExecutionEngine
                 .ExecuteReaderAsync(
@@ -131,6 +140,10 @@ namespace Hydrix.Engines
         /// <param name="options">The command execution options.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A task representing the asynchronous operation. The task result contains the mapped entity list.</returns>
+        [SuppressMessage(
+            "Major Code Smell",
+            "S6966",
+            Justification = "Synchronous execution is required in materialization pipeline for performance and allocation control")]
         public static async Task<IList<TEntity>> QueryAsync<TEntity, TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
             MaterializationOptions options = null,
@@ -140,6 +153,7 @@ namespace Hydrix.Engines
         {
             EnsureValidEntityRequest<TEntity>();
             options = ResolveOptions(options);
+            EnsureConnectionConfigured(options);
 
             using var dataReader = await ExecutionEngine
                 .ExecuteReaderAsync(
@@ -172,6 +186,25 @@ namespace Hydrix.Engines
         private static void EnsureValidEntityRequest<TEntity>()
             where TEntity : ITable, new()
             => EntityRequestValidationCache.Validate(typeof(TEntity));
+
+        /// <summary>
+        /// Validates that command execution options include a database connection.
+        /// </summary>
+        /// <param name="options">The execution options to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <see cref="ExecutionOptions.Connection"/> is null.</exception>
+        private static void EnsureConnectionConfigured(
+            ExecutionOptions options)
+        {
+            if (options == null)
+                throw new ArgumentNullException(
+                    nameof(options),
+                    "Execution options are required. Provide a non-null options instance with Connection configured.");
+
+            if (options.Connection == null)
+                throw new ArgumentException(
+                    "A non-null Connection is required. Provide options.Connection or use an API overload that accepts an explicit connection.",
+                    nameof(options));
+        }
 
         /// <summary>
         /// Resolves command execution options, returning a default instance when none is provided.

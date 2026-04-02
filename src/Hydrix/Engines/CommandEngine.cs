@@ -74,7 +74,7 @@ namespace Hydrix.Engines
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         public static IDbCommand CreateCommand(
-            in IDbConnection connection,
+            IDbConnection connection,
             IDbTransaction transaction,
             CommandType commandType,
             string sql,
@@ -120,7 +120,7 @@ namespace Hydrix.Engines
         /// The Procedure does not have a ProcedureAttribute decorating itself.
         /// </exception>
         public static IDbCommand CreateCommand<TDataParameterDriver>(
-            in IDbConnection connection,
+            IDbConnection connection,
             IDbTransaction transaction,
             IProcedure<TDataParameterDriver> procedure,
             string parameterPrefix = null,
@@ -266,7 +266,7 @@ namespace Hydrix.Engines
         /// <returns>An IDbCommand instance configured with the specified command type, SQL, parameters, and transaction context.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the database connection is not open when attempting to create the command.</exception>
         internal static IDbCommand CreateCommandCore(
-            in IDbConnection connection,
+            IDbConnection connection,
             IDbTransaction transaction,
             CommandType commandType,
             string sql,

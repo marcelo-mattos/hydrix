@@ -10,6 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 using Xunit;
@@ -1364,6 +1365,10 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         /// initializes the cache before lock acquisition.
         /// </summary>
         [Fact]
+        [SuppressMessage(
+            "Major Code Smell",
+            "S2925",
+            Justification = "Used to simulate timing and concurrency behavior in controlled test scenario")]
         public void GetCandidateOrdinals_InsideLock_InitializedByAnotherThread_ReturnsCachedValue()
         {
             var property = typeof(Parent).GetProperty(nameof(Parent.Child));
@@ -1480,6 +1485,10 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         /// designed to validate that the method returns the expected ordinals when another thread has already performed
         /// the initialization.</remarks>
         [Fact]
+        [SuppressMessage(
+            "Major Code Smell",
+            "S2925",
+            Justification = "Used to simulate timing and concurrency behavior in controlled test scenario")]
         public void GetCandidateOrdinals_CoversSecondIfInsideLock()
         {
             var property = typeof(Parent).GetProperty(nameof(Parent.Child));

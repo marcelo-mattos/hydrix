@@ -12,6 +12,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -472,6 +473,39 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies EnsureConnectionConfigured throws ArgumentNullException when options is null.
+        /// </summary>
+        [Fact]
+        public void EnsureConnectionConfigured_ThrowsArgumentNullException_WhenOptionsIsNull()
+        {
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                InvokeMaterializationPrivateVoidMethod(
+                    "EnsureConnectionConfigured",
+                    null));
+
+            Assert.Equal("options", exception.ParamName);
+        }
+
+        /// <summary>
+        /// Verifies EnsureConnectionConfigured does not throw when options contains a configured connection.
+        /// </summary>
+        [Fact]
+        public void EnsureConnectionConfigured_DoesNotThrow_WhenConnectionIsConfigured()
+        {
+            var options = new MaterializationOptions
+            {
+                Connection = new Mock<IDbConnection>().Object
+            };
+
+            var exception = Record.Exception(() =>
+                InvokeMaterializationPrivateVoidMethod(
+                    "EnsureConnectionConfigured",
+                    options));
+
+            Assert.Null(exception);
+        }
+
+        /// <summary>
         /// Verifies ResolveOptions returns the same options instance when provided and creates defaults when null.
         /// </summary>
         [Fact]
@@ -517,6 +551,20 @@ namespace Hydrix.UnitTests.Engines
             Assert.Equal(1, result[0].Id);
             Assert.Equal("Alice", result[0].Name);
             Assert.Equal(CommandType.Text, command.CommandType);
+        }
+
+        /// <summary>
+        /// Verifies Query throws a clear exception when options.Connection is not configured.
+        /// </summary>
+        [Fact]
+        public void Query_Text_WithNullConnection_ThrowsArgumentException()
+        {
+            var exception = Assert.Throws<ArgumentException>(() =>
+                MaterializationEngine.Query<TestEntity>(
+                    "select Id from t",
+                    options: new MaterializationCommandOptions()));
+
+            Assert.Equal("options", exception.ParamName);
         }
 
         /// <summary>
@@ -682,6 +730,20 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies procedure Query throws a clear exception when options.Connection is not configured.
+        /// </summary>
+        [Fact]
+        public void Query_Procedure_WithNullConnection_ThrowsArgumentException()
+        {
+            var exception = Assert.Throws<ArgumentException>(() =>
+                MaterializationEngine.Query<TestEntity, TestParameter>(
+                    new TestProcedure(),
+                    options: new MaterializationOptions()));
+
+            Assert.Equal("options", exception.ParamName);
+        }
+
+        /// <summary>
         /// Verifies procedure Query overload maps rows to entities when parameterPrefix is null,
         /// covering the default prefix branch.
         /// </summary>
@@ -727,6 +789,21 @@ namespace Hydrix.UnitTests.Engines
             Assert.Equal(10, result[0].Id);
             Assert.Equal("ProcAsync", result[0].Name);
             Assert.Equal(CommandType.StoredProcedure, command.CommandType);
+        }
+
+        /// <summary>
+        /// Verifies procedure QueryAsync throws a clear exception when options.Connection is not configured.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task QueryAsync_Procedure_WithNullConnection_ThrowsArgumentException()
+        {
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
+                await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
+                    new TestProcedure(),
+                    options: new MaterializationOptions()));
+
+            Assert.Equal("options", exception.ParamName);
         }
 
         /// <summary>
@@ -936,6 +1013,33 @@ namespace Hydrix.UnitTests.Engines
             return (TResult)method.Invoke(
                 null,
                 new[] { argument });
+        }
+
+        /// <summary>
+        /// Invokes a private static void method from MaterializationEngine and rethrows inner exceptions.
+        /// </summary>
+        /// <param name="methodName">The private static method name.</param>
+        /// <param name="argument">The method argument.</param>
+        private static void InvokeMaterializationPrivateVoidMethod(
+            string methodName,
+            object argument)
+        {
+            var method = typeof(MaterializationEngine).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+
+            try
+            {
+                method.Invoke(
+                    null,
+                    new[] { argument });
+            }
+            catch (TargetInvocationException exception) when (exception.InnerException != null)
+            {
+                ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+            }
         }
 
         /// <summary>
