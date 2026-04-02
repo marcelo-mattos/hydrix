@@ -540,11 +540,11 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
-        /// Verifies procedure QueryAsync throws when the fallback path returns a non-DbDataReader instance.
+        /// Verifies procedure QueryAsync falls back to synchronous mapping when the reader is not a DbDataReader.
         /// </summary>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_Procedure_WithFallbackNonDbReader_ThrowsInvalidOperationException()
+        public async Task QueryAsync_Procedure_WithFallbackNonDbReader_ReturnsEmptyCollection()
         {
             var command = new FallbackReaderCommand
             {
@@ -552,18 +552,20 @@ namespace Hydrix.UnitTests.Engines
             };
             var connection = CreateOpenConnection(command);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
-                    connection.Object,
-                    new TestProcedure()));
+            var result = await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
+                connection.Object,
+                new TestProcedure());
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>
-        /// Verifies QueryAsync throws when the fallback path returns a non-DbDataReader instance.
+        /// Verifies QueryAsync falls back to synchronous mapping when the reader is not a DbDataReader.
         /// </summary>
         /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
-        public async Task QueryAsync_WithFallbackNonDbReader_ThrowsInvalidOperationException()
+        public async Task QueryAsync_WithFallbackNonDbReader_ReturnsEmptyCollection()
         {
             var command = new FallbackReaderCommand
             {
@@ -571,10 +573,12 @@ namespace Hydrix.UnitTests.Engines
             };
             var connection = CreateOpenConnection(command);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await MaterializationEngine.QueryAsync<TestEntity>(
-                    connection.Object,
-                    "select Id from t"));
+            var result = await MaterializationEngine.QueryAsync<TestEntity>(
+                connection.Object,
+                "select Id from t");
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
 
         /// <summary>

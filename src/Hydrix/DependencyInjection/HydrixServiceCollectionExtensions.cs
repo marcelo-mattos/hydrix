@@ -5,25 +5,18 @@ using System;
 namespace Hydrix.DependencyInjection
 {
     /// <summary>
-    /// Provides extension methods for registering and configuring the Hydrix service within an application's dependency
-    /// injection container.
+    /// Provides extension methods for registering Hydrix services with an <see cref="IServiceCollection"/>.
     /// </summary>
-    /// <remarks>This class contains extension methods for IServiceCollection that enable the addition and
-    /// customization of Hydrix services during application startup. Use these methods to configure Hydrix options and
-    /// ensure the service is properly registered for dependency injection.</remarks>
     public static class HydrixServiceCollectionExtensions
     {
         /// <summary>
-        /// Registers Hydrix services in the specified dependency injection container, optionally configuring service
-        /// behavior using provided options.
+        /// Adds and configures Hydrix services to the specified service collection.
         /// </summary>
-        /// <remarks>This method allows customization of Hydrix service registration by supplying
-        /// configuration options. Callers can use the configure parameter to adjust settings prior to service
-        /// registration.</remarks>
-        /// <param name="services">The service collection to which Hydrix services will be added. Must not be null.</param>
-        /// <param name="configure">An optional delegate to configure Hydrix options before registration. If specified, it is invoked with a new
-        /// instance of HydrixOptions.</param>
-        /// <returns>The IServiceCollection instance with Hydrix services registered, enabling method chaining.</returns>
+        /// <remarks>Call this method during application startup to register Hydrix dependencies with the
+        /// dependency injection container.</remarks>
+        /// <param name="services">The service collection to which Hydrix services will be added. Cannot be null.</param>
+        /// <param name="configure">An optional delegate to configure Hydrix options. If null, default options are used.</param>
+        /// <returns>The same instance of <see cref="IServiceCollection"/> that was provided, to support method chaining.</returns>
         public static IServiceCollection AddHydrix(
             this IServiceCollection services,
             Action<HydrixOptions> configure = null)
