@@ -25,6 +25,11 @@ namespace Hydrix.Orchestrator.Resolvers
         public string[] ColumnNames { get; }
 
         /// <summary>
+        /// Gets the flattened field bindings used by schema matching to avoid recursive traversal on the hot path.
+        /// </summary>
+        private ResolvedFieldBinding[] MatchFields { get; }
+
+        /// <summary>
         /// Initializes a new instance of the ResolvedTableBindings class with the specified field and entity bindings.
         /// </summary>
         /// <param name="fields">An array of ResolvedFieldBinding objects representing the field bindings to include. If null, an empty array
@@ -40,6 +45,9 @@ namespace Hydrix.Orchestrator.Resolvers
             Fields = fields ?? Array.Empty<ResolvedFieldBinding>();
             Entities = entities ?? Array.Empty<ResolvedNestedBinding>();
             ColumnNames = columnNames ?? Array.Empty<string>();
+            MatchFields = BuildMatchFields(
+                Fields,
+                Entities);
         }
 
         /// <summary>
@@ -79,34 +87,80 @@ namespace Hydrix.Orchestrator.Resolvers
         /// current bindings.
         /// </summary>
         /// <remarks>This method checks both the type information and the actual runtime values of the
-        /// fields to ensure type consistency. It also recursively validates field types for any nested entity
-        /// bindings.</remarks>
+        /// fields to ensure type consistency.</remarks>
         /// <param name="reader">The data reader to compare against the expected field types. Must not be null.</param>
         /// <returns>true if all fields in the data reader match the expected types; otherwise, false.</returns>
         private bool MatchesFieldTypes(
             IDataReader reader)
         {
-            if (!FieldsMatch(reader))
-                return false;
+            for (var index = 0; index < MatchFields.Length; index++)
+            {
+                if (!FieldMatches(
+                    reader,
+                    MatchFields[index]))
+                {
+                    return false;
+                }
+            }
 
-            return EntitiesMatch(reader);
+            return true;
         }
 
         /// <summary>
-        /// Checks if all fields match the expected types.
+        /// Builds the flattened field bindings used by schema matching.
         /// </summary>
-        /// <param name="reader">The data reader to compare against the expected field types.</param>
-        /// <returns>true if all fields match; otherwise, false.</returns>
-        private bool FieldsMatch(
-            IDataReader reader)
+        private static ResolvedFieldBinding[] BuildMatchFields(
+            ResolvedFieldBinding[] fields,
+            ResolvedNestedBinding[] entities)
         {
-            for (var index = 0; index < Fields.Length; index++)
+            if (fields.Length == 0)
             {
-                var field = Fields[index];
-                if (!FieldMatches(reader, field))
-                    return false;
+                if (entities.Length == 0)
+                    return Array.Empty<ResolvedFieldBinding>();
+
+                if (entities.Length == 1)
+                    return entities[0].Bindings.MatchFields;
             }
-            return true;
+            else if (entities.Length == 0)
+            {
+                return fields;
+            }
+
+            var totalCount = fields.Length;
+            for (var index = 0; index < entities.Length; index++)
+                totalCount += entities[index].Bindings.MatchFields.Length;
+
+            if (totalCount == 0)
+                return Array.Empty<ResolvedFieldBinding>();
+
+            var matchFields = new ResolvedFieldBinding[totalCount];
+            var offset = 0;
+
+            if (fields.Length != 0)
+            {
+                Array.Copy(
+                    fields,
+                    matchFields,
+                    fields.Length);
+                offset = fields.Length;
+            }
+
+            for (var index = 0; index < entities.Length; index++)
+            {
+                var nestedMatchFields = entities[index].Bindings.MatchFields;
+                if (nestedMatchFields.Length == 0)
+                    continue;
+
+                Array.Copy(
+                    nestedMatchFields,
+                    0,
+                    matchFields,
+                    offset,
+                    nestedMatchFields.Length);
+                offset += nestedMatchFields.Length;
+            }
+
+            return matchFields;
         }
 
         /// <summary>
@@ -136,21 +190,6 @@ namespace Hydrix.Orchestrator.Resolvers
                 return false;
             }
 
-            return true;
-        }
-
-        /// <summary>
-        /// Checks if all nested entity bindings match the expected field types.
-        /// </summary>
-        /// <param name="reader">The data reader to compare against the expected field types.</param>
-        /// <returns>true if all nested entities match; otherwise, false.</returns>
-        private bool EntitiesMatch(IDataReader reader)
-        {
-            for (var index = 0; index < Entities.Length; index++)
-            {
-                if (!Entities[index].Bindings.MatchesFieldTypes(reader))
-                    return false;
-            }
             return true;
         }
 

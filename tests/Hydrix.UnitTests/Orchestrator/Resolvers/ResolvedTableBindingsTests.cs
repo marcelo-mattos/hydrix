@@ -255,5 +255,51 @@ namespace Hydrix.UnitTests.Orchestrator.Resolvers
 
             Assert.True(result);
         }
+
+        /// <summary>
+        /// Verifies that match-field flattening returns an empty array when no root fields exist, there are multiple
+        /// nested bindings, and all nested bindings are also empty.
+        /// </summary>
+        [Fact]
+        public void Constructor_BuildMatchFields_ReturnsEmpty_WhenRootAndNestedBindingsAreEmptyAcrossMultipleEntities()
+        {
+            var emptyNestedBindingsA = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>(),
+                Array.Empty<string>());
+            var emptyNestedBindingsB = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>(),
+                Array.Empty<string>());
+
+            var nestedA = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: emptyNestedBindingsA);
+            var nestedB = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: emptyNestedBindingsB);
+
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[] { nestedA, nestedB },
+                new[] { "Id" });
+
+            var matchFieldsProperty = typeof(ResolvedTableBindings).GetProperty(
+                "MatchFields",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            Assert.NotNull(matchFieldsProperty);
+
+            var matchFields = (ResolvedFieldBinding[])matchFieldsProperty.GetValue(bindings);
+
+            Assert.NotNull(matchFields);
+            Assert.Empty(matchFields);
+        }
     }
 }

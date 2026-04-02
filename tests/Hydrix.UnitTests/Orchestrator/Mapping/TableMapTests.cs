@@ -1935,6 +1935,43 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that schema matches include nested fields even when the root binding has no scalar fields.
+        /// </summary>
+        [Fact]
+        public void ResolvedTableBindings_Matches_UsesNestedFields_WhenRootHasNoScalarFields()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+            reader.Setup(r => r.GetValue(0)).Throws(new InvalidOperationException("GetValue should not be used when GetFieldType matches."));
+            reader.Setup(r => r.IsDBNull(0)).Throws(new InvalidOperationException("IsDBNull should not be used when GetFieldType matches."));
+
+            var nestedBindings = new ResolvedTableBindings(
+                new[]
+                {
+                    new ResolvedFieldBinding((_, __) => { }, 0, typeof(int))
+                },
+                Array.Empty<ResolvedNestedBinding>(),
+                new[] { "Id" });
+
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[]
+                {
+                    new ResolvedNestedBinding(
+                        usesPrimaryKey: true,
+                        primaryKeyOrdinal: 0,
+                        candidateOrdinals: Array.Empty<int>(),
+                        activator: _ => new Child(),
+                        bindings: nestedBindings)
+                },
+                new[] { "Id" });
+
+            Assert.True(bindings.Matches(reader.Object));
+        }
+
+        /// <summary>
         /// Verifies that the constructors for resolved bindings normalize null array parameters to empty arrays.
         /// </summary>
         /// <remarks>This test ensures that when null arrays are passed to the constructors of

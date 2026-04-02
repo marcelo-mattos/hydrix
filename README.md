@@ -69,7 +69,7 @@ Hydrix does not attempt to abstract SQL away from you.
 * Native SQL `IN` clause expansion
 * SQL command logging
 * Fully provider-agnostic ([ADO.NET](https://learn.microsoft.com/pt-br/dotnet/framework/data/adonet/ado-net-overview))
-* Zero external dependencies
+* No non-Microsoft dependencies 
 * Apache 2.0 licensed
 
 ---
