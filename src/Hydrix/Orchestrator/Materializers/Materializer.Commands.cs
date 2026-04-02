@@ -54,8 +54,7 @@ namespace Hydrix.Orchestrator.Materializers
                 sql,
                 parameters,
                 _parameterPrefix,
-                timeout,
-                _logger);
+                timeout);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -90,8 +89,7 @@ namespace Hydrix.Orchestrator.Materializers
                 sql,
                 parameters,
                 _parameterPrefix,
-                timeout,
-                _logger);
+                timeout);
         }
 
         /// <summary>
@@ -129,8 +127,7 @@ namespace Hydrix.Orchestrator.Materializers
                 sql,
                 parameters,
                 _parameterPrefix,
-                timeout,
-                _logger);
+                timeout);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -169,8 +166,7 @@ namespace Hydrix.Orchestrator.Materializers
                 sql,
                 parameters,
                 _parameterPrefix,
-                timeout,
-                _logger);
+                timeout);
         }
 
         /// <summary>
@@ -209,8 +205,7 @@ namespace Hydrix.Orchestrator.Materializers
                transaction,
                procedure,
                _parameterPrefix,
-               timeout,
-               _logger);
+               timeout);
         }
 
         /// <summary>
@@ -257,8 +252,7 @@ namespace Hydrix.Orchestrator.Materializers
                 transaction,
                 procedure,
                 _parameterPrefix,
-                timeout,
-                _logger);
+                timeout);
         }
     }
 }

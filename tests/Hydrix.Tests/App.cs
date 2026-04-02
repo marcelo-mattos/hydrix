@@ -162,6 +162,7 @@ namespace Hydrix.Tests
                 .AndIf(endDate.HasValue, "c.BirthDate <= @EndDate")
                 .AndIf(levels != null && levels.Length > 0, "c.Level IN (@Levels)")
                 .Build();
+            Console.WriteLine(where);
 
             levels = new int[] { 3, 5, 7 };
             where = builder
@@ -174,22 +175,16 @@ namespace Hydrix.Tests
                             levels != null,
                             levels.Length > 0
                         },
-                        new[]
-                        {
-                            "(c.IsActive IS NULL OR c.IsActive = @IsActive)",
-                            "c.Level IN (@Levels)"
-                        })
+                        "(c.IsActive IS NULL OR c.IsActive = @IsActive)",
+                        "c.Level IN (@Levels)")
                     .OrAndGroupIf(
                         new[]
                         {
                             startDate.HasValue,
                             endDate.HasValue
                         },
-                        new[]
-                        {
-                            "c.BirthDate >= @StartDate",
-                            "c.BirthDate <= @EndDate"
-                        })
+                        "c.BirthDate >= @StartDate",
+                        "c.BirthDate <= @EndDate")
                 .Build();
 
             var sql = $@"
@@ -214,6 +209,7 @@ namespace Hydrix.Tests
                     EndDate = endDate,
                     Levels = levels
                 });
+            Console.WriteLine($"Customer Count: {result.Count()}");
 
             sql = Product.BuildQuery<Product>(builder);
             var productResult = await connection.QueryAsync<Product>(
@@ -225,6 +221,7 @@ namespace Hydrix.Tests
                     EndDate = endDate,
                     Levels = levels
                 });
+            Console.WriteLine($"Product Count: {productResult.Count()}");
 
             sql = $@"
                 SELECT
@@ -249,6 +246,7 @@ namespace Hydrix.Tests
 
             productResult = await connection.QueryAsync<Product>(
                 sql);
+            Console.WriteLine($"Product Count: {productResult.Count()}");
 
             sql = $@"
                 SELECT
@@ -284,6 +282,7 @@ namespace Hydrix.Tests
                         Value = false
                     }
                 });
+            Console.WriteLine($"Product Count: {productResult.Count()}");
 
             // ----------------- DELETE DATA -----------------
 
@@ -321,10 +320,12 @@ namespace Hydrix.Tests
             // ----------------- SELECT DATA -----------------
 
             var customers = await connection.QueryAsync<Customer, SqlParameter>(new GetCustomer());
+            Console.WriteLine($"Customer Count: {customers.Count()}");
 
             await connection.ExecuteAsync(new DelCustomers());
 
             customers = await connection.QueryAsync<Customer, SqlParameter>(new GetCustomer());
+            Console.WriteLine($"Customer Count: {customers.Count()}");
 
             // ----------------- DELETE DATA -----------------
 

@@ -29,8 +29,7 @@ namespace Hydrix.Orchestrator.Materializers
                 {
                     RollbackTransaction();
                 }
-                catch
-                { }
+                catch (Exception) { /* Exception ignored during rollback in Dispose. Resource cleanup */ }
 
                 var connection = DbConnection;
                 if (connection != null)
@@ -39,15 +38,13 @@ namespace Hydrix.Orchestrator.Materializers
                     {
                         CloseConnection();
                     }
-                    catch
-                    { }
+                    catch (Exception) { /* Exception ignored during connection close in Dispose. Resource cleanup */ }
 
                     try
                     {
                         connection.Dispose();
                     }
-                    catch
-                    { }
+                    catch (Exception) { /* Exception ignored during connection dispose in Dispose. Resource cleanup */ }
 
                     DbConnection = null;
                 }

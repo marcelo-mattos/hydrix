@@ -67,7 +67,6 @@ namespace Hydrix.Engines
         /// This is used to ensure that parameter names are correctly formatted for the target database.</param>
         /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
         /// a command and generating an error.</param>
-        /// <param name="logger">An optional logger instance to use for logging command execution details. If null, logging is skipped.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -81,8 +80,7 @@ namespace Hydrix.Engines
             string sql,
             object parameters,
             string parameterPrefix = null,
-            int? timeout = null,
-            ILogger logger = null)
+            int? timeout = null)
             => CreateCommandCore(
                 connection,
                 transaction,
@@ -92,8 +90,7 @@ namespace Hydrix.Engines
                     command,
                     parameters,
                     parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix),
-                timeout,
-                logger);
+                timeout);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -113,7 +110,6 @@ namespace Hydrix.Engines
         /// This is used to ensure that parameter names are correctly formatted for the target database.</param>
         /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
         /// a command and generating an error.</param>
-        /// <param name="logger">An optional logger instance to use for logging command execution details. If null, logging is skipped.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -128,8 +124,7 @@ namespace Hydrix.Engines
             IDbTransaction transaction,
             IProcedure<TDataParameterDriver> procedure,
             string parameterPrefix = null,
-            int? timeout = null,
-            ILogger logger = null)
+            int? timeout = null)
             where TDataParameterDriver : IDataParameter, new()
         {
 #if NET8_0_OR_GREATER
@@ -177,7 +172,7 @@ namespace Hydrix.Engines
                     cmd.Parameters.Add(dataParameter);
                 });
 
-            LogCommand(logger, command);
+            LogCommand(command);
 
             return command;
         }
@@ -268,7 +263,6 @@ namespace Hydrix.Engines
         /// before execution. May be null if no parameters are required.</param>
         /// <param name="timeout">An optional command timeout, in seconds, to use for this command.
         /// If null, the default timeout configured for the Materializer is used.</param>
-        /// <param name="logger">An optional logger instance to use for logging command execution details. If null, logging is skipped.</param>
         /// <returns>An IDbCommand instance configured with the specified command type, SQL, parameters, and transaction context.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the database connection is not open when attempting to create the command.</exception>
         internal static IDbCommand CreateCommandCore(
@@ -277,8 +271,7 @@ namespace Hydrix.Engines
             CommandType commandType,
             string sql,
             Action<IDbCommand> parameterBinder,
-            int? timeout = null,
-            ILogger logger = null)
+            int? timeout = null)
         {
             if (connection.State != ConnectionState.Open)
                 throw new InvalidOperationException("Database connection is not open.");
@@ -290,7 +283,7 @@ namespace Hydrix.Engines
             command.Transaction = transaction;
 
             parameterBinder?.Invoke(command);
-            LogCommand(logger, command);
+            LogCommand(command);
 
             return command;
         }
@@ -302,12 +295,12 @@ namespace Hydrix.Engines
         /// <remarks>Logging occurs only if a logger is initialized. The logged information includes the
         /// command text and all associated parameters, which can assist in debugging and monitoring database
         /// operations.</remarks>
-        /// <param name="logger">The logger instance to use for logging the command details. If null, logging is skipped.</param>
         /// <param name="command">The database command whose execution details are to be logged. Must not be null.</param>
         private static void LogCommand(
-            ILogger logger,
             IDbCommand command)
         {
+            var logger = HydrixConfiguration.Options.Logger;
+
             if (logger is null)
                 return;
 

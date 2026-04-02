@@ -109,6 +109,27 @@ namespace Hydrix.UnitTests.DependencyInjection
         }
 
         /// <summary>
+        /// Verifies that AddHydrix resolves and assigns a logger from the service provider when no logger is
+        /// configured explicitly.
+        /// </summary>
+        [Fact]
+        public void AddHydrix_ResolvesLoggerFromServiceProvider_WhenLoggerIsNotConfigured()
+        {
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var services = new ServiceCollection();
+                services.AddLogging();
+                services.AddHydrix();
+
+                using var serviceProvider = services.BuildServiceProvider();
+                var resolved = serviceProvider.GetService<HydrixOptions>();
+
+                Assert.NotNull(resolved);
+                Assert.NotNull(resolved.Logger);
+            });
+        }
+
+        /// <summary>
         /// Executes a test action while isolating and restoring global Hydrix configuration state.
         /// </summary>
         /// <param name="action">The test action that may mutate <see cref="HydrixConfiguration.Options"/>.</param>

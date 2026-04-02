@@ -946,7 +946,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// parameters before execution. Can be null if no parameters are required.</param>
             /// <param name="timeout">An optional command timeout, in seconds, to use for this command.
             /// If null, the default timeout configured for the Materializer is used.</param>
-            /// <param name="logger">An optional logger instance to use for logging command execution details. If null, logging is skipped.</param>
             /// <returns>An <see cref="IDbCommand"/> instance configured with the specified command type, SQL statement,
             /// parameters, and transaction. The caller is responsible for disposing the returned command when it is no
             /// longer needed.</returns>
@@ -956,16 +955,14 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
                 CommandType commandType,
                 string sql,
                 Action<IDbCommand> parameterBinder,
-                int? timeout = null,
-                ILogger logger = null)
+                int? timeout = null)
             => CommandEngine.CreateCommandCore(
                     connection,
                     transaction,
                     commandType,
                     sql,
                     parameterBinder,
-                    timeout,
-                    logger);
+                    timeout);
         }
 
         /// <summary>

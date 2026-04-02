@@ -14,6 +14,13 @@ using Xunit;
 namespace Hydrix.UnitTests.Engines
 {
     /// <summary>
+    /// Defines a non-parallelized test collection for tests that mutate global Hydrix configuration state.
+    /// </summary>
+    [CollectionDefinition("HydrixConfigurationSequential", DisableParallelization = true)]
+    public class HydrixConfigurationSequentialCollection
+    { }
+
+    /// <summary>
     /// Contains unit tests for the CommandEngine class, verifying command creation, parameter binding, transaction
     /// assignment, and logging behaviors.
     /// </summary>
@@ -22,8 +29,14 @@ namespace Hydrix.UnitTests.Engines
     /// handling for the CommandEngine API, including scenarios involving closed connections, parameter binding,
     /// transaction association, and logging. Use these tests as a reference for expected CommandEngine behaviors in
     /// various usage scenarios.</remarks>
+    [Collection("HydrixConfigurationSequential")]
     public class CommandEngineTests
     {
+        /// <summary>
+        /// Provides synchronized access to tests that mutate global <see cref="HydrixConfiguration"/> state.
+        /// </summary>
+        private static readonly object ConfigurationSyncRoot = new object();
+
         /// <summary>
         /// Represents a mock implementation of the <see cref="IDbConnection"/> interface for testing or simulation
         /// purposes.
@@ -614,7 +627,7 @@ namespace Hydrix.UnitTests.Engines
             var conn = new FakeDbConnection();
             conn.State = ConnectionState.Closed;
             Assert.Throws<InvalidOperationException>(() =>
-                CommandEngine.CreateCommandCore(conn, null, CommandType.Text, "SELECT 1", null, null, null));
+                CommandEngine.CreateCommandCore(conn, null, CommandType.Text, "SELECT 1", null, null));
         }
 
         /// <summary>
@@ -634,8 +647,7 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.StoredProcedure,
                 "spTest",
                 c => { binderCalled = true; },
-                77,
-                null);
+                77);
             Assert.Equal(CommandType.StoredProcedure, cmd.CommandType);
             Assert.Equal("spTest", cmd.CommandText);
             Assert.Equal(77, cmd.CommandTimeout);
@@ -659,8 +671,7 @@ namespace Hydrix.UnitTests.Engines
                 "SELECT * FROM T WHERE Id=@Id",
                 new { Id = 42 },
                 "@",
-                30,
-                null);
+                30);
             Assert.Equal("SELECT * FROM T WHERE Id=@Id", cmd.CommandText);
         }
 
@@ -683,8 +694,7 @@ namespace Hydrix.UnitTests.Engines
                 "SELECT * FROM T WHERE Id=@Id",
                 new[] { param },
                 "@",
-                15,
-                null);
+                15);
             Assert.Single(cmd.Parameters);
             Assert.Equal("@Id", ((IDbDataParameter)cmd.Parameters[0]).ParameterName);
         }
@@ -703,8 +713,7 @@ namespace Hydrix.UnitTests.Engines
                 "SELECT 1",
                 null,
                 "@",
-                15,
-                null);
+                15);
 
             Assert.Empty(cmd.Parameters.Cast<IDataParameter>());
         }
@@ -726,7 +735,6 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.Text,
                 "SELECT 1",
                 null,
-                null,
                 null);
             Assert.Equal(transaction, cmd.Transaction);
         }
@@ -744,8 +752,7 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.Text,
                 "SELECT 1",
                 null,
-                HydrixOptions.DefaultTimeout,
-                null);
+                HydrixOptions.DefaultTimeout);
 
             Assert.Equal(HydrixOptions.DefaultTimeout, cmd.CommandTimeout);
         }
@@ -766,11 +773,10 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.Text,
                 "SELECT 1",
                 null,
-                null,
                 null);
             var logMethod = typeof(CommandEngine).GetMethod("LogCommand", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             var exception = Record.Exception(() =>
-                logMethod.Invoke(null, new object[] { null, cmd }));
+                logMethod.Invoke(null, new object[] { cmd }));
 
             Assert.Null(exception);
         }
@@ -785,34 +791,37 @@ namespace Hydrix.UnitTests.Engines
         [Fact]
         public void LogCommand_LogsCommandTextAndParameters()
         {
-            var conn = new FakeDbConnection();
-            var loggerMock = new Mock<ILogger>();
-            loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
-            var cmd = CommandEngine.CreateCommandCore(
-                conn,
-                null,
-                CommandType.Text,
-                "SELECT 1",
-                c =>
-                {
-                    var p = c.CreateParameter();
-                    p.ParameterName = "@foo";
-                    p.Value = 123;
-                    p.DbType = DbType.Int32;
-                    c.Parameters.Add(p);
-                },
-                null,
-                loggerMock.Object);
-            var logMethod = typeof(CommandEngine).GetMethod("LogCommand", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            logMethod.Invoke(null, new object[] { loggerMock.Object, cmd });
-            loggerMock.Verify(l =>
-                l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Executing DbCommand")),
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var conn = new FakeDbConnection();
+                var loggerMock = new Mock<ILogger>();
+                loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+                HydrixConfiguration.Options.Logger = loggerMock.Object;
+                var cmd = CommandEngine.CreateCommandCore(
+                    conn,
                     null,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.AtLeastOnce());
+                    CommandType.Text,
+                    "SELECT 1",
+                    c =>
+                    {
+                        var p = c.CreateParameter();
+                        p.ParameterName = "@foo";
+                        p.Value = 123;
+                        p.DbType = DbType.Int32;
+                        c.Parameters.Add(p);
+                    },
+                    null);
+                var logMethod = typeof(CommandEngine).GetMethod("LogCommand", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                logMethod.Invoke(null, new object[] { cmd });
+                loggerMock.Verify(l =>
+                    l.Log(
+                        LogLevel.Information,
+                        It.IsAny<EventId>(),
+                        It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Executing DbCommand")),
+                        null,
+                        It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    Times.AtLeastOnce());
+            });
         }
 
         /// <summary>
@@ -821,27 +830,30 @@ namespace Hydrix.UnitTests.Engines
         [Fact]
         public void LogCommand_WhenInformationLevelDisabled_DoesNotLog()
         {
-            var conn = new FakeDbConnection();
-            var loggerMock = new Mock<ILogger>();
-            loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(false);
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var conn = new FakeDbConnection();
+                var loggerMock = new Mock<ILogger>();
+                loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(false);
+                HydrixConfiguration.Options.Logger = loggerMock.Object;
 
-            CommandEngine.CreateCommandCore(
-                conn,
-                null,
-                CommandType.Text,
-                "SELECT 1",
-                null,
-                null,
-                loggerMock.Object);
+                CommandEngine.CreateCommandCore(
+                    conn,
+                    null,
+                    CommandType.Text,
+                    "SELECT 1",
+                    null,
+                    null);
 
-            loggerMock.Verify(
-                l => l.Log(
-                    It.IsAny<LogLevel>(),
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Never);
+                loggerMock.Verify(
+                    l => l.Log(
+                        It.IsAny<LogLevel>(),
+                        It.IsAny<EventId>(),
+                        It.IsAny<It.IsAnyType>(),
+                        It.IsAny<Exception>(),
+                        It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    Times.Never);
+            });
         }
 
         /// <summary>
@@ -850,29 +862,32 @@ namespace Hydrix.UnitTests.Engines
         [Fact]
         public void LogCommand_LogsCommandText_WhenThereAreNoParameters()
         {
-            var conn = new FakeDbConnection();
-            var loggerMock = new Mock<ILogger>();
-            loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var conn = new FakeDbConnection();
+                var loggerMock = new Mock<ILogger>();
+                loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+                HydrixConfiguration.Options.Logger = loggerMock.Object;
 
-            CommandEngine.CreateCommandCore(
-                conn,
-                null,
-                CommandType.Text,
-                "SELECT 1",
-                null,
-                null,
-                loggerMock.Object);
+                CommandEngine.CreateCommandCore(
+                    conn,
+                    null,
+                    CommandType.Text,
+                    "SELECT 1",
+                    null,
+                    null);
 
-            loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) =>
-                        v.ToString().Contains("Executing DbCommand") &&
-                        !v.ToString().Contains("Parameters:")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+                loggerMock.Verify(
+                    l => l.Log(
+                        LogLevel.Information,
+                        It.IsAny<EventId>(),
+                        It.Is<It.IsAnyType>((v, t) =>
+                            v.ToString().Contains("Executing DbCommand") &&
+                            !v.ToString().Contains("Parameters:")),
+                        It.IsAny<Exception>(),
+                        It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    Times.Once);
+            });
         }
 
         /// <summary>
@@ -886,7 +901,7 @@ namespace Hydrix.UnitTests.Engines
             var conn = new FakeDbConnection();
             CustomProcedure procedure = null;
             Assert.Throws<ArgumentNullException>(() =>
-                CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, null));
+                CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10));
         }
 
         /// <summary>
@@ -899,7 +914,7 @@ namespace Hydrix.UnitTests.Engines
             var conn = new FakeDbConnection { State = ConnectionState.Closed };
             var procedure = new CustomProcedure { Id = 1, Name = "Test" };
             Assert.Throws<InvalidOperationException>(() =>
-                CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, null));
+                CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10));
         }
 
         /// <summary>
@@ -912,7 +927,7 @@ namespace Hydrix.UnitTests.Engines
             var conn = new FakeDbConnection();
             var procedure = new NoAttributeProcedure();
             Assert.Throws<MissingMemberException>(() =>
-                CommandEngine.CreateCommand<FakeDataParameter>(conn, null, procedure, "@", 10, null));
+                CommandEngine.CreateCommand<FakeDataParameter>(conn, null, procedure, "@", 10));
         }
 
         /// <summary>
@@ -924,7 +939,7 @@ namespace Hydrix.UnitTests.Engines
         {
             var conn = new FakeDbConnection();
             var procedure = new CustomProcedure { Id = 42, Name = "Alpha" };
-            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 20, null);
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 20);
             Assert.NotNull(cmd);
             Assert.Equal(20, cmd.CommandTimeout);
             // The following assertion is removed because FakeDbConnection's CreateCommand does not set the Connection property.
@@ -944,7 +959,7 @@ namespace Hydrix.UnitTests.Engines
             var conn = new FakeDbConnection();
             var procedure = new CustomProcedure { Id = 7, Name = "Beta" };
             var transaction = new FakeDbTransaction();
-            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, transaction, procedure, "@", 15, null);
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, transaction, procedure, "@", 15);
             Assert.Equal(transaction, cmd.Transaction);
         }
 
@@ -957,7 +972,7 @@ namespace Hydrix.UnitTests.Engines
         {
             var conn = new FakeDbConnection();
             var procedure = new CustomProcedure { Id = 99, Name = "Gamma" };
-            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", HydrixOptions.DefaultTimeout, null);
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", HydrixOptions.DefaultTimeout);
             Assert.Equal(HydrixOptions.DefaultTimeout, cmd.CommandTimeout);
         }
 
@@ -973,7 +988,7 @@ namespace Hydrix.UnitTests.Engines
         {
             var conn = new FakeDbConnection();
             var procedure = new CustomProcedure { Id = 5, Name = "Delta" };
-            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, prefix, 10, null);
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, prefix, 10);
             Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == prefix + "Id");
             Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == prefix + "Name");
         }
@@ -985,19 +1000,25 @@ namespace Hydrix.UnitTests.Engines
         [Fact]
         public void CreateCommand_LogsCommand_WhenLoggerProvided()
         {
-            var conn = new FakeDbConnection();
-            var procedure = new CustomProcedure { Id = 11, Name = "Epsilon" };
-            var loggerMock = new Mock<ILogger>();
-            loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
-            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, loggerMock.Object);
-            loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Executing DbCommand")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.AtLeastOnce);
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var conn = new FakeDbConnection();
+                var procedure = new CustomProcedure { Id = 11, Name = "Epsilon" };
+                var loggerMock = new Mock<ILogger>();
+                loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+                HydrixConfiguration.Options.Logger = loggerMock.Object;
+
+                _ = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10);
+
+                loggerMock.Verify(
+                    l => l.Log(
+                        LogLevel.Information,
+                        It.IsAny<EventId>(),
+                        It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Executing DbCommand")),
+                        It.IsAny<Exception>(),
+                        It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    Times.AtLeastOnce);
+            });
         }
 
         /// <summary>
@@ -1014,8 +1035,7 @@ namespace Hydrix.UnitTests.Engines
                 null,
                 procedure,
                 "@",
-                10,
-                null);
+                10);
 
             var parameter = Assert.IsType<ProviderAwareDataParameter>(Assert.Single(cmd.Parameters.Cast<IDataParameter>()));
             Assert.Equal("@Code", parameter.ParameterName);
@@ -1038,8 +1058,7 @@ namespace Hydrix.UnitTests.Engines
                 null,
                 procedure,
                 "@",
-                10,
-                null);
+                10);
 
             var parameter = Assert.IsType<AttributeParameter>(Assert.Single(cmd.Parameters.Cast<IDataParameter>()));
             Assert.Equal("@When", parameter.ParameterName);
@@ -1056,7 +1075,7 @@ namespace Hydrix.UnitTests.Engines
         {
             var conn = new FakeDbConnection();
             var procedure = new CustomProcedure { Id = 0, Name = null };
-            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10, null);
+            var cmd = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10);
             Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Id" && (int)p.Value == 0);
             Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Name" && p.Value == DBNull.Value);
         }
@@ -1075,7 +1094,6 @@ namespace Hydrix.UnitTests.Engines
                 CommandType.Text,
                 "SELECT * FROM T WHERE Id = @Id",
                 new { Id = 12 },
-                null,
                 null,
                 null);
 
@@ -1098,7 +1116,6 @@ namespace Hydrix.UnitTests.Engines
                 conn,
                 null,
                 procedure,
-                null,
                 null,
                 null);
 
@@ -1125,8 +1142,7 @@ namespace Hydrix.UnitTests.Engines
                 null,
                 procedure,
                 "@",
-                10,
-                null);
+                10);
 
             var parameter = Assert.IsType<AttributeParameter>(Assert.Single(cmd.Parameters.Cast<IDataParameter>()));
             Assert.Equal("@Code", parameter.ParameterName);
@@ -1151,8 +1167,7 @@ namespace Hydrix.UnitTests.Engines
                 null,
                 procedure,
                 "@",
-                10,
-                null);
+                10);
 
             Assert.Equal(2, cmd.Parameters.Count);
             Assert.Contains(cmd.Parameters.Cast<IDataParameter>(), p => p.ParameterName == "@Name" && (string)p.Value == "Alpha");
@@ -1178,16 +1193,14 @@ namespace Hydrix.UnitTests.Engines
                 null,
                 new CustomProcedure { Id = 1, Name = "One" },
                 "@",
-                10,
-                null);
+                10);
 
             var second = CommandEngine.CreateCommand<CustomDataParameter>(
                 conn,
                 null,
                 new CustomProcedure { Id = 2, Name = "Two" },
                 "@",
-                10,
-                null);
+                10);
 
             Assert.Equal(2, first.Parameters.Count);
             Assert.Equal(2, second.Parameters.Count);
@@ -1246,6 +1259,29 @@ namespace Hydrix.UnitTests.Engines
 
             Assert.NotNull(first);
             Assert.Same(first, second);
+        }
+
+
+        /// <summary>
+        /// Executes a test action while isolating and restoring mutable global Hydrix configuration state.
+        /// </summary>
+        /// <param name="action">The test action that may mutate <see cref="HydrixConfiguration.Options"/>.</param>
+        private static void ExecuteWithIsolatedConfiguration(
+            Action action)
+        {
+            lock (ConfigurationSyncRoot)
+            {
+                var originalLogger = HydrixConfiguration.Options.Logger;
+
+                try
+                {
+                    action();
+                }
+                finally
+                {
+                    HydrixConfiguration.Options.Logger = originalLogger;
+                }
+            }
         }
     }
 }

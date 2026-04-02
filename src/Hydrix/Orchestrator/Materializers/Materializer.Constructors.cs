@@ -12,6 +12,7 @@ namespace Hydrix.Orchestrator.Materializers
     /// <remarks>This class allows for customization of the database connection, command execution timeout,
     /// and parameter naming conventions. It is designed to facilitate data retrieval and manipulation in a structured
     /// manner.</remarks>
+#pragma warning disable S1133
     [Obsolete("This class is deprecated. Please use the extension methods in HydrixDataCore class.")]
     public partial class Materializer :
         Contract.IMaterializer
@@ -64,4 +65,5 @@ namespace Hydrix.Orchestrator.Materializers
             _parameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
         }
     }
+#pragma warning restore S1133
 }

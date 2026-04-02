@@ -37,8 +37,7 @@ namespace Hydrix.Engines
                 sql,
                 parameters,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return command.ExecuteNonQuery();
         }
@@ -62,8 +61,7 @@ namespace Hydrix.Engines
                 options.Transaction,
                 procedure,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return command.ExecuteNonQuery();
         }
@@ -91,8 +89,7 @@ namespace Hydrix.Engines
                 sql,
                 parameters,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -126,8 +123,7 @@ namespace Hydrix.Engines
                 options.Transaction,
                 procedure,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -161,8 +157,7 @@ namespace Hydrix.Engines
                 sql,
                 parameters,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return command.ExecuteScalar();
         }
@@ -186,8 +181,7 @@ namespace Hydrix.Engines
                 options.Transaction,
                 procedure,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return command.ExecuteScalar();
         }
@@ -215,8 +209,7 @@ namespace Hydrix.Engines
                 sql,
                 parameters,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -250,8 +243,7 @@ namespace Hydrix.Engines
                 options.Transaction,
                 procedure,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             if (command is DbCommand dbCommand)
                 return await dbCommand
@@ -287,8 +279,7 @@ namespace Hydrix.Engines
                 sql,
                 parameters,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return ExecuteReaderAndOwnCommand(
                 command,
@@ -316,8 +307,7 @@ namespace Hydrix.Engines
                 options.Transaction,
                 procedure,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return ExecuteReaderAndOwnCommand(
                 command,
@@ -349,8 +339,7 @@ namespace Hydrix.Engines
                 sql,
                 parameters,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return await ExecuteReaderAsyncAndOwnCommand(
                     command,
@@ -382,8 +371,7 @@ namespace Hydrix.Engines
                 options.Transaction,
                 procedure,
                 ResolveParameterPrefix(options),
-                options.CommandTimeout,
-                HydrixConfiguration.Options.Logger);
+                options.CommandTimeout);
 
             return await ExecuteReaderAsyncAndOwnCommand(
                     command,

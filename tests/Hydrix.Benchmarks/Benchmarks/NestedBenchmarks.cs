@@ -75,7 +75,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <remarks>Set this field to define the initial dataset size for performance testing or seeding
         /// scenarios. Adjust the value as needed to match the scale of the benchmark or test case.</remarks>
         [Params(100_000)]
-        public int RowCount;
+        public int RowCount { get; set; }
 
         /// <summary>
         /// Gets or sets the number of rows to return per query. This value is used to control the size of each result
@@ -85,7 +85,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// result set. A higher value may improve throughput for large datasets, while a lower value can reduce memory
         /// usage and improve responsiveness for smaller queries.</remarks>
         [Params(1_000, 10_000)]
-        public int Take;
+        public int Take { get; set; }
 
         /// <summary>
         /// Stores the SQL query string formatted for Dapper multi-mapping to retrieve User and Order data with flat

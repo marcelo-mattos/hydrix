@@ -1,5 +1,6 @@
 ﻿using Hydrix.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace Hydrix.DependencyInjection
@@ -25,7 +26,13 @@ namespace Hydrix.DependencyInjection
 
             configure?.Invoke(options);
 
-            services.AddSingleton(options);
+            services.AddSingleton(provider =>
+            {
+                options.Logger ??= provider
+                    .GetService<ILoggerFactory>()?
+                    .CreateLogger("Hydrix");
+                return options;
+            });
 
             HydrixConfiguration.Configure(options);
 
