@@ -120,16 +120,25 @@ namespace Hydrix.Extensions
             where TEntity : ITable, new()
         {
             var metadata = EntityMetadataCache.GetOrAdd(typeof(TEntity));
-            var ordinalMap = dataReader.BuildOrdinals();
+            var schemaHash = dataReader.ComputeSchemaHash();
+
+            if (metadata.TryGetBindings(
+                schemaHash,
+                out var bindings))
+            {
+                return bindings;
+            }
+
+            var ordinals = dataReader.BuildOrdinals();
 
             return metadata.GetOrAddBindings(
-                ordinalMap.SchemaHash,
+                schemaHash,
                 _ => TableMap.Bind(
                     dataReader,
                     metadata,
                     string.Empty,
-                    ordinalMap.Ordinals,
-                    ordinalMap.SchemaHash));
+                    ordinals,
+                    schemaHash));
         }
 
         /// <summary>
@@ -156,15 +165,13 @@ namespace Hydrix.Extensions
         }
 
         /// <summary>
-        /// Builds an ordinal map for the current <see cref="IDataReader"/> schema.
+        /// Computes the schema hash for the current <see cref="IDataReader"/>.
         /// </summary>
         /// <param name="reader">The data reader to inspect.</param>
-        /// <returns>An <see cref="OrdinalMap"/> containing ordinals and a schema hash.</returns>
-        private static OrdinalMap BuildOrdinals(
+        /// <returns>The hash that represents the current schema.</returns>
+        private static int ComputeSchemaHash(
             this IDataReader reader)
         {
-            var ordinals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
             unchecked
             {
                 var hash = 17;
@@ -172,8 +179,6 @@ namespace Hydrix.Extensions
                 {
                     var name = reader.GetName(index) ?? string.Empty;
                     var fieldType = GetFieldType(reader, index);
-
-                    ordinals[name] = index;
 
                     hash = (hash * 31) + index;
                     hash = (hash * 31) + name.Length;
@@ -183,10 +188,29 @@ namespace Hydrix.Extensions
 
                 hash = (hash * 31) + reader.FieldCount;
 
-                return new OrdinalMap(
-                    ordinals,
-                    hash);
+                return hash;
             }
+        }
+
+        /// <summary>
+        /// Builds the ordinal map for the current <see cref="IDataReader"/> schema.
+        /// </summary>
+        /// <param name="reader">The data reader to inspect.</param>
+        /// <returns>A dictionary that maps column names to ordinals.</returns>
+        private static Dictionary<string, int> BuildOrdinals(
+            this IDataReader reader)
+        {
+            var ordinals = new Dictionary<string, int>(
+                reader.FieldCount,
+                StringComparer.OrdinalIgnoreCase);
+
+            for (var index = 0; index < reader.FieldCount; index++)
+            {
+                var name = reader.GetName(index) ?? string.Empty;
+                ordinals[name] = index;
+            }
+
+            return ordinals;
         }
 
         /// <summary>

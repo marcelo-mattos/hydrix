@@ -3,8 +3,13 @@ using BenchmarkDotNet.Order;
 using Dapper;
 using Hydrix.Benchmarks.Infrastructure;
 using Hydrix.Benchmarks.Models;
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+#if NET8_0_OR_GREATER
+using Microsoft.EntityFrameworkCore;
+#endif
 
 namespace Hydrix.Benchmarks.Benchmarks
 {
@@ -22,6 +27,36 @@ namespace Hydrix.Benchmarks.Benchmarks
     [Orderer(SummaryOrderPolicy.FastestToSlowest)]
     public class NestedBenchmarks
     {
+#if NET8_0_OR_GREATER
+
+        /// <summary>
+        /// Compiles a query that retrieves a collection of users with their associated order information, ordered by
+        /// user ID and limited to a specified number of results.
+        /// </summary>
+        /// <remarks>This compiled query uses Entity Framework's AsNoTracking for improved read
+        /// performance and projects each user into a UserWithOrder object, including selected order details. Using a
+        /// compiled query can improve performance when executing the same query multiple times with different
+        /// parameters.</remarks>
+        private static readonly Func<BenchmarkDbContext, int, IEnumerable<UserWithOrder>> EntityFrameworkNestedQuery =
+            EF.CompileQuery(
+                (BenchmarkDbContext context, int take) => context.Users
+                    .AsNoTracking()
+                    .OrderBy(user => user.Id)
+                    .Select(user => new UserWithOrder
+                    {
+                        Id = user.Id,
+                        Name = user.Name,
+                        Age = user.Age,
+                        Status = user.Status,
+                        Order = new Order
+                        {
+                            Id = user.Order.Id,
+                            Total = user.Order.Total
+                        }
+                    })
+                    .Take(take));
+#endif
+
         /// <summary>
         /// Gets the database fixture used for testing database interactions.
         /// </summary>
@@ -33,6 +68,13 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// Represents the database connection used for data operations.
         /// </summary>
         private IDbConnection _conn = null!;
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Stores the Entity Framework options used to create benchmark DbContext instances.
+        /// </summary>
+        private DbContextOptions<BenchmarkDbContext> _efOptions = null!;
+#endif
 
         /// <summary>
         /// Gets or sets the total number of rows to use as the seed size for database operations in benchmarks.
@@ -110,6 +152,13 @@ namespace Hydrix.Benchmarks.Benchmarks
                 LEFT JOIN Orders o ON o.UserId = u.Id
                 ORDER BY u.Id
                 LIMIT @take";
+
+#if NET8_0_OR_GREATER
+            _efOptions = new DbContextOptionsBuilder<BenchmarkDbContext>()
+                .UseSqlite(_db.Connection)
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                .Options;
+#endif
         }
 
         /// <summary>
@@ -163,6 +212,20 @@ namespace Hydrix.Benchmarks.Benchmarks
                 new { take = Take })
                 .AsList();
         }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Retrieves users and orders through Entity Framework Core without tracking.
+        /// </summary>
+        [Benchmark]
+        public List<UserWithOrder> EntityFramework_Nested()
+        {
+            using var context = new BenchmarkDbContext(_efOptions);
+            return [.. EntityFrameworkNestedQuery(
+                    context,
+                    Take)];
+        }
+#endif
 
         /// <summary>
         /// Retrieves a list of users along with their associated orders from the database using ADO.NET.

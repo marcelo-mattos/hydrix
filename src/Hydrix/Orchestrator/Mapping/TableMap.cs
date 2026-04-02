@@ -147,15 +147,21 @@ namespace Hydrix.Orchestrator.Mapping
             IDataRecord record,
             ResolvedTableBindings bindings)
         {
-            SetResolvedEntityFields(
-                entity,
-                record,
-                bindings.Fields);
+            if (bindings.Fields.Length != 0)
+            {
+                SetResolvedEntityFields(
+                    entity,
+                    record,
+                    bindings.Fields);
+            }
 
-            SetResolvedEntityNestedEntities(
-                entity,
-                record,
-                bindings.Entities);
+            if (bindings.Entities.Length != 0)
+            {
+                SetResolvedEntityNestedEntities(
+                    entity,
+                    record,
+                    bindings.Entities);
+            }
         }
 
         /// <summary>
@@ -555,15 +561,27 @@ namespace Hydrix.Orchestrator.Mapping
                 if (!shouldInstantiate)
                     continue;
 
+                var nestedBindings = nested.Bindings;
                 var nestedEntity = (ITable)nested.Factory();
                 nested.Setter(
                     entity,
                     nestedEntity);
 
-                SetEntity(
-                    nestedEntity,
-                    record,
-                    nested.Bindings);
+                if (nestedBindings.Fields.Length != 0)
+                {
+                    SetResolvedEntityFields(
+                        nestedEntity,
+                        record,
+                        nestedBindings.Fields);
+                }
+
+                if (nestedBindings.Entities.Length != 0)
+                {
+                    SetResolvedEntityNestedEntities(
+                        nestedEntity,
+                        record,
+                        nestedBindings.Entities);
+                }
             }
         }
 

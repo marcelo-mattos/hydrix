@@ -3,8 +3,13 @@ using BenchmarkDotNet.Order;
 using Dapper;
 using Hydrix.Benchmarks.Infrastructure;
 using Hydrix.Benchmarks.Models;
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+#if NET8_0_OR_GREATER
+using Microsoft.EntityFrameworkCore;
+#endif
 
 namespace Hydrix.Benchmarks.Benchmarks
 {
@@ -20,6 +25,30 @@ namespace Hydrix.Benchmarks.Benchmarks
     [Orderer(SummaryOrderPolicy.FastestToSlowest)]
     public class FlatBenchmarks
     {
+#if NET8_0_OR_GREATER
+
+        /// <summary>
+        /// Represents a compiled Entity Framework query that retrieves a specified number of users as flat data
+        /// transfer objects, ordered by user ID and without tracking changes.
+        /// </summary>
+        /// <remarks>This compiled query improves performance by reusing the query plan for repeated
+        /// executions. The query projects each user entity to a UserFlat object and does not track the returned
+        /// entities in the context.</remarks>
+        private static readonly Func<BenchmarkDbContext, int, IEnumerable<UserFlat>> EntityFrameworkFlatQuery =
+            EF.CompileQuery(
+                (BenchmarkDbContext context, int take) => context.Users
+                    .AsNoTracking()
+                    .OrderBy(user => user.Id)
+                    .Select(user => new UserFlat
+                    {
+                        Id = user.Id,
+                        Name = user.Name,
+                        Age = user.Age,
+                        Status = user.Status
+                    })
+                    .Take(take));
+#endif
+
         /// <summary>
         /// Gets the database fixture used for testing database interactions.
         /// </summary>
@@ -31,6 +60,13 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// Represents the database connection used for data operations.
         /// </summary>
         private IDbConnection _conn = null!;
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Stores the Entity Framework options used to create benchmark DbContext instances.
+        /// </summary>
+        private DbContextOptions<BenchmarkDbContext> _efOptions = null!;
+#endif
 
         /// <summary>
         /// Gets or sets the total number of rows to use as the seed size for database operations in benchmarks.
@@ -72,6 +108,13 @@ namespace Hydrix.Benchmarks.Benchmarks
             _conn = _db.Connection;
 
             _sql = "SELECT Id, Name, Age, Status FROM Users ORDER BY Id LIMIT @take";
+
+#if NET8_0_OR_GREATER
+            _efOptions = new DbContextOptionsBuilder<BenchmarkDbContext>()
+                .UseSqlite(_db.Connection)
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                .Options;
+#endif
         }
 
         /// <summary>
@@ -115,6 +158,20 @@ namespace Hydrix.Benchmarks.Benchmarks
                 .Query<UserFlat>(_conn, _sql, new { take = Take })
                 .AsList();
         }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Retrieves a flat user projection through Entity Framework Core without tracking.
+        /// </summary>
+        [Benchmark]
+        public List<UserFlat> EntityFramework_Flat()
+        {
+            using var context = new BenchmarkDbContext(_efOptions);
+            return [.. EntityFrameworkFlatQuery(
+                    context,
+                    Take)];
+        }
+#endif
 
         /// <summary>
         /// Retrieves a list of user records from the database using ADO.NET with manual parameter handling.

@@ -69,6 +69,50 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Represents a parent entity with a nested hierarchy used to validate recursive nested mapping.
+        /// </summary>
+        private class DeepParent : ITable
+        {
+            /// <summary>
+            /// Gets or sets the first-level nested entity.
+            /// </summary>
+            [ForeignTable("level_one", PrimaryKeys = new[] { "Id" })]
+            public DeepChild LevelOne { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the first-level nested entity containing a second-level nested relationship.
+        /// </summary>
+        [Table("level_one")]
+        private class DeepChild : ITable
+        {
+            /// <summary>
+            /// Gets or sets the primary key value for this nested entity.
+            /// </summary>
+            [Column]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the second-level nested entity.
+            /// </summary>
+            [ForeignTable("level_two", PrimaryKeys = new[] { "Id" })]
+            public DeepGrandChild LevelTwo { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the second-level nested entity used by recursive nested mapping tests.
+        /// </summary>
+        [Table("level_two")]
+        private class DeepGrandChild : ITable
+        {
+            /// <summary>
+            /// Gets or sets the primary key value for this entity.
+            /// </summary>
+            [Column]
+            public int Id { get; set; }
+        }
+
+        /// <summary>
         /// Dummy implementation of <see cref="ITable"/> for testing.
         /// </summary>
         [Table("Test")]
@@ -1141,6 +1185,44 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
 
             Assert.Equal(77, entity.Id);
             Assert.NotNull(entity.Nested);
+        }
+
+        /// <summary>
+        /// Verifies that nested entity mapping recurses into nested bindings when child bindings contain nested
+        /// entities.
+        /// </summary>
+        [Fact]
+        public void SetEntityNestedEntities_Recurses_WhenNestedBindingsContainEntities()
+        {
+            var entity = new DeepParent();
+            var record = new Mock<IDataRecord>();
+
+            record.Setup(r => r.IsDBNull(It.IsAny<int>())).Returns(false);
+
+            var metadata = MetadataFactory.CreateEntity(
+                Array.Empty<ColumnMap>(),
+                new[]
+                {
+                    new TableMap(
+                        typeof(DeepParent).GetProperty(nameof(DeepParent.LevelOne)),
+                        new ForeignTableAttribute("level_one")
+                        {
+                            PrimaryKeys = new[] { "Id" }
+                        })
+                });
+
+            var ordinals = new Dictionary<string, int>
+            {
+                { "LevelOne.Id", 0 },
+                { "LevelOne.LevelTwo.Id", 1 }
+            };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { entity, record.Object, metadata, string.Empty, ordinals, 987 });
+
+            Assert.NotNull(entity.LevelOne);
+            Assert.NotNull(entity.LevelOne.LevelTwo);
         }
 
         /// <summary>

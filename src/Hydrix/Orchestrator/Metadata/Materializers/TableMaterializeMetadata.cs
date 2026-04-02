@@ -67,5 +67,15 @@ namespace Hydrix.Orchestrator.Metadata.Materializers
             => _bindingsBySchemaHash.GetOrAdd(
                 schemaHash,
                 factory);
+
+        /// <summary>
+        /// Attempts to retrieve a cached schema-bound binding plan.
+        /// </summary>
+        public bool TryGetBindings(
+            int schemaHash,
+            out ResolvedTableBindings bindings)
+            => _bindingsBySchemaHash.TryGetValue(
+                schemaHash,
+                out bindings);
     }
 }
