@@ -86,49 +86,71 @@ namespace Hydrix.Orchestrator.Resolvers
         private bool MatchesFieldTypes(
             IDataReader reader)
         {
+            if (!FieldsMatch(reader))
+                return false;
+
+            return EntitiesMatch(reader);
+        }
+
+        /// <summary>
+        /// Checks if all fields match the expected types.
+        /// </summary>
+        /// <param name="reader">The data reader to compare against the expected field types.</param>
+        /// <returns>true if all fields match; otherwise, false.</returns>
+        private bool FieldsMatch(
+            IDataReader reader)
+        {
             for (var index = 0; index < Fields.Length; index++)
             {
                 var field = Fields[index];
-                if (field.Ordinal < 0)
-                {
-                    continue;
-                }
-
-                if (field.SourceType == null)
-                {
+                if (!FieldMatches(reader, field))
                     return false;
-                }
+            }
+            return true;
+        }
 
-                var currentFieldType = GetFieldType(
-                    reader,
-                    field.Ordinal);
-                if (currentFieldType != null)
-                {
-                    if (currentFieldType != field.SourceType)
-                    {
-                        return false;
-                    }
+        /// <summary>
+        /// Checks if a single field matches the expected type.
+        /// </summary>
+        /// <param name="reader">The data reader to compare against the expected field type.</param>
+        /// <param name="field">The field binding to check.</param>
+        /// <returns>true if the field matches; otherwise, false.</returns>
+        private static bool FieldMatches(
+            IDataReader reader,
+            ResolvedFieldBinding field)
+        {
+            if (field.Ordinal < 0)
+                return true;
 
-                    continue;
-                }
+            if (field.SourceType == null)
+                return false;
 
-                if (!reader.IsDBNull(field.Ordinal) &&
-                    reader.GetValue(field.Ordinal)?.GetType() != field.SourceType)
-                {
-                    return false;
-                }
+            var currentFieldType = GetFieldType(reader, field.Ordinal);
+
+            if (currentFieldType != null)
+                return currentFieldType == field.SourceType;
+
+            if (!reader.IsDBNull(field.Ordinal) &&
+                reader.GetValue(field.Ordinal)?.GetType() != field.SourceType)
+            {
+                return false;
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if all nested entity bindings match the expected field types.
+        /// </summary>
+        /// <param name="reader">The data reader to compare against the expected field types.</param>
+        /// <returns>true if all nested entities match; otherwise, false.</returns>
+        private bool EntitiesMatch(IDataReader reader)
+        {
             for (var index = 0; index < Entities.Length; index++)
             {
-                if (!Entities[index]
-                    .Bindings
-                    .MatchesFieldTypes(reader))
-                {
+                if (!Entities[index].Bindings.MatchesFieldTypes(reader))
                     return false;
-                }
             }
-
             return true;
         }
 
