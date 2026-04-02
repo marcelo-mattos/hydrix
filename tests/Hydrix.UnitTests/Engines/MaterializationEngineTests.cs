@@ -1,5 +1,7 @@
 using Hydrix.Attributes.Schemas;
+using Hydrix.Configuration;
 using Hydrix.Engines;
+using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
 using Moq;
 using System;
@@ -9,6 +11,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -443,6 +446,58 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies ResolveCommandOptions returns the same options instance when provided and creates defaults when null.
+        /// </summary>
+        [Fact]
+        public void ResolveCommandOptions_ReturnsSameOrDefault()
+        {
+            var provided = new MaterializationCommandOptions
+            {
+                Connection = new Mock<IDbConnection>().Object,
+                ParameterPrefix = "#"
+            };
+
+            var same = InvokeMaterializationPrivateMethod<MaterializationCommandOptions>(
+                "ResolveCommandOptions",
+                provided);
+
+            Assert.Same(provided, same);
+
+            var created = InvokeMaterializationPrivateMethod<MaterializationCommandOptions>(
+                "ResolveCommandOptions",
+                null);
+
+            Assert.NotNull(created);
+            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix);
+        }
+
+        /// <summary>
+        /// Verifies ResolveOptions returns the same options instance when provided and creates defaults when null.
+        /// </summary>
+        [Fact]
+        public void ResolveOptions_ReturnsSameOrDefault()
+        {
+            var provided = new MaterializationOptions
+            {
+                Connection = new Mock<IDbConnection>().Object,
+                ParameterPrefix = "#"
+            };
+
+            var same = InvokeMaterializationPrivateMethod<MaterializationOptions>(
+                "ResolveOptions",
+                provided);
+
+            Assert.Same(provided, same);
+
+            var created = InvokeMaterializationPrivateMethod<MaterializationOptions>(
+                "ResolveOptions",
+                null);
+
+            Assert.NotNull(created);
+            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix);
+        }
+
+        /// <summary>
         /// Verifies Query maps rows to entities using text command mode.
         /// </summary>
         [Fact]
@@ -452,8 +507,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = MaterializationEngine.Query<TestEntity>(
-                connection.Object,
-                "select Id, Name from t");
+                "select Id, Name from t",
+                options: new MaterializationCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(2, result.Count);
             Assert.Equal(1, result[0].Id);
@@ -472,11 +530,14 @@ namespace Hydrix.UnitTests.Engines
             var parameter = new TestDbParameter { ParameterName = "@Id", Value = 7 };
 
             var result = MaterializationEngine.Query<TestEntity>(
-                connection.Object,
                 "sp_test",
                 parameter,
-                commandType: CommandType.StoredProcedure,
-                parameterPrefix: "@");
+                options: new MaterializationCommandOptions
+                {
+                    Connection = connection.Object,
+                    CommandType = CommandType.StoredProcedure,
+                    ParameterPrefix = "@"
+                });
 
             Assert.Single(result);
             Assert.Equal(7, result[0].Id);
@@ -494,8 +555,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = await MaterializationEngine.QueryAsync<TestEntity>(
-                connection.Object,
-                "select Id, Name from t");
+                "select Id, Name from t",
+                options: new MaterializationCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Single(result);
             Assert.Equal(3, result[0].Id);
@@ -515,8 +579,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await MaterializationEngine.QueryAsync<TestEntity>(
-                    connection.Object,
                     "select Id from t",
+                    options: new MaterializationCommandOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -531,8 +598,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = await MaterializationEngine.QueryAsync<TestEntity>(
-                connection.Object,
-                "select Id from t");
+                "select Id from t",
+                options: new MaterializationCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Single(result);
             Assert.Equal(1, result[0].Id);
@@ -553,8 +623,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                options: new MaterializationOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.NotNull(result);
             Assert.Empty(result);
@@ -574,8 +647,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = await MaterializationEngine.QueryAsync<TestEntity>(
-                connection.Object,
-                "select Id from t");
+                "select Id from t",
+                options: new MaterializationCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.NotNull(result);
             Assert.Empty(result);
@@ -591,10 +667,13 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = MaterializationEngine.Query<TestEntity, TestParameter>(
-                connection.Object,
                 new TestProcedure(),
-                commandTimeout: 15,
-                parameterPrefix: "@");
+                options: new MaterializationOptions
+                {
+                    Connection = connection.Object,
+                    CommandTimeout = 15,
+                    ParameterPrefix = "@"
+                });
 
             Assert.Single(result);
             Assert.Equal(9, result[0].Id);
@@ -613,8 +692,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = MaterializationEngine.Query<TestEntity, TestParameter>(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                options: new MaterializationOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Single(result);
             Assert.Equal(11, result[0].Id);
@@ -633,10 +715,13 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
-                connection.Object,
                 new TestProcedure(),
-                commandTimeout: 15,
-                parameterPrefix: "@");
+                options: new MaterializationOptions
+                {
+                    Connection = connection.Object,
+                    CommandTimeout = 15,
+                    ParameterPrefix = "@"
+                });
 
             Assert.Single(result);
             Assert.Equal(10, result[0].Id);
@@ -658,8 +743,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
-                    connection.Object,
                     new TestProcedure(),
+                    options: new MaterializationOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -674,8 +762,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = await MaterializationEngine.QueryAsync<TestEntity, TestParameter>(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                options: new MaterializationOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Single(result);
             Assert.Equal(1, result[0].Id);
@@ -692,8 +783,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             Assert.Throws<MissingMemberException>(() => MaterializationEngine.Query<InvalidEntity>(
-                connection.Object,
-                "select Id from t"));
+                "select Id from t",
+                options: new MaterializationCommandOptions
+                {
+                    Connection = connection.Object
+                }));
         }
 
         /// <summary>
@@ -706,8 +800,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             Assert.Throws<MissingMemberException>(() => MaterializationEngine.Query<InvalidEntity, TestParameter>(
-                connection.Object,
-                new TestProcedure()));
+                new TestProcedure(),
+                options: new MaterializationOptions
+                {
+                    Connection = connection.Object
+                }));
         }
 
         /// <summary>
@@ -817,6 +914,28 @@ namespace Hydrix.UnitTests.Engines
             connection.Setup(c => c.State).Returns(ConnectionState.Open);
             connection.Setup(c => c.CreateCommand()).Returns(command);
             return connection;
+        }
+
+        /// <summary>
+        /// Invokes a private static method from MaterializationEngine and returns the typed result.
+        /// </summary>
+        /// <typeparam name="TResult">The expected return type.</typeparam>
+        /// <param name="methodName">The private static method name.</param>
+        /// <param name="argument">The method argument.</param>
+        /// <returns>The method invocation result cast to <typeparamref name="TResult"/>.</returns>
+        private static TResult InvokeMaterializationPrivateMethod<TResult>(
+            string methodName,
+            object argument)
+        {
+            var method = typeof(MaterializationEngine).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+
+            return (TResult)method.Invoke(
+                null,
+                new[] { argument });
         }
 
         /// <summary>

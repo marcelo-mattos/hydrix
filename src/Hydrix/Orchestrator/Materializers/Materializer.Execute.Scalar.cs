@@ -1,4 +1,5 @@
 ﻿using Hydrix.Engines;
+using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -38,13 +39,15 @@ namespace Hydrix.Orchestrator.Materializers
             object parameters,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                DbConnection,
                 sql,
                 parameters,
-                null,
-                CommandType.Text,
-                timeout,
-                _parameterPrefix);
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    CommandType = CommandType.Text,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -65,13 +68,16 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                DbConnection,
                 sql,
                 parameters,
-                transaction,
-                CommandType.Text,
-                timeout,
-                _parameterPrefix);
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandType = CommandType.Text,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -133,13 +139,15 @@ namespace Hydrix.Orchestrator.Materializers
             IEnumerable<IDataParameter> parameters,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                DbConnection,
                 sql,
                 parameters,
-                null,
-                commandType,
-                timeout,
-                _parameterPrefix);
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    CommandType = commandType,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -162,13 +170,16 @@ namespace Hydrix.Orchestrator.Materializers
             IDbTransaction transaction,
             int? timeout = null)
             => ExecutionEngine.ExecuteScalar(
-                DbConnection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                timeout,
-                _parameterPrefix);
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -216,6 +227,67 @@ namespace Hydrix.Orchestrator.Materializers
                 (IEnumerable<IDataParameter>)null,
                 transaction,
                 timeout);
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
+        /// and is implemented by .NET Framework data providers that access data sources.
+        /// </typeparam>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public object ExecuteScalar<TDataParameterDriver>(
+            IProcedure<TDataParameterDriver> procedure,
+            int? timeout = null)
+            where TDataParameterDriver : IDataParameter, new()
+            => ExecutionEngine.ExecuteScalar(
+                procedure,
+                new ExecutionOptions
+                {
+                    Connection = DbConnection,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
+
+        /// <summary>
+        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
+        /// and is implemented by .NET Framework data providers that access data sources.
+        /// </typeparam>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>The first column of the first row in the resultset.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public object ExecuteScalar<TDataParameterDriver>(
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction,
+            int? timeout = null)
+            where TDataParameterDriver : IDataParameter, new()
+            => ExecutionEngine.ExecuteScalar(
+                procedure,
+                new ExecutionOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -237,13 +309,15 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    DbConnection,
                     sql,
                     parameters,
-                    null,
-                    CommandType.Text,
-                    timeout,
-                    _parameterPrefix,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        CommandType = CommandType.Text,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -269,13 +343,16 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    DbConnection,
                     sql,
                     parameters,
-                    transaction,
-                    CommandType.Text,
-                    timeout,
-                    _parameterPrefix,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandType = CommandType.Text,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -352,13 +429,15 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    DbConnection,
                     sql,
                     parameters,
-                    null,
-                    commandType,
-                    timeout,
-                    _parameterPrefix,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        CommandType = commandType,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -386,13 +465,16 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null,
             CancellationToken cancellationToken = default)
             => await ExecutionEngine.ExecuteScalarAsync(
-                    DbConnection,
                     sql,
                     parameters,
-                    transaction,
-                    commandType,
-                    timeout,
-                    _parameterPrefix,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandType = commandType,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -452,62 +534,6 @@ namespace Hydrix.Orchestrator.Materializers
                     timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
-
-        /// <summary>
-        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
-        /// </summary>
-        /// <typeparam name="TDataParameterDriver">
-        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
-        /// and is implemented by .NET Framework data providers that access data sources.
-        /// </typeparam>
-        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
-        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
-        /// and generating an error. If null, the default timeout is used.</param>
-        /// <returns>The first column of the first row in the resultset.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        public object ExecuteScalar<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> procedure,
-            int? timeout = null)
-            where TDataParameterDriver : IDataParameter, new()
-            => ExecutionEngine.ExecuteScalar(
-                DbConnection,
-                procedure,
-                null,
-                timeout,
-                _parameterPrefix);
-
-        /// <summary>
-        /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
-        /// </summary>
-        /// <typeparam name="TDataParameterDriver">
-        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
-        /// and is implemented by .NET Framework data providers that access data sources.
-        /// </typeparam>
-        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
-        /// <param name="transaction">The transaction to use for the command.</param>
-        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
-        /// and generating an error. If null, the default timeout is used.</param>
-        /// <returns>The first column of the first row in the resultset.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        public object ExecuteScalar<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction,
-            int? timeout = null)
-            where TDataParameterDriver : IDataParameter, new()
-            => ExecutionEngine.ExecuteScalar(
-                DbConnection,
-                procedure,
-                transaction,
-                timeout,
-                _parameterPrefix);
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row in the resultset returned by the query. Extra columns or rows are ignored.
@@ -533,11 +559,13 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
             => await ExecutionEngine.ExecuteScalarAsync(
-                    DbConnection,
                     procedure,
-                    null,
-                    timeout,
-                    _parameterPrefix,
+                    new ExecutionOptions
+                    {
+                        Connection = DbConnection,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -567,11 +595,14 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
             => await ExecutionEngine.ExecuteScalarAsync(
-                    DbConnection,
                     procedure,
-                    transaction,
-                    timeout,
-                    _parameterPrefix,
+                    new ExecutionOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
     }

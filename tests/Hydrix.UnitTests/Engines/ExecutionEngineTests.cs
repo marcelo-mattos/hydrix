@@ -1,5 +1,7 @@
 using Hydrix.Attributes.Schemas;
+using Hydrix.Configuration;
 using Hydrix.Engines;
+using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
 using Moq;
 using System;
@@ -8,6 +10,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -743,9 +746,12 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = ExecutionEngine.ExecuteNonQuery(
-                connection.Object,
                 "update x set y = @Id",
-                new { Id = 1 });
+                new { Id = 1 },
+                new ExecutionCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(7, result);
             Assert.Equal(CommandType.Text, command.CommandType);
@@ -764,10 +770,13 @@ namespace Hydrix.UnitTests.Engines
             var parameter = new TestParameter { ParameterName = "@p1", Value = 10 };
 
             var result = ExecutionEngine.ExecuteNonQuery(
-                connection.Object,
                 "sp_test",
                 parameter,
-                commandType: CommandType.StoredProcedure);
+                new ExecutionCommandOptions
+                {
+                    Connection = connection.Object,
+                    CommandType = CommandType.StoredProcedure
+                });
 
             Assert.Equal(3, result);
             Assert.Equal(CommandType.StoredProcedure, command.CommandType);
@@ -785,7 +794,12 @@ namespace Hydrix.UnitTests.Engines
             dbCommand.Setup(c => c.ExecuteNonQueryAsync(It.IsAny<CancellationToken>())).ReturnsAsync(11);
 
             var connection = CreateOpenConnection(dbCommand.Object);
-            var result = await ExecutionEngine.ExecuteNonQueryAsync(connection.Object, "update x set y = 1");
+            var result = await ExecutionEngine.ExecuteNonQueryAsync(
+                "update x set y = 1",
+                options: new ExecutionCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(11, result);
         }
@@ -803,8 +817,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await ExecutionEngine.ExecuteNonQueryAsync(
-                    connection.Object,
                     "update x set y = 1",
+                    options: new ExecutionCommandOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -818,8 +835,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = ExecutionEngine.ExecuteNonQuery(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                new ExecutionOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(8, result);
             Assert.Equal(CommandType.StoredProcedure, command.CommandType);
@@ -837,8 +857,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(dbCommand.Object);
 
             var result = await ExecutionEngine.ExecuteNonQueryAsync(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                new ExecutionOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(12, result);
         }
@@ -856,8 +879,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await ExecutionEngine.ExecuteNonQueryAsync(
-                    connection.Object,
                     new TestProcedure(),
+                    options: new ExecutionOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -870,7 +896,12 @@ namespace Hydrix.UnitTests.Engines
             var command = new TestCommand { ScalarResult = 123 };
             var connection = CreateOpenConnection(command);
 
-            var result = ExecutionEngine.ExecuteScalar(connection.Object, "select 123");
+            var result = ExecutionEngine.ExecuteScalar(
+                "select 123",
+                options: new ExecutionCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(123, result);
         }
@@ -886,7 +917,12 @@ namespace Hydrix.UnitTests.Engines
             dbCommand.Setup(c => c.ExecuteScalarAsync(It.IsAny<CancellationToken>())).ReturnsAsync("ok");
             var connection = CreateOpenConnection(dbCommand.Object);
 
-            var result = await ExecutionEngine.ExecuteScalarAsync(connection.Object, "select 'ok'");
+            var result = await ExecutionEngine.ExecuteScalarAsync(
+                "select 'ok'",
+                options: new ExecutionCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal("ok", result);
         }
@@ -904,8 +940,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await ExecutionEngine.ExecuteScalarAsync(
-                    connection.Object,
                     "select 1",
+                    options: new ExecutionCommandOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -919,8 +958,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = ExecutionEngine.ExecuteScalar(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                new ExecutionOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(456, result);
             Assert.Equal(CommandType.StoredProcedure, command.CommandType);
@@ -938,8 +980,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(dbCommand.Object);
 
             var result = await ExecutionEngine.ExecuteScalarAsync(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                new ExecutionOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal("proc-ok", result);
         }
@@ -957,8 +1002,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await ExecutionEngine.ExecuteScalarAsync(
-                    connection.Object,
                     new TestProcedure(),
+                    options: new ExecutionOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -973,7 +1021,12 @@ namespace Hydrix.UnitTests.Engines
             var command = new TestCommand { ReaderResult = reader.Object };
             var connection = CreateOpenConnection(command);
 
-            var result = ExecutionEngine.ExecuteReader(connection.Object, "select 1");
+            var result = ExecutionEngine.ExecuteReader(
+                "select 1",
+                options: new ExecutionCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.NotSame(reader.Object, result);
             Assert.False(command.IsDisposed);
@@ -994,7 +1047,12 @@ namespace Hydrix.UnitTests.Engines
             var dbCommand = new TestAsyncDbCommand { ReaderAsyncResult = dataReader };
             var connection = CreateOpenConnection(dbCommand);
 
-            var result = await ExecutionEngine.ExecuteReaderAsync(connection.Object, "select 1");
+            var result = await ExecutionEngine.ExecuteReaderAsync(
+                "select 1",
+                options: new ExecutionCommandOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.IsAssignableFrom<DbDataReader>(result);
             Assert.False(dbCommand.IsDisposed);
@@ -1017,8 +1075,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await ExecutionEngine.ExecuteReaderAsync(
-                    connection.Object,
                     "select 1",
+                    options: new ExecutionCommandOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -1034,8 +1095,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(command);
 
             var result = ExecutionEngine.ExecuteReader(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                options: new ExecutionOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.Equal(CommandType.StoredProcedure, command.CommandType);
             Assert.False(command.IsDisposed);
@@ -1057,8 +1121,11 @@ namespace Hydrix.UnitTests.Engines
             var connection = CreateOpenConnection(dbCommand);
 
             var result = await ExecutionEngine.ExecuteReaderAsync(
-                connection.Object,
-                new TestProcedure());
+                new TestProcedure(),
+                options: new ExecutionOptions
+                {
+                    Connection = connection.Object
+                });
 
             Assert.IsAssignableFrom<DbDataReader>(result);
             Assert.False(dbCommand.IsDisposed);
@@ -1081,8 +1148,11 @@ namespace Hydrix.UnitTests.Engines
 
             await Assert.ThrowsAsync<TaskCanceledException>(async () =>
                 await ExecutionEngine.ExecuteReaderAsync(
-                    connection.Object,
                     new TestProcedure(),
+                    options: new ExecutionOptions
+                    {
+                        Connection = connection.Object
+                    },
                     cancellationToken: cancellationTokenSource.Token));
         }
 
@@ -1096,7 +1166,12 @@ namespace Hydrix.UnitTests.Engines
             connection.Setup(c => c.State).Returns(ConnectionState.Closed);
 
             Assert.Throws<InvalidOperationException>(() =>
-                ExecutionEngine.ExecuteNonQuery(connection.Object, "update x set y = 1"));
+                ExecutionEngine.ExecuteNonQuery(
+                    "update x set y = 1",
+                    options: new ExecutionCommandOptions
+                    {
+                        Connection = connection.Object
+                    }));
         }
 
         /// <summary>
@@ -1122,12 +1197,67 @@ namespace Hydrix.UnitTests.Engines
 
             var exception = Assert.Throws<InvalidOperationException>(() =>
                 ExecutionEngine.ExecuteReader(
-                    connection.Object,
                     "select 1",
-                    behavior: CommandBehavior.SingleResult));
+                    behavior: CommandBehavior.SingleResult,
+                    options: new ExecutionCommandOptions
+                    {
+                        Connection = connection.Object
+                    }));
 
             Assert.Equal("boom", exception.Message);
             Assert.Equal(1, disposed);
+        }
+
+        /// <summary>
+        /// Verifies ResolveCommandOptions returns the same options instance when provided and creates defaults when null.
+        /// </summary>
+        [Fact]
+        public void ResolveCommandOptions_ReturnsSameOrDefault()
+        {
+            var provided = new ExecutionCommandOptions
+            {
+                Connection = new Mock<IDbConnection>().Object,
+                ParameterPrefix = "#"
+            };
+
+            var same = InvokeExecutionEnginePrivateMethod<ExecutionCommandOptions>(
+                "ResolveCommandOptions",
+                provided);
+
+            Assert.Same(provided, same);
+
+            var created = InvokeExecutionEnginePrivateMethod<ExecutionCommandOptions>(
+                "ResolveCommandOptions",
+                null);
+
+            Assert.NotNull(created);
+            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
+        }
+
+        /// <summary>
+        /// Verifies ResolveOptions returns the same options instance when provided and creates defaults when null.
+        /// </summary>
+        [Fact]
+        public void ResolveOptions_ReturnsSameOrDefault()
+        {
+            var provided = new ExecutionOptions
+            {
+                Connection = new Mock<IDbConnection>().Object,
+                ParameterPrefix = "#"
+            };
+
+            var same = InvokeExecutionEnginePrivateMethod<ExecutionOptions>(
+                "ResolveOptions",
+                provided);
+
+            Assert.Same(provided, same);
+
+            var created = InvokeExecutionEnginePrivateMethod<ExecutionOptions>(
+                "ResolveOptions",
+                null);
+
+            Assert.NotNull(created);
+            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix);
         }
 
         /// <summary>
@@ -1139,6 +1269,28 @@ namespace Hydrix.UnitTests.Engines
             connection.Setup(c => c.State).Returns(ConnectionState.Open);
             connection.Setup(c => c.CreateCommand()).Returns(command);
             return connection;
+        }
+
+        /// <summary>
+        /// Invokes a private static method from ExecutionEngine and returns the typed result.
+        /// </summary>
+        /// <typeparam name="TResult">The expected return type.</typeparam>
+        /// <param name="methodName">The private static method name.</param>
+        /// <param name="argument">The method argument.</param>
+        /// <returns>The method invocation result cast to <typeparamref name="TResult"/>.</returns>
+        private static TResult InvokeExecutionEnginePrivateMethod<TResult>(
+            string methodName,
+            object argument)
+        {
+            var method = typeof(ExecutionEngine).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+
+            return (TResult)method.Invoke(
+                null,
+                new[] { argument });
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Hydrix.Engines;
+using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -44,14 +45,16 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                DbConnection,
                 sql,
                 parameters,
-                null,
-                CommandType.Text,
-                limit,
-                timeout,
-                _parameterPrefix);
+                new MaterializationCommandOptions
+                {
+                    Connection = DbConnection,
+                    CommandType = CommandType.Text,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix,
+                    Limit = limit
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -79,14 +82,17 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                DbConnection,
                 sql,
                 parameters,
-                transaction,
-                CommandType.Text,
-                limit,
-                timeout,
-                _parameterPrefix);
+                new MaterializationCommandOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandType = CommandType.Text,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix,
+                    Limit = limit
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -171,14 +177,16 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                DbConnection,
                 sql,
                 parameters,
-                null,
-                commandType,
-                limit,
-                timeout,
-                _parameterPrefix);
+                new MaterializationCommandOptions
+                {
+                    Connection = DbConnection,
+                    CommandType = commandType,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix,
+                    Limit = limit
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -208,14 +216,17 @@ namespace Hydrix.Orchestrator.Materializers
             int? timeout = null)
             where TEntity : ITable, new()
             => MaterializationEngine.Query<TEntity>(
-                DbConnection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                limit,
-                timeout,
-                _parameterPrefix);
+                new MaterializationCommandOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix,
+                    Limit = limit
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -279,6 +290,81 @@ namespace Hydrix.Orchestrator.Materializers
                 transaction,
                 limit,
                 timeout);
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
+        /// Then parse its result into a ITable array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
+        /// and is implemented by .NET Framework data providers that access data sources.
+        /// </typeparam>
+        /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="limit">The maximum number of entities to create. If zero or negative, all records are converted.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>An ITable array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttribute decorating itself.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public IList<TEntity> Query<TEntity, TDataParameterDriver>(
+            IProcedure<TDataParameterDriver> procedure,
+            int limit = 0,
+            int? timeout = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+            => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
+                procedure,
+                new MaterializationOptions
+                {
+                    Connection = DbConnection,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix,
+                    Limit = limit
+                });
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
+        /// Then parse its result into a ITable array returning the processed data to the requester.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
+        /// and is implemented by .NET Framework data providers that access data sources.
+        /// </typeparam>
+        /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="limit">The maximum number of entities to create. If zero or negative, all records are converted.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>An ITable array filled with the DataSet result.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The entity does not have a TableAttribute decorating itself.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        public IList<TEntity> Query<TEntity, TDataParameterDriver>(
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction,
+            int limit = 0,
+            int? timeout = null)
+            where TEntity : ITable, new()
+            where TDataParameterDriver : IDataParameter, new()
+            => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
+                procedure,
+                new MaterializationOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix,
+                    Limit = limit
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
@@ -307,14 +393,16 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    DbConnection,
                     sql,
                     parameters,
-                    null,
-                    CommandType.Text,
-                    limit,
-                    timeout,
-                    _parameterPrefix,
+                    new MaterializationCommandOptions
+                    {
+                        Connection = DbConnection,
+                        CommandType = CommandType.Text,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix,
+                        Limit = limit
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -347,14 +435,17 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    DbConnection,
                     sql,
                     parameters,
-                    transaction,
-                    CommandType.Text,
-                    limit,
-                    timeout,
-                    _parameterPrefix,
+                    new MaterializationCommandOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandType = CommandType.Text,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix,
+                        Limit = limit
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -454,14 +545,16 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    DbConnection,
                     sql,
                     parameters,
-                    null,
-                    commandType,
-                    limit,
-                    timeout,
-                    _parameterPrefix,
+                    new MaterializationCommandOptions
+                    {
+                        Connection = DbConnection,
+                        CommandType = commandType,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix,
+                        Limit = limit
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -496,14 +589,17 @@ namespace Hydrix.Orchestrator.Materializers
             CancellationToken cancellationToken = default)
             where TEntity : ITable, new()
             => await MaterializationEngine.QueryAsync<TEntity>(
-                    DbConnection,
                     sql,
                     parameters,
-                    transaction,
-                    commandType,
-                    limit,
-                    timeout,
-                    _parameterPrefix,
+                    new MaterializationCommandOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandType = commandType,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix,
+                        Limit = limit
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -593,76 +689,6 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="limit">The maximum number of entities to create. If zero or negative, all records are converted.</param>
         /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
         /// and generating an error. If null, the default timeout is used.</param>
-        /// <returns>An ITable array filled with the DataSet result.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The entity does not have a TableAttribute decorating itself.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        public IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> procedure,
-            int limit = 0,
-            int? timeout = null)
-            where TEntity : ITable, new()
-            where TDataParameterDriver : IDataParameter, new()
-            => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
-                DbConnection,
-                procedure,
-                null,
-                limit,
-                timeout,
-                _parameterPrefix);
-
-        /// <summary>
-        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
-        /// Then parse its result into a ITable array returning the processed data to the requester.
-        /// </summary>
-        /// <typeparam name="TDataParameterDriver">
-        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
-        /// and is implemented by .NET Framework data providers that access data sources.
-        /// </typeparam>
-        /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
-        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
-        /// <param name="transaction">The transaction to use for the command.</param>
-        /// <param name="limit">The maximum number of entities to create. If zero or negative, all records are converted.</param>
-        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
-        /// and generating an error. If null, the default timeout is used.</param>
-        /// <returns>An ITable array filled with the DataSet result.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
-        /// <exception cref="MissingMemberException">The entity does not have a TableAttribute decorating itself.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        public IList<TEntity> Query<TEntity, TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction,
-            int limit = 0,
-            int? timeout = null)
-            where TEntity : ITable, new()
-            where TDataParameterDriver : IDataParameter, new()
-            => MaterializationEngine.Query<TEntity, TDataParameterDriver>(
-                DbConnection,
-                procedure,
-                transaction,
-                limit,
-                timeout,
-                _parameterPrefix);
-
-        /// <summary>
-        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.DataSet.
-        /// Then parse its result into a ITable array returning the processed data to the requester.
-        /// </summary>
-        /// <typeparam name="TDataParameterDriver">
-        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
-        /// and is implemented by .NET Framework data providers that access data sources.
-        /// </typeparam>
-        /// <typeparam name="TEntity">Represents a Sql Table that holds the data to be parsed from the DataSet result.</typeparam>
-        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
-        /// <param name="limit">The maximum number of entities to create. If zero or negative, all records are converted.</param>
-        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
-        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An ITable array filled with the DataSet result.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -680,12 +706,14 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
             => await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
-                    DbConnection,
                     procedure,
-                    null,
-                    limit,
-                    timeout,
-                    _parameterPrefix,
+                    new MaterializationOptions
+                    {
+                        Connection = DbConnection,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix,
+                        Limit = limit
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -721,12 +749,15 @@ namespace Hydrix.Orchestrator.Materializers
             where TEntity : ITable, new()
             where TDataParameterDriver : IDataParameter, new()
             => await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
-                    DbConnection,
                     procedure,
-                    transaction,
-                    limit,
-                    timeout,
-                    _parameterPrefix,
+                    new MaterializationOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix,
+                        Limit = limit
+                    },
                     cancellationToken)
                 .ConfigureAwait(false);
     }

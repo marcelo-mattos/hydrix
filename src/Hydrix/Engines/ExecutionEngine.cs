@@ -1,4 +1,5 @@
 using Hydrix.Configuration;
+using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
 using Hydrix.Wrappers;
 using System.Data;
@@ -18,31 +19,25 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command and returns the number of affected rows.
         /// </summary>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandType">The command interpretation mode.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <returns>The number of rows affected.</returns>
         public static int ExecuteNonQuery(
-            IDbConnection connection,
             string sql,
             object parameters = null,
-            IDbTransaction transaction = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeout = null,
-            string parameterPrefix = null)
+            ExecutionCommandOptions options = null)
         {
+            options = ResolveCommandOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
-                commandType,
+                options.Connection,
+                options.Transaction,
+                options.CommandType,
                 sql,
                 parameters,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return command.ExecuteNonQuery();
@@ -52,26 +47,22 @@ namespace Hydrix.Engines
         /// Executes a stored procedure command and returns the number of affected rows.
         /// </summary>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <returns>The number of rows affected.</returns>
         public static int ExecuteNonQuery<TDataParameterDriver>(
-            IDbConnection connection,
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction = null,
-            int? commandTimeout = null,
-            string parameterPrefix = null)
+            ExecutionOptions options = null)
             where TDataParameterDriver : IDataParameter, new()
         {
+            options = ResolveOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
+                options.Connection,
+                options.Transaction,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return command.ExecuteNonQuery();
@@ -80,33 +71,27 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command asynchronously and returns the number of affected rows.
         /// </summary>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandType">The command interpretation mode.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
         /// <returns>A task containing the number of rows affected.</returns>
         public static async Task<int> ExecuteNonQueryAsync(
-            IDbConnection connection,
             string sql,
             object parameters = null,
-            IDbTransaction transaction = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeout = null,
-            string parameterPrefix = null,
+            ExecutionCommandOptions options = null,
             CancellationToken cancellationToken = default)
         {
+            options = ResolveCommandOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
-                commandType,
+                options.Connection,
+                options.Transaction,
+                options.CommandType,
                 sql,
                 parameters,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             if (command is DbCommand dbCommand)
@@ -124,28 +109,24 @@ namespace Hydrix.Engines
         /// Executes a stored procedure command asynchronously and returns the number of affected rows.
         /// </summary>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
         /// <returns>A task containing the number of rows affected.</returns>
         public static async Task<int> ExecuteNonQueryAsync<TDataParameterDriver>(
-            IDbConnection connection,
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction = null,
-            int? commandTimeout = null,
-            string parameterPrefix = null,
+            ExecutionOptions options = null,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
+            options = ResolveOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
+                options.Connection,
+                options.Transaction,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             if (command is DbCommand dbCommand)
@@ -162,31 +143,25 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command and returns the first column of the first row.
         /// </summary>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandType">The command interpretation mode.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <returns>The scalar result.</returns>
         public static object ExecuteScalar(
-            IDbConnection connection,
             string sql,
             object parameters = null,
-            IDbTransaction transaction = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeout = null,
-            string parameterPrefix = null)
+            ExecutionCommandOptions options = null)
         {
+            options = ResolveCommandOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
-                commandType,
+                options.Connection,
+                options.Transaction,
+                options.CommandType,
                 sql,
                 parameters,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return command.ExecuteScalar();
@@ -196,26 +171,22 @@ namespace Hydrix.Engines
         /// Executes a stored procedure command and returns the first column of the first row.
         /// </summary>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <returns>The scalar result.</returns>
         public static object ExecuteScalar<TDataParameterDriver>(
-            IDbConnection connection,
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction = null,
-            int? commandTimeout = null,
-            string parameterPrefix = null)
+            ExecutionOptions options = null)
             where TDataParameterDriver : IDataParameter, new()
         {
+            options = ResolveOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
+                options.Connection,
+                options.Transaction,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return command.ExecuteScalar();
@@ -224,33 +195,27 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command asynchronously and returns the first column of the first row.
         /// </summary>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandType">The command interpretation mode.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
         /// <returns>A task containing the scalar result.</returns>
         public static async Task<object> ExecuteScalarAsync(
-            IDbConnection connection,
             string sql,
             object parameters = null,
-            IDbTransaction transaction = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeout = null,
-            string parameterPrefix = null,
+            ExecutionCommandOptions options = null,
             CancellationToken cancellationToken = default)
         {
+            options = ResolveCommandOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
-                commandType,
+                options.Connection,
+                options.Transaction,
+                options.CommandType,
                 sql,
                 parameters,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             if (command is DbCommand dbCommand)
@@ -268,28 +233,24 @@ namespace Hydrix.Engines
         /// Executes a stored procedure command asynchronously and returns the first column of the first row.
         /// </summary>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
         /// <returns>A task containing the scalar result.</returns>
         public static async Task<object> ExecuteScalarAsync<TDataParameterDriver>(
-            IDbConnection connection,
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction = null,
-            int? commandTimeout = null,
-            string parameterPrefix = null,
+            ExecutionOptions options = null,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
+            options = ResolveOptions(options);
+
             using var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
+                options.Connection,
+                options.Transaction,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             if (command is DbCommand dbCommand)
@@ -306,33 +267,27 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command and returns a data reader.
         /// </summary>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandType">The command interpretation mode.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
         /// <param name="behavior">The command behavior flags.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <returns>The data reader.</returns>
         public static IDataReader ExecuteReader(
-            IDbConnection connection,
             string sql,
             object parameters = null,
-            IDbTransaction transaction = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeout = null,
             CommandBehavior behavior = CommandBehavior.Default,
-            string parameterPrefix = null)
+            ExecutionCommandOptions options = null)
         {
+            options = ResolveCommandOptions(options);
+
             var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
-                commandType,
+                options.Connection,
+                options.Transaction,
+                options.CommandType,
                 sql,
                 parameters,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return ExecuteReaderAndOwnCommand(
@@ -344,28 +299,24 @@ namespace Hydrix.Engines
         /// Executes a stored procedure command and returns a data reader.
         /// </summary>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
         /// <param name="behavior">The command behavior flags.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <returns>The data reader.</returns>
         public static IDataReader ExecuteReader<TDataParameterDriver>(
-            IDbConnection connection,
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction = null,
-            int? commandTimeout = null,
             CommandBehavior behavior = CommandBehavior.Default,
-            string parameterPrefix = null)
+            ExecutionOptions options = null)
             where TDataParameterDriver : IDataParameter, new()
         {
+            options = ResolveOptions(options);
+
             var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
+                options.Connection,
+                options.Transaction,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return ExecuteReaderAndOwnCommand(
@@ -376,35 +327,29 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command asynchronously and returns a data reader.
         /// </summary>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandType">The command interpretation mode.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
         /// <param name="behavior">The command behavior flags.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
         /// <returns>The data reader.</returns>
         public static async Task<IDataReader> ExecuteReaderAsync(
-            IDbConnection connection,
             string sql,
             object parameters = null,
-            IDbTransaction transaction = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeout = null,
             CommandBehavior behavior = CommandBehavior.Default,
-            string parameterPrefix = null,
+            ExecutionCommandOptions options = null,
             CancellationToken cancellationToken = default)
         {
+            options = ResolveCommandOptions(options);
+
             var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
-                commandType,
+                options.Connection,
+                options.Transaction,
+                options.CommandType,
                 sql,
                 parameters,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return await ExecuteReaderAsyncAndOwnCommand(
@@ -418,30 +363,26 @@ namespace Hydrix.Engines
         /// Executes a stored procedure command asynchronously and returns a data reader.
         /// </summary>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
-        /// <param name="connection">The database connection used to create and execute the command.</param>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
-        /// <param name="transaction">The optional transaction associated with the command.</param>
-        /// <param name="commandTimeout">The optional command timeout in seconds.</param>
         /// <param name="behavior">The command behavior flags.</param>
-        /// <param name="parameterPrefix">The parameter name prefix.</param>
+        /// <param name="options">The command execution options.</param>
         /// <param name="cancellationToken">The cancellation token for the asynchronous operation.</param>
         /// <returns>The data reader.</returns>
         public static async Task<IDataReader> ExecuteReaderAsync<TDataParameterDriver>(
-            IDbConnection connection,
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction = null,
-            int? commandTimeout = null,
             CommandBehavior behavior = CommandBehavior.Default,
-            string parameterPrefix = null,
+            ExecutionOptions options = null,
             CancellationToken cancellationToken = default)
             where TDataParameterDriver : IDataParameter, new()
         {
+            options = ResolveOptions(options);
+
             var command = CommandEngine.CreateCommand(
-                connection,
-                transaction,
+                options.Connection,
+                options.Transaction,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                commandTimeout,
+                ResolveParameterPrefix(options),
+                options.CommandTimeout,
                 HydrixConfiguration.Options.Logger);
 
             return await ExecuteReaderAsyncAndOwnCommand(
@@ -507,5 +448,32 @@ namespace Hydrix.Engines
                 throw;
             }
         }
+
+        /// <summary>
+        /// Resolves command execution options, returning a default instance when none is provided.
+        /// </summary>
+        /// <param name="options">The command execution options.</param>
+        /// <returns>A non-null command execution options instance.</returns>
+        private static ExecutionCommandOptions ResolveCommandOptions(
+            ExecutionCommandOptions options)
+            => options ?? new ExecutionCommandOptions();
+
+        /// <summary>
+        /// Resolves execution options, returning a default instance when none is provided.
+        /// </summary>
+        /// <param name="options">The execution options.</param>
+        /// <returns>A non-null execution options instance.</returns>
+        private static ExecutionOptions ResolveOptions(
+            ExecutionOptions options)
+            => options ?? new ExecutionOptions();
+
+        /// <summary>
+        /// Resolves the effective parameter prefix for command execution.
+        /// </summary>
+        /// <param name="options">The execution options instance.</param>
+        /// <returns>The provided parameter prefix or the configured default prefix when none is specified.</returns>
+        private static string ResolveParameterPrefix(
+            ExecutionOptions options)
+            => options.ParameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Hydrix.Configuration;
 using Hydrix.Defaults;
 using Hydrix.Engines;
+using Hydrix.Engines.Options;
 using Hydrix.Extensions;
 using Hydrix.Schemas.Contract;
 using System;
@@ -19,6 +20,22 @@ namespace Hydrix
     /// the connection is null.</remarks>
     public static class HydrixDataCore
     {
+        /// <summary>
+        /// Represents the error message used when an operation is performed on an empty sequence.
+        /// </summary>
+        /// <remarks>This constant is typically used in exception messages to indicate that a sequence
+        /// does not contain any elements. It can be referenced when throwing exceptions such as
+        /// InvalidOperationException in sequence-processing methods.</remarks>
+        private const string SequenceContainsNoElementsMessage = "Sequence contains no elements.";
+
+        /// <summary>
+        /// Represents the error message used when a sequence contains more than one element in operations that expect a
+        /// single result.
+        /// </summary>
+        /// <remarks>This constant is typically used in exception messages to indicate that an operation
+        /// requiring a single element encountered multiple elements in the sequence.</remarks>
+        private const string SequenceContainsMoreThanOneElementMessage = "Sequence contains more than one element.";
+
         /// <summary>
         /// Executes a SQL command against the specified database connection and returns the number of rows affected.
         /// </summary>
@@ -52,12 +69,15 @@ namespace Hydrix
         {
             ValidateCommand(connection, sql);
             return ExecutionEngine.ExecuteNonQuery(
-                connection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                commandTimeout);
+                new ExecutionCommandOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = commandTimeout
+                });
         }
 
         /// <summary>
@@ -80,11 +100,14 @@ namespace Hydrix
         {
             ValidateProcedure(connection, procedure);
             return ExecutionEngine.ExecuteNonQuery(
-                connection,
                 procedure,
-                transaction,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix);
+                new ExecutionOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
+                });
         }
 
         /// <summary>
@@ -123,13 +146,16 @@ namespace Hydrix
         {
             ValidateCommand(connection, sql);
             return await ExecutionEngine.ExecuteNonQueryAsync(
-                connection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix,
+                new ExecutionCommandOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
+                },
                 cancellationToken)
             .ConfigureAwait(false);
         }
@@ -156,11 +182,14 @@ namespace Hydrix
         {
             ValidateProcedure(connection, procedure);
             return await ExecutionEngine.ExecuteNonQueryAsync(
-                connection,
                 procedure,
-                transaction,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix,
+                new ExecutionOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
+                },
                 cancellationToken)
             .ConfigureAwait(false);
         }
@@ -198,12 +227,15 @@ namespace Hydrix
         {
             ValidateCommand(connection, sql);
             return ExecutionEngine.ExecuteScalar(
-                connection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                commandTimeout)
+                new ExecutionCommandOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = commandTimeout
+                })
             .As<TResult>();
         }
 
@@ -228,11 +260,14 @@ namespace Hydrix
         {
             ValidateProcedure(connection, procedure);
             return ExecutionEngine.ExecuteScalar(
-                connection,
                 procedure,
-                transaction,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix)
+                new ExecutionOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
+                })
             .As<TResult>();
         }
 
@@ -269,13 +304,16 @@ namespace Hydrix
         {
             ValidateCommand(connection, sql);
             return (await ExecutionEngine.ExecuteScalarAsync(
-                connection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix,
+                new ExecutionCommandOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
+                },
                 cancellationToken)
             .ConfigureAwait(false))
             .As<TResult>();
@@ -305,11 +343,14 @@ namespace Hydrix
             ValidateProcedure(connection, procedure);
 
             return (await ExecutionEngine.ExecuteScalarAsync(
-                connection,
                 procedure,
-                transaction,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix,
+                new ExecutionOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
+                },
                 cancellationToken)
             .ConfigureAwait(false))
             .As<TResult>();
@@ -351,14 +392,17 @@ namespace Hydrix
         {
             ValidateCommand(connection, sql);
             return MaterializationEngine.Query<TEntity>(
-                connection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                limit,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix);
+                new MaterializationCommandOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix,
+                    Limit = limit
+                });
         }
 
         /// <summary>
@@ -384,12 +428,15 @@ namespace Hydrix
         {
             ValidateProcedure(connection, procedure);
             return MaterializationEngine.Query<TEntity, TDataParameterDriver>(
-                connection,
                 procedure,
-                transaction,
-                limit,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix);
+                new MaterializationOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix,
+                    Limit = limit
+                });
         }
 
         /// <summary>
@@ -431,14 +478,17 @@ namespace Hydrix
         {
             ValidateCommand(connection, sql);
             return await MaterializationEngine.QueryAsync<TEntity>(
-                connection,
                 sql,
                 parameters,
-                transaction,
-                commandType,
-                limit,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix,
+                new MaterializationCommandOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix,
+                    Limit = limit
+                },
                 cancellationToken)
             .ConfigureAwait(false);
         }
@@ -468,12 +518,15 @@ namespace Hydrix
         {
             ValidateProcedure(connection, procedure);
             return await MaterializationEngine.QueryAsync<TEntity, TDataParameterDriver>(
-                connection,
                 procedure,
-                transaction,
-                limit,
-                commandTimeout,
-                HydrixConfiguration.Options.ParameterPrefix,
+                new MaterializationOptions
+                {
+                    Connection = connection,
+                    Transaction = transaction,
+                    CommandTimeout = commandTimeout,
+                    ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix,
+                    Limit = limit
+                },
                 cancellationToken)
             .ConfigureAwait(false);
         }
@@ -517,7 +570,7 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             return enumerator.Current;
         }
@@ -550,7 +603,7 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             return enumerator.Current;
         }
@@ -596,7 +649,7 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             return enumerator.Current;
         }
@@ -633,7 +686,7 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             return enumerator.Current;
         }
@@ -826,12 +879,12 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
@@ -865,12 +918,12 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
@@ -918,12 +971,12 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
@@ -961,12 +1014,12 @@ namespace Hydrix
             using var enumerator = result.GetEnumerator();
 
             if (!enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains no elements.");
+                throw new InvalidOperationException(SequenceContainsNoElementsMessage);
 
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
@@ -1015,7 +1068,7 @@ namespace Hydrix
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
@@ -1054,7 +1107,7 @@ namespace Hydrix
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
@@ -1109,7 +1162,7 @@ namespace Hydrix
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
@@ -1152,7 +1205,7 @@ namespace Hydrix
             var first = enumerator.Current;
 
             if (enumerator.MoveNext())
-                throw new InvalidOperationException("Sequence contains more than one element.");
+                throw new InvalidOperationException(SequenceContainsMoreThanOneElementMessage);
 
             return first;
         }
