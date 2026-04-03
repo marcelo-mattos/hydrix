@@ -18,17 +18,17 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Gets the database connection.
         /// </summary>
-        internal IDbConnection DbConnection
+        public IDbConnection DbConnection
         {
             get
             {
-                lock (this._lockConnection)
-                    return this._dbConnection;
+                lock (_lockConnection)
+                    return _dbConnection;
             }
             private set
             {
-                lock (this._lockConnection)
-                    this._dbConnection = value;
+                lock (_lockConnection)
+                    _dbConnection = value;
             }
         }
 
@@ -39,13 +39,13 @@ namespace Hydrix.Orchestrator.Materializers
         {
             get
             {
-                lock (this._lockTransaction)
-                    return this._dbTransaction;
+                lock (_lockTransaction)
+                    return _dbTransaction;
             }
             private set
             {
-                lock (this._lockTransaction)
-                    this._dbTransaction = value;
+                lock (_lockTransaction)
+                    _dbTransaction = value;
             }
         }
 
@@ -56,8 +56,8 @@ namespace Hydrix.Orchestrator.Materializers
         {
             get
             {
-                lock (this._lockTransaction)
-                    return this.DbTransaction != null;
+                lock (_lockTransaction)
+                    return DbTransaction != null;
             }
         }
 
@@ -69,11 +69,11 @@ namespace Hydrix.Orchestrator.Materializers
         {
             get
             {
-                if (this.IsDisposed)
+                if (IsDisposed)
                     throw new ObjectDisposedException("The connection has been disposed.");
 
-                lock (this._lockConnection)
-                    return this.DbConnection.ConnectionString;
+                lock (_lockConnection)
+                    return DbConnection.ConnectionString;
             }
         }
 
@@ -85,11 +85,11 @@ namespace Hydrix.Orchestrator.Materializers
         {
             get
             {
-                if (this.IsDisposed)
+                if (IsDisposed)
                     throw new ObjectDisposedException("The connection has been disposed.");
 
-                lock (this._lockConnection)
-                    return this.DbConnection.State;
+                lock (_lockConnection)
+                    return DbConnection.State;
             }
         }
 
@@ -103,13 +103,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         public int Timeout
         {
-            get => this._timeout;
+            get => _timeout;
             set
             {
                 if (value <= 0)
                     throw new ArgumentException("The property value assigned is less than 0.");
 
-                this._timeout = value;
+                _timeout = value;
             }
         }
 
@@ -126,11 +126,11 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// Gets a value that determines freeing, releasing, or resetting condition of unmanaged resources.
         /// </summary>
-        public Boolean IsDisposed { get; private set; } = default;
+        public bool IsDisposed { get; private set; }
 
         /// <summary>
         /// Gets a value that determines freeing, releasing, or resetting condition of unmanaged resources.
         /// </summary>
-        public Boolean IsDisposing { get; private set; } = default;
+        public bool IsDisposing { get; private set; }
     }
 }

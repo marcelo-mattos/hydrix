@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Hydrix.Orchestrator.Materializers
 {
@@ -18,26 +18,39 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="disposing">Flag to determine if the managed objects needs to be released.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!(this.IsDisposed))
+            if (IsDisposed)
+                return;
+
+            IsDisposing = true;
+
+            if (disposing)
             {
-                this.IsDisposing = true;
-
-                // Dispose managed state (managed objects).
-                if (disposing)
-                { }
-
-                // Dispose unmanaged state (unmanaged objects).
-                try { this.RollbackTransaction(); } catch { }
-                try { this.CloseConnection(); } catch { }
-
-                lock (this._lockConnection)
+                try
                 {
-                    this.DbConnection?.Dispose();
-                    this.DbConnection = null;
+                    RollbackTransaction();
                 }
+                catch (Exception) { /* Exception ignored during rollback in Dispose. Resource cleanup */ }
 
-                this.IsDisposed = true;
+                var connection = DbConnection;
+                if (connection != null)
+                {
+                    try
+                    {
+                        CloseConnection();
+                    }
+                    catch (Exception) { /* Exception ignored during connection close in Dispose. Resource cleanup */ }
+
+                    try
+                    {
+                        connection.Dispose();
+                    }
+                    catch (Exception) { /* Exception ignored during connection dispose in Dispose. Resource cleanup */ }
+
+                    DbConnection = null;
+                }
             }
+
+            IsDisposed = true;
         }
 
         /// <summary>
@@ -46,7 +59,7 @@ namespace Hydrix.Orchestrator.Materializers
         /// </summary>
         public void Dispose()
         {
-            this.Dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
     }

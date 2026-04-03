@@ -30,8 +30,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteScalar_WithSqlAndParameters_ReturnsExpected()
         {
-            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>())).Returns(1);
-            var result = _materializerMock.Object.ExecuteScalar("SELECT", new { Id = 1 });
+            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>(), It.IsAny<int>())).Returns(1);
+            var result = _materializerMock.Object.ExecuteScalar("SELECT", new { Id = 1 }, It.IsAny<int>());
             Assert.Equal(1, result);
         }
 
@@ -46,8 +46,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteScalar_WithSqlParametersAndTransaction_ReturnsExpected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>(), transaction)).Returns(2);
-            var result = _materializerMock.Object.ExecuteScalar("SELECT", new { Id = 2 }, transaction);
+            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>())).Returns(2);
+            var result = _materializerMock.Object.ExecuteScalar("SELECT", new { Id = 2 }, transaction, It.IsAny<int>());
             Assert.Equal(2, result);
         }
 
@@ -60,8 +60,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteScalar_WithSqlOnly_ReturnsExpected()
         {
-            _materializerMock.Setup(m => m.ExecuteScalar("SELECT")).Returns(3);
-            var result = _materializerMock.Object.ExecuteScalar("SELECT");
+            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<int>())).Returns(3);
+            var result = _materializerMock.Object.ExecuteScalar("SELECT", It.IsAny<int>());
             Assert.Equal(3, result);
         }
 
@@ -76,8 +76,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteScalar_WithSqlAndTransaction_ReturnsExpected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", transaction)).Returns(4);
-            var result = _materializerMock.Object.ExecuteScalar("SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", transaction, It.IsAny<int>())).Returns(4);
+            var result = _materializerMock.Object.ExecuteScalar("SELECT", transaction, It.IsAny<int>());
             Assert.Equal(4, result);
         }
 
@@ -92,8 +92,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteScalar_WithCommandTypeSqlAndParameters_ReturnsExpected()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.Text, "SELECT", parameters)).Returns(5);
-            var result = _materializerMock.Object.ExecuteScalar(CommandType.Text, "SELECT", parameters);
+            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.Text, "SELECT", parameters, It.IsAny<int>())).Returns(5);
+            var result = _materializerMock.Object.ExecuteScalar(CommandType.Text, "SELECT", parameters, It.IsAny<int>());
             Assert.Equal(5, result);
         }
 
@@ -109,8 +109,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.StoredProcedure, "PROC", parameters, transaction)).Returns(6);
-            var result = _materializerMock.Object.ExecuteScalar(CommandType.StoredProcedure, "PROC", parameters, transaction);
+            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>())).Returns(6);
+            var result = _materializerMock.Object.ExecuteScalar(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>());
             Assert.Equal(6, result);
         }
 
@@ -123,8 +123,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteScalar_WithCommandTypeAndSql_ReturnsExpected()
         {
-            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.Text, "SELECT")).Returns(7);
-            var result = _materializerMock.Object.ExecuteScalar(CommandType.Text, "SELECT");
+            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.Text, "SELECT", It.IsAny<int>())).Returns(7);
+            var result = _materializerMock.Object.ExecuteScalar(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Equal(7, result);
         }
 
@@ -138,8 +138,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteScalar_WithCommandTypeSqlAndTransaction_ReturnsExpected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.Text, "SELECT", transaction)).Returns(8);
-            var result = _materializerMock.Object.ExecuteScalar(CommandType.Text, "SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteScalar(CommandType.Text, "SELECT", transaction, It.IsAny<int>())).Returns(8);
+            var result = _materializerMock.Object.ExecuteScalar(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Equal(8, result);
         }
 
@@ -154,8 +154,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteScalarAsync_WithSqlParametersAndCancellationToken_ReturnsExpected()
         {
-            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>())).ReturnsAsync(9);
-            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT", new { Id = 9 });
+            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(9);
+            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT", new { Id = 9 }, It.IsAny<int>());
             Assert.Equal(9, result);
         }
 
@@ -171,8 +171,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteScalarAsync_WithSqlParametersTransactionAndCancellationToken_ReturnsExpected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<object>(), transaction, It.IsAny<CancellationToken>())).ReturnsAsync(10);
-            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT", new { Id = 10 }, transaction);
+            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(10);
+            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT", new { Id = 10 }, transaction, It.IsAny<int>());
             Assert.Equal(10, result);
         }
 
@@ -187,8 +187,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteScalarAsync_WithSqlAndCancellationToken_ReturnsExpected()
         {
-            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<CancellationToken>())).ReturnsAsync(11);
-            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT");
+            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(11);
+            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT", It.IsAny<int>());
             Assert.Equal(11, result);
         }
 
@@ -204,8 +204,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteScalarAsync_WithSqlTransactionAndCancellationToken_ReturnsExpected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", transaction, It.IsAny<CancellationToken>())).ReturnsAsync(12);
-            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(12);
+            var result = await _materializerMock.Object.ExecuteScalarAsync("SELECT", transaction, It.IsAny<int>());
             Assert.Equal(12, result);
         }
 
@@ -218,8 +218,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteScalarAsync_WithCommandTypeSqlParametersAndCancellationToken_ReturnsExpected()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.Text, "SELECT", parameters, It.IsAny<CancellationToken>())).ReturnsAsync(13);
-            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.Text, "SELECT", parameters);
+            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(13);
+            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.Text, "SELECT", parameters, It.IsAny<int>());
             Assert.Equal(13, result);
         }
 
@@ -233,8 +233,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<CancellationToken>())).ReturnsAsync(14);
-            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.StoredProcedure, "PROC", parameters, transaction);
+            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(14);
+            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.StoredProcedure, "PROC", parameters, transaction, It.IsAny<int>());
             Assert.Equal(14, result);
         }
 
@@ -249,8 +249,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteScalarAsync_WithCommandTypeAndSqlAndCancellationToken_ReturnsExpected()
         {
-            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.Text, "SELECT", It.IsAny<CancellationToken>())).ReturnsAsync(15);
-            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.Text, "SELECT");
+            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(15);
+            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Equal(15, result);
         }
 
@@ -266,8 +266,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteScalarAsync_WithCommandTypeSqlTransactionAndCancellationToken_ReturnsExpected()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.Text, "SELECT", transaction, It.IsAny<CancellationToken>())).ReturnsAsync(16);
-            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.Text, "SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteScalarAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(16);
+            var result = await _materializerMock.Object.ExecuteScalarAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Equal(16, result);
         }
 
@@ -282,8 +282,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteScalar_GenericProcedure_ReturnsExpected()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteScalar<DummyParameter>(proc)).Returns(17);
-            var result = _materializerMock.Object.ExecuteScalar<DummyParameter>(proc);
+            _materializerMock.Setup(m => m.ExecuteScalar<DummyParameter>(proc, It.IsAny<int>())).Returns(17);
+            var result = _materializerMock.Object.ExecuteScalar<DummyParameter>(proc, It.IsAny<int>());
             Assert.Equal(17, result);
         }
 
@@ -298,8 +298,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalar<DummyParameter>(proc, transaction)).Returns(18);
-            var result = _materializerMock.Object.ExecuteScalar<DummyParameter>(proc, transaction);
+            _materializerMock.Setup(m => m.ExecuteScalar<DummyParameter>(proc, transaction, It.IsAny<int>())).Returns(18);
+            var result = _materializerMock.Object.ExecuteScalar<DummyParameter>(proc, transaction, It.IsAny<int>());
             Assert.Equal(18, result);
         }
 
@@ -314,8 +314,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteScalarAsync_GenericProcedure_ReturnsExpected()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteScalarAsync<DummyParameter>(proc, It.IsAny<CancellationToken>())).ReturnsAsync(19);
-            var result = await _materializerMock.Object.ExecuteScalarAsync<DummyParameter>(proc);
+            _materializerMock.Setup(m => m.ExecuteScalarAsync<DummyParameter>(proc, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(19);
+            var result = await _materializerMock.Object.ExecuteScalarAsync<DummyParameter>(proc, It.IsAny<int>());
             Assert.Equal(19, result);
         }
 
@@ -332,8 +332,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteScalarAsync<DummyParameter>(proc, transaction, It.IsAny<CancellationToken>())).ReturnsAsync(20);
-            var result = await _materializerMock.Object.ExecuteScalarAsync<DummyParameter>(proc, transaction);
+            _materializerMock.Setup(m => m.ExecuteScalarAsync<DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(20);
+            var result = await _materializerMock.Object.ExecuteScalarAsync<DummyParameter>(proc, transaction, It.IsAny<int>());
             Assert.Equal(20, result);
         }
 
@@ -347,9 +347,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteScalar_Disposed_ThrowsObjectDisposedException()
         {
-            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws(new ObjectDisposedException(nameof(IMaterializer)));
-            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteScalar("SELECT", new { }));
+            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteScalar("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -360,8 +360,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteScalar_InvalidArgument_ThrowsArgumentException()
         {
-            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", null)).Throws<ArgumentException>();
-            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteScalar("SELECT", null));
+            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", null, It.IsAny<int>())).Throws<ArgumentException>();
+            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteScalar("SELECT", null, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -374,8 +374,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteScalar_InvalidOperation_ThrowsInvalidOperationException()
         {
-            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>())).Throws<InvalidOperationException>();
-            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteScalar("SELECT", new { }));
+            _materializerMock.Setup(m => m.ExecuteScalar("SELECT", It.IsAny<object>(), It.IsAny<int>())).Throws<InvalidOperationException>();
+            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteScalar("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -388,10 +388,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteScalarAsync_OperationCanceled_ThrowsOperationCanceledException()
         {
-            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteScalarAsync("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await _materializerMock.Object.ExecuteScalarAsync("SELECT", new { }, CancellationToken.None));
+                await _materializerMock.Object.ExecuteScalarAsync("SELECT", new { }, It.IsAny<int>(), CancellationToken.None));
         }
     }
 }

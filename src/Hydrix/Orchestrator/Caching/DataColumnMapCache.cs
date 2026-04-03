@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -26,7 +25,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>The DataColumnBinder instance is created only when it is first accessed, ensuring
         /// efficient resource usage. This approach is particularly useful in scenarios where the binder may not be
         /// needed immediately, thus avoiding unnecessary initialization overhead.</remarks>
-        private static readonly Lazy<DataColumnBinder<TEntity>> _map =
+        private static readonly Lazy<DataColumnBinder<TEntity>> Map =
             new Lazy<DataColumnBinder<TEntity>>(Build, isThreadSafe: true);
 
         /// <summary>
@@ -37,7 +36,7 @@ namespace Hydrix.Orchestrator.Caching
         /// specified entity type, facilitating data binding operations.</remarks>
         /// <returns>A DataColumnBinder&lt;TEntity&gt; instance that is either retrieved from the map or newly created.</returns>
         public static DataColumnBinder<TEntity> GetOrCreate() =>
-            _map.Value;
+            Map.Value;
 
         /// <summary>
         /// Creates a new instance of the DataColumnBinder for the specified entity type, binding its readable

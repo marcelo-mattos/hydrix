@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Hydrix.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hydrix.Orchestrator.Materializers
 {
@@ -14,15 +16,9 @@ namespace Hydrix.Orchestrator.Materializers
         Contract.IMaterializer
     {
         /// <summary>
-        /// A logger instance used for recording diagnostic and operational information,
-        /// typically for debugging or monitoring the execution of SQL commands within the materializer.
-        /// </summary>
-        private readonly ILogger _logger;
-
-        /// <summary>
         /// The wait time (in seconds) before terminating the attempt to execute a command and generating an error.
         /// </summary>
-        private int _timeout = DefaultTimeout;
+        private int _timeout = HydrixOptions.DefaultTimeout;
 
         /// <summary>
         /// The database connection.
@@ -47,6 +43,15 @@ namespace Hydrix.Orchestrator.Materializers
         /// <summary>
         /// The prefix used for SQL parameters.
         /// </summary>
-        private readonly string _parameterPrefix = DefaultParameterPrefix;
+        private readonly string _parameterPrefix = HydrixOptions.DefaultParameterPrefix;
+
+        /// <summary>
+        /// The logger instance associated with this materializer.
+        /// </summary>
+        [SuppressMessage(
+            "Major Code Smell",
+            "S1144",
+            Justification = "Used indirectly by tests through reflection.")]
+        private readonly ILogger _logger;
     }
 }

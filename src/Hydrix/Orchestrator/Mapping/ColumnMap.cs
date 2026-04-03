@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Reflection;
 
 namespace Hydrix.Orchestrator.Mapping
 {
@@ -18,6 +19,11 @@ namespace Hydrix.Orchestrator.Mapping
         public string Name { get; }
 
         /// <summary>
+        /// Gets the reflected property metadata when it is available.
+        /// </summary>
+        public PropertyInfo Property { get; }
+
+        /// <summary>
         /// Gets the field reader associated with this instance, which provides access to the underlying data fields.
         /// </summary>
         public FieldReader Reader { get; }
@@ -29,20 +35,31 @@ namespace Hydrix.Orchestrator.Mapping
         public Action<object, object> Setter { get; }
 
         /// <summary>
+        /// Gets the CLR target type of the mapped property.
+        /// </summary>
+        public Type TargetType { get; }
+
+        /// <summary>
         /// Initializes a new instance of the SqlFieldMap class using the specified property, SQL field attribute, and
         /// target type.
         /// </summary>
         /// <param name="name">The name of the SQL field to which the property is mapped. This should be a valid column name in the database.</param>
         /// <param name="setter">The compiled setter delegate used to assign values to the entity property without reflection.</param>
         /// <param name="reader">The field reader delegate used to read values from the data record.</param>
+        /// <param name="targetType">The CLR target type of the mapped property when available.</param>
+        /// <param name="property">The reflected property metadata when it is available.</param>
         public ColumnMap(
             string name,
             Action<object, object> setter,
-            FieldReader reader)
+            FieldReader reader,
+            Type targetType = null,
+            PropertyInfo property = null)
         {
             Name = name;
+            Property = property;
             Setter = setter;
             Reader = reader;
+            TargetType = targetType;
         }
     }
 }

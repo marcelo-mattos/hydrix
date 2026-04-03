@@ -1,6 +1,7 @@
 using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Caching;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
 
@@ -38,8 +39,65 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
             /// <remarks>This property establishes a link to a related entity, enabling navigation
             /// between associated data models. Ensure that the foreign entity is properly configured in the database
             /// context to maintain referential integrity.</remarks>
-            [ForeignTable("foreign", PrimaryKeys = new string[0])]
+            [ForeignTable("foreign", PrimaryKeys = new string[0], ForeignKeys = new[] { "ForeignId" })]
             public ForeignEntityWithNoPrimaryKey Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets the foreign key value associated with the relationship.
+            /// </summary>
+            public int ForeignId { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a main entity with an explicit foreign-key name that does not match any property.
+        /// </summary>
+        private class MainEntityWithNonExistentConfiguredForeignKey
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity with explicit join key configuration.
+            /// </summary>
+            [ForeignTable("foreign", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "UnknownForeignKey" })]
+            public ForeignEntityWithColumn Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets a sample property unrelated to the configured foreign key name.
+            /// </summary>
+            public int AnyValue { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a main entity with a required foreign-key property.
+        /// </summary>
+        private class MainEntityWithRequiredForeignKey
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity with explicit join key configuration.
+            /// </summary>
+            [ForeignTable("foreign", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "ForeignId" })]
+            public ForeignEntityWithColumn Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets the required foreign-key value used by the join.
+            /// </summary>
+            [Required]
+            public int ForeignId { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a main entity whose foreign mapping explicitly defines a schema.
+        /// </summary>
+        private class MainEntityWithExplicitForeignSchema
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity with an explicit schema in the foreign-table attribute.
+            /// </summary>
+            [ForeignTable("foreign", Schema = "custom", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "ForeignId" })]
+            public ForeignEntityWithColumn Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets the foreign key value used in the relationship.
+            /// </summary>
+            public int ForeignId { get; set; }
         }
 
         /// <summary>
@@ -92,8 +150,13 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
             /// <remarks>This property is decorated with the ForeignTable attribute, indicating that
             /// it maps to a foreign key relationship in the database. Ensure that the related entity is properly
             /// configured to maintain referential integrity.</remarks>
-            [ForeignTable("foreign", PrimaryKeys = null)]
+            [ForeignTable("foreign", PrimaryKeys = null, ForeignKeys = new[] { "ForeignId" })]
             public ForeignEntityWithColumn Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets the foreign key value associated with the relationship.
+            /// </summary>
+            public int ForeignId { get; set; }
         }
 
         /// <summary>
@@ -120,6 +183,63 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
             /// <remarks>This property is typically used to establish a relationship with another
             /// entity in a database or data model. Ensure that the value assigned is valid and corresponds to an
             /// existing entity.</remarks>
+            public int ForeignId { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a foreign entity that declares a primary key using data annotations.
+        /// </summary>
+        private class ForeignEntityWithPrimaryKey
+        {
+            /// <summary>
+            /// Gets or sets the primary key identifier of the foreign entity.
+            /// </summary>
+            [Key]
+            public int Id { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a main entity with a foreign table relationship but without resolvable foreign keys.
+        /// </summary>
+        private class MainEntityWithForeignTableWithoutForeignKeys
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity.
+            /// </summary>
+            [ForeignTable("foreign")]
+            public ForeignEntityWithPrimaryKey Foreign { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a foreign entity used for composite key mapping scenarios.
+        /// </summary>
+        private class ForeignEntityWithCompositeKey
+        {
+            /// <summary>
+            /// Gets or sets the first key-like value.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the second key-like value.
+            /// </summary>
+            public int Code { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a main entity with mismatched counts between configured primary and foreign keys.
+        /// </summary>
+        private class MainEntityWithMismatchedKeys
+        {
+            /// <summary>
+            /// Gets or sets the related foreign entity with explicit join key configuration.
+            /// </summary>
+            [ForeignTable("foreign", PrimaryKeys = new[] { "Id", "Code" }, ForeignKeys = new[] { "ForeignId" })]
+            public ForeignEntityWithCompositeKey Foreign { get; set; }
+
+            /// <summary>
+            /// Gets or sets the foreign key value used in the relationship.
+            /// </summary>
             public int ForeignId { get; set; }
         }
 
@@ -172,6 +292,68 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
 
             Assert.DoesNotContain(join.Columns, c => c.ColumnName == "Ignored");
             Assert.DoesNotContain(join.Columns, c => c.ColumnName == "Nested");
+        }
+
+        /// <summary>
+        /// Verifies that building metadata throws an InvalidOperationException when foreign keys cannot be resolved
+        /// from attributes or inferred relationship metadata.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_Throws_WhenForeignKeysCannotBeResolved()
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithForeignTableWithoutForeignKeys)));
+
+            Assert.Contains("Foreign key not resolved", ex.Message);
+        }
+
+        /// <summary>
+        /// Verifies that building metadata throws an InvalidOperationException when configured primary and foreign key
+        /// counts do not match.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_Throws_WhenPrimaryAndForeignKeyCountsMismatch()
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithMismatchedKeys)));
+
+            Assert.Contains("PrimaryKeys and ForeignKeys count mismatch", ex.Message);
+        }
+
+        /// <summary>
+        /// Verifies that explicit schema configured in <see cref="ForeignTableAttribute"/> is preserved in join metadata.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_UsesExplicitSchema_WhenForeignTableAttributeDefinesSchema()
+        {
+            var metadata = EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithExplicitForeignSchema));
+
+            Assert.NotEmpty(metadata.Joins);
+            Assert.Equal("custom", metadata.Joins[0].Schema);
+        }
+
+        /// <summary>
+        /// Verifies that join metadata is marked as required when all configured foreign-key properties are required.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_JoinIsRequired_WhenForeignKeyPropertyHasRequiredAttribute()
+        {
+            var metadata = EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithRequiredForeignKey));
+
+            Assert.NotEmpty(metadata.Joins);
+            Assert.True(metadata.Joins[0].IsRequiredJoin);
+        }
+
+        /// <summary>
+        /// Verifies that join metadata is optional when the configured foreign-key property cannot be found.
+        /// </summary>
+        [Fact]
+        public void BuildMetadata_JoinIsNotRequired_WhenConfiguredForeignKeyPropertyDoesNotExist()
+        {
+            var metadata = EntityBuilderMetadataCache.GetMetadata(typeof(MainEntityWithNonExistentConfiguredForeignKey));
+
+            Assert.NotEmpty(metadata.Joins);
+            Assert.False(metadata.Joins[0].IsRequiredJoin);
         }
     }
 }

@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -22,7 +21,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This static field is used to store instances of ParameterObjectBinder for efficient
         /// retrieval based on type. It ensures thread-safe access to the cache, allowing multiple threads to read and
         /// write without causing data corruption.</remarks>
-        private static readonly ConcurrentDictionary<Type, ParameterObjectBinder> _cache
+        private static readonly ConcurrentDictionary<Type, ParameterObjectBinder> Cache
             = new ConcurrentDictionary<Type, ParameterObjectBinder>();
 
         /// <summary>
@@ -36,7 +35,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <returns>A <see cref="ParameterObjectBinder"/> instance associated with the specified type.</returns>
         public static ParameterObjectBinder GetOrAdd(
             Type type)
-            => _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 BuildBinder);
 

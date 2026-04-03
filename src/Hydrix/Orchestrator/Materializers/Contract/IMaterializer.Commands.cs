@@ -27,6 +27,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
+        /// a command and generating an error.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -36,7 +38,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IDbCommand CreateCommand(
             string sql,
             object parameters,
-            IDbTransaction transaction);
+            IDbTransaction transaction,
+            int? timeout = null);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -46,6 +49,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
+        /// a command and generating an error.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -54,7 +59,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// </exception>
         IDbCommand CreateCommand(
             string sql,
-            object parameters);
+            object parameters,
+            int? timeout = null);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -70,6 +76,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <param name="transaction">
         /// Represents the transaction to be used for the command.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
+        /// a command and generating an error.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -80,7 +88,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters,
-            IDbTransaction transaction);
+            IDbTransaction transaction,
+            int? timeout = null);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -93,6 +102,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement
         /// or stored procedure.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
+        /// a command and generating an error.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -102,7 +113,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         IDbCommand CreateCommand(
             CommandType commandType,
             string sql,
-            IEnumerable<IDataParameter> parameters);
+            IEnumerable<IDataParameter> parameters,
+            int? timeout = null);
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -115,6 +127,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <param name="procedure">
         /// Represents a Sql Entity that holds the data parameters to be executed by the connection command.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
+        /// a command and generating an error.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -122,10 +136,11 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a ProcedureAttibute decorating itself.
+        /// The SqlEntity does not have a ProcedureAttribute decorating itself.
         /// </exception>
         IDbCommand CreateCommand<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> procedure)
+            IProcedure<TDataParameterDriver> procedure,
+            int? timeout = null)
             where TDataParameterDriver : IDataParameter, new();
 
         /// <summary>
@@ -142,6 +157,8 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// <param name="transaction">
         /// Represents the transaction to be used for the command.
         /// </param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute
+        /// a command and generating an error.</param>
         /// <returns>A Command object associated with the connection.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -149,11 +166,12 @@ namespace Hydrix.Orchestrator.Materializers.Contract
         /// The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.
         /// </exception>
         /// <exception cref="MissingMemberException">
-        /// The SqlEntity does not have a ProcedureAttibute decorating itself.
+        /// The SqlEntity does not have a ProcedureAttribute decorating itself.
         /// </exception>
         IDbCommand CreateCommand<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction)
+            IDbTransaction transaction,
+            int? timeout = null)
             where TDataParameterDriver : IDataParameter, new();
     }
 }

@@ -1,9 +1,15 @@
 ﻿using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Materializers;
+using Hydrix.Orchestrator.Resolvers;
 using Hydrix.Schemas.Contract;
+using Moq;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
@@ -201,6 +207,288 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Materializers
             // Assert
             Assert.Same(fields, metadata.Fields);
             Assert.Same(entities, metadata.Entities);
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddBindings caches the first binding for a schema hash and reuses it on subsequent
+        /// requests.
+        /// </summary>
+        [Fact]
+        public void GetOrAddBindings_ReusesCachedBinding_ForSameSchemaHash()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            var invocationCount = 0;
+
+            var first = metadata.GetOrAddBindings(
+                1,
+                _ =>
+                {
+                    invocationCount++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            var second = metadata.GetOrAddBindings(
+                1,
+                _ =>
+                {
+                    invocationCount++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            Assert.Same(first, second);
+            Assert.Equal(1, invocationCount);
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddBindings stops caching new schema hashes once the configured cache cap is reached.
+        /// </summary>
+        [Fact]
+        public void GetOrAddBindings_DoesNotCacheNewSchemaHash_WhenCacheCapIsReached()
+        {
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+
+            var maxCacheSizeField = metadataType.GetField("MaxBindingsCacheSize", flags);
+            var bindingsCacheSizeField = metadataType.GetField("_bindingsCacheSize", flags);
+
+            Assert.NotNull(maxCacheSizeField);
+            Assert.NotNull(bindingsCacheSizeField);
+
+            var maxCacheSize = (int)maxCacheSizeField.GetRawConstantValue();
+
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            for (var schemaHash = 0; schemaHash < maxCacheSize; schemaHash++)
+            {
+                metadata.GetOrAddBindings(
+                    schemaHash,
+                    _ => new ResolvedTableBindings(null, null));
+            }
+
+            var cacheSizeBefore = (int)bindingsCacheSizeField.GetValue(metadata);
+            Assert.Equal(maxCacheSize, cacheSizeBefore);
+
+            var missesFactoryInvocations = 0;
+
+            var first = metadata.GetOrAddBindings(
+                maxCacheSize + 1,
+                _ =>
+                {
+                    missesFactoryInvocations++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            var second = metadata.GetOrAddBindings(
+                maxCacheSize + 1,
+                _ =>
+                {
+                    missesFactoryInvocations++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            Assert.NotSame(first, second);
+            Assert.Equal(2, missesFactoryInvocations);
+            Assert.False(metadata.TryGetBindings(maxCacheSize + 1, out _));
+            Assert.Equal(maxCacheSize, (int)bindingsCacheSizeField.GetValue(metadata));
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddBindings rolls back reserved cache size and returns the cached bindings when cache
+        /// insertion loses a race for the same schema hash.
+        /// </summary>
+        [Fact]
+        public void GetOrAddBindings_DecrementsCacheSizeAndReturnsCachedBindings_WhenTryAddLosesRace()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+
+            var bindingsBySchemaHashField = metadataType.GetField("_bindingsBySchemaHash", flags);
+            var bindingsCacheSizeField = metadataType.GetField("_bindingsCacheSize", flags);
+
+            Assert.NotNull(bindingsBySchemaHashField);
+            Assert.NotNull(bindingsCacheSizeField);
+
+            var bindingsBySchemaHash =
+                (ConcurrentDictionary<int, ResolvedTableBindings>)bindingsBySchemaHashField.GetValue(metadata);
+
+            var schemaHash = 42;
+            var cachedBindings = new ResolvedTableBindings(null, null);
+            var currentBindings = new ResolvedTableBindings(null, null);
+
+            var result = metadata.GetOrAddBindings(
+                schemaHash,
+                _ =>
+                {
+                    bindingsBySchemaHash.TryAdd(schemaHash, cachedBindings);
+                    return currentBindings;
+                });
+
+            Assert.Same(cachedBindings, result);
+            Assert.Equal(0, (int)bindingsCacheSizeField.GetValue(metadata));
+            Assert.True(metadata.TryGetBindings(schemaHash, out var fromCache));
+            Assert.Same(cachedBindings, fromCache);
+        }
+
+        /// <summary>
+        /// Verifies that cache slot reservation core retries after a failed update attempt and succeeds on a later
+        /// attempt.
+        /// </summary>
+        [Fact]
+        public void TryReserveBindingsCacheSlotCore_RetriesAfterFailedUpdate_AndThenSucceeds()
+        {
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var method = metadataType.GetMethod("TryReserveBindingsCacheSlotCore", flags);
+
+            Assert.NotNull(method);
+
+            var reads = new Queue<int>(new[] { 0, 0 });
+            Func<int> readCacheSize = () => reads.Dequeue();
+
+            var updateCalls = 0;
+            Func<int, int, bool> tryUpdate = (current, updated) =>
+            {
+                updateCalls++;
+                return updateCalls == 2;
+            };
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { readCacheSize, tryUpdate });
+
+            Assert.True(result);
+            Assert.Equal(2, updateCalls);
+        }
+
+        /// <summary>
+        /// Verifies that cache slot reservation core returns false when the cache size has reached the configured
+        /// maximum.
+        /// </summary>
+        [Fact]
+        public void TryReserveBindingsCacheSlotCore_ReturnsFalse_WhenCacheIsFull()
+        {
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var method = metadataType.GetMethod("TryReserveBindingsCacheSlotCore", flags);
+            var maxCacheSizeField = metadataType.GetField("MaxBindingsCacheSize", flags);
+
+            Assert.NotNull(method);
+            Assert.NotNull(maxCacheSizeField);
+
+            var maxCacheSize = (int)maxCacheSizeField.GetRawConstantValue();
+
+            Func<int> readCacheSize = () => maxCacheSize;
+
+            var updateCalls = 0;
+            Func<int, int, bool> tryUpdate = (current, updated) =>
+            {
+                updateCalls++;
+                return true;
+            };
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { readCacheSize, tryUpdate });
+
+            Assert.False(result);
+            Assert.Equal(0, updateCalls);
+        }
+
+        /// <summary>
+        /// Verifies that RememberBindings ignores null bindings and keeps hot bindings unset.
+        /// </summary>
+        [Fact]
+        public void RememberBindings_DoesNothing_WhenBindingsIsNull()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(null);
+
+            var reader = new Mock<IDataReader>().Object;
+            Assert.False(metadata.TryGetHotBindings(reader, out var hotBindings));
+            Assert.Null(hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that RememberBindings ignores bindings with empty schema snapshots.
+        /// </summary>
+        [Fact]
+        public void RememberBindings_DoesNothing_WhenBindingsHasEmptyColumnNames()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(new ResolvedTableBindings(null, null, Array.Empty<string>()));
+
+            var reader = new Mock<IDataReader>().Object;
+            Assert.False(metadata.TryGetHotBindings(reader, out var hotBindings));
+            Assert.Null(hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that TryGetHotBindings returns true when remembered bindings match the reader schema.
+        /// </summary>
+        [Fact]
+        public void TryGetHotBindings_ReturnsTrue_WhenRememberedBindingsMatchReader()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            var remembered = new ResolvedTableBindings(
+                null,
+                null,
+                new[] { "Id", "Name" });
+
+            metadata.RememberBindings(remembered);
+
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(2);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetName(1)).Returns("Name");
+
+            var found = metadata.TryGetHotBindings(reader.Object, out var hotBindings);
+
+            Assert.True(found);
+            Assert.Same(remembered, hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that TryGetHotBindings returns false when remembered bindings do not match the reader schema.
+        /// </summary>
+        [Fact]
+        public void TryGetHotBindings_ReturnsFalse_WhenRememberedBindingsDoNotMatchReader()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(new ResolvedTableBindings(
+                null,
+                null,
+                new[] { "Id", "Name" }));
+
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(1);
+
+            var found = metadata.TryGetHotBindings(reader.Object, out var hotBindings);
+
+            Assert.False(found);
+            Assert.Null(hotBindings);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Hydrix.Attributes.Schemas
     /// Represents a procedure object from a database and its mapping to System.Data.DataSet
     /// columns; and is implemented by .NET Framework data providers that access data sources.
     /// </summary>
-    [System.AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class)]
     public sealed class ProcedureAttribute :
         Commands.CommandAttribute
     {
@@ -32,7 +32,7 @@ namespace Hydrix.Attributes.Schemas
         /// <summary>
         /// Gets or sets the procedure name.
         /// </summary>
-        public string Name { get; private set; } = string.Empty;
+        public string Name { get; }
 
         /// <summary>
         /// Constructor.
@@ -43,7 +43,7 @@ namespace Hydrix.Attributes.Schemas
             base(CommandType.StoredProcedure,
                 name)
         {
-            this.Name = name;
+            Name = name;
         }
     }
 }

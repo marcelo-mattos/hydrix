@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Moq;
+using System;
+using System.Data;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers
@@ -21,37 +23,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             mat.Dispose();
             Assert.True(mat.IsDisposed);
             Assert.True(mat.IsDisposing);
-        }
-
-        /// <summary>
-        /// Verifies that disposing the TestMaterializer instance calls both Rollback and Close operations.
-        /// </summary>
-        /// <remarks>This test ensures that the Dispose method triggers the expected cleanup actions by
-        /// asserting that both RollbackCalled and CloseCalled are set to true after disposal.</remarks>
-        [Fact]
-        public void Dispose_CallsRollbackAndClose()
-        {
-            var mat = new TestMaterializerDispose();
-            mat.Dispose();
-            Assert.True(mat.RollbackCalled);
-            Assert.True(mat.CloseCalled);
-        }
-
-        /// <summary>
-        /// Verifies that disposing the materializer disposes the underlying database connection and sets the
-        /// DbConnection property to null.
-        /// </summary>
-        /// <remarks>This test ensures that resource cleanup is performed correctly when the materializer
-        /// is disposed. It checks that the associated database connection is properly disposed and that the reference
-        /// to the connection is cleared.</remarks>
-        [Fact]
-        public void Dispose_DisposesDbConnectionAndSetsNull()
-        {
-            var mat = new TestMaterializerDispose();
-            var conn = (TestDbConnection)mat.DbConnection;
-            mat.Dispose();
-            Assert.True(conn.Disposed);
-            Assert.Null(mat.DbConnection);
         }
 
         /// <summary>
@@ -91,6 +62,64 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             Exception ex = Record.Exception(() => matEx.Dispose());
             Assert.True(matEx.IsDisposed);
             Assert.True(matEx.IsDisposing);
+        }
+
+        /// <summary>
+        /// Verifies that disposing with a null connection does not throw and marks the instance as disposed.
+        /// </summary>
+        [Fact]
+        public void Dispose_WithNullConnection_DoesNotThrow()
+        {
+            var mat = new TestMaterializerDispose();
+            mat.SetDbConnectionNull();
+
+            var exception = Record.Exception(() => mat.Dispose());
+
+            Assert.Null(exception);
+            Assert.True(mat.IsDisposing);
+            Assert.True(mat.IsDisposed);
+            Assert.Null(mat.DbConnection);
+        }
+
+        [Fact]
+        public void Dispose_RollsBackClosesAndDisposesConnection()
+        {
+            var connection = new TrackingDbConnection();
+            var transaction = new TrackingDbTransaction();
+            var materializer = new TestMaterializerDispose();
+            materializer.SetDbConnection(connection);
+            materializer.SetDbTransaction(transaction);
+
+            materializer.Dispose();
+
+            Assert.True(materializer.RollbackCalled);
+            Assert.True(materializer.CloseCalled);
+            Assert.True(transaction.RollbackCalled);
+            Assert.True(connection.CloseCalled);
+            Assert.True(connection.DisposeCalled);
+            Assert.Null(materializer.DbConnection);
+        }
+
+        /// <summary>
+        /// Verifies that disposing the materializer swallows exceptions thrown by the connection dispose call and
+        /// still clears the connection reference.
+        /// </summary>
+        [Fact]
+        public void Dispose_WhenConnectionDisposeThrows_DoesNotThrowAndClearsConnection()
+        {
+            var connection = new Mock<IDbConnection>();
+            connection.Setup(c => c.Dispose()).Throws(new Exception("Simulated dispose exception"));
+
+            var materializer = new TestMaterializerDispose();
+            materializer.SetDbConnection(connection.Object);
+
+            var exception = Record.Exception(() => materializer.Dispose());
+
+            Assert.Null(exception);
+            Assert.True(materializer.IsDisposed);
+            Assert.True(materializer.IsDisposing);
+            Assert.True(materializer.CloseCalled);
+            Assert.Null(materializer.DbConnection);
         }
     }
 }

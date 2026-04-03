@@ -27,7 +27,7 @@ It intentionally sits between **raw [ADO.NET](https://learn.microsoft.com/pt-br/
 
 Hydrix is designed for performance-sensitive systems where:
 
-* * SQL must remain explicit and visible
+* SQL must remain explicit and visible
 * Developers retain full control over execution
 * Behavior must be predictable and transparent
 * Object graphs must be materialized efficiently from flat JOINs
@@ -56,20 +56,38 @@ Hydrix does not attempt to abstract SQL away from you.
 ## ✨ Key Features
 
 * Explicit SQL execution (Text and Stored Procedures)
+* Strongly typed stored procedure support with `IProcedure<TDataParameter>`
 * Entity materialization via standard .NET DataAnnotations
 * Nested entity support (flat JOIN → object graph)
 * Thread-safe metadata caching
+* Process-wide hot cache optimizations for metadata/materialization internals
 * Zero reflection in the materialization hot path
 * Compiled enum converters (no `Enum.ToObject` per row)
+* Optional per-call timeout (`int? timeout`) in execution/query APIs
+* Configuration support via `HydrixOptions`
+* Dependency Injection integration via `AddHydrix(...)`
 * Native SQL `IN` clause expansion
 * SQL command logging
 * Fully provider-agnostic ([ADO.NET](https://learn.microsoft.com/pt-br/dotnet/framework/data/adonet/ado-net-overview))
-* Zero external dependencies
+* No non-Microsoft dependencies 
 * Apache 2.0 licensed
 
-## ⚡ Performance Design (Hydrix 2.0)
+---
 
-* Hydrix 2.0 introduces architectural improvements focused on runtime efficiency:
+## 🆕 What's New in Hydrix 2.1.0
+
+* Configuration and DI integration (`HydrixOptions` and `AddHydrix`)
+* Strongly typed procedure execution using `IProcedure<TDataParameter>`
+* Optional timeout support across command/query execution APIs
+* Internal execution pipeline refactoring (`CommandEngine` and `ParameterEngine`)
+* Improved conversion flow (`As<T>`, `Guid`, and provider `DbType` handling)
+* Expanded test coverage and validation hardening
+
+---
+
+## ⚡ Performance Design (Hydrix 2.x)
+
+* Hydrix 2.x introduces architectural improvements focused on runtime efficiency:
 * Metadata is built once per type and cached
 * Property setters are compiled into delegates
 * Enum conversions use compiled converters
@@ -77,6 +95,8 @@ Hydrix does not attempt to abstract SQL away from you.
 * No `Activator.CreateInstance` in hot paths
 * No `Enum.ToObject` in hot paths
 * Minimal allocations during nested resolution
+* Improved cache topology for faster repeated access
+* Lower overhead in conversion and command execution paths
 
 Hydrix is engineered for predictable runtime behavior and low GC pressure.
 
@@ -95,13 +115,14 @@ dotnet add package Hydrix
 ### Executing SQL Commands
 
 ```csharp
-hydrix.ExecuteNonQuery(
+conn.Execute(
     "INSERT INTO orders (id, total) VALUES (@id, @total)",
     new
     {
         id = Guid.NewGuid(),
         total = 150.75m
-    }
+    },
+    timeout: 30
 );
 ```
 
@@ -110,9 +131,10 @@ hydrix.ExecuteNonQuery(
 ### Querying Entities
 
 ```csharp
-var orders = hydrix.Query<Order>(
+var orders = conn.Query<Order>(
     "SELECT id, total FROM orders WHERE total > @min",
-    new { min = 100 }
+    new { min = 100 },
+    timeout: 30
 );
 ```
 
@@ -121,7 +143,7 @@ var orders = hydrix.Query<Order>(
 ### Native `IN` Clause Support
 
 ```csharp
-var orders = hydrix.Query<Order>(
+var orders = conn.Query<Order>(
     "SELECT * FROM orders WHERE id IN (@ids)",
     new
     {
@@ -137,6 +159,25 @@ WHERE id IN (@ids_0, @ids_1, @ids_2)
 ```
 
 Each value is safely parameterized.
+
+---
+
+## 🧩 Configuration & DI
+
+```csharp
+using Hydrix.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+
+services.AddHydrix(options =>
+{
+    options.CommandTimeout = 60;
+    options.ParameterPrefix = "@";
+});
+```
+
+Use this configuration to centralize command timeout and parameter conventions.
 
 ---
 
@@ -159,6 +200,8 @@ public class Order :
     public decimal Total { get; set; }
 }
 ```
+
+Hydrix supports strongly typed procedure parameters through `IProcedure<TDataParameter>`, allowing provider-specific parameter drivers while keeping procedure contracts explicit.
 
 ---
 
@@ -203,29 +246,6 @@ public class CreateOrder :
 
 ---
 
-## 🔄 Transactions
-
-```csharp
-hydrix.OpenConnection();
-hydrix.BeginTransaction(IsolationLevel.ReadCommitted);
-
-try
-{
-    await hydrix.ExecuteNonQueryAsync(...);
-    await hydrix.ExecuteNonQueryAsync(...);
-
-    hydrix.CommitTransaction();
-}
-catch
-{
-    hydrix.RollbackTransaction();
-    throw;
-}
-```
-
-
----
-
 ## 📝 SQL Command Logging
 
 ```
@@ -246,6 +266,7 @@ Hydrix works with any ADO.NET-compatible provider:
 * PostgreSQL
 * MySQL
 * Oracle
+* DB2
 * Others
 
 ---

@@ -30,8 +30,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteReader_WithSqlAndParameters_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>())).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader("SELECT", new { Id = 1 });
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>(), It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader("SELECT", new { Id = 1 }, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -43,8 +43,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>(), transaction)).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader("SELECT", new { Id = 2 }, transaction);
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader("SELECT", new { Id = 2 }, transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -55,8 +55,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteReader_WithSqlOnly_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT")).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader("SELECT");
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader("SELECT", It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -68,8 +68,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT", transaction)).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader("SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", transaction, It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader("SELECT", transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -81,8 +81,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT", parameters)).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT", parameters);
+            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT", parameters, It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT", parameters, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -95,8 +95,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
             var reader = new Mock<IDataReader>().Object;
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT", parameters, transaction)).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT", parameters, transaction);
+            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -107,8 +107,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteReader_WithCommandTypeAndSql_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT")).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT");
+            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT", It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -120,8 +120,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT", transaction)).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteReader(CommandType.Text, "SELECT", transaction, It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -132,8 +132,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteReaderAsync_WithSqlParameters_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT", new { Id = 1 });
+            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT", new { Id = 1 }, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -145,8 +145,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<object>(), transaction, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT", new { Id = 2 }, transaction);
+            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT", new { Id = 2 }, transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -157,8 +157,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteReaderAsync_WithSqlOnly_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT");
+            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT", It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -170,8 +170,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", transaction, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync("SELECT", transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -183,8 +183,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters);
+            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -197,8 +197,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
             var reader = new Mock<IDataReader>().Object;
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, transaction);
+            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -209,8 +209,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteReaderAsync_WithCommandTypeAndSql_ReturnsDataReader()
         {
             var reader = new Mock<IDataReader>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT");
+            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -222,8 +222,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", transaction, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteReaderAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -235,8 +235,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteReader(proc)).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader(proc);
+            _materializerMock.Setup(m => m.ExecuteReader(proc, It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader(proc, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -249,8 +249,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
             var reader = new Mock<IDataReader>().Object;
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReader(proc, transaction)).Returns(reader);
-            var result = _materializerMock.Object.ExecuteReader(proc, transaction);
+            _materializerMock.Setup(m => m.ExecuteReader(proc, transaction, It.IsAny<int>())).Returns(reader);
+            var result = _materializerMock.Object.ExecuteReader(proc, transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -262,8 +262,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var reader = new Mock<IDataReader>().Object;
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteReaderAsync(proc, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync(proc);
+            _materializerMock.Setup(m => m.ExecuteReaderAsync(proc, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync(proc, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -276,8 +276,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
             var reader = new Mock<IDataReader>().Object;
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteReaderAsync(proc, transaction, It.IsAny<CancellationToken>())).ReturnsAsync(reader);
-            var result = await _materializerMock.Object.ExecuteReaderAsync(proc, transaction);
+            _materializerMock.Setup(m => m.ExecuteReaderAsync(proc, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(reader);
+            var result = await _materializerMock.Object.ExecuteReaderAsync(proc, transaction, It.IsAny<int>());
             Assert.Same(reader, result);
         }
 
@@ -287,8 +287,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteReader_Disposed_ThrowsObjectDisposedException()
         {
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>())).Throws(new ObjectDisposedException(nameof(IMaterializer)));
-            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }));
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>(), It.IsAny<int>())).Throws(new ObjectDisposedException(nameof(IMaterializer)));
+            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -297,8 +297,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteReader_InvalidArgument_ThrowsArgumentException()
         {
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>())).Throws<ArgumentException>();
-            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }));
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>(), It.IsAny<int>())).Throws<ArgumentException>();
+            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -307,8 +307,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteReader_NotSupported_ThrowsNotSupportedException()
         {
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>())).Throws<NotSupportedException>();
-            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }));
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>(), It.IsAny<int>())).Throws<NotSupportedException>();
+            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -317,8 +317,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteReader_InvalidOperation_ThrowsInvalidOperationException()
         {
-            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>())).Throws<InvalidOperationException>();
-            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }));
+            _materializerMock.Setup(m => m.ExecuteReader("SELECT", It.IsAny<object>(), It.IsAny<int>())).Throws<InvalidOperationException>();
+            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteReader("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -327,10 +327,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteReaderAsync_OperationCanceled_ThrowsOperationCanceledException()
         {
-            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteReaderAsync("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await _materializerMock.Object.ExecuteReaderAsync("SELECT", new { }, CancellationToken.None));
+                await _materializerMock.Object.ExecuteReaderAsync("SELECT", new { }, It.IsAny<int>(), CancellationToken.None));
         }
     }
 }

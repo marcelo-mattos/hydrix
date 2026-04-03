@@ -1,4 +1,5 @@
-﻿using Hydrix.Orchestrator.Caching;
+using Hydrix.Attributes.Schemas;
+using Hydrix.Orchestrator.Caching;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xunit;
@@ -9,7 +10,7 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
     /// Contains unit tests for validating entity request attributes in the EntityRequestValidationCache class.
     /// </summary>
     /// <remarks>This class tests various scenarios for entity validation, including the presence of table and
-    /// column attributes, and caching behavior for repeated validations.</remarks>
+    /// mappable members, and caching behavior for repeated validations.</remarks>
     public class EntityRequestValidationCacheTests
     {
         /// <summary>
@@ -26,10 +27,8 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
-        /// Represents an entity that is mapped to the 'NoColumnEntity' table in the database.
+        /// Represents an entity mapped by convention through its public properties.
         /// </summary>
-        /// <remarks>This class contains only an identifier property and does not define additional
-        /// columns. It can be used as a placeholder or for scenarios where only the primary key is required.</remarks>
         [Table("NoColumnEntity")]
         private class NoColumnEntity
         {
@@ -40,12 +39,94 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
+        /// Represents an entity that has no properties eligible for mapping.
+        /// </summary>
+        [Table("NoMappedMembersEntity")]
+        private class NoMappedMembersEntity
+        {
+            /// <summary>
+            /// Gets or sets a value ignored by Hydrix mapping.
+            /// </summary>
+            [NotMapped]
+            public int Ignored { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that only exposes foreign table navigation properties.
+        /// </summary>
+        [Table("ForeignOnlyEntity")]
+        private class ForeignOnlyEntity
+        {
+            /// <summary>
+            /// Gets or sets a foreign table navigation property that should not be considered scalar-mappable.
+            /// </summary>
+            [ForeignTable("Child")]
+            public ChildEntity Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity containing both scalar-mappable and foreign table navigation properties.
+        /// </summary>
+        [Table("MixedForeignEntity")]
+        private class MixedForeignEntity
+        {
+            /// <summary>
+            /// Gets or sets the scalar identifier that should be considered mappable.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets a foreign table navigation property that should be ignored by scalar validation.
+            /// </summary>
+            [ForeignTable("Child")]
+            public ChildEntity Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a child entity type used for foreign table navigation properties in tests.
+        /// </summary>
+        private class ChildEntity
+        {
+            /// <summary>
+            /// Gets or sets the child identifier.
+            /// </summary>
+            public int Id { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that only exposes static properties and therefore has no mappable instance members.
+        /// </summary>
+        [Table("StaticOnlyEntity")]
+        private class StaticOnlyEntity
+        {
+            /// <summary>
+            /// Gets or sets a static value that should not be considered mappable.
+            /// </summary>
+            public static int StaticValue { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity that only exposes an indexer and therefore has no regular mappable instance members.
+        /// </summary>
+        [Table("IndexerOnlyEntity")]
+        private class IndexerOnlyEntity
+        {
+            /// <summary>
+            /// Gets or sets a value by index. This indexer should not be considered mappable.
+            /// </summary>
+            /// <param name="index">The index position to access.</param>
+            /// <returns>The value at the specified index.</returns>
+            public string this[int index]
+            {
+                get => string.Empty;
+                set { }
+            }
+        }
+
+        /// <summary>
         /// Represents an entity that does not correspond to a database table, intended for in-memory operations or
         /// scenarios where persistence is not required.
         /// </summary>
-        /// <remarks>This class is useful for modeling data that needs to be processed or validated
-        /// without being stored in a database. The Id property uniquely identifies each instance of the
-        /// entity.</remarks>
         private class NoTableEntity
         {
             /// <summary>
@@ -56,12 +137,8 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
-        /// Verifies that the entity validation returns true when both the specified table and column are present in the
-        /// model.
+        /// Verifies that the entity validation returns true when a mapped member is present.
         /// </summary>
-        /// <remarks>This test ensures that the Validate method of EntityRequestValidationCache correctly
-        /// identifies a valid entity configuration. It is intended to confirm that the validation logic works as
-        /// expected when all required schema elements exist.</remarks>
         [Fact]
         public void Validate_ReturnsTrue_WhenTableAndColumnPresent()
         {
@@ -69,40 +146,75 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
-        /// Verifies that the Validate method returns false when the specified entity type does not define any columns.
+        /// Verifies that convention-based properties still count as valid mapped members.
         /// </summary>
-        /// <remarks>This test ensures that entity validation correctly identifies and rejects entity
-        /// types lacking column definitions. It helps prevent operations on invalid entities by confirming that the
-        /// validation logic enforces the presence of at least one column.</remarks>
         [Fact]
-        public void Validate_ReturnsFalse_WhenNoColumnPresent()
+        public void Validate_ReturnsTrue_WhenTableAndConventionMappedPropertyPresent()
         {
-            Assert.False(EntityRequestValidationCache.Validate(typeof(NoColumnEntity)));
+            Assert.True(EntityRequestValidationCache.Validate(typeof(NoColumnEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when the entity has no mappable properties.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenNoMappablePropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(NoMappedMembersEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when only foreign table navigation properties exist.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenOnlyForeignTablePropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(ForeignOnlyEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns true when at least one scalar property exists alongside foreign table
+        /// navigation properties.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsTrue_WhenScalarPropertyExistsAlongsideForeignTableProperty()
+        {
+            Assert.True(EntityRequestValidationCache.Validate(typeof(MixedForeignEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when only static properties exist.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenOnlyStaticPropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(StaticOnlyEntity)));
+        }
+
+        /// <summary>
+        /// Verifies that validation returns false when only indexer properties exist.
+        /// </summary>
+        [Fact]
+        public void Validate_ReturnsFalse_WhenOnlyIndexerPropertiesExist()
+        {
+            Assert.False(EntityRequestValidationCache.Validate(typeof(IndexerOnlyEntity)));
         }
 
         /// <summary>
         /// Validates that an exception is thrown when the specified entity type lacks a TableAttribute.
         /// </summary>
-        /// <remarks>This test verifies that the EntityRequestValidationCache.Validate method throws a
-        /// MissingMemberException if the provided entity type does not have a TableAttribute. This ensures that entity
-        /// types are properly configured for database mapping and that missing attributes are detected at validation
-        /// time.</remarks>
         [Fact]
         public void Validate_Throws_WhenNoTableAttribute()
         {
             var ex = Assert.Throws<MissingMemberException>(() =>
                 EntityRequestValidationCache.Validate(typeof(NoTableEntity)));
-            Assert.Contains("TableAttibute", ex.Message);
+            Assert.Contains("TableAttribute", ex.Message);
         }
 
         /// <summary>
         /// Verifies that the EntityRequestValidationCache returns cached validation results for repeated requests of
         /// the same entity type.
         /// </summary>
-        /// <remarks>This test ensures that after the initial validation of a specific entity type,
-        /// subsequent validations for the same type utilize the cache rather than re-evaluating the entity. This
-        /// behavior is important for performance and consistency in scenarios where entity validation is requested
-        /// multiple times.</remarks>
         [Fact]
         public void Validate_UsesCache_ForSameType()
         {

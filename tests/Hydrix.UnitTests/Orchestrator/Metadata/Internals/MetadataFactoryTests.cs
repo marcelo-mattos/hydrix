@@ -1,8 +1,13 @@
-﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
+using Hydrix.Schemas.Contract;
+using Moq;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+using System.Linq.Expressions;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
@@ -56,6 +61,112 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             /// or to prevent the creation of instances without specific parameters.</remarks>
             private NoDefaultCtor()
             { }
+        }
+
+        /// <summary>
+        /// Represents enum values used by coverage tests.
+        /// </summary>
+        private enum CoverageEnum
+        {
+            /// <summary>
+            /// Represents the zero value.
+            /// </summary>
+            Zero = 0,
+
+            /// <summary>
+            /// Represents the one value.
+            /// </summary>
+            One = 1
+        }
+
+        /// <summary>
+        /// Represents a test entity used to validate record assigner behavior.
+        /// </summary>
+        private sealed class CoverageEntity
+        {
+            /// <summary>
+            /// Gets or sets an Int32 value.
+            /// </summary>
+            public int Int32Value { get; set; }
+
+            /// <summary>
+            /// Gets or sets a nullable Int32 value.
+            /// </summary>
+            public int? NullableInt32Value { get; set; }
+
+            /// <summary>
+            /// Gets or sets a Guid value.
+            /// </summary>
+            public Guid GuidValue { get; set; }
+
+            /// <summary>
+            /// Gets or sets an enum value.
+            /// </summary>
+            public CoverageEnum EnumValue { get; set; }
+
+            /// <summary>
+            /// Gets or sets a custom reference value.
+            /// </summary>
+            public CustomReference CustomValue { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a custom reference type used in fallback conversion tests.
+        /// </summary>
+        private sealed class CustomReference
+        {
+            /// <summary>
+            /// Gets or sets a textual value.
+            /// </summary>
+            public string Value { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a parent entity used to validate nested entity activator behavior.
+        /// </summary>
+        private sealed class ActivatorParent
+        {
+            /// <summary>
+            /// Gets or sets the nested child entity.
+            /// </summary>
+            public ActivatorChild Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a child entity that can be created through nested activator delegates.
+        /// </summary>
+        [Table("ActivatorChild")]
+        private sealed class ActivatorChild : ITable
+        {
+            /// <summary>
+            /// Gets or sets the identifier.
+            /// </summary>
+            [Column]
+            public int Id { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a parent object used by nested materializer coverage tests.
+        /// </summary>
+        private sealed class Parent
+        {
+            /// <summary>
+            /// Gets or sets the nested child entity.
+            /// </summary>
+            public Child Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a child entity materialized by nested materializer delegates.
+        /// </summary>
+        [Table("branch_child")]
+        private sealed class Child : ITable
+        {
+            /// <summary>
+            /// Gets or sets the identifier value.
+            /// </summary>
+            [Column]
+            public int Id { get; set; }
         }
 
         /// <summary>
@@ -189,5 +300,477 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             Assert.Equal(prop, meta.Property);
             Assert.Equal(attr, meta.Attribute);
         }
+
+        /// <summary>
+        /// Verifies that CreateGetter throws when property metadata has no declaring type.
+        /// </summary>
+        [Fact]
+        public void CreateGetter_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("Orphan");
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateGetter(property.Object));
+        }
+
+        /// <summary>
+        /// Verifies that CreateSetter throws when property metadata has no declaring type.
+        /// </summary>
+        [Fact]
+        public void CreateSetter_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("Orphan");
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateSetter(property.Object));
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="MetadataFactory.CreateRecordAssigner(PropertyInfo, int, Type)"/> throws when the
+        /// property declaring type is null.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("Detached");
+            property.SetupGet(p => p.PropertyType).Returns(typeof(int));
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateRecordAssigner(property.Object, 0, typeof(int)));
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityActivator creates and assigns a nested entity instance.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityActivator_CreatesAndAssignsNestedEntity()
+        {
+            var property = typeof(ActivatorParent).GetProperty(nameof(ActivatorParent.Child));
+
+            var activator = MetadataFactory.CreateNestedEntityActivator(property);
+            var parent = new ActivatorParent();
+
+            var child = activator(parent);
+
+            Assert.NotNull(child);
+            Assert.IsType<ActivatorChild>(child);
+            Assert.Same(child, parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityActivator throws when property metadata has no declaring type.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityActivator_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("OrphanNested");
+            property.SetupGet(p => p.PropertyType).Returns(typeof(ActivatorChild));
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateNestedEntityActivator(property.Object));
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityMaterializer instantiates and populates a nested entity when the primary key is present.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_CreatesAndPopulatesNestedEntity_WhenPrimaryKeyIsPresent()
+        {
+            var property = typeof(ActivatorParent).GetProperty(nameof(ActivatorParent.Child));
+            var childProperty = typeof(ActivatorChild).GetProperty(nameof(ActivatorChild.Id));
+            var fieldAssigner = MetadataFactory.CreateRecordAssigner(childProperty, 0, typeof(int));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: null,
+                fieldAssigners: new[] { fieldAssigner });
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(17);
+            var parent = new ActivatorParent();
+
+            materializer(parent, record.Object);
+
+            Assert.NotNull(parent.Child);
+            Assert.Equal(17, parent.Child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that CreateNestedEntityMaterializer skips nested instantiation when the primary key is null.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_SkipsNestedEntity_WhenPrimaryKeyIsDBNull()
+        {
+            var property = typeof(ActivatorParent).GetProperty(nameof(ActivatorParent.Child));
+            var childProperty = typeof(ActivatorChild).GetProperty(nameof(ActivatorChild.Id));
+            var fieldAssigner = MetadataFactory.CreateRecordAssigner(childProperty, 0, typeof(int));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: null,
+                fieldAssigners: new[] { fieldAssigner });
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            var parent = new ActivatorParent();
+
+            materializer(parent, record.Object);
+
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that enum assignment uses a typed getter when provider type maps to enum underlying type.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_UsesTypedGetter_ForEnumUnderlyingType()
+        {
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.EnumValue));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, typeof(int));
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(1);
+            var entity = new CoverageEntity();
+
+            assigner(entity, record.Object);
+
+            Assert.Equal(CoverageEnum.One, entity.EnumValue);
+        }
+
+        /// <summary>
+        /// Verifies that enum assignment uses direct numeric conversion when provider type is numerically compatible.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_UsesDirectNumericConversion_ForEnumProviderType()
+        {
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.EnumValue));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, typeof(short));
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt16(0)).Returns((short)1);
+            var entity = new CoverageEntity();
+
+            assigner(entity, record.Object);
+
+            Assert.Equal(CoverageEnum.One, entity.EnumValue);
+        }
+
+        /// <summary>
+        /// Verifies that enum assignment uses fallback conversion when direct conversion is unavailable.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_UsesFallbackConverter_ForEnumWhenDirectConversionIsUnavailable()
+        {
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.EnumValue));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, typeof(string));
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetValue(0)).Returns("One");
+            var entity = new CoverageEntity();
+
+            assigner(entity, record.Object);
+
+            Assert.Equal(CoverageEnum.One, entity.EnumValue);
+        }
+
+        /// <summary>
+        /// Verifies that direct numeric conversion is used for compatible provider and target numeric types.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_UsesDirectNumericConversion_ForCompatibleProviderType()
+        {
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.Int32Value));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, typeof(long));
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt64(0)).Returns(42L);
+            var entity = new CoverageEntity();
+
+            assigner(entity, record.Object);
+
+            Assert.Equal(42, entity.Int32Value);
+        }
+
+        /// <summary>
+        /// Verifies that fallback conversion is used when provider type is unsupported for direct conversion.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_UsesFallbackConverter_ForUnsupportedProviderType()
+        {
+            var guid = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.GuidValue));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, typeof(byte[]));
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetValue(0)).Returns(guid.ToByteArray());
+            var entity = new CoverageEntity();
+
+            assigner(entity, record.Object);
+
+            Assert.Equal(guid, entity.GuidValue);
+        }
+
+        /// <summary>
+        /// Verifies that fallback conversion is used when source provider type is unknown.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_UsesFallbackConverter_WhenSourceTypeIsUnknown()
+        {
+            var value = new CustomReference { Value = "custom" };
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.CustomValue));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, null);
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetValue(0)).Returns(value);
+            var entity = new CoverageEntity();
+
+            assigner(entity, record.Object);
+
+            Assert.Same(value, entity.CustomValue);
+        }
+
+        /// <summary>
+        /// Verifies that assignment converts values to nullable target types.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_ConvertsToNullableTargetType()
+        {
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.NullableInt32Value));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, typeof(int));
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(9);
+            var entity = new CoverageEntity();
+
+            assigner(entity, record.Object);
+
+            Assert.Equal(9, entity.NullableInt32Value);
+        }
+
+        /// <summary>
+        /// Verifies that assignment uses default target values when the record field is <see cref="DBNull"/>.
+        /// </summary>
+        [Fact]
+        public void CreateRecordAssigner_AssignsDefaultValue_WhenRecordContainsDBNull()
+        {
+            var property = typeof(CoverageEntity).GetProperty(nameof(CoverageEntity.Int32Value));
+            var assigner = MetadataFactory.CreateRecordAssigner(property, 0, typeof(int));
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            var entity = new CoverageEntity { Int32Value = 99 };
+
+            assigner(entity, record.Object);
+
+            Assert.Equal(0, entity.Int32Value);
+        }
+
+        /// <summary>
+        /// Verifies that direct typed conversion permits only same-type pairs or numeric-compatible pairs.
+        /// </summary>
+        [Fact]
+        public void CanUseDirectTypedConversion_AllowsOnlySameTypeOrNumericPairs()
+        {
+            Assert.True((bool)InvokePrivate(
+                "CanUseDirectTypedConversion",
+                typeof(int),
+                typeof(int)));
+
+            Assert.True((bool)InvokePrivate(
+                "CanUseDirectTypedConversion",
+                typeof(long),
+                typeof(int)));
+
+            Assert.False((bool)InvokePrivate(
+                "CanUseDirectTypedConversion",
+                typeof(bool),
+                typeof(int)));
+        }
+
+        /// <summary>
+        /// Verifies numeric type recognition for supported and unsupported types.
+        /// </summary>
+        /// <param name="type">The type under evaluation.</param>
+        /// <param name="expected">The expected numeric recognition result.</param>
+        [Theory]
+        [InlineData(typeof(byte), true)]
+        [InlineData(typeof(short), true)]
+        [InlineData(typeof(int), true)]
+        [InlineData(typeof(long), true)]
+        [InlineData(typeof(float), true)]
+        [InlineData(typeof(double), true)]
+        [InlineData(typeof(decimal), true)]
+        [InlineData(typeof(string), false)]
+        public void IsNumericType_RecognizesSupportedTypes(Type type, bool expected)
+        {
+            var result = (bool)InvokePrivate("IsNumericType", type);
+
+            Assert.Equal(expected, result);
+        }
+
+        /// <summary>
+        /// Verifies that direct getter-call creation returns false when source type is null or unsupported.
+        /// </summary>
+        [Fact]
+        public void TryCreateDirectConversionGetterCall_ReturnsFalse_WhenSourceTypeIsNullOrUnsupported()
+        {
+            var record = Expression.Parameter(typeof(IDataRecord), "record");
+            var ordinal = Expression.Constant(0);
+            var method = typeof(MetadataFactory).GetMethod(
+                "TryCreateDirectConversionGetterCall",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var nullSourceArgs = new object[] { record, ordinal, null, typeof(int), null };
+            var unsupportedSourceArgs = new object[] { record, ordinal, typeof(byte[]), typeof(int), null };
+            var nonNumericEnumArgs = new object[] { record, ordinal, typeof(bool), typeof(CoverageEnum), null };
+            var nonNumericTargetArgs = new object[] { record, ordinal, typeof(bool), typeof(Guid), null };
+
+            Assert.False((bool)method.Invoke(null, nullSourceArgs));
+            Assert.Null(nullSourceArgs[4]);
+            Assert.False((bool)method.Invoke(null, unsupportedSourceArgs));
+            Assert.Null(unsupportedSourceArgs[4]);
+            Assert.False((bool)method.Invoke(null, nonNumericEnumArgs));
+            Assert.Null(nonNumericEnumArgs[4]);
+            Assert.False((bool)method.Invoke(null, nonNumericTargetArgs));
+            Assert.Null(nonNumericTargetArgs[4]);
+        }
+
+        /// <summary>
+        /// Verifies that nested materialization is skipped when candidate ordinals are null in non-primary-key mode.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_Skips_WhenCandidatesAreNull_AndPrimaryKeyModeIsDisabled()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                fieldAssigners: null);
+
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+
+            materializer(parent, record.Object);
+
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that nested materialization is skipped when candidate ordinals are empty in non-primary-key mode.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_Skips_WhenCandidatesAreEmpty_AndPrimaryKeyModeIsDisabled()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: Array.Empty<int>(),
+                fieldAssigners: null);
+
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+
+            materializer(parent, record.Object);
+
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that nested materialization uses OR-combination across candidate ordinals and instantiates when at
+        /// least one candidate is not <see cref="DBNull"/>.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_Instantiates_WhenAnyCandidateOrdinalIsNotDbNull()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var childProperty = typeof(Child).GetProperty(nameof(Child.Id));
+            var fieldAssigner = MetadataFactory.CreateRecordAssigner(childProperty, 0, typeof(int));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: new[] { 0, 1 },
+                fieldAssigners: new[] { fieldAssigner });
+
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            record.Setup(r => r.IsDBNull(1)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(27);
+
+            materializer(parent, record.Object);
+
+            Assert.NotNull(parent.Child);
+            Assert.Equal(0, parent.Child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that nested materializer ignores null field assigners and still instantiates the nested entity.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_Instantiates_WhenFieldAssignerEntryIsNull()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var materializer = MetadataFactory.CreateNestedEntityMaterializer(
+                property,
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: null,
+                fieldAssigners: new Action<object, IDataRecord>[] { null });
+
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+
+            materializer(parent, record.Object);
+
+            Assert.NotNull(parent.Child);
+            Assert.Equal(0, parent.Child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that nested materializer creation throws when property metadata has no declaring type.
+        /// </summary>
+        [Fact]
+        public void CreateNestedEntityMaterializer_Throws_WhenDeclaringTypeIsNull()
+        {
+            var property = new Mock<System.Reflection.PropertyInfo>();
+            property.SetupGet(p => p.Name).Returns("OrphanNested");
+            property.SetupGet(p => p.PropertyType).Returns(typeof(Child));
+            property.SetupGet(p => p.DeclaringType).Returns((Type)null);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                MetadataFactory.CreateNestedEntityMaterializer(
+                    property.Object,
+                    usesPrimaryKey: true,
+                    primaryKeyOrdinal: 0,
+                    candidateOrdinals: null,
+                    fieldAssigners: null));
+        }
+
+        /// <summary>
+        /// Invokes a non-public static method on <see cref="MetadataFactory"/> and returns its raw result.
+        /// </summary>
+        /// <param name="methodName">The name of the non-public static method to invoke.</param>
+        /// <param name="args">The arguments passed to the invoked method.</param>
+        /// <returns>The raw return value produced by the invoked method.</returns>
+        private static object InvokePrivate(
+            string methodName,
+            params object[] args)
+            => typeof(MetadataFactory)
+                .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, args);
     }
 }

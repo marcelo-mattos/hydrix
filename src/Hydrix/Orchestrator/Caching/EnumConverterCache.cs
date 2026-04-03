@@ -20,7 +20,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This dictionary is thread-safe and is intended for caching conversion functions to
         /// avoid recreating delegates for repeated type conversions. Access to this cache is safe for concurrent read
         /// and write operations from multiple threads.</remarks>
-        private static readonly ConcurrentDictionary<Type, Func<object, object>> _cache
+        private static readonly ConcurrentDictionary<Type, Func<object, object>> Cache
             = new ConcurrentDictionary<Type, Func<object, object>>();
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace Hydrix.Orchestrator.Caching
         /// for future use.</returns>
         public static Func<object, object> GetOrAdd(
             Type type)
-            => _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 CreateEnumConverter);
 

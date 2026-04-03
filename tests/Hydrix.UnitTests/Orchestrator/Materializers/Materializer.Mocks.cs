@@ -1,5 +1,6 @@
 ﻿using Hydrix.Attributes.Parameters;
 using Hydrix.Attributes.Schemas;
+using Hydrix.Engines;
 using Hydrix.Orchestrator.Materializers;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,8 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Materializers
@@ -933,26 +936,33 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// Creates and returns a database command configured with the specified command type, SQL statement,
             /// parameters, and transaction context.
             /// </summary>
+            /// <param name="connection">The database connection to use for creating the command. Must be an open connection.</param>
+            /// <param name="transaction">An optional database transaction within which the command will be executed. If null, the current active
+            /// transaction is used if available.</param>
             /// <param name="commandType">The type of command to execute, such as Text, StoredProcedure, or TableDirect. Determines how the SQL
             /// statement is interpreted by the database.</param>
             /// <param name="sql">The SQL statement or stored procedure to execute. Cannot be null or empty.</param>
             /// <param name="parameterBinder">An action that binds parameters to the command. This delegate is invoked to configure the command's
             /// parameters before execution. Can be null if no parameters are required.</param>
-            /// <param name="transaction">The transaction context in which the command will execute. Can be null if the command should execute
-            /// outside of a transaction.</param>
+            /// <param name="timeout">An optional command timeout, in seconds, to use for this command.
+            /// If null, the default timeout configured for the Materializer is used.</param>
             /// <returns>An <see cref="IDbCommand"/> instance configured with the specified command type, SQL statement,
             /// parameters, and transaction. The caller is responsible for disposing the returned command when it is no
             /// longer needed.</returns>
             public IDbCommand CallCreateCommandCore(
+                in IDbConnection connection,
+                IDbTransaction transaction,
                 CommandType commandType,
                 string sql,
                 Action<IDbCommand> parameterBinder,
-                IDbTransaction transaction)
-            => CreateCommandCore(
+                int? timeout = null)
+            => CommandEngine.CreateCommandCore(
+                    connection,
+                    transaction,
                     commandType,
                     sql,
                     parameterBinder,
-                    transaction);
+                    timeout);
         }
 
         /// <summary>
@@ -1162,7 +1172,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// intended for use in test environments only.</remarks>
             public TestMaterializerDispose() : base(null)
             {
-                typeof(Materializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, new TestDbConnection());
+                typeof(Materializer).GetProperty("DbConnection", BindingFlags.Public | BindingFlags.Instance)?.SetValue(this, new TestDbConnection());
                 typeof(Materializer).GetField("_lockConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, new object());
                 typeof(Materializer).GetProperty("IsDisposed", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, false);
                 typeof(Materializer).GetProperty("IsDisposing", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, false);
@@ -1197,7 +1207,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// render the instance unusable for further database operations until a new connection is
             /// assigned.</remarks>
             public void SetDbConnectionNull()
-                => typeof(Materializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, null);
+                => typeof(Materializer).GetProperty("DbConnection", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, null);
 
             /// <summary>
             /// Sets the database connection to be used by this instance.
@@ -1207,7 +1217,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// operations.</remarks>
             /// <param name="conn">The database connection to associate with this instance. Cannot be null.</param>
             public void SetDbConnection(IDbConnection conn)
-                => typeof(Materializer).GetProperty("DbConnection", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(this, conn);
+                => typeof(Materializer).GetProperty("DbConnection", BindingFlags.Public | BindingFlags.Instance)?.SetValue(this, conn);
 
             /// <summary>
             /// Associates the specified database transaction with the current materializer instance.
@@ -1239,6 +1249,15 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             /// <param name="value">true to indicate that the instance is disposing; otherwise, false.</param>
             public void SetDisposing(bool value)
                 => typeof(Materializer).GetProperty("IsDisposing")?.SetValue(this, value);
+
+            /// <summary>
+            /// Invokes the protected dispose routine with an explicit disposing flag.
+            /// </summary>
+            /// <remarks>This helper is intended for unit tests that need to validate both branches of the
+            /// protected dispose implementation.</remarks>
+            /// <param name="disposing">true to dispose managed resources; otherwise, false.</param>
+            public void CallDisposeCore(bool disposing)
+                => base.Dispose(disposing);
         }
 
         /// <summary>
@@ -1716,7 +1735,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         /// Creates a sample DataTable containing predefined columns and rows for demonstration or testing purposes.
         /// </summary>
         /// <returns>A DataTable with two columns, "Id" and "Name", and two rows of sample data.</returns>
-        private static DataTable CreateSampleTable(bool empty = false)
+        private static DataTable CreateSampleTable(bool empty = false, int limit = 2)
         {
             var table = new DataTable(nameof(Materializer));
 
@@ -1725,22 +1744,22 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             if (empty)
                 return table;
 
-            table.Rows.Add(1, "Alice");
-            table.Rows.Add(2, "Bob");
+            for (int i = 0; i < limit; i++)
+                table.Rows.Add(i + 1, i == 0 ? "Alice" : "Bob");
+
             return table;
         }
 
         /// <summary>
-        /// Creates a mock implementation of the IDataReader interface for use in unit tests.
+        /// Creates a mock implementation of the <see cref="DbDataReader"/> class for use in unit tests.
         /// </summary>
-        /// <remarks>The returned mock IDataReader supports common data reader operations such as Read,
-        /// GetValue, GetName, and IsDBNull, based on a predefined in-memory data table. This method is intended for
-        /// testing scenarios where a real database connection is not required.</remarks>
-        /// <returns>A Mock&lt;IDataReader&gt; instance configured to simulate reading from a sample data table.</returns>
-        private static Mock<IDataReader> CreateMockReader(bool empty = false)
+        /// <remarks>The returned mock reader supports both synchronous and asynchronous read paths and common
+        /// schema/value access operations based on a predefined in-memory data table.</remarks>
+        /// <returns>A <see cref="Mock{DbDataReader}"/> instance configured to simulate reading from a sample data table.</returns>
+        private static Mock<DbDataReader> CreateMockReader(bool empty = false, int limit = 2)
         {
-            var table = CreateSampleTable(empty);
-            var reader = new Mock<IDataReader>();
+            var table = CreateSampleTable(empty, limit);
+            var reader = new Mock<DbDataReader>();
             int rowIndex = -1;
 
             reader.Setup(r => r.Read()).Returns(() =>
@@ -1748,6 +1767,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
                 rowIndex++;
                 return rowIndex < table.Rows.Count;
             });
+
+            reader.Setup(r => r.ReadAsync(It.IsAny<CancellationToken>()))
+                .Returns((CancellationToken _) =>
+                {
+                    rowIndex++;
+                    return Task.FromResult(rowIndex < table.Rows.Count);
+                });
 
             reader.Setup(r => r.FieldCount).Returns(table.Columns.Count);
             reader.Setup(r => r.GetOrdinal(It.IsAny<string>())).Returns((string columnName) =>
@@ -1773,7 +1799,6 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
                   return table.Columns.Count;
               });
-            reader.Setup(r => r.Dispose());
             reader.Setup(r => r.GetInt32(It.IsAny<int>())).Returns((int i) => Convert.ToInt32(table.Rows[rowIndex][i]));
             reader.Setup(r => r.GetInt64(It.IsAny<int>())).Returns((int i) => Convert.ToInt64(table.Rows[rowIndex][i]));
             reader.Setup(r => r.GetInt16(It.IsAny<int>())).Returns((int i) => Convert.ToInt16(table.Rows[rowIndex][i]));
@@ -1791,6 +1816,612 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             reader.Setup(r => r.GetString(It.IsAny<int>())).Returns((int i) => Convert.ToString(table.Rows[rowIndex][i]));
 
             return reader;
+        }
+
+        /// <summary>
+        /// Represents a parameter to a database command, including its type, direction, value, and mapping information.
+        /// </summary>
+        /// <remarks>Use this class to define and configure parameters for database commands or stored
+        /// procedures. The parameter's properties control how it is interpreted by the database engine, including its
+        /// data type, direction (input, output, etc.), and mapping to source columns. The behavior and requirements for
+        /// certain properties, such as parameter naming conventions, may vary depending on the underlying data provider
+        /// or database system.</remarks>
+        private sealed class TestDbParameter :
+            DbParameter
+        {
+            /// <summary>
+            /// Gets or sets the database type of the parameter.
+            /// </summary>
+            public override DbType DbType { get; set; }
+
+            /// <summary>
+            /// Gets or sets the direction of the parameter within a command or stored procedure.
+            /// </summary>
+            /// <remarks>The direction determines whether the parameter is used for input, output,
+            /// bidirectional, or as a return value from a stored procedure. The default is typically Input. Changing
+            /// the direction may affect how the parameter is handled during command execution.</remarks>
+            public override ParameterDirection Direction { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether the current type allows null values.
+            /// </summary>
+            public override bool IsNullable { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name of the parameter for the command or query.
+            /// </summary>
+            /// <remarks>The parameter name is used to identify the parameter within the command text
+            /// or query. The format and requirements for parameter names may vary depending on the data provider or
+            /// database system in use.</remarks>
+            public override string ParameterName { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name of the source column mapped to the DataSet column.
+            /// </summary>
+            /// <remarks>This property is typically used in data adapter scenarios to specify which
+            /// column in the data source is associated with a parameter or field. The value is case-sensitive and
+            /// should match the column name in the data source exactly.</remarks>
+            public override string SourceColumn { get; set; }
+
+            /// <summary>
+            /// Gets or sets the value associated with this instance.
+            /// </summary>
+            public override object Value { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether the mapped source column accepts null values.
+            /// </summary>
+            public override bool SourceColumnNullMapping { get; set; }
+
+            /// <summary>
+            /// Gets or sets the size of the object.
+            /// </summary>
+            public override int Size { get; set; }
+
+            /// <summary>
+            /// Resets the type associated with the parameter to its default value.
+            /// </summary>
+            /// <remarks>Call this method to clear any custom database type settings and revert the
+            /// parameter to its original type mapping. This is useful when reusing parameter objects for different
+            /// commands or queries.</remarks>
+            public override void ResetDbType()
+            { }
+        }
+
+        /// <summary>
+        /// Represents a collection of database parameters for a command, providing methods to add, remove, and access
+        /// parameters by index or name.
+        /// </summary>
+        /// <remarks>This collection is used to manage parameters associated with a database command. It
+        /// supports standard collection operations such as adding, removing, and enumerating parameters. Parameter
+        /// lookup by name is case-sensitive and returns the first matching parameter. Thread safety is not guaranteed;
+        /// callers should synchronize access if the collection is used concurrently.</remarks>
+        private sealed class TestDbParameterCollection :
+            DbParameterCollection
+        {
+            /// <summary>
+            /// A private list that holds the parameters in the collection. This list is used to store and manage the
+            /// </summary>
+            private readonly List<object> _items = new List<object>();
+
+            /// <summary>
+            /// Gets the number of elements contained in the collection.
+            /// </summary>
+            public override int Count => _items.Count;
+
+            /// <summary>
+            /// Gets an object that can be used to synchronize access to the collection.
+            /// </summary>
+            /// <remarks>Use this object to lock the collection during multithreaded operations to
+            /// ensure thread safety. Synchronization is the caller's responsibility; the collection itself does not
+            /// perform any locking.</remarks>
+            public override object SyncRoot => this;
+
+            /// <summary>
+            /// Adds an object to the end of the collection.
+            /// </summary>
+            /// <param name="value">The object to add to the collection. The value can be null.</param>
+            /// <returns>The zero-based index at which the value has been added.</returns>
+            public override int Add(object value)
+            {
+                _items.Add(value);
+                return _items.Count - 1;
+            }
+
+            /// <summary>
+            /// Adds the elements of the specified array to the end of the collection.
+            /// </summary>
+            /// <remarks>The order of the elements in the array is preserved in the collection. If the
+            /// array is empty, the collection remains unchanged.</remarks>
+            /// <param name="values">An array containing the elements to add to the collection. The array can contain null values.</param>
+            public override void AddRange(Array values)
+            {
+                foreach (var value in values)
+                    _items.Add(value);
+            }
+
+            /// <summary>
+            /// Removes all items from the collection.
+            /// </summary>
+            /// <remarks>After calling this method, the collection will be empty. This operation does
+            /// not modify the capacity of the underlying storage.</remarks>
+            public override void Clear() => _items.Clear();
+
+            /// <summary>
+            /// Determines whether the collection contains a specific value.
+            /// </summary>
+            /// <param name="value">The object to locate in the collection. The value can be null.</param>
+            /// <returns>true if the value is found in the collection; otherwise, false.</returns>
+            public override bool Contains(object value) => _items.Contains(value);
+
+            /// <summary>
+            /// Determines whether the specified string occurs within this instance.
+            /// </summary>
+            /// <param name="value">The string to seek within this instance. Can be null or empty.</param>
+            /// <returns>true if the specified string occurs within this instance; otherwise, false.</returns>
+            public override bool Contains(string value) => IndexOf(value) >= 0;
+
+            /// <summary>
+            /// Copies the elements of the collection to a specified array, starting at the specified array index.
+            /// </summary>
+            /// <remarks>The destination array must be large enough to contain the elements copied
+            /// from the collection, starting at the specified index. This method performs a shallow copy of the
+            /// elements.</remarks>
+            /// <param name="array">The one-dimensional array that is the destination of the elements copied from the collection. The array
+            /// must have zero-based indexing.</param>
+            /// <param name="index">The zero-based index in the destination array at which copying begins.</param>
+            public override void CopyTo(Array array, int index) => _items.ToArray().CopyTo(array, index);
+
+            /// <summary>
+            /// Returns an enumerator that iterates through the collection.
+            /// </summary>
+            /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+            public override IEnumerator GetEnumerator() => _items.GetEnumerator();
+
+            /// <summary>
+            /// Retrieves the parameter at the specified index from the collection.
+            /// </summary>
+            /// <param name="index">The zero-based index of the parameter to retrieve. Must be greater than or equal to 0 and less than the
+            /// number of parameters in the collection.</param>
+            /// <returns>The <see cref="DbParameter"/> located at the specified index.</returns>
+            protected override DbParameter GetParameter(int index) => (DbParameter)_items[index];
+
+            /// <summary>
+            /// Retrieves the database parameter with the specified name from the collection.
+            /// </summary>
+            /// <remarks>If multiple parameters have the same name, the first match is returned.
+            /// Throws an exception if the parameter is not found.</remarks>
+            /// <param name="parameterName">The name of the parameter to retrieve. The comparison may be case-sensitive depending on the
+            /// implementation.</param>
+            /// <returns>The <see cref="DbParameter"/> object with the specified name.</returns>
+            protected override DbParameter GetParameter(string parameterName) => (DbParameter)_items[IndexOf(parameterName)];
+
+            /// <summary>
+            /// Searches for the specified object and returns the zero-based index of the first occurrence within the
+            /// collection.
+            /// </summary>
+            /// <param name="value">The object to locate in the collection. The value can be null.</param>
+            /// <returns>The zero-based index of the first occurrence of the value within the collection, if found; otherwise,
+            /// -1.</returns>
+            public override int IndexOf(object value) => _items.IndexOf(value);
+
+            /// <summary>
+            /// Returns the zero-based index of the parameter with the specified name.
+            /// </summary>
+            /// <remarks>If multiple parameters have the same name, the method returns the index of
+            /// the first occurrence. The search is case-sensitive and does not perform culture-specific
+            /// comparisons.</remarks>
+            /// <param name="parameterName">The name of the parameter to locate in the collection. The comparison is case-sensitive.</param>
+            /// <returns>The zero-based index of the parameter with the specified name if found; otherwise, -1.</returns>
+            public override int IndexOf(string parameterName)
+            {
+                for (var i = 0; i < _items.Count; i++)
+                {
+                    if (_items[i] is DbParameter parameter && parameter.ParameterName == parameterName)
+                        return i;
+                }
+
+                return -1;
+            }
+
+            /// <summary>
+            /// Inserts an element into the collection at the specified index.
+            /// </summary>
+            /// <param name="index">The zero-based index at which the value should be inserted. Must be greater than or equal to 0 and less
+            /// than or equal to the number of elements in the collection.</param>
+            /// <param name="value">The object to insert into the collection. Can be null if the collection allows null values.</param>
+            public override void Insert(int index, object value) => _items.Insert(index, value);
+
+            /// <summary>
+            /// Removes the first occurrence of a specific object from the collection.
+            /// </summary>
+            /// <param name="value">The object to remove from the collection. The value can be null.</param>
+            public override void Remove(object value) => _items.Remove(value);
+
+            /// <summary>
+            /// Removes the element at the specified index of the collection.
+            /// </summary>
+            /// <param name="index">The zero-based index of the element to remove. Must be greater than or equal to 0 and less than the
+            /// number of elements in the collection.</param>
+            public override void RemoveAt(int index) => _items.RemoveAt(index);
+
+            /// <summary>
+            /// Removes the parameter with the specified name from the collection.
+            /// </summary>
+            /// <remarks>If the parameter with the specified name does not exist in the collection, no
+            /// action is taken.</remarks>
+            /// <param name="parameterName">The name of the parameter to remove. The comparison is typically case-sensitive, depending on the
+            /// implementation.</param>
+            public override void RemoveAt(string parameterName)
+            {
+                var index = IndexOf(parameterName);
+                if (index >= 0)
+                    _items.RemoveAt(index);
+            }
+
+            /// <summary>
+            /// Sets the parameter at the specified index to the given value.
+            /// </summary>
+            /// <param name="index">The zero-based index of the parameter to set. Must be within the bounds of the parameter collection.</param>
+            /// <param name="value">The new value to assign to the parameter at the specified index. Cannot be null.</param>
+            protected override void SetParameter(int index, DbParameter value) => _items[index] = value;
+
+            /// <summary>
+            /// Sets the specified parameter in the collection, replacing any existing parameter with the same name or
+            /// adding it if it does not exist.
+            /// </summary>
+            /// <param name="parameterName">The name of the parameter to set or add. Cannot be null or empty.</param>
+            /// <param name="value">The parameter object to set in the collection. Cannot be null.</param>
+            protected override void SetParameter(string parameterName, DbParameter value)
+            {
+                var index = IndexOf(parameterName);
+                if (index >= 0)
+                    _items[index] = value;
+                else
+                    _items.Add(value);
+            }
+        }
+
+        /// <summary>
+        /// Represents a test implementation of a database command for use in unit testing scenarios.
+        /// </summary>
+        /// <remarks>This sealed class provides a mock implementation of the DbCommand abstract base
+        /// class, allowing for controlled testing of database-related code without requiring a live database
+        /// connection. It supports parameter management, command execution simulation, and customizable results. Not
+        /// all DbCommand features are supported; for example, executing a DbDataReader is not implemented and will
+        /// throw a NotSupportedException.</remarks>
+        private sealed class TestDbCommand :
+            DbCommand
+        {
+            /// <summary>
+            /// A collection of parameters associated with this command, allowing for parameter management and access by name or index.
+            /// </summary>
+            private readonly TestDbParameterCollection _parameters = new TestDbParameterCollection();
+
+            /// <summary>
+            /// Gets the cancellation token that was most recently used in an operation.
+            /// </summary>
+            public CancellationToken LastCancellationToken { get; private set; }
+
+            /// <summary>
+            /// Gets or sets the result value.
+            /// </summary>
+            public int Result { get; set; }
+
+            /// <summary>
+            /// Gets or sets the data reader result returned by reader execution methods.
+            /// </summary>
+            public DbDataReader ReaderResult { get; set; }
+
+            /// <summary>
+            /// Gets the command behavior used in the most recent reader execution.
+            /// </summary>
+            public CommandBehavior LastCommandBehavior { get; private set; }
+
+            /// <summary>
+            /// Gets or sets the SQL statement to execute at the data source.
+            /// </summary>
+            /// <remarks>The command text can be a SQL query, a stored procedure name, or any command
+            /// supported by the underlying data provider. Setting this property replaces any existing command text. The
+            /// format and content of the command text must be valid for the data source and command type
+            /// specified.</remarks>
+            public override string CommandText { get; set; }
+
+            /// <summary>
+            /// Gets or sets the wait time, in seconds, before terminating an attempt to execute a command and
+            /// generating an error.
+            /// </summary>
+            /// <remarks>A value of 0 indicates no limit, and the command will wait indefinitely.
+            /// Setting this property to a negative value will throw an exception. The default value is determined by
+            /// the specific data provider implementation.</remarks>
+            public override int CommandTimeout { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating how the command string is interpreted by the data provider.
+            /// </summary>
+            /// <remarks>Set this property to specify whether the command text represents a raw SQL
+            /// statement, a stored procedure, or a table name. The default value is typically CommandType.Text.
+            /// Changing this property may affect how parameters are handled and how the command is executed by the
+            /// provider.</remarks>
+            public override CommandType CommandType { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether the component is visible at design time.
+            /// </summary>
+            /// <remarks>This property is typically used by design-time environments to determine
+            /// whether the component should be displayed in a visual designer. It does not affect the component's
+            /// runtime behavior.</remarks>
+            public override bool DesignTimeVisible { get; set; }
+
+            /// <summary>
+            /// Gets or sets how command results are applied to the DataRow when used by the Update method of a
+            /// DbDataAdapter.
+            /// </summary>
+            /// <remarks>This property determines whether output parameters, the first returned row,
+            /// or both are mapped to the changed DataRow after a command executes. The default value and supported
+            /// options may vary depending on the specific command implementation.</remarks>
+            public override UpdateRowSource UpdatedRowSource { get; set; }
+
+            /// <summary>
+            /// Gets or sets the database connection used by the provider.
+            /// </summary>
+            protected override DbConnection DbConnection { get; set; }
+
+            /// <summary>
+            /// Gets the collection of parameters for the command.
+            /// </summary>
+            /// <remarks>The parameter collection contains all parameters used by the command, such as
+            /// those for SQL queries or stored procedures. Modifying this collection affects the parameters sent to the
+            /// data source when the command is executed.</remarks>
+            protected override DbParameterCollection DbParameterCollection => _parameters;
+
+            /// <summary>
+            /// Gets or sets the database transaction associated with the current context.
+            /// </summary>
+            /// <remarks>Use this property to access or assign the underlying database transaction
+            /// when performing operations that require transactional consistency. Setting this property allows custom
+            /// transaction management for advanced scenarios.</remarks>
+            protected override DbTransaction DbTransaction { get; set; }
+
+            /// <summary>
+            /// Attempts to cancel the current operation.
+            /// </summary>
+            /// <remarks>Override this method to provide custom cancellation logic for operations that
+            /// support cancellation. If the operation cannot be canceled, this method may have no effect.</remarks>
+            public override void Cancel()
+            { }
+
+            /// <summary>
+            /// Executes a SQL statement against the connection and returns the number of rows affected.
+            /// </summary>
+            /// <returns>The number of rows affected by the SQL statement. Returns -1 for statements that do not affect rows.</returns>
+            public override int ExecuteNonQuery() => Result;
+
+            /// <summary>
+            /// Executes the query and returns the first column of the first row in the result set.
+            /// </summary>
+            /// <returns>An object representing the value of the first column of the first row in the result set, or null if the
+            /// result set is empty.</returns>
+            public override object ExecuteScalar() => Result;
+
+            /// <summary>
+            /// Prepares the command for execution by performing any necessary setup or validation steps.
+            /// </summary>
+            public override void Prepare()
+            { }
+
+            /// <summary>
+            /// Creates a new instance of a database parameter specific to the test implementation.
+            /// </summary>
+            /// <returns>A new <see cref="TestDbParameter"/> instance representing a database parameter.</returns>
+            protected override DbParameter CreateDbParameter() => new TestDbParameter();
+
+            /// <summary>
+            /// Executes the command and returns a data reader using the specified command behavior.
+            /// </summary>
+            /// <param name="behavior">A value from the <see cref="CommandBehavior"/> enumeration that specifies command execution behavior.</param>
+            /// <returns>The configured <see cref="DbDataReader"/> test instance.</returns>
+            /// <exception cref="InvalidOperationException">Thrown when no reader result is configured.</exception>
+            protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+            {
+                LastCommandBehavior = behavior;
+
+                return ReaderResult ??
+                    throw new InvalidOperationException("ReaderResult was not configured.");
+            }
+
+            /// <summary>
+            /// Asynchronously executes the command and returns a data reader using the specified behavior.
+            /// </summary>
+            /// <param name="behavior">A value from the <see cref="CommandBehavior"/> enumeration that specifies command execution behavior.</param>
+            /// <param name="cancellationToken">A cancellation token that can be used to request cancellation of the asynchronous operation.</param>
+            /// <returns>A task containing the configured <see cref="DbDataReader"/> test instance.</returns>
+            /// <exception cref="InvalidOperationException">Thrown when no reader result is configured.</exception>
+            protected override Task<DbDataReader> ExecuteDbDataReaderAsync(
+                CommandBehavior behavior,
+                CancellationToken cancellationToken)
+            {
+                LastCommandBehavior = behavior;
+                LastCancellationToken = cancellationToken;
+
+                return Task.FromResult(
+                    ReaderResult ??
+                    throw new InvalidOperationException("ReaderResult was not configured."));
+            }
+
+            /// <summary>
+            /// Asynchronously executes a SQL statement against the connection and returns the number of rows affected.
+            /// </summary>
+            /// <param name="cancellationToken">A cancellation token that can be used to request cancellation of the asynchronous operation.</param>
+            /// <returns>A task representing the asynchronous operation. The task result contains the number of rows affected by
+            /// the command.</returns>
+            public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+            {
+                LastCancellationToken = cancellationToken;
+                return Task.FromResult(Result);
+            }
+
+            /// <summary>
+            /// Asynchronously executes the command and returns the first column of the first row in the result set.
+            /// </summary>
+            /// <param name="cancellationToken">A cancellation token that can be used to request cancellation of the asynchronous operation.</param>
+            /// <returns>A task representing the asynchronous operation. The task result contains the scalar result value.</returns>
+            public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+            {
+                LastCancellationToken = cancellationToken;
+                return Task.FromResult((object)Result);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new instance of the Materializer class using the specified test database command.
+        /// </summary>
+        /// <remarks>This method is intended for testing scenarios where a mock database command is
+        /// required. The created Materializer uses a mock connection with an open state and a default timeout of 30
+        /// seconds.</remarks>
+        /// <param name="command">The test database command to be used by the materializer. Must not be null.</param>
+        /// <returns>A Materializer instance configured to use the provided test database command.</returns>
+        private static Materializer CreateMaterializerWithDbCommand(TestDbCommand command)
+        {
+            var connectionMock = new Mock<IDbConnection>();
+            connectionMock.Setup(c => c.CreateCommand()).Returns(command);
+            connectionMock.Setup(c => c.State).Returns(ConnectionState.Open);
+
+            return new Materializer(connectionMock.Object, timeout: 30, parameterPrefix: "@");
+        }
+
+        /// <summary>
+        /// Represents a tracking implementation of <see cref="IDbConnection"/> used to validate lifecycle behavior in
+        /// tests.
+        /// </summary>
+        private sealed class TrackingDbConnection :
+            IDbConnection
+        {
+            /// <summary>
+            /// Gets or sets the connection string used by the connection.
+            /// </summary>
+            public string ConnectionString { get; set; }
+
+            /// <summary>
+            /// Gets the time to wait while trying to establish a connection before terminating the attempt.
+            /// </summary>
+            public int ConnectionTimeout => 0;
+
+            /// <summary>
+            /// Gets the name of the current database.
+            /// </summary>
+            public string Database => "Tracking";
+
+            /// <summary>
+            /// Gets the current state of the connection.
+            /// </summary>
+            public ConnectionState State { get; private set; } = ConnectionState.Open;
+
+            /// <summary>
+            /// Gets a value indicating whether <see cref="Close"/> was called.
+            /// </summary>
+            public bool CloseCalled { get; private set; }
+
+            /// <summary>
+            /// Gets a value indicating whether <see cref="Dispose"/> was called.
+            /// </summary>
+            public bool DisposeCalled { get; private set; }
+
+            /// <summary>
+            /// Begins a database transaction.
+            /// </summary>
+            /// <returns>An <see cref="IDbTransaction"/> object.</returns>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public IDbTransaction BeginTransaction() => throw new NotImplementedException();
+
+            /// <summary>
+            /// Begins a database transaction with the specified isolation level.
+            /// </summary>
+            /// <param name="il">The isolation level for the transaction.</param>
+            /// <returns>An <see cref="IDbTransaction"/> object.</returns>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public IDbTransaction BeginTransaction(IsolationLevel il) => throw new NotImplementedException();
+
+            /// <summary>
+            /// Changes the current database for an open connection.
+            /// </summary>
+            /// <param name="databaseName">The name of the database to use.</param>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public void ChangeDatabase(string databaseName) => throw new NotImplementedException();
+
+            /// <summary>
+            /// Closes the connection.
+            /// </summary>
+            public void Close()
+            {
+                CloseCalled = true;
+                State = ConnectionState.Closed;
+            }
+
+            /// <summary>
+            /// Creates and returns a command object associated with the connection.
+            /// </summary>
+            /// <returns>An <see cref="IDbCommand"/> object.</returns>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public IDbCommand CreateCommand() => throw new NotImplementedException();
+
+            /// <summary>
+            /// Opens the database connection.
+            /// </summary>
+            public void Open()
+            {
+                State = ConnectionState.Open;
+            }
+
+            /// <summary>
+            /// Releases all resources used by the current connection instance.
+            /// </summary>
+            public void Dispose()
+            {
+                DisposeCalled = true;
+            }
+        }
+
+        /// <summary>
+        /// Represents a tracking implementation of <see cref="IDbTransaction"/> used by disposal and rollback tests.
+        /// </summary>
+        private sealed class TrackingDbTransaction :
+            IDbTransaction
+        {
+            /// <summary>
+            /// Gets the connection object associated with the transaction.
+            /// </summary>
+            public IDbConnection Connection => null;
+
+            /// <summary>
+            /// Gets the isolation level for the transaction.
+            /// </summary>
+            public IsolationLevel IsolationLevel => IsolationLevel.ReadCommitted;
+
+            /// <summary>
+            /// Gets a value indicating whether <see cref="Rollback"/> was called.
+            /// </summary>
+            public bool RollbackCalled { get; private set; }
+
+            /// <summary>
+            /// Commits the database transaction.
+            /// </summary>
+            /// <exception cref="NotImplementedException">Always thrown by this test double.</exception>
+            public void Commit() => throw new NotImplementedException();
+
+            /// <summary>
+            /// Rolls back a transaction from a pending state.
+            /// </summary>
+            public void Rollback()
+            {
+                RollbackCalled = true;
+            }
+
+            /// <summary>
+            /// Releases resources used by the transaction.
+            /// </summary>
+            public void Dispose()
+            { }
         }
     }
 }

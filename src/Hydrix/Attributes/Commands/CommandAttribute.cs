@@ -6,19 +6,19 @@ namespace Hydrix.Attributes.Commands
     /// <summary>
     /// Command attribute to decorates a class that specifies how a command string is interpreted.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class)]
     public abstract class CommandAttribute :
         Attribute
     {
         /// <summary>
         /// Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.
         /// </summary>
-        public CommandType CommandType { get; private set; } = CommandType.StoredProcedure;
+        public CommandType CommandType { get; private set; }
 
         /// <summary>
         /// Gets or sets the text command to run against the data source.
         /// </summary>
-        public string CommandText { get; protected set; } = string.Empty;
+        public string CommandText { get; protected set; }
 
         /// <summary>
         /// Constructor.
@@ -29,8 +29,8 @@ namespace Hydrix.Attributes.Commands
             CommandType commandType,
             string commandText)
         {
-            this.CommandType = commandType;
-            this.CommandText = commandText;
+            CommandType = commandType;
+            CommandText = commandText;
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Hydrix.Configuration;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Data;
 
 namespace Hydrix.Orchestrator.Materializers
@@ -10,6 +12,9 @@ namespace Hydrix.Orchestrator.Materializers
     /// <remarks>This class allows for customization of the database connection, command execution timeout,
     /// and parameter naming conventions. It is designed to facilitate data retrieval and manipulation in a structured
     /// manner.</remarks>
+#pragma warning disable S1133
+
+    [Obsolete("This class is deprecated. Please use the extension methods in HydrixDataCore class.")]
     public partial class Materializer :
         Contract.IMaterializer
     {
@@ -26,12 +31,12 @@ namespace Hydrix.Orchestrator.Materializers
         /// </param>
         public Materializer(
             IDbConnection connection,
-            int timeout = DefaultTimeout,
-            string parameterPrefix = DefaultParameterPrefix) : this(
+            int? timeout = null,
+            string parameterPrefix = null) : this(
                 connection,
                 null,
-                timeout,
-                parameterPrefix)
+                timeout ?? HydrixConfiguration.Options.CommandTimeout,
+                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix)
         { }
 
         /// <summary>
@@ -49,24 +54,17 @@ namespace Hydrix.Orchestrator.Materializers
         public Materializer(
             IDbConnection connection,
             ILogger logger,
-            int timeout = DefaultTimeout,
-            string parameterPrefix = DefaultParameterPrefix)
+            int? timeout = null,
+            string parameterPrefix = null)
         {
-            this._logger = logger;
+            lock (_lockConnection)
+                DbConnection = connection;
 
-            lock (this._lockConnection)
-                this.DbConnection = connection;
-
-            this.Timeout = timeout;
-            this._parameterPrefix = parameterPrefix;
-        }
-
-        /// <summary>
-        /// Destructor.
-        /// </summary>
-        ~Materializer()
-        {
-            this.Dispose(false);
+            _logger = logger;
+            Timeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
+            _parameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
         }
     }
+
+#pragma warning restore S1133
 }

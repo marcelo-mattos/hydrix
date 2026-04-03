@@ -1,8 +1,9 @@
-﻿using Hydrix.Schemas.Contract;
+﻿using Hydrix.Engines;
+using Hydrix.Engines.Options;
+using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,30 +24,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
-        /// <returns>An System.Data.IDataReader object.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        IDataReader Contract.IMaterializer.ExecuteReader(
-            string sql,
-            object parameters)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
-
-        /// <summary>
-        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
-        /// </summary>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
-        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -55,39 +34,27 @@ namespace Hydrix.Orchestrator.Materializers
         IDataReader Contract.IMaterializer.ExecuteReader(
             string sql,
             object parameters,
-            IDbTransaction transaction)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    sql,
-                    parameters,
-                    transaction);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
-
-        /// <summary>
-        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
-        /// </summary>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <returns>An System.Data.IDataReader object.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        IDataReader Contract.IMaterializer.ExecuteReader(
-            string sql)
-            => (this as Contract.IMaterializer)
-                .ExecuteReader(
-                    sql,
-                    (object)null);
+            int? timeout)
+            => ExecutionEngine.ExecuteReader(
+                sql,
+                parameters,
+                CommandBehavior.Default,
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    CommandType = CommandType.Text,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -95,38 +62,64 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         IDataReader Contract.IMaterializer.ExecuteReader(
             string sql,
-            IDbTransaction transaction)
+            object parameters,
+            IDbTransaction transaction,
+            int? timeout)
+            => ExecutionEngine.ExecuteReader(
+                sql,
+                parameters,
+                CommandBehavior.Default,
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandType = CommandType.Text,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
+        /// </summary>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>An System.Data.IDataReader object.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        IDataReader Contract.IMaterializer.ExecuteReader(
+            string sql,
+            int? timeout)
             => (this as Contract.IMaterializer)
                 .ExecuteReader(
                     sql,
                     (object)null,
-                    transaction);
+                    timeout);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
         /// </summary>
-        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         IDataReader Contract.IMaterializer.ExecuteReader(
-            CommandType commandType,
             string sql,
-            IEnumerable<IDataParameter> parameters)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            IDbTransaction transaction,
+            int? timeout)
+            => (this as Contract.IMaterializer)
+                .ExecuteReader(
                     sql,
-                    parameters);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+                    (object)null,
+                    transaction,
+                    timeout);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -134,7 +127,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
-        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -144,44 +138,28 @@ namespace Hydrix.Orchestrator.Materializers
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters,
-            IDbTransaction transaction)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
-                    sql,
-                    parameters,
-                    transaction);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
-
-        /// <summary>
-        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
-        /// </summary>
-        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
-        /// <param name="sql">Sets the text command to run against the data source.</param>
-        /// <returns>An System.Data.IDataReader object.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        IDataReader Contract.IMaterializer.ExecuteReader(
-            CommandType commandType,
-            string sql)
-            => (this as Contract.IMaterializer)
-                .ExecuteReader(
-                    commandType,
-                    sql,
-                    (IEnumerable<IDataParameter>)null);
+            int? timeout)
+            => ExecutionEngine.ExecuteReader(
+                sql,
+                parameters,
+                CommandBehavior.Default,
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    CommandType = commandType,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
         /// </summary>
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
@@ -190,19 +168,78 @@ namespace Hydrix.Orchestrator.Materializers
         IDataReader Contract.IMaterializer.ExecuteReader(
             CommandType commandType,
             string sql,
-            IDbTransaction transaction)
+            IEnumerable<IDataParameter> parameters,
+            IDbTransaction transaction,
+            int? timeout)
+            => ExecutionEngine.ExecuteReader(
+                sql,
+                parameters,
+                CommandBehavior.Default,
+                new ExecutionCommandOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandType = commandType,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
+        /// </summary>
+        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>An System.Data.IDataReader object.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        IDataReader Contract.IMaterializer.ExecuteReader(
+            CommandType commandType,
+            string sql,
+            int? timeout)
             => (this as Contract.IMaterializer)
                 .ExecuteReader(
                     commandType,
                     sql,
                     (IEnumerable<IDataParameter>)null,
-                    transaction);
+                    timeout);
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
+        /// </summary>
+        /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
+        /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>An System.Data.IDataReader object.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        IDataReader Contract.IMaterializer.ExecuteReader(
+            CommandType commandType,
+            string sql,
+            IDbTransaction transaction,
+            int? timeout)
+            => (this as Contract.IMaterializer)
+                .ExecuteReader(
+                    commandType,
+                    sql,
+                    (IEnumerable<IDataParameter>)null,
+                    transaction,
+                    timeout);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -213,25 +250,21 @@ namespace Hydrix.Orchestrator.Materializers
         async Task<IDataReader> Contract.IMaterializer.ExecuteReaderAsync(
             string sql,
             object parameters,
+            int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteReaderAsync(
                     sql,
-                    parameters);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    parameters,
+                    CommandBehavior.Default,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        CommandType = CommandType.Text,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -239,6 +272,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -250,31 +285,29 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             object parameters,
             IDbTransaction transaction,
+            int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteReaderAsync(
                     sql,
                     parameters,
-                    transaction);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    CommandBehavior.Default,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandType = CommandType.Text,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -284,11 +317,13 @@ namespace Hydrix.Orchestrator.Materializers
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<IDataReader> Contract.IMaterializer.ExecuteReaderAsync(
             string sql,
+            int? timeout,
             CancellationToken cancellationToken)
             => await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
                     sql,
                     (object)null,
+                    timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -297,6 +332,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// </summary>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -307,12 +344,14 @@ namespace Hydrix.Orchestrator.Materializers
         async Task<IDataReader> Contract.IMaterializer.ExecuteReaderAsync(
             string sql,
             IDbTransaction transaction,
+            int? timeout,
             CancellationToken cancellationToken)
             => await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
                     sql,
                     (object)null,
                     transaction,
+                    timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -322,6 +361,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -333,26 +374,21 @@ namespace Hydrix.Orchestrator.Materializers
             CommandType commandType,
             string sql,
             IEnumerable<IDataParameter> parameters,
+            int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteReaderAsync(
                     sql,
-                    parameters);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    parameters,
+                    CommandBehavior.Default,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        CommandType = commandType,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -361,6 +397,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="parameters">Sets the System.Data.IDataParameterCollection with the parameters of the SQL statement or stored procedure.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -373,33 +411,30 @@ namespace Hydrix.Orchestrator.Materializers
             string sql,
             IEnumerable<IDataParameter> parameters,
             IDbTransaction transaction,
+            int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    commandType,
+            => await ExecutionEngine.ExecuteReaderAsync(
                     sql,
                     parameters,
-                    transaction);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    CommandBehavior.Default,
+                    new ExecutionCommandOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandType = commandType,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
         /// </summary>
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -410,12 +445,14 @@ namespace Hydrix.Orchestrator.Materializers
         async Task<IDataReader> Contract.IMaterializer.ExecuteReaderAsync(
             CommandType commandType,
             string sql,
+            int? timeout,
             CancellationToken cancellationToken)
             => await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
                     commandType,
                     sql,
                     (IEnumerable<IDataParameter>)null,
+                    timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -425,6 +462,8 @@ namespace Hydrix.Orchestrator.Materializers
         /// <param name="commandType">Indicates or specifies how the System.Data.IDbCommand.CommandText property is interpreted.</param>
         /// <param name="sql">Sets the text command to run against the data source.</param>
         /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
@@ -436,6 +475,7 @@ namespace Hydrix.Orchestrator.Materializers
             CommandType commandType,
             string sql,
             IDbTransaction transaction,
+            int? timeout,
             CancellationToken cancellationToken)
             => await (this as Contract.IMaterializer)
                 .ExecuteReaderAsync(
@@ -443,6 +483,7 @@ namespace Hydrix.Orchestrator.Materializers
                     sql,
                     (IEnumerable<IDataParameter>)null,
                     transaction,
+                    timeout,
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -454,50 +495,26 @@ namespace Hydrix.Orchestrator.Materializers
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
         /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
-        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
-        IDataReader Contract.IMaterializer.ExecuteReader<TDataParameterDriver>(
-            IProcedure<TDataParameterDriver> procedure)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    procedure);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
-
-        /// <summary>
-        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
-        /// </summary>
-        /// <typeparam name="TDataParameterDriver">
-        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
-        /// and is implemented by .NET Framework data providers that access data sources.
-        /// </typeparam>
-        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
-        /// <param name="transaction">The transaction to use for the command.</param>
-        /// <returns>An System.Data.IDataReader object.</returns>
-        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
-        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
-        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         IDataReader Contract.IMaterializer.ExecuteReader<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
-            IDbTransaction transaction)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    procedure,
-                    transaction);
-
-            return command.ExecuteReader(
-                CommandBehavior.Default);
-        }
+            int? timeout)
+            => ExecutionEngine.ExecuteReader(
+                procedure,
+                CommandBehavior.Default,
+                new ExecutionOptions
+                {
+                    Connection = DbConnection,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -507,34 +524,63 @@ namespace Hydrix.Orchestrator.Materializers
         /// and is implemented by .NET Framework data providers that access data sources.
         /// </typeparam>
         /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="transaction">The transaction to use for the command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
+        /// <returns>An System.Data.IDataReader object.</returns>
+        /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
+        /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
+        /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
+        /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
+        IDataReader Contract.IMaterializer.ExecuteReader<TDataParameterDriver>(
+            IProcedure<TDataParameterDriver> procedure,
+            IDbTransaction transaction,
+            int? timeout)
+            => ExecutionEngine.ExecuteReader(
+                procedure,
+                CommandBehavior.Default,
+                new ExecutionOptions
+                {
+                    Connection = DbConnection,
+                    Transaction = transaction,
+                    CommandTimeout = timeout,
+                    ParameterPrefix = _parameterPrefix
+                });
+
+        /// <summary>
+        /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">
+        /// Represents a parameter to a Command object, and optionally, its mapping to System.Data.DataSet columns;
+        /// and is implemented by .NET Framework data providers that access data sources.
+        /// </typeparam>
+        /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<IDataReader> Contract.IMaterializer.ExecuteReaderAsync<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
+            int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
-                    procedure);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+            => await ExecutionEngine.ExecuteReaderAsync(
+                    procedure,
+                    CommandBehavior.Default,
+                    new ExecutionOptions
+                    {
+                        Connection = DbConnection,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
 
         /// <summary>
         /// Executes the System.Data.IDbCommand.CommandText against the System.Data.IDbCommand.Connection and builds an System.Data.IDataReader.
@@ -545,35 +591,32 @@ namespace Hydrix.Orchestrator.Materializers
         /// </typeparam>
         /// <param name="procedure">Represents a Sql Entity that holds the data parameters to be executed by the connection command.</param>
         /// <param name="transaction">The database transaction to use.</param>
+        /// <param name="timeout">Sets the wait time (in seconds) before terminating the attempt to execute a command
+        /// and generating an error. If null, the default timeout is used.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>An System.Data.IDataReader object.</returns>
         /// <exception cref="ObjectDisposedException">The connection has been disposed.</exception>
         /// <exception cref="ArgumentException">The property value assigned is less than 0.</exception>
         /// <exception cref="NotSupportedException">The System.Collections.IList is read-only. -or- The System.Collections.IList has a fixed size.</exception>
-        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttibute decorating itself.</exception>
+        /// <exception cref="MissingMemberException">The Procedure does not have a ProcedureAttribute decorating itself.</exception>
         /// <exception cref="InvalidOperationException">The connection does not exist. -or- The connection is not open.</exception>
         /// <exception cref="OperationCanceledException">The operation was canceled.</exception>
         async Task<IDataReader> Contract.IMaterializer.ExecuteReaderAsync<TDataParameterDriver>(
             IProcedure<TDataParameterDriver> procedure,
             IDbTransaction transaction,
+            int? timeout,
             CancellationToken cancellationToken)
-        {
-            var command = (this as Contract.IMaterializer)
-                .CreateCommand(
+            => await ExecutionEngine.ExecuteReaderAsync(
                     procedure,
-                    transaction);
-
-            if (command is DbCommand dbCommand)
-                return await dbCommand
-                    .ExecuteReaderAsync(
-                        CommandBehavior.Default,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await Task.Run(
-                () => command.ExecuteReader(
-                    CommandBehavior.Default),
-                    cancellationToken);
-        }
+                    CommandBehavior.Default,
+                    new ExecutionOptions
+                    {
+                        Connection = DbConnection,
+                        Transaction = transaction,
+                        CommandTimeout = timeout,
+                        ParameterPrefix = _parameterPrefix
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
     }
 }

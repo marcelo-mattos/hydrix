@@ -205,6 +205,28 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         }
 
         /// <summary>
+        /// Verifies that the ExecuteDataSetAsync method returns a DataSet containing the expected data when called
+        /// without SQL parameters.
+        /// </summary>
+        /// <remarks>This test ensures that the method correctly materializes a DataSet from a SQL query
+        /// when no parameters are provided. It checks that the resulting DataSet contains a single table with the
+        /// expected number of rows and values.</remarks>
+        [Fact]
+        public async Task ExecuteDataSetAsync_WithoutSqlParameters_ReturnsDataSet()
+        {
+            var commandMock = new Mock<IDbCommand>();
+            commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
+            var materializer = CreateMaterializerWithCommand(commandMock);
+
+            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", 30, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.Single(result.Tables);
+            Assert.Equal(2, result.Tables[0].Rows.Count);
+            Assert.Equal("Alice", result.Tables[0].Rows[0]["Name"]);
+        }
+
+        /// <summary>
         /// Verifies that ExecuteDataSetAsync returns a DataSet for SQL, parameters, and cancellation token.
         /// </summary>
         [Fact]
@@ -214,7 +236,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", new { }, CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", new { }, 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -233,7 +255,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", new { }, transaction, CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", new { }, transaction, 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -270,7 +292,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", transaction, CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync("SELECT * FROM Test", transaction, 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -289,7 +311,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var parameters = new List<IDataParameter>();
-            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", parameters, CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", parameters, 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -309,7 +331,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", parameters, transaction, CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", parameters, transaction, 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -327,7 +349,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -346,7 +368,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", transaction, CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync(CommandType.Text, "SELECT * FROM Test", transaction, 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -364,7 +386,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestProcedure(), CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestProcedure(), 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);
@@ -382,7 +404,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader().Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction(), CancellationToken.None);
+            var result = await materializer.ExecuteDataSetAsync<FakeDataParameter>(new TestProcedure(), new FakeDbTransaction(), 30, CancellationToken.None);
 
             Assert.NotNull(result);
             Assert.Single(result.Tables);

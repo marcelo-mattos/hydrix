@@ -28,8 +28,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteDataSet_WithSqlAndParameters_ReturnsDataSet()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>())).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet("SELECT", new { Id = 1 });
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>(), It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet("SELECT", new { Id = 1 }, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -43,8 +43,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteDataSet_WithSqlParametersAndTransaction_ReturnsDataSet()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>(), transaction)).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet("SELECT", new { Id = 2 }, transaction);
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet("SELECT", new { Id = 2 }, transaction, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -57,8 +57,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteDataSet_WithSqlOnly_ReturnsDataSet()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT")).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet("SELECT");
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet("SELECT", It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -72,8 +72,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteDataSet_WithSqlAndTransaction_ReturnsDataSet()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", transaction)).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet("SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", transaction, It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet("SELECT", transaction, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -88,8 +88,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteDataSet_WithCommandTypeSqlAndParameters_ReturnsDataSet()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT", parameters)).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT", parameters);
+            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT", parameters, It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT", parameters, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -104,8 +104,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT", parameters, transaction)).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT", parameters, transaction);
+            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -119,8 +119,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteDataSet_WithCommandTypeAndSql_ReturnsDataSet()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT")).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT");
+            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT", It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -134,8 +134,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteDataSet_WithCommandTypeSqlAndTransaction_ReturnsDataSet()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT", transaction)).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT", transaction);
+            _materializerMock.Setup(m => m.ExecuteDataSet(CommandType.Text, "SELECT", transaction, It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -150,9 +150,26 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteDataSetAsync_WithSqlParameters_ReturnsDataSet()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { Id = 1 });
+            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { Id = 1 }, It.IsAny<int>(), It.IsAny<CancellationToken>());
+            Assert.NotNull(result);
+        }
+
+        /// <summary>
+        /// Verifies that executing the ExecuteDataSetAsync method with SQL parameters and a transaction returns a
+        /// non-null DataSet.
+        /// </summary>
+        /// <remarks>This is a unit test that ensures the ExecuteDataSetAsync method correctly handles SQL
+        /// parameters and transactions and returns a valid DataSet instance. The test uses mocked dependencies to
+        /// isolate the behavior under the test.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteDataSetAsync_WithoutSqlParametersAndTransaction_ReturnsDataSet()
+        {
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new DataSet());
+            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -168,9 +185,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteDataSetAsync_WithSqlParametersAndTransaction_ReturnsDataSet()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<object>(), transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { Id = 2 }, transaction);
+            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { Id = 2 }, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -183,9 +200,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteDataSetAsync_WithSqlOnly_ReturnsDataSet()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT");
+            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -200,9 +217,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteDataSetAsync_WithSqlAndTransaction_ReturnsDataSet()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", transaction);
+            var result = await _materializerMock.Object.ExecuteDataSetAsync("SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -218,9 +235,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteDataSetAsync_WithCommandTypeSqlParameters_ReturnsDataSet()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters);
+            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -236,9 +253,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters, transaction);
+            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -253,9 +270,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteDataSetAsync_WithCommandTypeAndSql_ReturnsDataSet()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT");
+            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -268,9 +285,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteDataSetAsync_WithCommandTypeSqlAndTransaction_ReturnsDataSet()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT", transaction);
+            var result = await _materializerMock.Object.ExecuteDataSetAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -284,8 +301,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void ExecuteDataSet_GenericProcedure_ReturnsDataSet()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteDataSet<DummyParameter>(proc)).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet<DummyParameter>(proc);
+            _materializerMock.Setup(m => m.ExecuteDataSet<DummyParameter>(proc, It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet<DummyParameter>(proc, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -300,8 +317,8 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSet<DummyParameter>(proc, transaction)).Returns(new DataSet());
-            var result = _materializerMock.Object.ExecuteDataSet<DummyParameter>(proc, transaction);
+            _materializerMock.Setup(m => m.ExecuteDataSet<DummyParameter>(proc, transaction, It.IsAny<int>())).Returns(new DataSet());
+            var result = _materializerMock.Object.ExecuteDataSet<DummyParameter>(proc, transaction, It.IsAny<int>());
             Assert.NotNull(result);
         }
 
@@ -317,9 +334,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task ExecuteDataSetAsync_GenericProcedure_ReturnsDataSet()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync<DummyParameter>(proc, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync<DummyParameter>(proc, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync<DummyParameter>(proc);
+            var result = await _materializerMock.Object.ExecuteDataSetAsync<DummyParameter>(proc, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -336,9 +353,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync<DummyParameter>(proc, transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync<DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new DataSet());
-            var result = await _materializerMock.Object.ExecuteDataSetAsync<DummyParameter>(proc, transaction);
+            var result = await _materializerMock.Object.ExecuteDataSetAsync<DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>());
             Assert.NotNull(result);
         }
 
@@ -351,9 +368,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteDataSet_Disposed_ThrowsObjectDisposedException()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws(new ObjectDisposedException(nameof(IMaterializer)));
-            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }));
+            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -364,9 +381,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteDataSet_InvalidArgument_ThrowsArgumentException()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<ArgumentException>();
-            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }));
+            Assert.Throws<ArgumentException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -378,9 +395,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteDataSet_NotSupported_ThrowsNotSupportedException()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<NotSupportedException>();
-            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }));
+            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -393,9 +410,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void ExecuteDataSet_InvalidOperation_ThrowsInvalidOperationException()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.ExecuteDataSet("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<InvalidOperationException>();
-            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }));
+            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.ExecuteDataSet("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -405,10 +422,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task ExecuteDataSetAsync_OperationCanceled_ThrowsOperationCanceledException()
         {
-            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.ExecuteDataSetAsync("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { }, CancellationToken.None));
+                await _materializerMock.Object.ExecuteDataSetAsync("SELECT", new { }, It.IsAny<int>(), CancellationToken.None));
         }
     }
 }

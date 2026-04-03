@@ -1,7 +1,9 @@
 using Hydrix.Orchestrator.Metadata.Internals;
 using Moq;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
@@ -22,6 +24,38 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         /// values, such as enabled/disabled or on/off. Using an enumeration improves code clarity and type safety
         /// compared to using raw integer or boolean values.</remarks>
         public enum MyEnum : int
+        {
+            /// <summary>
+            /// Represents the constant value zero.
+            /// </summary>
+            Zero = 0,
+
+            /// <summary>
+            /// Represents the numeric value one.
+            /// </summary>
+            One = 1
+        }
+
+        /// <summary>
+        /// Defines a set of named constants with an sbyte underlying type.
+        /// </summary>
+        public enum EnumWithSByteUnderlying : sbyte
+        {
+            /// <summary>
+            /// Represents the constant value zero.
+            /// </summary>
+            Zero = 0,
+
+            /// <summary>
+            /// Represents the numeric value one.
+            /// </summary>
+            One = 1
+        }
+
+        /// <summary>
+        /// Defines a set of named constants with an unsigned integer underlying type.
+        /// </summary>
+        public enum EnumWithUIntUnderlying : uint
         {
             /// <summary>
             /// Represents the constant value zero.
@@ -78,6 +112,17 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         /// </summary>
         public class CustomType
         { }
+
+        /// <summary>
+        /// Represents a custom value type used to validate fallback behavior for non-nullable structs.
+        /// </summary>
+        public struct CustomStruct
+        {
+            /// <summary>
+            /// Gets or sets a sample value.
+            /// </summary>
+            public int Value { get; set; }
+        }
 
         /// <summary>
         /// Verifies that the correct value is returned for various base types when reading from a data record.
@@ -197,6 +242,43 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Verifies that enum readers return the configured null/default path when the underlying raw value resolves
+        /// to null while the record is not marked as DBNull.
+        /// </summary>
+        [Fact]
+        public void EnumType_WhenRawValueIsNull_ReturnsNullValuePath()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(false);
+            mock.Setup(r => r.GetValue(0)).Returns((object)null);
+
+            var nullableReader = FieldReaderFactory.Create(typeof(EnumWithUIntUnderlying?));
+            var nonNullableReader = FieldReaderFactory.Create(typeof(EnumWithUIntUnderlying));
+
+            var nullableResult = nullableReader(mock.Object, 0);
+            var nonNullableResult = nonNullableReader(mock.Object, 0);
+
+            Assert.Null(nullableResult);
+            Assert.Equal(EnumWithUIntUnderlying.Zero, nonNullableResult);
+        }
+
+        /// <summary>
+        /// Verifies that the field reader returns null for nullable base reference types when the record value is
+        /// DBNull.
+        /// </summary>
+        [Fact]
+        public void NullableReferenceBaseType_ReturnsNullOnDBNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(true);
+
+            var reader = FieldReaderFactory.Create(typeof(string));
+            var result = reader(mock.Object, 0);
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
         /// Verifies that reading a non-nullable base type from a data record returns the default value when the data is
         /// DBNull.
         /// </summary>
@@ -258,6 +340,22 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Verifies that reading a non-nullable enum returns the enum default value when the record value is
+        /// DBNull.
+        /// </summary>
+        [Fact]
+        public void NonNullableEnumType_ReturnsDefaultOnDBNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(true);
+
+            var reader = FieldReaderFactory.Create(typeof(MyEnum));
+            var result = reader(mock.Object, 0);
+
+            Assert.Equal(MyEnum.Zero, result);
+        }
+
+        /// <summary>
         /// Verifies that a field reader correctly converts a byte value from a data record into the corresponding
         /// MyByteEnum value.
         /// </summary>
@@ -300,6 +398,61 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
         }
 
         /// <summary>
+        /// Verifies that enum fallback conversion returns the enum default when the raw value is null for
+        /// non-nullable enum targets.
+        /// </summary>
+        [Fact]
+        public void EnumType_WithUnsupportedUnderlying_ReturnsDefaultWhenRawIsNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(false);
+            mock.Setup(r => r.GetValue(0)).Returns((object)null);
+
+            var reader = FieldReaderFactory.Create(typeof(EnumWithUIntUnderlying));
+            var result = reader(mock.Object, 0);
+
+            Assert.Equal(EnumWithUIntUnderlying.Zero, result);
+        }
+
+        /// <summary>
+        /// Verifies that enum reader creation handles a null delegate entry in the internal base-readers map, covering
+        /// the null-conditional invocation branch.
+        /// </summary>
+        [Fact]
+        public void EnumType_WhenEnumReaderDelegateIsNull_ReturnsDefaultPath()
+        {
+            var baseReadersField = typeof(FieldReaderFactory).GetField(
+                "BaseReaders",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var baseReaders = (Dictionary<Type, Func<IDataRecord, int, object>>)baseReadersField.GetValue(null);
+
+            var key = typeof(sbyte);
+            baseReaders.TryGetValue(key, out var previous);
+            var existed = baseReaders.ContainsKey(key);
+
+            try
+            {
+                baseReaders[key] = null;
+
+                var mock = new Mock<IDataRecord>();
+                mock.Setup(r => r.IsDBNull(0)).Returns(false);
+
+                var reader = FieldReaderFactory.Create(typeof(EnumWithSByteUnderlying));
+                var result = reader(mock.Object, 0);
+
+                Assert.Equal(EnumWithSByteUnderlying.Zero, result);
+            }
+            finally
+            {
+                if (existed)
+                    baseReaders[key] = previous;
+                else
+                    baseReaders.Remove(key);
+            }
+        }
+
+        /// <summary>
         /// Verifies that retrieving a value of a custom type from an IDataRecord falls back to using GetValue when
         /// appropriate.
         /// </summary>
@@ -335,6 +488,61 @@ namespace Hydrix.UnitTests.Orchestrator.Metadata.Internals
             var reader = FieldReaderFactory.Create(typeof(CustomType));
             var result = reader(mock.Object, 0);
             Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that fallback readers return default values for non-nullable structs when the record contains
+        /// DBNull.
+        /// </summary>
+        [Fact]
+        public void NonNullableCustomStruct_ReturnsDefaultOnDBNull()
+        {
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(true);
+
+            var reader = FieldReaderFactory.Create(typeof(CustomStruct));
+            var result = reader(mock.Object, 0);
+
+            Assert.Equal(default(CustomStruct), result);
+        }
+
+        /// <summary>
+        /// Verifies that fallback readers return the original value for non-nullable structs when the record contains
+        /// data.
+        /// </summary>
+        [Fact]
+        public void NonNullableCustomStruct_FallbackReturnsValue()
+        {
+            var value = new CustomStruct { Value = 42 };
+
+            var mock = new Mock<IDataRecord>();
+            mock.Setup(r => r.IsDBNull(0)).Returns(false);
+            mock.Setup(r => r.GetValue(0)).Returns(value);
+
+            var reader = FieldReaderFactory.Create(typeof(CustomStruct));
+            var result = reader(mock.Object, 0);
+
+            Assert.Equal(value, result);
+        }
+
+        /// <summary>
+        /// Verifies that the field reader falls back to using an enum converter when the source type does not match the
+        /// enum type, ensuring correct conversion from a string value to the corresponding enum value.
+        /// </summary>
+        /// <remarks>This test ensures that when a field reader is created for an enum type but receives a
+        /// value of a mismatched source type, such as a string, it correctly uses a fallback mechanism to convert the
+        /// value to the appropriate enum member.</remarks>
+        [Fact]
+        public void Create_WithEnumAndMismatchedSourceType_FallsBackToEnumConverter()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetValue(0)).Returns("One");
+
+            var reader = FieldReaderFactory.Create(typeof(MyEnum), typeof(string));
+            var result = reader(record.Object, 0);
+
+            Assert.Equal(MyEnum.One, result);
         }
     }
 }

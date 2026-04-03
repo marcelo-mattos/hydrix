@@ -1,13 +1,16 @@
-﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Attributes.Schemas;
 using Hydrix.Orchestrator.Mapping;
 using Hydrix.Orchestrator.Metadata.Internals;
 using Hydrix.Orchestrator.Metadata.Materializers;
+using Hydrix.Orchestrator.Resolvers;
 using Hydrix.Schemas.Contract;
 using Moq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 using Xunit;
@@ -63,6 +66,50 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             /// <summary>
             /// Gets or sets the unique identifier for the entity.
             /// </summary>
+            public int Id { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a parent entity with a nested hierarchy used to validate recursive nested mapping.
+        /// </summary>
+        private class DeepParent : ITable
+        {
+            /// <summary>
+            /// Gets or sets the first-level nested entity.
+            /// </summary>
+            [ForeignTable("level_one", PrimaryKeys = new[] { "Id" })]
+            public DeepChild LevelOne { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the first-level nested entity containing a second-level nested relationship.
+        /// </summary>
+        [Table("level_one")]
+        private class DeepChild : ITable
+        {
+            /// <summary>
+            /// Gets or sets the primary key value for this nested entity.
+            /// </summary>
+            [Column]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the second-level nested entity.
+            /// </summary>
+            [ForeignTable("level_two", PrimaryKeys = new[] { "Id" })]
+            public DeepGrandChild LevelTwo { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the second-level nested entity used by recursive nested mapping tests.
+        /// </summary>
+        [Table("level_two")]
+        private class DeepGrandChild : ITable
+        {
+            /// <summary>
+            /// Gets or sets the primary key value for this entity.
+            /// </summary>
+            [Column]
             public int Id { get; set; }
         }
 
@@ -259,6 +306,26 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             Assert.Equal(attribute, map.Attribute);
             Assert.NotNull(map.Factory);
             Assert.NotNull(map.Setter);
+        }
+
+        /// <summary>
+        /// Verifies that the TableMap constructor sets key-related metadata to null when no usable primary key is
+        /// provided.
+        /// </summary>
+        [Fact]
+        public void Constructor_WithoutPrimaryKey_SetsKeyMetadataToNull()
+        {
+            var property = typeof(TestEntity).GetProperty(nameof(TestEntity.NestedNullPrimaryKey));
+            var attribute = new ForeignTableAttribute("text")
+            {
+                Schema = "Nested",
+                PrimaryKeys = null
+            };
+
+            var map = new TableMap(property, attribute);
+
+            Assert.Null(map.PrimaryKey);
+            Assert.Null(map.KeyColumnSuffix);
         }
 
         /// <summary>
@@ -1042,6 +1109,209 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that candidate ordinals are recalculated when the schema hash changes.
+        /// </summary>
+        [Fact]
+        public void GetCandidateOrdinals_Recalculates_WhenSchemaHashChanges()
+        {
+            var tableMap = CreateTableMapWithPrimaryKey();
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var ordinalsA = new Dictionary<string, int> { { "Child.Id", 1 } };
+            var ordinalsB = new Dictionary<string, int> { { "Child.Id", 9 } };
+
+            var result1 = (int[])method.Invoke(tableMap, new object[] { ordinalsA, "Child.", 100 });
+            var result2 = (int[])method.Invoke(tableMap, new object[] { ordinalsB, "Child.", 200 });
+
+            Assert.NotSame(result1, result2);
+            Assert.Contains(1, result1);
+            Assert.Contains(9, result2);
+        }
+
+        /// <summary>
+        /// Verifies that candidate ordinal discovery matches prefixes using ordinal case-insensitive comparison.
+        /// </summary>
+        [Fact]
+        public void GetCandidateOrdinals_MatchesPrefix_CaseInsensitive()
+        {
+            var tableMap = CreateTableMapWithPrimaryKey();
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var ordinals = new Dictionary<string, int>
+            {
+                { "cHiLd.Id", 3 },
+                { "Other.Id", 4 }
+            };
+
+            var result = (int[])method.Invoke(tableMap, new object[] { ordinals, "Child.", 321 });
+
+            Assert.Single(result);
+            Assert.Equal(3, result[0]);
+        }
+
+        /// <summary>
+        /// Verifies that SetEntity populates both scalar fields and nested entities in a single call.
+        /// </summary>
+        [Fact]
+        public void SetEntity_SetsFieldsAndInstantiatesNestedEntity()
+        {
+            var entity = new TestEntity();
+            var record = new Mock<IDataRecord>();
+
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(77);
+            record.Setup(r => r.IsDBNull(1)).Returns(false);
+
+            var idField = new ColumnMap(
+                "Id",
+                (obj, val) => ((TestEntity)obj).Id = (int)val,
+                (r, ordinal) => r.GetInt32(ordinal));
+
+            var nestedMap = new TableMap(
+                typeof(TestEntity).GetProperty(nameof(TestEntity.Nested)),
+                new ForeignTableAttribute("text")
+                {
+                    Schema = "Nested",
+                    PrimaryKeys = new[] { "Id" }
+                });
+
+            var metadata = MetadataFactory.CreateEntity(new[] { idField }, new[] { nestedMap });
+            var ordinals = new Dictionary<string, int>
+            {
+                { "Id", 0 },
+                { "Nested.Id", 1 }
+            };
+
+            TableMap.SetEntity(entity, record.Object, metadata, string.Empty, ordinals, 10);
+
+            Assert.Equal(77, entity.Id);
+            Assert.NotNull(entity.Nested);
+        }
+
+        /// <summary>
+        /// Verifies that nested entity mapping recurses into nested bindings when child bindings contain nested
+        /// entities.
+        /// </summary>
+        [Fact]
+        public void SetEntityNestedEntities_Recurses_WhenNestedBindingsContainEntities()
+        {
+            var entity = new DeepParent();
+            var record = new Mock<IDataRecord>();
+
+            record.Setup(r => r.IsDBNull(It.IsAny<int>())).Returns(false);
+
+            var metadata = MetadataFactory.CreateEntity(
+                Array.Empty<ColumnMap>(),
+                new[]
+                {
+                    new TableMap(
+                        typeof(DeepParent).GetProperty(nameof(DeepParent.LevelOne)),
+                        new ForeignTableAttribute("level_one")
+                        {
+                            PrimaryKeys = new[] { "Id" }
+                        })
+                });
+
+            var ordinals = new Dictionary<string, int>
+            {
+                { "LevelOne.Id", 0 },
+                { "LevelOne.LevelTwo.Id", 1 }
+            };
+
+            typeof(TableMap)
+                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { entity, record.Object, metadata, string.Empty, ordinals, 987 });
+
+            Assert.NotNull(entity.LevelOne);
+            Assert.NotNull(entity.LevelOne.LevelTwo);
+        }
+
+        /// <summary>
+        /// Verifies that the fast nested materializer branch is used when it is available on a leaf binding.
+        /// </summary>
+        [Fact]
+        public void SetResolvedEntityNestedEntities_UsesFastMaterializer_WhenAvailable()
+        {
+            var parent = new Parent();
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: null,
+                activator: _ => new Child(),
+                bindings: bindings,
+                materializer: (entity, _) => ((Parent)entity).Child = new Child { Id = 55 });
+
+            typeof(TableMap)
+                .GetMethod("SetResolvedEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, new Mock<IDataRecord>().Object, new[] { nestedBinding } });
+
+            Assert.NotNull(parent.Child);
+            Assert.Equal(55, parent.Child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that leaf nested bindings receive a compiled fast materializer.
+        /// </summary>
+        [Fact]
+        public void ResolveNestedBindings_CreatesFastMaterializer_ForLeafNestedEntity()
+        {
+            var metadata = CreateMetadata(CreateTableMapWithPrimaryKey());
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+
+            var result = InvokePrivate<ResolvedNestedBinding[]>(
+                "ResolveNestedBindings",
+                record.Object,
+                metadata,
+                string.Empty,
+                new Dictionary<string, int> { { "Child.Id", 0 } },
+                321);
+
+            var binding = Assert.Single(result);
+            Assert.NotNull(binding.Materializer);
+        }
+
+        /// <summary>
+        /// Verifies that recursive nested bindings keep using the generic nested path instead of the leaf fast materializer.
+        /// </summary>
+        [Fact]
+        public void ResolveNestedBindings_DoesNotCreateFastMaterializer_WhenNestedEntityHasChildren()
+        {
+            var metadata = MetadataFactory.CreateEntity(
+                Array.Empty<ColumnMap>(),
+                new[]
+                {
+                    new TableMap(
+                        typeof(DeepParent).GetProperty(nameof(DeepParent.LevelOne)),
+                        new ForeignTableAttribute("level_one")
+                        {
+                            PrimaryKeys = new[] { "Id" }
+                        })
+                });
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+            record.Setup(r => r.GetFieldType(1)).Returns(typeof(int));
+
+            var result = InvokePrivate<ResolvedNestedBinding[]>(
+                "ResolveNestedBindings",
+                record.Object,
+                metadata,
+                string.Empty,
+                new Dictionary<string, int>
+                {
+                    { "LevelOne.Id", 0 },
+                    { "LevelOne.LevelTwo.Id", 1 }
+                },
+                654);
+
+            var binding = Assert.Single(result);
+            Assert.Null(binding.Materializer);
+        }
+
+        /// <summary>
         /// Verifies that the GetCandidateOrdinals method returns the correct matching ordinals based on the specified
         /// prefix and that it caches the results for subsequent calls with the same parameters.
         /// </summary>
@@ -1148,6 +1418,99 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that the second cache check inside the lock evaluates the branch where initialization is true but
+        /// schema hash does not match.
+        /// </summary>
+        [Fact]
+        public void GetCandidateOrdinals_InsideLock_InitializedTrueButSchemaMismatch_Recomputes()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var attr = new ForeignTableAttribute("SomeTable");
+            var tableMap = new TableMap(property, attr);
+
+            var candidateOrdinalsField = typeof(TableMap).GetField("_candidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsSchemaHashField = typeof(TableMap).GetField("_candidateOrdinalsSchemaHash", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsInitializedField = typeof(TableMap).GetField("_candidateOrdinalsInitialized", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            candidateOrdinalsField.SetValue(tableMap, new[] { 99 });
+            candidateOrdinalsSchemaHashField.SetValue(tableMap, 111);
+            candidateOrdinalsInitializedField.SetValue(tableMap, true);
+
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var ordinals = new Dictionary<string, int> { { "Child.Id", 5 }, { "Other.Id", 7 } };
+
+            var result = (int[])method.Invoke(tableMap, new object[] { ordinals, "Child.", 222 });
+
+            Assert.Single(result);
+            Assert.Equal(5, result[0]);
+        }
+
+        /// <summary>
+        /// Verifies that the second cache check inside the lock returns the cached value when another thread
+        /// initializes the cache before lock acquisition.
+        /// </summary>
+        [Fact]
+        [SuppressMessage(
+            "Major Code Smell",
+            "S2925",
+            Justification = "Used to simulate timing and concurrency behavior in controlled test scenario")]
+        public void GetCandidateOrdinals_InsideLock_InitializedByAnotherThread_ReturnsCachedValue()
+        {
+            var property = typeof(Parent).GetProperty(nameof(Parent.Child));
+            var attr = new ForeignTableAttribute("SomeTable");
+            var tableMap = new TableMap(property, attr);
+
+            var candidateOrdinalsField = typeof(TableMap).GetField("_candidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsSchemaHashField = typeof(TableMap).GetField("_candidateOrdinalsSchemaHash", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateOrdinalsInitializedField = typeof(TableMap).GetField("_candidateOrdinalsInitialized", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateLockField = typeof(TableMap).GetField("_candidateLock", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var method = typeof(TableMap).GetMethod("GetCandidateOrdinals", BindingFlags.NonPublic | BindingFlags.Instance);
+            var candidateLock = candidateLockField.GetValue(tableMap);
+
+            var expected = new[] { 41, 42 };
+            const int schemaHash = 333;
+
+            candidateOrdinalsInitializedField.SetValue(tableMap, false);
+
+            int[] result = null;
+            Exception threadException = null;
+            Thread thread = null;
+
+            lock (candidateLock)
+            {
+                thread = new Thread(() =>
+                {
+                    try
+                    {
+                        result = (int[])method.Invoke(tableMap, new object[]
+                        {
+                            new Dictionary<string, int> { { "Child.Id", 1 } },
+                            "Child.",
+                            schemaHash
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        threadException = ex;
+                    }
+                });
+
+                thread.Start();
+                Thread.Sleep(50);
+
+                candidateOrdinalsField.SetValue(tableMap, expected);
+                candidateOrdinalsSchemaHashField.SetValue(tableMap, schemaHash);
+                candidateOrdinalsInitializedField.SetValue(tableMap, true);
+            }
+
+            thread.Join(1000);
+
+            Assert.Null(threadException);
+            Assert.Same(expected, result);
+        }
+
+        /// <summary>
         /// Verifies that the method returns cached candidate ordinals when they are initialized within a lock, ensuring
         /// that the locking mechanism provides thread-safe access to the cached values.
         /// </summary>
@@ -1207,6 +1570,10 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         /// designed to validate that the method returns the expected ordinals when another thread has already performed
         /// the initialization.</remarks>
         [Fact]
+        [SuppressMessage(
+            "Major Code Smell",
+            "S2925",
+            Justification = "Used to simulate timing and concurrency behavior in controlled test scenario")]
         public void GetCandidateOrdinals_CoversSecondIfInsideLock()
         {
             var property = typeof(Parent).GetProperty(nameof(Parent.Child));
@@ -1341,6 +1708,563 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
             });
             Assert.Same(expected, result2);
             Assert.True(enteredLock);
+        }
+
+        /// <summary>
+        /// Verifies that the ResolveFieldAssigner method returns null when the data reader is missing.
+        /// </summary>
+        /// <remarks>This test ensures that the field assigner resolution logic correctly handles the case
+        /// where the required data reader is not provided, returning null as expected. This behavior is important for
+        /// preventing assignment operations when necessary dependencies are absent.</remarks>
+        [Fact]
+        public void ResolveFieldAssigner_ReturnsNull_WhenReaderIsMissing()
+        {
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                null);
+
+            var result = InvokePrivate<Action<object, IDataRecord>>(
+                "ResolveFieldAssigner",
+                new Mock<IDataRecord>().Object,
+                field,
+                0);
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that ResolveFieldBindings skips fields whose resolved assigner is null and returns an empty
+        /// bindings array in this scenario.
+        /// </summary>
+        [Fact]
+        public void ResolveFieldBindings_SkipsField_WhenResolvedAssignerIsNull()
+        {
+            var record = new Mock<IDataRecord>().Object;
+            var field = new ColumnMap(
+                "Id",
+                null,
+                (dataRecord, ordinal) => 123);
+            var metadata = MetadataFactory.CreateEntity(new[] { field }, Array.Empty<TableMap>());
+            var ordinals = new Dictionary<string, int>
+            {
+                { "Id", 0 }
+            };
+
+            var result = InvokePrivate<ResolvedFieldBinding[]>(
+                "ResolveFieldBindings",
+                record,
+                metadata,
+                string.Empty,
+                ordinals);
+
+            Assert.Empty(result);
+        }
+
+        /// <summary>
+        /// Verifies that the ResolveFieldAssigner method returns null when the field does not have a setter.
+        /// </summary>
+        /// <remarks>This test ensures that the field assigner resolution logic correctly handles cases
+        /// where a setter is missing, returning null as expected. This behavior is important for scenarios where only
+        /// read access is available for a mapped field.</remarks>
+        [Fact]
+        public void ResolveFieldAssigner_ReturnsNull_WhenSetterIsMissing()
+        {
+            var field = new ColumnMap(
+                "Id",
+                null,
+                (record, ordinal) => 5);
+
+            var result = InvokePrivate<Action<object, IDataRecord>>(
+                "ResolveFieldAssigner",
+                new Mock<IDataRecord>().Object,
+                field,
+                0);
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that the field reader resolution uses a provider-type-aware reader when a target type is specified.
+        /// </summary>
+        /// <remarks>This test ensures that when resolving a field reader for a column with a specified
+        /// target type, the reader correctly handles type conversion based on the provider's field type. It validates
+        /// that the resolved reader returns the expected value when the data record provides a value of a different
+        /// type than the target.</remarks>
+        [Fact]
+        public void ResolveFieldReader_WithTargetType_UsesProviderTypeAwareReader()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Returns(typeof(long));
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetValue(0)).Returns(12L);
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                (reader, ordinal) => 1,
+                typeof(int));
+
+            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+            var value = reader(record.Object, 0);
+
+            Assert.Equal(12, value);
+        }
+
+        /// <summary>
+        /// Verifies that the field reader resolution logic falls back to using a null source type when an
+        /// InvalidOperationException is thrown by GetFieldType, ensuring the field value can still be read
+        /// successfully.
+        /// </summary>
+        /// <remarks>This test simulates a scenario where schema information is unavailable and
+        /// GetFieldType throws an exception. It ensures that the fallback mechanism allows the field reader to retrieve
+        /// the value without relying on the field type metadata.</remarks>
+        [Fact]
+        public void ResolveFieldReader_WhenGetFieldTypeThrowsInvalidOperationException_FallsBackToNullSourceType()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Throws(new InvalidOperationException("schema unavailable"));
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(7);
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                (reader, ordinal) => 1,
+                typeof(int));
+
+            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+
+            Assert.Equal(7, reader(record.Object, 0));
+        }
+
+        /// <summary>
+        /// Verifies that the field reader resolution logic falls back to a null source type when the data record's
+        /// GetFieldType method throws a NotSupportedException.
+        /// </summary>
+        /// <remarks>This test ensures that the field reader can handle cases where schema information is
+        /// unavailable, such as when GetFieldType is not supported by the data source. It confirms that the fallback
+        /// mechanism allows value retrieval to proceed without schema type information.</remarks>
+        [Fact]
+        public void ResolveFieldReader_WhenGetFieldTypeThrowsNotSupportedException_FallsBackToNullSourceType()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetFieldType(0)).Throws(new NotSupportedException("schema unavailable"));
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+            record.Setup(r => r.GetInt32(0)).Returns(8);
+            var field = new ColumnMap(
+                "Id",
+                (entity, value) => ((Child)entity).Id = (int)value,
+                (reader, ordinal) => 1,
+                typeof(int));
+
+            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+
+            Assert.Equal(8, reader(record.Object, 0));
+        }
+
+        /// <summary>
+        /// Verifies that the ResolveNestedBindings method returns an empty array when the count is positive but the
+        /// enumeration is empty.
+        /// </summary>
+        /// <remarks>This test ensures that when provided with metadata containing a positive count and an
+        /// empty enumeration, the ResolveNestedBindings method produces an empty result, confirming correct handling of
+        /// this edge case.</remarks>
+        [Fact]
+        public void ResolveNestedBindings_ReturnsEmptyArray_WhenCountIsPositiveButEnumerationIsEmpty()
+        {
+            var metadata = new TableMaterializeMetadata(
+                Array.Empty<ColumnMap>(),
+                new CountedEmptyReadOnlyList<TableMap>());
+
+            var result = InvokePrivate<ResolvedNestedBinding[]>(
+                "ResolveNestedBindings",
+                new Mock<IDataRecord>().Object,
+                metadata,
+                string.Empty,
+                new Dictionary<string, int>(),
+                0);
+
+            Assert.Empty(result);
+        }
+
+        /// <summary>
+        /// Verifies that schema matches reuse provider field types without touching the current row value.
+        /// </summary>
+        [Fact]
+        public void ResolvedTableBindings_Matches_DoesNotReadCurrentValue_WhenProviderFieldTypeMatches()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+            reader.Setup(r => r.GetValue(0)).Throws(new InvalidOperationException("GetValue should not be used when GetFieldType matches."));
+            reader.Setup(r => r.IsDBNull(0)).Throws(new InvalidOperationException("IsDBNull should not be used when GetFieldType matches."));
+
+            var bindings = new ResolvedTableBindings(
+                new[]
+                {
+                    new ResolvedFieldBinding((_, __) => { }, 0, typeof(int))
+                },
+                Array.Empty<ResolvedNestedBinding>(),
+                new[] { "Id" });
+
+            Assert.True(bindings.Matches(reader.Object));
+        }
+
+        /// <summary>
+        /// Verifies that schema matches still fall back to the current row value when provider field types are unavailable.
+        /// </summary>
+        [Fact]
+        public void ResolvedTableBindings_Matches_FallsBackToCurrentValue_WhenProviderFieldTypeIsUnavailable()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Throws(new NotSupportedException("Provider field types unavailable."));
+            reader.Setup(r => r.IsDBNull(0)).Returns(false);
+            reader.Setup(r => r.GetValue(0)).Returns(7);
+
+            var bindings = new ResolvedTableBindings(
+                new[]
+                {
+                    new ResolvedFieldBinding((_, __) => { }, 0, typeof(int))
+                },
+                Array.Empty<ResolvedNestedBinding>(),
+                new[] { "Id" });
+
+            Assert.True(bindings.Matches(reader.Object));
+        }
+
+        /// <summary>
+        /// Verifies that schema matches include nested fields even when the root binding has no scalar fields.
+        /// </summary>
+        [Fact]
+        public void ResolvedTableBindings_Matches_UsesNestedFields_WhenRootHasNoScalarFields()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+            reader.Setup(r => r.GetValue(0)).Throws(new InvalidOperationException("GetValue should not be used when GetFieldType matches."));
+            reader.Setup(r => r.IsDBNull(0)).Throws(new InvalidOperationException("IsDBNull should not be used when GetFieldType matches."));
+
+            var nestedBindings = new ResolvedTableBindings(
+                new[]
+                {
+                    new ResolvedFieldBinding((_, __) => { }, 0, typeof(int))
+                },
+                Array.Empty<ResolvedNestedBinding>(),
+                new[] { "Id" });
+
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[]
+                {
+                    new ResolvedNestedBinding(
+                        usesPrimaryKey: true,
+                        primaryKeyOrdinal: 0,
+                        candidateOrdinals: Array.Empty<int>(),
+                        activator: _ => new Child(),
+                        bindings: nestedBindings)
+                },
+                new[] { "Id" });
+
+            Assert.True(bindings.Matches(reader.Object));
+        }
+
+        /// <summary>
+        /// Verifies that the constructors for resolved bindings normalize null array parameters to empty arrays.
+        /// </summary>
+        /// <remarks>This test ensures that when null arrays are passed to the constructors of
+        /// ResolvedTableBindings and ResolvedNestedBinding, the resulting properties are initialized as empty arrays
+        /// rather than remaining null. This behavior helps prevent null reference exceptions when accessing these
+        /// properties.</remarks>
+        [Fact]
+        public void ResolvedBindings_Constructors_NormalizeNullArrays()
+        {
+            var tableBindings = new ResolvedTableBindings(null, null);
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                factory: () => new Child(),
+                setter: (entity, value) => ((Parent)entity).Child = (Child)value,
+                bindings: tableBindings);
+
+            Assert.NotNull(tableBindings.Fields);
+            Assert.NotNull(tableBindings.Entities);
+            Assert.Empty(tableBindings.Fields);
+            Assert.Empty(tableBindings.Entities);
+            Assert.NotNull(nestedBinding.CandidateOrdinals);
+            Assert.Empty(nestedBinding.CandidateOrdinals);
+        }
+
+        /// <summary>
+        /// Verifies that SetResolvedEntityNestedEntities skips activation when materializer is null and
+        /// instantiation preconditions evaluate to false.
+        /// </summary>
+        [Fact]
+        public void SetResolvedEntityNestedEntities_SkipsActivation_WhenShouldInstantiateIsFalse_AndMaterializerIsNull()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            var nestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var activatorCalls = 0;
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: Array.Empty<int>(),
+                activator: _ =>
+                {
+                    activatorCalls++;
+                    return new Child();
+                },
+                bindings: nestedBindings,
+                materializer: null);
+
+            typeof(TableMap)
+                .GetMethod("SetResolvedEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, new[] { nestedBinding } });
+
+            Assert.Equal(0, activatorCalls);
+            Assert.Null(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that <c>SetResolvedEntityNestedEntities</c> evaluates the non-primary-key branch and instantiates
+        /// a nested entity when at least one candidate ordinal is not <see cref="DBNull"/>.
+        /// </summary>
+        [Fact]
+        public void SetResolvedEntityNestedEntities_Instantiates_WhenUsesPrimaryKeyIsFalse_AndAnyCandidateIsNotDbNull()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            record.Setup(r => r.IsDBNull(1)).Returns(false);
+
+            var nestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var activatorCalls = 0;
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: new[] { 0, 1 },
+                activator: entity =>
+                {
+                    activatorCalls++;
+                    var child = new Child();
+                    ((Parent)entity).Child = child;
+                    return child;
+                },
+                bindings: nestedBindings,
+                materializer: null);
+
+            typeof(TableMap)
+                .GetMethod("SetResolvedEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, new[] { nestedBinding } });
+
+            Assert.Equal(1, activatorCalls);
+            Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that <c>HasAnyNonDbNull</c> returns <see langword="true"/> when at least one ordinal contains a
+        /// non-<see cref="DBNull"/> value.
+        /// </summary>
+        [Fact]
+        public void HasAnyNonDbNull_ReturnsTrue_WhenAnyOrdinalIsNotDbNull()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            record.Setup(r => r.IsDBNull(1)).Returns(false);
+
+            var method = typeof(TableMap).GetMethod(
+                "HasAnyNonDbNull",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { record.Object, new[] { 0, 1 } });
+
+            Assert.True(result);
+        }
+
+        /// <summary>
+        /// Verifies that <c>HasAnyNonDbNull</c> returns <see langword="false"/> when all inspected ordinals contain
+        /// <see cref="DBNull"/> values.
+        /// </summary>
+        [Fact]
+        public void HasAnyNonDbNull_ReturnsFalse_WhenAllOrdinalsAreDbNull()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            record.Setup(r => r.IsDBNull(1)).Returns(true);
+
+            var method = typeof(TableMap).GetMethod(
+                "HasAnyNonDbNull",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { record.Object, new[] { 0, 1 } });
+
+            Assert.False(result);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TableMap.SetEntity(ITable, System.Data.IDataRecord, Hydrix.Orchestrator.Resolvers.ResolvedTableBindings)"/>
+        /// falls back to the scalar-fields loop and correctly assigns field values when
+        /// <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/>.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> whenever any nested-entity
+        /// binding lacks a pre-compiled materializer. This test uses such a binding to force the fallback path and
+        /// verifies that the scalar field assigner is invoked via the loop (lines 164–170 of TableMap.cs).
+        /// </remarks>
+        [Fact]
+        public void SetEntity_FallsBack_ToFieldsLoop_WhenRowMaterializerIsNull()
+        {
+            var child = new Child();
+
+            Action<object, IDataRecord> assigner =
+                (entity, record) => ((Child)entity).Id = record.GetInt32(0);
+            var field = new ResolvedFieldBinding(assigner, 0, typeof(int));
+
+            var dummyNestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: Array.Empty<int>(),
+                activator: _ => new Child(),
+                bindings: dummyNestedBindings,
+                materializer: null);
+
+            var bindings = new ResolvedTableBindings(
+                new[] { field },
+                new[] { nestedBinding });
+
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetInt32(0)).Returns(42);
+
+            Assert.Null(bindings.RowMaterializer);
+
+            TableMap.SetEntity(child, record.Object, bindings);
+
+            Assert.Equal(42, child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TableMap.SetEntity(ITable, System.Data.IDataRecord, Hydrix.Orchestrator.Resolvers.ResolvedTableBindings)"/>
+        /// falls back to the nested-entities loop and activates the nested entity when
+        /// <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> and no scalar fields exist.
+        /// </summary>
+        /// <remarks>
+        /// This test exercises lines 172–178 of TableMap.cs. The nested entity is activated because
+        /// <c>UsesPrimaryKey</c> is <see langword="true"/>, <c>PrimaryKeyOrdinal</c> is a valid zero-based index,
+        /// and the primary-key column is not <see cref="DBNull"/>.
+        /// </remarks>
+        [Fact]
+        public void SetEntity_FallsBack_ToNestedEntitiesLoop_WhenRowMaterializerIsNull_AndNoFields()
+        {
+            var parent = new Parent();
+            var activatorCalled = false;
+
+            var dummyNestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: Array.Empty<int>(),
+                activator: entity =>
+                {
+                    activatorCalled = true;
+                    var child = new Child();
+                    ((Parent)entity).Child = child;
+                    return child;
+                },
+                bindings: dummyNestedBindings,
+                materializer: null);
+
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[] { nestedBinding });
+
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+
+            Assert.Null(bindings.RowMaterializer);
+
+            TableMap.SetEntity(parent, record.Object, bindings);
+
+            Assert.True(activatorCalled);
+            Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
+        /// Invokes a non-public static method of the TableMap type by name and returns its result cast to the specified
+        /// type.
+        /// </summary>
+        /// <remarks>This method uses reflection to access and invoke non-public static methods. Use with
+        /// caution, as changes to method signatures or access modifiers may cause runtime errors.</remarks>
+        /// <typeparam name="T">The type to which the result of the invoked method will be cast.</typeparam>
+        /// <param name="methodName">The name of the non-public static method to invoke on the TableMap type.</param>
+        /// <param name="args">An array of arguments to pass to the method being invoked.</param>
+        /// <returns>The result of the invoked method, cast to the specified type parameter T.</returns>
+        private static T InvokePrivate<T>(
+            string methodName,
+            params object[] args)
+            => (T)typeof(TableMap)
+                .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, args);
+
+        /// <summary>
+        /// Represents a read-only list with a fixed count and no accessible elements.
+        /// </summary>
+        /// <remarks>This implementation of IReadOnlyList&lt;T&gt; always reports a count of one, but does not
+        /// provide access to any elements. Attempting to access an element by index will result in an exception. The
+        /// enumerator returned by this list yields no elements.</remarks>
+        /// <typeparam name="T">The type of elements in the list.</typeparam>
+        private sealed class CountedEmptyReadOnlyList<T> :
+            IReadOnlyList<T>
+        {
+            /// <summary>
+            /// Gets the number of elements contained in the collection.
+            /// </summary>
+            public int Count => 1;
+
+            /// <summary>
+            /// Gets the element at the specified index.
+            /// </summary>
+            /// <param name="index">The zero-based index of the element to retrieve.</param>
+            /// <returns>The element at the specified index.</returns>
+            /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is less than 0 or greater than or equal to the number of elements.</exception>
+            public T this[int index]
+                => throw new ArgumentOutOfRangeException(nameof(index));
+
+            /// <summary>
+            /// Returns an enumerator that iterates through the collection.
+            /// </summary>
+            /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+            public IEnumerator<T> GetEnumerator()
+            {
+                yield break;
+            }
+
+            /// <summary>
+            /// Returns an enumerator that iterates through the collection.
+            /// </summary>
+            /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+            IEnumerator IEnumerable.GetEnumerator()
+                => GetEnumerator();
         }
 
         /// <summary>

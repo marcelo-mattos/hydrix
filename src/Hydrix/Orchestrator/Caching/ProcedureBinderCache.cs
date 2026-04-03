@@ -4,7 +4,6 @@ using Hydrix.Orchestrator.Binders.Procedure;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -28,7 +27,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This field is implemented as a concurrent dictionary to ensure safe access and
         /// modification in multi-threaded scenarios. It enables efficient retrieval and storage of procedure binders
         /// for different types.</remarks>
-        private static readonly ConcurrentDictionary<Type, ProcedureBinder> _cache =
+        private static readonly ConcurrentDictionary<Type, ProcedureBinder> Cache =
             new ConcurrentDictionary<Type, ProcedureBinder>();
 
         /// <summary>
@@ -41,7 +40,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <returns>A ProcedureBinder instance associated with the specified type.</returns>
         public static ProcedureBinder GetOrAdd(
             Type type)
-            => _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 BuildBinder);
 

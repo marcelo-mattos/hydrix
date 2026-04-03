@@ -94,9 +94,8 @@ namespace Hydrix.Orchestrator.Binders.Parameter
             string prefix,
             Action<IDbCommand, string, object> addParameter)
         {
-            for (int index = 0; index < _bindings.Length; index++)
+            foreach (var binder in _bindings)
             {
-                var binder = _bindings[index];
                 var value = binder.Getter(parameters);
 
                 if (IsEnumerableParameter(value))
@@ -110,7 +109,10 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     continue;
                 }
 
-                addParameter(command, $"{prefix}{binder.Name}", value);
+                addParameter(
+                    command,
+                    $"{prefix}{binder.Name}",
+                    value);
             }
         }
 
@@ -152,11 +154,11 @@ namespace Hydrix.Orchestrator.Binders.Parameter
             IEnumerable values)
         {
             var parameterNames = new List<string>();
-            int index = 0;
+            var index = 0;
 
             foreach (var item in values)
             {
-                string parameterName = $"{prefix}{name}_{index++}";
+                var parameterName = $"{prefix}{name}_{index++}";
                 parameterNames.Add(parameterName);
 
                 var parameter = command.CreateParameter();
@@ -216,13 +218,12 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     ref index))
                     continue;
 
-                if (state == SqlScanState.Normal &&
-                    TryReplaceToken(
-                        sql,
-                        token,
-                        replacement,
-                        builder,
-                        ref index))
+                if (TryReplaceToken(
+                    sql,
+                    token,
+                    replacement,
+                    builder,
+                    ref index))
                     continue;
 
                 builder.Append(@char);
@@ -265,12 +266,12 @@ namespace Hydrix.Orchestrator.Binders.Parameter
 
                 case SqlScanState.BlockComment:
                     builder.Append(@char);
-                    if (@char == '*' && index + 1 < length && sql[index + 1] == '/')
-                    {
-                        builder.Append('/');
-                        index++;
-                        state = SqlScanState.Normal;
-                    }
+                    if (@char != '*' || index + 1 >= length || sql[index + 1] != '/')
+                        return true;
+
+                    builder.Append('/');
+                    index++;
+                    state = SqlScanState.Normal;
                     return true;
 
                 case SqlScanState.SingleQuote:
@@ -279,11 +280,11 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     if (@char == '\'' && !(index + 1 < length && sql[index + 1] == '\''))
                         state = SqlScanState.Normal;
 
-                    if (@char == '\'' && index + 1 < length && sql[index + 1] == '\'')
-                    {
-                        builder.Append('\'');
-                        index++;
-                    }
+                    if (@char != '\'' || index + 1 >= length || sql[index + 1] != '\'')
+                        return true;
+
+                    builder.Append('\'');
+                    index++;
                     return true;
 
                 case SqlScanState.DoubleQuote:
@@ -293,36 +294,38 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     return true;
 
                 case SqlScanState.Normal:
-                    if (@char == '-' && index + 1 < length && sql[index + 1] == '-')
+                    switch (@char)
                     {
-                        builder.Append("--");
-                        index++;
-                        state = SqlScanState.LineComment;
-                        return true;
+                        case '-' when index + 1 < length && sql[index + 1] == '-':
+                            builder.Append("--");
+                            index++;
+                            state = SqlScanState.LineComment;
+                            return true;
+
+                        case '/' when index + 1 < length && sql[index + 1] == '*':
+                            builder.Append("/*");
+                            index++;
+                            state = SqlScanState.BlockComment;
+                            return true;
+
+                        case '\'':
+                            builder.Append(@char);
+                            state = SqlScanState.SingleQuote;
+                            return true;
+
+                        case '"':
+                            builder.Append(@char);
+                            state = SqlScanState.DoubleQuote;
+                            return true;
                     }
 
-                    if (@char == '/' && index + 1 < length && sql[index + 1] == '*')
-                    {
-                        builder.Append("/*");
-                        index++;
-                        state = SqlScanState.BlockComment;
-                        return true;
-                    }
+                    break;
 
-                    if (@char == '\'')
-                    {
-                        builder.Append(@char);
-                        state = SqlScanState.SingleQuote;
-                        return true;
-                    }
-
-                    if (@char == '"')
-                    {
-                        builder.Append(@char);
-                        state = SqlScanState.DoubleQuote;
-                        return true;
-                    }
-                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(state),
+                        state,
+                        null);
             }
 
             return false;
@@ -361,8 +364,8 @@ namespace Hydrix.Orchestrator.Binders.Parameter
                     return false;
             }
 
-            char previous = index > 0 ? sql[index - 1] : '\0';
-            char next = (index + tokenLength) < length ? sql[index + tokenLength] : '\0';
+            var previous = index > 0 ? sql[index - 1] : '\0';
+            var next = (index + tokenLength) < length ? sql[index + tokenLength] : '\0';
 
             if (!IsTokenBoundary(previous) || !IsTokenBoundary(next))
                 return false;

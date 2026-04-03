@@ -234,21 +234,28 @@ namespace Hydrix.UnitTests.Orchestrator.Caching
         }
 
         /// <summary>
-        /// Verifies that the GetOrAdd method returns null when the specified type does not define a provider-specific
-        /// DbType property.
+        /// Verifies that the GetOrAdd method returns a no-op delegate when the specified type does not define a
+        /// provider-specific DbType property.
         /// </summary>
-        /// <remarks>This test ensures that ProviderDbTypeSetterCache.GetOrAdd returns null for types that
-        /// do not have a provider-specific DbType property, indicating that no setter is available for such
-        /// types.</remarks>
+        /// <remarks>This test ensures that ProviderDbTypeSetterCache.GetOrAdd always returns a non-null
+        /// delegate, even when no provider-specific DbType property exists.</remarks>
         [Fact]
-        public void GetOrAdd_ReturnsNoop_WhenNoProviderDbTypeProperty()
+        public void GetOrAdd_ReturnsNoopDelegate_WhenNoProviderDbTypeProperty()
         {
             var setter = ProviderDbTypeSetterCache.GetOrAdd(typeof(ParameterNoEnumDbType));
+
             Assert.NotNull(setter);
 
-            var param = new ParameterNoEnumDbType();
-            setter(param, 123);
-            Assert.Equal("<.cctor>b__4_0", setter.Method.Name);
+            var parameter = new ParameterNoEnumDbType
+            {
+                Value = 123,
+                SomeInt = 7
+            };
+
+            setter(parameter, 9999);
+
+            Assert.Equal(123, parameter.Value);
+            Assert.Equal(7, parameter.SomeInt);
         }
 
         /// <summary>

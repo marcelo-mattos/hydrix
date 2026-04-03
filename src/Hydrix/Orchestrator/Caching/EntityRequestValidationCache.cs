@@ -1,13 +1,15 @@
-﻿using System;
+using Hydrix.Attributes.Schemas;
+using System;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Reflection;
 
 namespace Hydrix.Orchestrator.Caching
 {
     /// <summary>
     /// Provides a thread-safe cache for validating whether an entity type is decorated with a TableAttribute and
-    /// contains at least one property with a ColumnAttribute.
+    /// contains at least one mappable property.
     /// </summary>
     /// <remarks>This class is intended for internal use to optimize repeated validation checks on entity
     /// types. It ensures that only types meeting the required attribute criteria are considered valid for further
@@ -20,7 +22,7 @@ namespace Hydrix.Orchestrator.Caching
         /// <remarks>This cache is thread-safe and can be accessed concurrently by multiple threads. It is
         /// used to avoid repeated evaluations for the same type, which can enhance performance in multi-threaded
         /// scenarios.</remarks>
-        private static readonly ConcurrentDictionary<Type, bool> _cache
+        private static readonly ConcurrentDictionary<Type, bool> Cache
             = new ConcurrentDictionary<Type, bool>();
 
         /// <summary>
@@ -32,18 +34,17 @@ namespace Hydrix.Orchestrator.Caching
         /// <returns>true if the specified type is valid; otherwise, false.</returns>
         public static bool Validate(
             Type type)
-            => _cache.GetOrAdd(
+            => Cache.GetOrAdd(
                 type,
                 BuildMetadata);
 
         /// <summary>
-        /// Determines whether the specified type has any properties decorated with the ColumnAttribute.
+        /// Determines whether the specified type has at least one mappable property.
         /// </summary>
         /// <remarks>This method checks for the presence of a TableAttribute on the type and verifies if
-        /// any of its properties are marked with a ColumnAttribute, which is essential for entity mapping in data
-        /// contexts.</remarks>
-        /// <param name="type">The type to inspect for TableAttribute and ColumnAttribute decorations.</param>
-        /// <returns>true if the type has at least one property with a ColumnAttribute; otherwise, false.</returns>
+        /// any of its public instance properties participate in Hydrix mapping semantics.</remarks>
+        /// <param name="type">The type to inspect for TableAttribute and mapped properties.</param>
+        /// <returns>true if the type has at least one property that is not marked with NotMappedAttribute; otherwise, false.</returns>
         /// <exception cref="MissingMemberException">Thrown if the specified type does not have a TableAttribute decorating itself.</exception>
         internal static bool BuildMetadata(
             Type type)
@@ -54,15 +55,14 @@ namespace Hydrix.Orchestrator.Caching
                 .FirstOrDefault();
 
             if (tableAttribute == null)
-                throw new MissingMemberException("The entity does not have a TableAttibute decorating itself.");
+                throw new MissingMemberException("The entity does not have a TableAttribute decorating itself.");
 
-            var hasAnyColumn = type
-                .GetProperties()
-                .Any(property => property
-                    .GetCustomAttributes(typeof(ColumnAttribute), false)
-                    .Length != 0);
-
-            return hasAnyColumn;
+            return type
+                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Any(property =>
+                    property.GetIndexParameters().Length == 0 &&
+                    property.GetCustomAttributes(typeof(ForeignTableAttribute), false).Length == 0 &&
+                    property.GetCustomAttributes(typeof(NotMappedAttribute), false).Length == 0);
         }
     }
 }

@@ -86,9 +86,8 @@ namespace Hydrix.Orchestrator.Binders.Procedure
             string prefix,
             Action<IDbCommand, string, object, ParameterDirection, int> addParameter)
         {
-            for (var index = 0; index < _parameters.Length; index++)
+            foreach (var parameter in _parameters)
             {
-                var parameter = _parameters[index];
                 var value = parameter.Getter(procedureInstance) ?? DBNull.Value;
 
                 addParameter(

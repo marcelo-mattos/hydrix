@@ -29,9 +29,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_WithSqlAndParameters_ReturnsEntity()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { Id = 1 });
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { Id = 1 }, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -45,9 +45,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void SingleOrDefault_WithSqlParametersAndTransaction_ReturnsEntity()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), transaction))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { Id = 2 }, transaction);
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { Id = 2 }, transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -59,9 +59,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_WithSqlOnly_ReturnsEntity()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT"))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT");
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -75,9 +75,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void SingleOrDefault_WithSqlAndTransaction_ReturnsEntity()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", transaction))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", transaction, It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", transaction);
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -92,9 +92,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void SingleOrDefault_WithCommandTypeSqlAndParameters_ReturnsEntity()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters);
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -109,9 +109,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction);
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -125,9 +125,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_WithCommandTypeAndSql_ReturnsEntity()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT"))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT");
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -142,9 +142,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void SingleOrDefault_WithCommandTypeSqlAndTransaction_ReturnsEntity()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", transaction))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", transaction);
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -159,9 +159,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public void SingleOrDefault_GenericProcedure_ReturnsEntity()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity, DummyParameter>(proc))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity, DummyParameter>(proc, It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity, DummyParameter>(proc);
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity, DummyParameter>(proc, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -177,9 +177,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity, DummyParameter>(proc, transaction))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>()))
                 .Returns(_entity);
-            var result = _materializerMock.Object.SingleOrDefault<DummyEntity, DummyParameter>(proc, transaction);
+            var result = _materializerMock.Object.SingleOrDefault<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -194,9 +194,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task SingleOrDefaultAsync_WithSqlAndParameters_ReturnsEntity()
         {
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", new { Id = 1 });
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", new { Id = 1 }, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -212,9 +212,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task SingleOrDefaultAsync_WithSqlParametersAndTransaction_ReturnsEntity()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<object>(), transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<object>(), transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", new { Id = 2 }, transaction);
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", new { Id = 2 }, transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -228,9 +228,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task SingleOrDefaultAsync_WithSqlOnly_ReturnsEntity()
         {
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT");
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -246,9 +246,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task SingleOrDefaultAsync_WithSqlAndTransaction_ReturnsEntity()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", transaction);
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -264,9 +264,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task SingleOrDefaultAsync_WithCommandTypeSqlAndParameters_ReturnsEntity()
         {
             var parameters = new List<IDataParameter>();
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters);
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -282,9 +282,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction);
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -299,9 +299,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task SingleOrDefaultAsync_WithCommandTypeAndSql_ReturnsEntity()
         {
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT");
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -316,9 +316,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task SingleOrDefaultAsync_WithCommandTypeSqlAndTransaction_ReturnsEntity()
         {
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", transaction);
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>(CommandType.Text, "SELECT", transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -333,9 +333,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         public async Task SingleOrDefaultAsync_GenericProcedure_ReturnsEntity()
         {
             var proc = new DummyProcedure();
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc);
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -351,9 +351,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         {
             var proc = new DummyProcedure();
             var transaction = new Mock<IDbTransaction>().Object;
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_entity);
-            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, transaction);
+            var result = await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity, DummyParameter>(proc, transaction, It.IsAny<int>());
             Assert.Same(_entity, result);
         }
 
@@ -367,9 +367,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_ObjectDisposed_ThrowsObjectDisposedException()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws(new ObjectDisposedException(nameof(IMaterializer)));
-            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }));
+            Assert.Throws<ObjectDisposedException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -381,9 +381,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_ArgumentException_ThrowsArgumentException()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<ArgumentException>();
-            Assert.Throws<ArgumentException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }));
+            Assert.Throws<ArgumentException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -395,9 +395,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_NotSupportedException_ThrowsNotSupportedException()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<NotSupportedException>();
-            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }));
+            Assert.Throws<NotSupportedException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -410,9 +410,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_MissingMemberException_ThrowsMissingMemberException()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<MissingMemberException>();
-            Assert.Throws<MissingMemberException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }));
+            Assert.Throws<MissingMemberException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -425,9 +425,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public void SingleOrDefault_InvalidOperationException_ThrowsInvalidOperationException()
         {
-            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>()))
+            _materializerMock.Setup(m => m.SingleOrDefault<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>()))
                 .Throws<InvalidOperationException>();
-            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }));
+            Assert.Throws<InvalidOperationException>(() => _materializerMock.Object.SingleOrDefault<DummyEntity>("SELECT", new { }, It.IsAny<int>()));
         }
 
         /// <summary>
@@ -440,10 +440,10 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers.Contract
         [Fact]
         public async Task SingleOrDefaultAsync_OperationCanceled_ThrowsOperationCanceledException()
         {
-            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            _materializerMock.Setup(m => m.SingleOrDefaultAsync<DummyEntity>("SELECT", It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
             await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-                await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", new { }, CancellationToken.None));
+                await _materializerMock.Object.SingleOrDefaultAsync<DummyEntity>("SELECT", new { }, It.IsAny<int>(), CancellationToken.None));
         }
     }
 }

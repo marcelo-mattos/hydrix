@@ -1,7 +1,8 @@
-﻿using Hydrix.Orchestrator.Materializers.Contract;
+using Hydrix.Orchestrator.Materializers.Contract;
 using Moq;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -19,6 +20,34 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
     public partial class MaterializerTests
     {
         /// <summary>
+        /// Asserts that the specified actual reader is an IDataReader instance and is not the same instance as the
+        /// provided inner reader.
+        /// </summary>
+        /// <param name="innerReader">The original IDataReader instance to compare against.</param>
+        /// <param name="actual">The IDataReader instance to verify as a distinct, assignable reader.</param>
+        private static void AssertWrappedReader(
+            IDataReader innerReader,
+            IDataReader actual)
+        {
+            Assert.IsAssignableFrom<IDataReader>(actual);
+            Assert.NotSame(innerReader, actual);
+        }
+
+        /// <summary>
+        /// Asserts that the specified data reader is a wrapped instance of DbDataReader and is not the same object as
+        /// the provided inner reader.
+        /// </summary>
+        /// <param name="innerReader">The original DbDataReader instance that is expected to be wrapped.</param>
+        /// <param name="actual">The IDataReader instance to verify as a wrapped DbDataReader.</param>
+        private static void AssertWrappedDbReader(
+            DbDataReader innerReader,
+            IDataReader actual)
+        {
+            Assert.IsAssignableFrom<DbDataReader>(actual);
+            Assert.NotSame(innerReader, actual);
+        }
+
+        /// <summary>
         /// Verifies that the ExecuteReader method of IMaterializer returns the expected IDataReader when provided
         /// with a SQL query and parameters.
         /// </summary>
@@ -35,7 +64,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             var result = (materializer as IMaterializer).ExecuteReader("SELECT", new { Id = 1 });
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
             commandMock.Verify(c => c.ExecuteReader(CommandBehavior.Default), Times.Once);
         }
 
@@ -57,7 +86,45 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var transaction = new Mock<IDbTransaction>().Object;
             var result = (materializer as IMaterializer).ExecuteReader("SELECT", new { Id = 2 }, transaction);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteReaderAsync uses the DbCommand asynchronous reader path for SQL and object parameters.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithSqlParameters_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, null, token);
+
+            AssertWrappedDbReader(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteReaderAsync with SQL, parameters and transaction overload uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, (IDbTransaction)null, null, token);
+
+            AssertWrappedDbReader(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>
@@ -77,7 +144,45 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             var result = (materializer as IMaterializer).ExecuteReader("SELECT");
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteReaderAsync with command type and parameters uses the DbCommand asynchronous reader path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithCommandTypeSqlParameters_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", (IEnumerable<IDataParameter>)null, null, token);
+
+            AssertWrappedDbReader(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that ExecuteReaderAsync with command type, parameters and transaction overload uses the DbCommand asynchronous path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_WithCommandTypeSqlParametersAndTransaction_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", (IEnumerable<IDataParameter>)null, (IDbTransaction)null, null, token);
+
+            AssertWrappedDbReader(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>
@@ -98,7 +203,45 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var transaction = new Mock<IDbTransaction>().Object;
             var result = (materializer as IMaterializer).ExecuteReader("SELECT", transaction);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
+        }
+
+        /// <summary>
+        /// Verifies that generic ExecuteReaderAsync uses the DbCommand asynchronous reader path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_Generic_WithProcedure_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(new TestProcedure(), null, token);
+
+            AssertWrappedDbReader(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
+        }
+
+        /// <summary>
+        /// Verifies that generic ExecuteReaderAsync with transaction overload uses the DbCommand asynchronous reader path.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
+        [Fact]
+        public async Task ExecuteReaderAsync_Generic_WithProcedureAndTransaction_UsesDbCommandPath()
+        {
+            var reader = new Mock<DbDataReader>().Object;
+            var command = new TestDbCommand { ReaderResult = reader };
+            var materializer = CreateMaterializerWithDbCommand(command);
+            var token = new CancellationTokenSource().Token;
+
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(new TestProcedure(), (IDbTransaction)null, null, token);
+
+            AssertWrappedDbReader(reader, result);
+            Assert.Equal(CommandBehavior.Default, command.LastCommandBehavior);
+            Assert.Equal(token, command.LastCancellationToken);
         }
 
         /// <summary>
@@ -119,7 +262,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var parameters = new List<IDataParameter>();
             var result = (materializer as IMaterializer).ExecuteReader(CommandType.Text, "SELECT", parameters);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -142,7 +285,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var transaction = new Mock<IDbTransaction>().Object;
             var result = (materializer as IMaterializer).ExecuteReader(CommandType.Text, "SELECT", parameters, transaction);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -162,7 +305,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             var result = (materializer as IMaterializer).ExecuteReader(CommandType.Text, "SELECT");
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -183,7 +326,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var transaction = new Mock<IDbTransaction>().Object;
             var result = (materializer as IMaterializer).ExecuteReader(CommandType.Text, "SELECT", transaction);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -202,9 +345,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -223,9 +366,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -244,9 +387,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, transaction, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, transaction, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -265,9 +408,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -287,9 +430,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", transaction, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync("SELECT", transaction, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -309,9 +452,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var parameters = new List<IDataParameter>();
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -332,9 +475,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             var parameters = new List<IDataParameter>();
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, transaction, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", parameters, transaction, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -353,9 +496,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(readerMock.Object);
             var materializer = CreateMaterializerWithCommand(commandMock);
 
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -375,9 +518,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var transaction = new Mock<IDbTransaction>().Object;
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", transaction, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync(CommandType.Text, "SELECT", transaction, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -398,7 +541,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var procedure = new TestProcedure();
             var result = (materializer as IMaterializer).ExecuteReader<FakeDataParameter>(procedure);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -420,7 +563,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var transaction = new FakeDbTransaction();
             var result = (materializer as IMaterializer).ExecuteReader<FakeDataParameter>(procedure, transaction);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -440,9 +583,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             var procedure = new TestProcedure();
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(procedure, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(procedure, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -461,9 +604,9 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             var procedure = new TestProcedure();
             var transaction = new FakeDbTransaction();
-            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(procedure, transaction, CancellationToken.None);
+            var result = await (materializer as IMaterializer).ExecuteReaderAsync<FakeDataParameter>(procedure, transaction, It.IsAny<int>(), CancellationToken.None);
 
-            Assert.Same(readerMock.Object, result);
+            AssertWrappedReader(readerMock.Object, result);
         }
 
         /// <summary>
@@ -480,7 +623,7 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
             var materializer = CreateMaterializerWithCommand(commandMock);
 
             await Assert.ThrowsAsync<TaskCanceledException>(() =>
-                (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, new CancellationToken(true)));
+                (materializer as IMaterializer).ExecuteReaderAsync("SELECT", new { Id = 1 }, It.IsAny<int>(), new CancellationToken(true)));
         }
     }
 }

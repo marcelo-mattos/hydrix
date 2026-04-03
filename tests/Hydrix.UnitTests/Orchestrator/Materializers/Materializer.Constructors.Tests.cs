@@ -1,4 +1,5 @@
-﻿using Hydrix.Orchestrator.Materializers;
+﻿using Hydrix.Configuration;
+using Hydrix.Orchestrator.Materializers;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Reflection;
@@ -77,13 +78,13 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
         public void Constructor_Uses_Default_Timeout_And_Prefix()
         {
             var connection = new DummyDbConnection();
-            var defaultTimeoutField = typeof(Materializer).GetField("DefaultTimeout", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            var defaultPrefixField = typeof(Materializer).GetField("DefaultParameterPrefix", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            var defaultTimeoutField = typeof(HydrixOptions).GetField("DefaultTimeout", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            var defaultPrefixField = typeof(HydrixOptions).GetField("DefaultParameterPrefix", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
 
             int defaultTimeout = (int)defaultTimeoutField.GetValue(null);
             string defaultPrefix = (string)defaultPrefixField.GetValue(null);
 
-            var materializer = new Materializer(connection);
+            var materializer = new Materializer(connection, HydrixOptions.DefaultTimeout);
 
             var timeoutProp = typeof(Materializer).GetProperty("Timeout", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             Assert.Equal(defaultTimeout, (int)timeoutProp.GetValue(materializer));
@@ -103,6 +104,53 @@ namespace Hydrix.UnitTests.Orchestrator.Materializers
 
             var dbConnProp = typeof(Materializer).GetProperty("DbConnection", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             Assert.Null(dbConnProp.GetValue(materializer));
+        }
+
+        /// <summary>
+        /// Verifies that the logger-based constructor applies configuration defaults when timeout and parameter prefix
+        /// are null.
+        /// </summary>
+        [Fact]
+        public void Constructor_WithLogger_UsesConfigurationDefaults_WhenTimeoutAndPrefixAreNull()
+        {
+            var connection = new DummyDbConnection();
+            var logger = new Mock<ILogger>().Object;
+
+            var materializer = new Materializer(
+                connection,
+                logger,
+                null,
+                null);
+
+            var timeoutProp = typeof(Materializer).GetProperty("Timeout", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.Equal(HydrixConfiguration.Options.CommandTimeout, (int)timeoutProp.GetValue(materializer));
+            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, GetPrivateParameterPrefix(materializer));
+
+            var loggerField = typeof(Materializer).GetField("_logger", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.Same(logger, loggerField.GetValue(materializer));
+        }
+
+        /// <summary>
+        /// Verifies that the logger-based constructor accepts a null logger while preserving explicit timeout and
+        /// parameter prefix values.
+        /// </summary>
+        [Fact]
+        public void Constructor_WithLogger_AllowsNullLogger_AndKeepsExplicitValues()
+        {
+            var connection = new DummyDbConnection();
+
+            var materializer = new Materializer(
+                connection,
+                null,
+                55,
+                "$");
+
+            var loggerField = typeof(Materializer).GetField("_logger", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.Null(loggerField.GetValue(materializer));
+
+            var timeoutProp = typeof(Materializer).GetProperty("Timeout", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.Equal(55, (int)timeoutProp.GetValue(materializer));
+            Assert.Equal("$", GetPrivateParameterPrefix(materializer));
         }
     }
 }

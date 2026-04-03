@@ -1,10 +1,13 @@
-﻿using FluentValidation;
-using Hydrix.Orchestrator.Builders.Query;
+﻿using Hydrix.Orchestrator.Builders.Query;
 using Hydrix.Orchestrator.Builders.Query.Conditions;
 using Hydrix.Orchestrator.Caching;
+using Hydrix.Orchestrator.Metadata.Builders;
+using Hydrix.Orchestrator.Metadata.Snapshots;
 using Hydrix.Schemas.Contract;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Threading;
 
 namespace Hydrix.Schemas
 {
@@ -18,6 +21,13 @@ namespace Hydrix.Schemas
         IEntity
     {
         /// <summary>
+        /// Holds the process-wide hot cache snapshot for the most recently requested entity metadata.
+        /// </summary>
+        /// <remarks>This field is read/written using volatile operations to provide a lock-free fast path for repeated
+        /// metadata lookups in high-throughput and async scenarios.</remarks>
+        private static EntityMetadataSnapshot _cache;
+
+        /// <summary>
         /// Validates the current object and returns a value that indicates whether the object is in a valid state.
         /// </summary>
         /// <remarks>Use this method to determine whether the object's state meets all defined validation
@@ -25,26 +35,34 @@ namespace Hydrix.Schemas
         /// found.</remarks>
         /// <param name="results">When this method returns, contains a list of <see cref="ValidationResult"/> objects that describe any
         /// validation errors encountered. The list is empty if the object is valid.</param>
-        /// <param name="fluentValidator">An FluentValidation validator to use for additional validation logic.</param>
+        /// <param name="externalValidator">An external validator delegate to execute additional validation logic.</param>
         /// <returns>true if the object passes all validation checks; otherwise, false.</returns>
         public virtual bool IsValid<T>(
             out List<ValidationResult> results,
-            AbstractValidator<T> fluentValidator)
+            Func<T, IEnumerable<ValidationResult>> externalValidator)
             where T : IEntity
         {
             IsValid(out results);
 
-            if (fluentValidator != null && this is T entity)
-            {
-                var fluentResult = fluentValidator.Validate(entity);
+            if (externalValidator == null)
+                return results.Count == 0;
 
-                foreach (var error in fluentResult.Errors)
-                {
-                    results.Add(new ValidationResult(
-                        error.ErrorMessage,
-                        new string[] { error.PropertyName }));
-                }
+            T entity;
+            try
+            {
+                entity = (T)(object)this;
             }
+            catch (InvalidCastException exception)
+            {
+                throw new InvalidCastException(
+                    $"External validator type mismatch. Expected entity assignable to '{typeof(T).FullName}', but actual runtime type is '{GetType().FullName}'.",
+                    exception);
+            }
+
+            var externalResults = externalValidator(entity);
+            if (externalResults != null)
+                results.AddRange(externalResults);
+
             return results.Count == 0;
         }
 
@@ -77,12 +95,11 @@ namespace Hydrix.Schemas
         private void ValidateInternal(
             List<ValidationResult> results)
         {
-            var metadata = EntityBuilderMetadataCache.GetMetadata(GetType());
+            var metadata = GetOrAddEntityMetadata(GetType());
 
             foreach (var column in metadata.Columns)
             {
                 var value = column.Getter(this);
-
                 var context = new ValidationContext(this)
                 {
                     MemberName = column.PropertyName
@@ -93,6 +110,39 @@ namespace Hydrix.Schemas
                     context,
                     results);
             }
+        }
+
+        /// <summary>
+        /// Retrieves the metadata associated with the specified entity type, adding it to the cache if it does not
+        /// already exist.
+        /// </summary>
+        /// <remarks>This method optimizes repeated access by caching the most recently requested entity
+        /// type and its metadata. Subsequent calls with the same entity type return the cached metadata, improving
+        /// performance for frequent lookups.</remarks>
+        /// <param name="entityType">The type of the entity for which metadata is requested. Cannot be null.</param>
+        /// <returns>The metadata object for the specified entity type. If the metadata is already cached, returns the cached
+        /// instance; otherwise, retrieves and caches the metadata before returning it.</returns>
+        private static EntityBuilderMetadata GetOrAddEntityMetadata(
+            Type entityType)
+        {
+            var snapshot = Volatile.Read(ref _cache);
+
+            if (snapshot != null && ReferenceEquals(
+                snapshot.EntityType,
+                entityType))
+            {
+                return snapshot.Metadata;
+            }
+
+            var metadata = EntityBuilderMetadataCache.GetMetadata(entityType);
+
+            Volatile.Write(
+                ref _cache,
+                new EntityMetadataSnapshot(
+                    entityType,
+                    metadata));
+
+            return metadata;
         }
 
         /// <summary>

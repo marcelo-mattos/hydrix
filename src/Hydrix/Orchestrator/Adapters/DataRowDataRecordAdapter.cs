@@ -182,7 +182,7 @@ namespace Hydrix.Orchestrator.Adapters
         /// Gets the value of the specified column as a <see cref="Guid"/>.
         /// </summary>
         public Guid GetGuid(int i)
-            => _row[i] is Guid g ? g : Guid.Parse(_row[i].ToString());
+            => _row[i] is Guid g ? g : Guid.Parse(_row[i].ToString() ?? throw new InvalidCastException());
 
         /// <summary>
         /// Gets the value of the specified column as a <see cref="short"/>.

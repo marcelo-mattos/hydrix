@@ -16,6 +16,19 @@ namespace Hydrix.UnitTests.Orchestrator.Adapters
     public class DataRowDataRecordAdapterTests
     {
         /// <summary>
+        /// Represents a value object whose <see cref="ToString"/> implementation returns null.
+        /// </summary>
+        private sealed class NullToStringValue
+        {
+            /// <summary>
+            /// Returns a null string representation.
+            /// </summary>
+            /// <returns>Always null.</returns>
+            public override string ToString()
+                => null;
+        }
+
+        /// <summary>
         /// Creates a new DataTable instance populated with a single row containing test data of various data types.
         /// </summary>
         /// <remarks>The returned DataTable includes columns for Boolean, Byte, Char, Guid, Int16, Int32,
@@ -404,6 +417,38 @@ namespace Hydrix.UnitTests.Orchestrator.Adapters
             var guid = Guid.Parse(table.Rows[0][13].ToString());
             var adapter = new DataRowDataRecordAdapter(table.Rows[0]);
             Assert.Equal(guid, adapter.GetGuid(13));
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="DataRowDataRecordAdapter.GetGuid(int)"/> throws a <see cref="FormatException"/>
+        /// when the source value is a non-Guid string.
+        /// </summary>
+        [Fact]
+        public void GetGuid_InvalidString_ThrowsFormatException()
+        {
+            var table = new DataTable();
+            table.Columns.Add("GuidCol", typeof(string));
+            table.Rows.Add("not-a-guid");
+
+            var adapter = new DataRowDataRecordAdapter(table.Rows[0]);
+
+            Assert.Throws<FormatException>(() => adapter.GetGuid(0));
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="DataRowDataRecordAdapter.GetGuid(int)"/> throws an
+        /// <see cref="InvalidCastException"/> when <see cref="object.ToString"/> returns null.
+        /// </summary>
+        [Fact]
+        public void GetGuid_ToStringReturnsNull_ThrowsInvalidCastException()
+        {
+            var table = new DataTable();
+            table.Columns.Add("GuidCol", typeof(object));
+            table.Rows.Add(new NullToStringValue());
+
+            var adapter = new DataRowDataRecordAdapter(table.Rows[0]);
+
+            Assert.Throws<InvalidCastException>(() => adapter.GetGuid(0));
         }
 
         /// <summary>
