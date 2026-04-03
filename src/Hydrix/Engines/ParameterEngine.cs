@@ -120,22 +120,11 @@ namespace Hydrix.Engines
         }
 
         /// <summary>
-        /// Creates and adds a scalar SQL parameter to the specified command.
-        ///
-        /// The parameter name is automatically prefixed with '@' and the provided value is assigned
-        /// directly, falling back to <see cref="DBNull.Value"/> when the value is <c>null</c>.
-        ///
-        /// This method is intended for simple (non-collection) values and is used internally by the
-        /// parameter binding infrastructure, including dynamic object-based parameter mapping and
-        /// SQL <c>IN</c> expansion support.
+        /// Adds a parameter with the specified name and value to the given database command.
         /// </summary>
-        /// <param name="command">
-        /// The <see cref="IDbCommand"/> instance to which the parameter will be added.
-        /// </param>
-        /// <param name="name">The logical parameter name without the '@' prefix.</param>
-        /// <param name="value">
-        /// The value to assign to the parameter, or <c>null</c> to represent a database NULL.
-        /// </param>
+        /// <param name="command">The database command to which the parameter will be added. Cannot be null.</param>
+        /// <param name="name">The name of the parameter to add. Cannot be null or empty.</param>
+        /// <param name="value">The value to assign to the parameter. If null, the parameter value is set to <see cref="DBNull.Value"/>.</param>
         private static void AddParameter(
             IDbCommand command,
             string name,

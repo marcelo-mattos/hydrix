@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Reflection;
 
 namespace Hydrix.Orchestrator.Resolvers
 {
@@ -31,19 +32,28 @@ namespace Hydrix.Orchestrator.Resolvers
         public Type SourceType { get; }
 
         /// <summary>
+        /// Gets the reflected property metadata for the target property, used for
+        /// building inlined expression trees in the fast-path row materializer.
+        /// </summary>
+        public PropertyInfo Property { get; }
+
+        /// <summary>
         /// Initializes a new instance of the ResolvedFieldBinding class with the specified field assignment action.
         /// </summary>
         /// <param name="assigner">An action that assigns a value to an object based on data from an IDataRecord. Cannot be null.</param>
         /// <param name="ordinal">The ordinal used by this binding, or -1 if not applicable.</param>
         /// <param name="sourceType">The provider CLR type captured when this binding was resolved or null if not applicable.</param>
+        /// <param name="property">The reflected property metadata for inline expression building, or null if not available.</param>
         public ResolvedFieldBinding(
             Action<object, IDataRecord> assigner,
             int ordinal = -1,
-            Type sourceType = null)
+            Type sourceType = null,
+            PropertyInfo property = null)
         {
             Assigner = assigner;
             Ordinal = ordinal;
             SourceType = sourceType;
+            Property = property;
         }
     }
 }

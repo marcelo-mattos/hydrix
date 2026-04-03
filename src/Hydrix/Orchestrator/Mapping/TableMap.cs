@@ -311,7 +311,8 @@ namespace Hydrix.Orchestrator.Mapping
                 fields.Add(new ResolvedFieldBinding(
                     assigner,
                     ordinal,
-                    sourceType));
+                    sourceType,
+                    field.Property));
             }
 
             return fields.Count == 0
@@ -458,7 +459,8 @@ namespace Hydrix.Orchestrator.Mapping
                     candidateOrdinals,
                     nested.Activator,
                     nestedBindings,
-                    materializer));
+                    materializer,
+                    nested.Property));
             }
 
             return entities.Count == 0

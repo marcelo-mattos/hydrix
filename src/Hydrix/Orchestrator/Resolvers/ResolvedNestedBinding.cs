@@ -1,6 +1,7 @@
 using Hydrix.Schemas.Contract;
 using System;
 using System.Data;
+using System.Reflection;
 
 namespace Hydrix.Orchestrator.Resolvers
 {
@@ -60,6 +61,12 @@ namespace Hydrix.Orchestrator.Resolvers
         public Action<object, IDataRecord> Materializer { get; }
 
         /// <summary>
+        /// Gets the reflected property metadata for the navigation property on the parent entity,
+        /// used for building inlined expression trees in the fast-path row materializer.
+        /// </summary>
+        public PropertyInfo NavigationProperty { get; }
+
+        /// <summary>
         /// Initializes a new instance of the ResolvedNestedBinding class with the specified primary key usage,
         /// ordinals, factory, setter, and table bindings.
         /// </summary>
@@ -103,13 +110,15 @@ namespace Hydrix.Orchestrator.Resolvers
         /// <param name="activator">A delegate that creates and assigns the nested object. Cannot be null.</param>
         /// <param name="bindings">The resolved table bindings that define how nested objects are mapped. Cannot be null.</param>
         /// <param name="materializer">An optional fast-path materializer for nested leaf entities.</param>
+        /// <param name="navigationProperty">The reflected navigation property on the parent entity for inline expression building.</param>
         public ResolvedNestedBinding(
             bool usesPrimaryKey,
             int primaryKeyOrdinal,
             int[] candidateOrdinals,
             Func<object, ITable> activator,
             ResolvedTableBindings bindings,
-            Action<object, IDataRecord> materializer = null)
+            Action<object, IDataRecord> materializer = null,
+            PropertyInfo navigationProperty = null)
         {
             UsesPrimaryKey = usesPrimaryKey;
             PrimaryKeyOrdinal = primaryKeyOrdinal;
@@ -117,6 +126,7 @@ namespace Hydrix.Orchestrator.Resolvers
             Activator = activator;
             Bindings = bindings;
             Materializer = materializer;
+            NavigationProperty = navigationProperty;
         }
     }
 }

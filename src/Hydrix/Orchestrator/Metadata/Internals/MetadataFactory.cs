@@ -25,7 +25,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         /// <remarks>This field can be used to invoke the IsDBNull method via reflection when working with
         /// IDataRecord instances. It is useful for scenarios where method access is required dynamically at
         /// runtime.</remarks>
-        private static readonly MethodInfo IsDbNullMethod =
+        internal static readonly MethodInfo IsDbNullMethod =
             typeof(IDataRecord).GetMethod(
                 nameof(IDataRecord.IsDBNull));
 
@@ -334,7 +334,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         /// used. Can be null or empty.</param>
         /// <returns>An expression that evaluates to <see langword="true"/> if the nested object should be instantiated;
         /// otherwise, <see langword="false"/>.</returns>
-        private static Expression CreateNestedInstantiationCondition(
+        internal static Expression CreateNestedInstantiationCondition(
             ParameterExpression record,
             bool usesPrimaryKey,
             int primaryKeyOrdinal,
@@ -492,7 +492,7 @@ namespace Hydrix.Orchestrator.Metadata.Internals
         /// <param name="sourceType">The original type of the value in the data record.</param>
         /// <returns>An expression that, when executed, retrieves the value at the specified ordinal from the data record and
         /// converts it to the target type.</returns>
-        private static Expression CreateValueExpression(
+        internal static Expression CreateValueExpression(
             ParameterExpression record,
             ConstantExpression ordinal,
             Type targetType,

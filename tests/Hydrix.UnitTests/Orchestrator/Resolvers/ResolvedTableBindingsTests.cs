@@ -2,7 +2,10 @@ using Hydrix.Orchestrator.Resolvers;
 using Hydrix.Schemas.Contract;
 using Moq;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq.Expressions;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Orchestrator.Resolvers
@@ -17,6 +20,35 @@ namespace Hydrix.UnitTests.Orchestrator.Resolvers
         /// </summary>
         private sealed class DummyTable : ITable
         { }
+
+        /// <summary>
+        /// Represents a parent entity with a scalar identifier and a navigation property, used to supply
+        /// <see cref="System.Reflection.PropertyInfo"/> instances for inlined expression-tree tests.
+        /// </summary>
+        private sealed class ParentEntity : ITable
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the child entity associated with this instance.
+            /// </summary>
+            public ChildEntity Child { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a child entity with a scalar identifier, used as the navigation-property target
+        /// in inlined expression-tree tests.
+        /// </summary>
+        private sealed class ChildEntity : ITable
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            public int Id { get; set; }
+        }
 
         /// <summary>
         /// Verifies that <see cref="ResolvedTableBindings.Matches(IDataReader)"/> returns false when reader is null.
@@ -461,6 +493,330 @@ namespace Hydrix.UnitTests.Orchestrator.Resolvers
             bindings.RowMaterializer(new DummyTable(), record.Object);
 
             Assert.True(nestedCalled);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is non-null and built via the delegate
+        /// fallback path when the nested entity has a null <see cref="ResolvedNestedBinding.NavigationProperty"/>,
+        /// covering the <c>entity.NavigationProperty == null</c> branch of <c>AreEntitiesValid</c>.
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNotNull_WhenEntityNavigationPropertyIsNull()
+        {
+            Action<object, IDataRecord> fieldAssigner = (e, r) => { };
+            var rootField = new ResolvedFieldBinding(
+                fieldAssigner,
+                0,
+                typeof(int),
+                typeof(ParentEntity).GetProperty(nameof(ParentEntity.Id)));
+
+            var childBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            Action<object, IDataRecord> nestedMaterializer = (e, r) => { };
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                materializer: nestedMaterializer,
+                navigationProperty: null);
+
+            var bindings = new ResolvedTableBindings(
+                new[] { rootField },
+                new[] { entity });
+
+            Assert.NotNull(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that <c>AreEntitiesValid</c> returns <see langword="false"/> when the entity's
+        /// <see cref="ResolvedNestedBinding.Bindings"/> property is <see langword="null"/>, covering the
+        /// <c>entity.Bindings == null</c> branch that is unreachable through the public constructor.
+        /// </summary>
+        [Fact]
+        public void AreEntitiesValid_ReturnsFalse_WhenEntityBindingsIsNull()
+        {
+            var navigationProperty = typeof(ParentEntity).GetProperty(nameof(ParentEntity.Child));
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: null,
+                navigationProperty: navigationProperty);
+
+            var method = typeof(ResolvedTableBindings).GetMethod(
+                "AreEntitiesValid",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (bool)method.Invoke(null, new object[] { new[] { entity } });
+
+            Assert.False(result);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> when the
+        /// nested entity's bindings contain sub-entities (<c>Entities.Length != 0</c>), covering that branch of
+        /// <c>AreEntitiesValid</c> and ensuring both the inlined and delegate paths return null.
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNull_WhenEntityBindingsHasSubEntities()
+        {
+            Action<object, IDataRecord> fieldAssigner = (e, r) => { };
+            var rootField = new ResolvedFieldBinding(
+                fieldAssigner,
+                0,
+                typeof(int),
+                typeof(ParentEntity).GetProperty(nameof(ParentEntity.Id)));
+
+            var leafBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var leafEntity = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: leafBindings);
+
+            var childBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[] { leafEntity });
+
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                navigationProperty: typeof(ParentEntity).GetProperty(nameof(ParentEntity.Child)));
+
+            var bindings = new ResolvedTableBindings(
+                new[] { rootField },
+                new[] { entity });
+
+            Assert.Null(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is non-null and built via the delegate
+        /// fallback path when a child field has a null <see cref="ResolvedFieldBinding.Property"/>, covering the
+        /// <c>childField.Property == null</c> branch of <c>AreEntitiesValid</c>.
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNotNull_WhenChildFieldPropertyIsNull()
+        {
+            Action<object, IDataRecord> fieldAssigner = (e, r) => { };
+            var rootField = new ResolvedFieldBinding(
+                fieldAssigner,
+                0,
+                typeof(int),
+                typeof(ParentEntity).GetProperty(nameof(ParentEntity.Id)));
+
+            var childField = new ResolvedFieldBinding(fieldAssigner, 1, typeof(int), property: null);
+
+            var childBindings = new ResolvedTableBindings(
+                new[] { childField },
+                Array.Empty<ResolvedNestedBinding>());
+
+            Action<object, IDataRecord> nestedMaterializer = (e, r) => { };
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                materializer: nestedMaterializer,
+                navigationProperty: typeof(ParentEntity).GetProperty(nameof(ParentEntity.Child)));
+
+            var bindings = new ResolvedTableBindings(
+                new[] { rootField },
+                new[] { entity });
+
+            Assert.NotNull(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Directly invokes <c>AddEntityAssignments</c> via reflection with <c>isPkField = true</c> (child field
+        /// ordinal matches the entity primary key ordinal), covering the <c>true</c> branch of the <c>&amp;&amp;</c>
+        /// on line 348 and the <c>true</c> branch of the ternary on line 351
+        /// (<c>CreateInlineFieldAssignmentNoNullCheck</c> path).
+        /// </summary>
+        [Fact]
+        public void AddEntityAssignments_UsesNoNullCheckAssignment_WhenChildFieldOrdinalMatchesPrimaryKeyOrdinal()
+        {
+            var navProp = typeof(ParentEntity).GetProperty(nameof(ParentEntity.Child));
+            var pkField = new ResolvedFieldBinding(
+                assigner: null,
+                ordinal: 1,
+                sourceType: typeof(int),
+                property: typeof(ChildEntity).GetProperty(nameof(ChildEntity.Id)));
+
+            var childBindings = new ResolvedTableBindings(
+                new[] { pkField },
+                Array.Empty<ResolvedNestedBinding>());
+
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 1,
+                candidateOrdinals: new[] { 1 },
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                navigationProperty: navProp);
+
+            var method = typeof(ResolvedTableBindings).GetMethod(
+                "AddEntityAssignments",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var bodyExpressions = new List<Expression>();
+            var variables = new List<ParameterExpression>();
+            var typedParent = Expression.Variable(typeof(ParentEntity), "typedParent");
+            var record = Expression.Parameter(typeof(IDataRecord), "record");
+
+            method.Invoke(null, new object[] { bodyExpressions, variables, typedParent, record, new[] { entity } });
+
+            Assert.Single(bodyExpressions);
+        }
+
+        /// <summary>
+        /// Directly invokes <c>AddEntityAssignments</c> via reflection with <c>UsesPrimaryKey = false</c> and a
+        /// child field present, covering the short-circuit branch of the <c>&amp;&amp;</c> on line 348
+        /// (<c>entity.UsesPrimaryKey = false</c> → <c>brfalse.s</c> taken) that is not exercised by any other unit
+        /// test in this suite.
+        /// </summary>
+        [Fact]
+        public void AddEntityAssignments_UsesNullCheckAssignment_WhenUsesPrimaryKeyIsFalse()
+        {
+            var navProp = typeof(ParentEntity).GetProperty(nameof(ParentEntity.Child));
+            var field = new ResolvedFieldBinding(
+                assigner: null,
+                ordinal: 1,
+                sourceType: typeof(int),
+                property: typeof(ChildEntity).GetProperty(nameof(ChildEntity.Id)));
+
+            var childBindings = new ResolvedTableBindings(
+                new[] { field },
+                Array.Empty<ResolvedNestedBinding>());
+
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                navigationProperty: navProp);
+
+            var method = typeof(ResolvedTableBindings).GetMethod(
+                "AddEntityAssignments",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var bodyExpressions = new List<Expression>();
+            var variables = new List<ParameterExpression>();
+            var typedParent = Expression.Variable(typeof(ParentEntity), "typedParent");
+            var record = Expression.Parameter(typeof(IDataRecord), "record");
+
+            method.Invoke(null, new object[] { bodyExpressions, variables, typedParent, record, new[] { entity } });
+
+            Assert.Single(bodyExpressions);
+        }
+
+        /// <summary>
+        /// Directly invokes <c>AddEntityAssignments</c> via reflection with <c>UsesPrimaryKey = true</c> but a
+        /// child field whose ordinal does not match the primary key ordinal, covering the <c>false</c> branch of
+        /// the second operand of the <c>&amp;&amp;</c> on line 348 and the <c>false</c> branch of the ternary on
+        /// line 351 (<c>CreateInlineFieldAssignment</c> path) via the non-short-circuit evaluation path.
+        /// </summary>
+        [Fact]
+        public void AddEntityAssignments_UsesNullCheckAssignment_WhenChildFieldOrdinalDoesNotMatchPrimaryKeyOrdinal()
+        {
+            var navProp = typeof(ParentEntity).GetProperty(nameof(ParentEntity.Child));
+            var nonPkField = new ResolvedFieldBinding(
+                assigner: null,
+                ordinal: 2,
+                sourceType: typeof(int),
+                property: typeof(ChildEntity).GetProperty(nameof(ChildEntity.Id)));
+
+            var childBindings = new ResolvedTableBindings(
+                new[] { nonPkField },
+                Array.Empty<ResolvedNestedBinding>());
+
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 1,
+                candidateOrdinals: new[] { 1 },
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                navigationProperty: navProp);
+
+            var method = typeof(ResolvedTableBindings).GetMethod(
+                "AddEntityAssignments",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var bodyExpressions = new List<Expression>();
+            var variables = new List<ParameterExpression>();
+            var typedParent = Expression.Variable(typeof(ParentEntity), "typedParent");
+            var record = Expression.Parameter(typeof(IDataRecord), "record");
+
+            method.Invoke(null, new object[] { bodyExpressions, variables, typedParent, record, new[] { entity } });
+
+            Assert.Single(bodyExpressions);
+        }
+
+        /// <summary>
+        /// Verifies that the inlined <see cref="ResolvedTableBindings.RowMaterializer"/> uses the no-null-check
+        /// assignment path for a child field whose ordinal matches the entity's primary key ordinal, covering the
+        /// <c>isPkField == true</c> branch of <c>AddEntityAssignments</c>. Also invokes the compiled materializer
+        /// to confirm it assigns both the parent scalar field and the nested primary key field correctly.
+        /// </summary>
+        [Fact]
+        public void Constructor_InlinedRowMaterializer_UsesNoNullCheckAssignment_WhenChildFieldMatchesPrimaryKeyOrdinal()
+        {
+            Action<object, IDataRecord> fieldAssigner = (e, r) => { };
+            var rootField = new ResolvedFieldBinding(
+                fieldAssigner,
+                0,
+                typeof(int),
+                typeof(ParentEntity).GetProperty(nameof(ParentEntity.Id)));
+
+            var childField = new ResolvedFieldBinding(
+                assigner: null,
+                ordinal: 1,
+                sourceType: typeof(int),
+                property: typeof(ChildEntity).GetProperty(nameof(ChildEntity.Id)));
+
+            var childBindings = new ResolvedTableBindings(
+                new[] { childField },
+                Array.Empty<ResolvedNestedBinding>());
+
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 1,
+                candidateOrdinals: new[] { 1 },
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                navigationProperty: typeof(ParentEntity).GetProperty(nameof(ParentEntity.Child)));
+
+            var bindings = new ResolvedTableBindings(
+                new[] { rootField },
+                new[] { entity });
+
+            Assert.NotNull(bindings.RowMaterializer);
+
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.IsDBNull(0)).Returns(false);
+            reader.Setup(r => r.GetInt32(0)).Returns(42);
+            reader.Setup(r => r.IsDBNull(1)).Returns(false);
+            reader.Setup(r => r.GetInt32(1)).Returns(99);
+
+            var parent = new ParentEntity();
+            bindings.RowMaterializer(parent, reader.Object);
+
+            Assert.NotNull(parent.Child);
+            Assert.Equal(99, parent.Child.Id);
         }
     }
 }
