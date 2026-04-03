@@ -1,5 +1,5 @@
-﻿using Hydrix.Orchestrator.Binders.Parameter;
-using Hydrix.Orchestrator.Caching;
+﻿using Hydrix.Binders.Parameter;
+using Hydrix.Caching;
 using System;
 using System.Collections.Generic;
 using System.Data;

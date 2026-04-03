@@ -1,8 +1,8 @@
-﻿using Hydrix.Orchestrator.Builders.Query;
-using Hydrix.Orchestrator.Builders.Query.Conditions;
-using Hydrix.Orchestrator.Caching;
-using Hydrix.Orchestrator.Metadata.Builders;
-using Hydrix.Orchestrator.Metadata.Snapshots;
+﻿using Hydrix.Builders.Query;
+using Hydrix.Builders.Query.Conditions;
+using Hydrix.Caching;
+using Hydrix.Metadata.Builders;
+using Hydrix.Metadata.Snapshots;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;

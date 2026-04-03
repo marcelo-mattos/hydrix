@@ -1,6 +1,6 @@
 ﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Builders.Query.Conditions;
-using Hydrix.Orchestrator.Caching;
+using Hydrix.Builders.Query.Conditions;
+using Hydrix.Caching;
 using Hydrix.Schemas;
 using Hydrix.Schemas.Contract;
 using System;

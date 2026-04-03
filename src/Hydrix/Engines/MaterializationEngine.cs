@@ -1,7 +1,7 @@
+using Hydrix.Caching;
 using Hydrix.Configuration;
 using Hydrix.Engines.Options;
 using Hydrix.Extensions;
-using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;

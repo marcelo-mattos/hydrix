@@ -1,7 +1,7 @@
-﻿using Hydrix.Configuration;
+﻿using Hydrix.Binders.Procedure;
+using Hydrix.Caching;
+using Hydrix.Configuration;
 using Hydrix.Extensions;
-using Hydrix.Orchestrator.Binders.Procedure;
-using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
 using System;

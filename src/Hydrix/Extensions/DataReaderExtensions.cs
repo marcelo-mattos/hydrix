@@ -1,6 +1,6 @@
-using Hydrix.Orchestrator.Caching;
-using Hydrix.Orchestrator.Mapping;
-using Hydrix.Orchestrator.Resolvers;
+using Hydrix.Caching;
+using Hydrix.Mapping;
+using Hydrix.Resolvers;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;

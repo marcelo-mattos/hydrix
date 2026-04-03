@@ -1,4 +1,4 @@
-using Hydrix.Orchestrator.Caching;
+using Hydrix.Caching;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
