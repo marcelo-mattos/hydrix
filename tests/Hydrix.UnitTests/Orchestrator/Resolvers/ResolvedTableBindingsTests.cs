@@ -301,5 +301,166 @@ namespace Hydrix.UnitTests.Orchestrator.Resolvers
             Assert.NotNull(matchFields);
             Assert.Empty(matchFields);
         }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> when both
+        /// fields and entities arrays are empty (<c>totalOps == 0</c> early-return branch).
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNull_WhenBothFieldsAndEntitiesAreEmpty()
+        {
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            Assert.Null(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> when any
+        /// nested-entity binding has a <see langword="null"/> materializer.
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNull_WhenAnyEntityMaterializerIsNull()
+        {
+            var nestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: nestedBindings,
+                materializer: null);
+
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[] { nestedBinding });
+
+            Assert.Null(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> when any
+        /// scalar field binding has a <see langword="null"/> assigner.
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNull_WhenAnyFieldAssignerIsNull()
+        {
+            var field = new ResolvedFieldBinding(null, 0, typeof(int));
+
+            var bindings = new ResolvedTableBindings(
+                new[] { field },
+                Array.Empty<ResolvedNestedBinding>());
+
+            Assert.Null(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is compiled and non-<see langword="null"/>
+        /// when there is a single scalar field with a valid assigner (<c>totalOps == 1</c> single-expression branch).
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNotNull_WhenSingleFieldHasValidAssigner()
+        {
+            Action<object, IDataRecord> assigner = (e, r) => { };
+            var field = new ResolvedFieldBinding(assigner, 0, typeof(int));
+
+            var bindings = new ResolvedTableBindings(
+                new[] { field },
+                Array.Empty<ResolvedNestedBinding>());
+
+            Assert.NotNull(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="ResolvedTableBindings.RowMaterializer"/> is compiled and non-<see langword="null"/>
+        /// when multiple scalar fields and nested-entity materializers are all valid (<c>Expression.Block</c> branch).
+        /// </summary>
+        [Fact]
+        public void Constructor_RowMaterializer_IsNotNull_WhenMultipleFieldsAndEntityMaterializersAreValid()
+        {
+            Action<object, IDataRecord> assigner = (e, r) => { };
+            var field1 = new ResolvedFieldBinding(assigner, 0, typeof(int));
+            var field2 = new ResolvedFieldBinding(assigner, 1, typeof(string));
+
+            var nestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            Action<object, IDataRecord> nestedMaterializer = (e, r) => { };
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: nestedBindings,
+                materializer: nestedMaterializer);
+
+            var bindings = new ResolvedTableBindings(
+                new[] { field1, field2 },
+                new[] { nestedBinding });
+
+            Assert.NotNull(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that the compiled <see cref="ResolvedTableBindings.RowMaterializer"/> invokes every scalar field
+        /// assigner exactly once per call.
+        /// </summary>
+        [Fact]
+        public void RowMaterializer_InvokesAllFieldAssigners_WhenCalled()
+        {
+            var callCount = 0;
+            Action<object, IDataRecord> assigner1 = (e, r) => callCount++;
+            Action<object, IDataRecord> assigner2 = (e, r) => callCount++;
+            var field1 = new ResolvedFieldBinding(assigner1, 0, typeof(int));
+            var field2 = new ResolvedFieldBinding(assigner2, 1, typeof(int));
+
+            var bindings = new ResolvedTableBindings(
+                new[] { field1, field2 },
+                Array.Empty<ResolvedNestedBinding>());
+
+            var record = new Mock<IDataRecord>();
+            bindings.RowMaterializer(new DummyTable(), record.Object);
+
+            Assert.Equal(2, callCount);
+        }
+
+        /// <summary>
+        /// Verifies that the compiled <see cref="ResolvedTableBindings.RowMaterializer"/> also invokes nested-entity
+        /// materializers in the same pass.
+        /// </summary>
+        [Fact]
+        public void RowMaterializer_InvokesNestedEntityMaterializer_WhenCalled()
+        {
+            var nestedCalled = false;
+            Action<object, IDataRecord> assigner = (e, r) => { };
+            var field = new ResolvedFieldBinding(assigner, 0, typeof(int));
+
+            var nestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            Action<object, IDataRecord> nestedMaterializer = (e, r) => nestedCalled = true;
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: nestedBindings,
+                materializer: nestedMaterializer);
+
+            var bindings = new ResolvedTableBindings(
+                new[] { field },
+                new[] { nestedBinding });
+
+            var record = new Mock<IDataRecord>();
+            bindings.RowMaterializer(new DummyTable(), record.Object);
+
+            Assert.True(nestedCalled);
+        }
     }
 }

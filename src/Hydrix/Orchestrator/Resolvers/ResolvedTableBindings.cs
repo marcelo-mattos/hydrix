@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Linq.Expressions;
 
 namespace Hydrix.Orchestrator.Resolvers
 {
@@ -30,6 +31,19 @@ namespace Hydrix.Orchestrator.Resolvers
         private ResolvedFieldBinding[] MatchFields { get; }
 
         /// <summary>
+        /// Gets the compiled single-pass row materializer that assigns all scalar fields and nested leaf entities
+        /// in one delegate invocation, eliminating the per-field loop on the hot path.
+        /// </summary>
+        /// <remarks>
+        /// This is available when every nested entity in <see cref="Entities"/> has a pre-compiled
+        /// <see cref="ResolvedNestedBinding.Materializer"/>. When <see langword="null"/>, the caller must
+        /// fall back to the loop-based <see cref="Mapping.TableMap.SetResolvedEntityFields"/> path.
+        /// On runtimes with Dynamic PGO (.NET 8+) the JIT can devirtualize and inline the constant-captured
+        /// delegate invocations after a few warm-up iterations, yielding near-zero indirect-call overhead.
+        /// </remarks>
+        public Action<object, IDataRecord> RowMaterializer { get; }
+
+        /// <summary>
         /// Initializes a new instance of the ResolvedTableBindings class with the specified field and entity bindings.
         /// </summary>
         /// <param name="fields">An array of ResolvedFieldBinding objects representing the field bindings to include. If null, an empty array
@@ -48,6 +62,71 @@ namespace Hydrix.Orchestrator.Resolvers
             MatchFields = BuildMatchFields(
                 Fields,
                 Entities);
+            RowMaterializer = BuildRowMaterializer(
+                Fields,
+                Entities);
+        }
+
+        /// <summary>
+        /// Builds a single compiled <see cref="Action{T1,T2}"/> that invokes every scalar field assigner and every
+        /// nested-entity materializer sequentially, without the overhead of a loop or array indexing.
+        /// </summary>
+        /// <remarks>
+        /// Returns <see langword="null"/> when any nested entity lacks a pre-compiled materializer (i.e. has
+        /// deeper nesting), so the caller can fall back to the loop-based path. Also returns
+        /// <see langword="null"/> when there are no operations to perform or when any field assigner is missing.
+        /// </remarks>
+        /// <param name="fields">The resolved scalar field bindings for this entity level.</param>
+        /// <param name="entities">The resolved nested entity bindings for this entity level.</param>
+        /// <returns>A compiled <see cref="Action{T1,T2}"/> covering all assignments, or <see langword="null"/> if the
+        /// fast-path cannot be applied.</returns>
+        private static Action<object, IDataRecord> BuildRowMaterializer(
+            ResolvedFieldBinding[] fields,
+            ResolvedNestedBinding[] entities)
+        {
+            for (var i = 0; i < entities.Length; i++)
+            {
+                if (entities[i].Materializer == null)
+                    return null;
+            }
+
+            var totalOps = fields.Length + entities.Length;
+            if (totalOps == 0)
+                return null;
+
+            var parent = Expression.Parameter(typeof(object), "parent");
+            var record = Expression.Parameter(typeof(IDataRecord), "record");
+            var body = new Expression[totalOps];
+
+            for (var i = 0; i < fields.Length; i++)
+            {
+                if (fields[i].Assigner == null)
+                    return null;
+
+                body[i] = Expression.Invoke(
+                    Expression.Constant(fields[i].Assigner),
+                    parent,
+                    record);
+            }
+
+            for (var i = 0; i < entities.Length; i++)
+            {
+                body[fields.Length + i] = Expression.Invoke(
+                    Expression.Constant(entities[i].Materializer),
+                    parent,
+                    record);
+            }
+
+            var blockBody = totalOps == 1
+                ? body[0]
+                : (Expression)Expression.Block(body);
+
+            return Expression
+                .Lambda<Action<object, IDataRecord>>(
+                    blockBody,
+                    parent,
+                    record)
+                .Compile();
         }
 
         /// <summary>

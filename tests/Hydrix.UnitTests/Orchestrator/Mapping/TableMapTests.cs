@@ -2033,6 +2033,183 @@ namespace Hydrix.UnitTests.Orchestrator.Mapping
         }
 
         /// <summary>
+        /// Verifies that <c>SetResolvedEntityNestedEntities</c> evaluates the non-primary-key branch and instantiates
+        /// a nested entity when at least one candidate ordinal is not <see cref="DBNull"/>.
+        /// </summary>
+        [Fact]
+        public void SetResolvedEntityNestedEntities_Instantiates_WhenUsesPrimaryKeyIsFalse_AndAnyCandidateIsNotDbNull()
+        {
+            var parent = new Parent();
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            record.Setup(r => r.IsDBNull(1)).Returns(false);
+
+            var nestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var activatorCalls = 0;
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: new[] { 0, 1 },
+                activator: entity =>
+                {
+                    activatorCalls++;
+                    var child = new Child();
+                    ((Parent)entity).Child = child;
+                    return child;
+                },
+                bindings: nestedBindings,
+                materializer: null);
+
+            typeof(TableMap)
+                .GetMethod("SetResolvedEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { parent, record.Object, new[] { nestedBinding } });
+
+            Assert.Equal(1, activatorCalls);
+            Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
+        /// Verifies that <c>HasAnyNonDbNull</c> returns <see langword="true"/> when at least one ordinal contains a
+        /// non-<see cref="DBNull"/> value.
+        /// </summary>
+        [Fact]
+        public void HasAnyNonDbNull_ReturnsTrue_WhenAnyOrdinalIsNotDbNull()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            record.Setup(r => r.IsDBNull(1)).Returns(false);
+
+            var method = typeof(TableMap).GetMethod(
+                "HasAnyNonDbNull",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { record.Object, new[] { 0, 1 } });
+
+            Assert.True(result);
+        }
+
+        /// <summary>
+        /// Verifies that <c>HasAnyNonDbNull</c> returns <see langword="false"/> when all inspected ordinals contain
+        /// <see cref="DBNull"/> values.
+        /// </summary>
+        [Fact]
+        public void HasAnyNonDbNull_ReturnsFalse_WhenAllOrdinalsAreDbNull()
+        {
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(true);
+            record.Setup(r => r.IsDBNull(1)).Returns(true);
+
+            var method = typeof(TableMap).GetMethod(
+                "HasAnyNonDbNull",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { record.Object, new[] { 0, 1 } });
+
+            Assert.False(result);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TableMap.SetEntity(ITable, System.Data.IDataRecord, Hydrix.Orchestrator.Resolvers.ResolvedTableBindings)"/>
+        /// falls back to the scalar-fields loop and correctly assigns field values when
+        /// <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/>.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> whenever any nested-entity
+        /// binding lacks a pre-compiled materializer. This test uses such a binding to force the fallback path and
+        /// verifies that the scalar field assigner is invoked via the loop (lines 164–170 of TableMap.cs).
+        /// </remarks>
+        [Fact]
+        public void SetEntity_FallsBack_ToFieldsLoop_WhenRowMaterializerIsNull()
+        {
+            var child = new Child();
+
+            Action<object, IDataRecord> assigner =
+                (entity, record) => ((Child)entity).Id = record.GetInt32(0);
+            var field = new ResolvedFieldBinding(assigner, 0, typeof(int));
+
+            var dummyNestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: Array.Empty<int>(),
+                activator: _ => new Child(),
+                bindings: dummyNestedBindings,
+                materializer: null);
+
+            var bindings = new ResolvedTableBindings(
+                new[] { field },
+                new[] { nestedBinding });
+
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.GetInt32(0)).Returns(42);
+
+            Assert.Null(bindings.RowMaterializer);
+
+            TableMap.SetEntity(child, record.Object, bindings);
+
+            Assert.Equal(42, child.Id);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TableMap.SetEntity(ITable, System.Data.IDataRecord, Hydrix.Orchestrator.Resolvers.ResolvedTableBindings)"/>
+        /// falls back to the nested-entities loop and activates the nested entity when
+        /// <see cref="ResolvedTableBindings.RowMaterializer"/> is <see langword="null"/> and no scalar fields exist.
+        /// </summary>
+        /// <remarks>
+        /// This test exercises lines 172–178 of TableMap.cs. The nested entity is activated because
+        /// <c>UsesPrimaryKey</c> is <see langword="true"/>, <c>PrimaryKeyOrdinal</c> is a valid zero-based index,
+        /// and the primary-key column is not <see cref="DBNull"/>.
+        /// </remarks>
+        [Fact]
+        public void SetEntity_FallsBack_ToNestedEntitiesLoop_WhenRowMaterializerIsNull_AndNoFields()
+        {
+            var parent = new Parent();
+            var activatorCalled = false;
+
+            var dummyNestedBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var nestedBinding = new ResolvedNestedBinding(
+                usesPrimaryKey: true,
+                primaryKeyOrdinal: 0,
+                candidateOrdinals: Array.Empty<int>(),
+                activator: entity =>
+                {
+                    activatorCalled = true;
+                    var child = new Child();
+                    ((Parent)entity).Child = child;
+                    return child;
+                },
+                bindings: dummyNestedBindings,
+                materializer: null);
+
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[] { nestedBinding });
+
+            var record = new Mock<IDataRecord>();
+            record.Setup(r => r.IsDBNull(0)).Returns(false);
+
+            Assert.Null(bindings.RowMaterializer);
+
+            TableMap.SetEntity(parent, record.Object, bindings);
+
+            Assert.True(activatorCalled);
+            Assert.NotNull(parent.Child);
+        }
+
+        /// <summary>
         /// Invokes a non-public static method of the TableMap type by name and returns its result cast to the specified
         /// type.
         /// </summary>

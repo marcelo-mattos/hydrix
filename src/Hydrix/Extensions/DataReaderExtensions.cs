@@ -42,20 +42,32 @@ namespace Hydrix.Extensions
 #endif
             var entities = limit > 0 ? new List<TEntity>(limit) : new List<TEntity>();
             ResolvedTableBindings bindings = null;
-            var count = 0;
 
-            while (dataReader.Read())
+            if (limit <= 0)
             {
-                if (limit > 0 && count >= limit)
-                    break;
-
-                bindings ??= CreateBindings<TEntity>(dataReader);
-
-                MapCurrentEntity(
-                    dataReader,
-                    bindings,
-                    entities);
-                count++;
+                while (dataReader.Read())
+                {
+                    bindings ??= CreateBindings<TEntity>(dataReader);
+                    MapCurrentEntity(
+                        dataReader,
+                        bindings,
+                        entities);
+                }
+            }
+            else
+            {
+                var count = 0;
+                while (dataReader.Read())
+                {
+                    if (count >= limit)
+                        break;
+                    bindings ??= CreateBindings<TEntity>(dataReader);
+                    MapCurrentEntity(
+                        dataReader,
+                        bindings,
+                        entities);
+                    count++;
+                }
             }
 
             return entities;
@@ -88,22 +100,36 @@ namespace Hydrix.Extensions
 
             var entities = limit > 0 ? new List<TEntity>(limit) : new List<TEntity>();
             ResolvedTableBindings bindings = null;
-            var count = 0;
 
-            while (await dbDataReader
-                .ReadAsync(cancellationToken)
-                .ConfigureAwait(false))
+            if (limit <= 0)
             {
-                if (limit > 0 && count >= limit)
-                    break;
-
-                bindings ??= CreateBindings<TEntity>(dbDataReader);
-
-                MapCurrentEntity(
-                    dbDataReader,
-                    bindings,
-                    entities);
-                count++;
+                while (await dbDataReader
+                    .ReadAsync(cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    bindings ??= CreateBindings<TEntity>(dbDataReader);
+                    MapCurrentEntity(
+                        dbDataReader,
+                        bindings,
+                        entities);
+                }
+            }
+            else
+            {
+                var count = 0;
+                while (await dbDataReader
+                    .ReadAsync(cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    if (count >= limit)
+                        break;
+                    bindings ??= CreateBindings<TEntity>(dbDataReader);
+                    MapCurrentEntity(
+                        dbDataReader,
+                        bindings,
+                        entities);
+                    count++;
+                }
             }
 
             return entities;

@@ -154,6 +154,13 @@ namespace Hydrix.Orchestrator.Mapping
             IDataRecord record,
             ResolvedTableBindings bindings)
         {
+            var rowMaterializer = bindings.RowMaterializer;
+            if (rowMaterializer != null)
+            {
+                rowMaterializer(entity, record);
+                return;
+            }
+
             if (bindings.Fields.Length != 0)
             {
                 SetResolvedEntityFields(
