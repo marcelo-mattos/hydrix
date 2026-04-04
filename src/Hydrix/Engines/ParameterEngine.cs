@@ -30,7 +30,6 @@ namespace Hydrix.Engines
         /// and writes remain atomically consistent under concurrent access.</remarks>
         private static ParameterBinderCacheEntry _lastBinderCache;
 
-
         /// <summary>
         /// Binds parameters to the specified database command by extracting values from the provided object or
         /// collection.

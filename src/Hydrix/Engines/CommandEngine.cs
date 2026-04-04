@@ -2,7 +2,6 @@ using Hydrix.Binders.Procedure;
 using Hydrix.Caching;
 using Hydrix.Caching.Entries;
 using Hydrix.Configuration;
-using Hydrix.Extensions;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
 using System;
@@ -36,6 +35,17 @@ namespace Hydrix.Engines
         /// and writes remain atomically consistent under concurrent access.</remarks>
         private static ProviderDbTypeSetterCacheEntry _lastProviderSetterCache;
 
+        /// <summary>
+        /// Reuses a static delegate for binding anonymous-object parameters without allocating a per-call closure.
+        /// </summary>
+        private static readonly Action<IDbCommand, (object Parameters, string ParameterPrefix)> BindParametersFromObjectDelegate =
+            BindParametersFromObject;
+
+        /// <summary>
+        /// Reuses a static delegate for invoking prebuilt parameter binders without allocating a per-call closure.
+        /// </summary>
+        private static readonly Action<IDbCommand, Action<IDbCommand>> InvokeParameterBinderDelegate =
+            InvokeParameterBinder;
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -69,16 +79,18 @@ namespace Hydrix.Engines
             object parameters,
             string parameterPrefix = null,
             int? timeout = null)
-            => CreateCommandCore(
+        {
+            var resolvedParameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
+
+            return CreateCommandCore(
                 connection,
                 transaction,
                 commandType,
                 sql,
-                command => ParameterEngine.BindParametersFromObject(
-                    command,
-                    parameters,
-                    parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix),
+                (parameters, resolvedParameterPrefix),
+                BindParametersFromObjectDelegate,
                 timeout);
+        }
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -131,34 +143,15 @@ namespace Hydrix.Engines
             binder.ApplyCommand(command);
             command.CommandTimeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             command.Transaction = transaction;
+
+            var resolvedParameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
             var providerDbTypeSetter = GetOrAddProviderDbTypeSetter(typeof(TDataParameterDriver));
 
-            binder.BindParameters(
+            binder.BindParameters<TDataParameterDriver>(
                 command,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                (cmd, name, value, direction, dbType) =>
-                {
-                    var dataParameter = new TDataParameterDriver
-                    {
-                        ParameterName = name,
-                        Direction = direction,
-                        Value = value
-                    };
-
-                    if (dbType.IsStandardDbType())
-                    {
-                        dataParameter.DbType = (DbType)dbType;
-                    }
-                    else
-                    {
-                        providerDbTypeSetter(
-                            dataParameter,
-                            dbType);
-                    }
-
-                    cmd.Parameters.Add(dataParameter);
-                });
+                resolvedParameterPrefix,
+                providerDbTypeSetter);
 
             LogCommand(command);
 
@@ -252,6 +245,37 @@ namespace Hydrix.Engines
             string sql,
             Action<IDbCommand> parameterBinder,
             int? timeout = null)
+            => CreateCommandCore(
+                connection,
+                transaction,
+                commandType,
+                sql,
+                parameterBinder,
+                InvokeParameterBinderDelegate,
+                timeout);
+
+        /// <summary>
+        /// Creates and configures a database command using strongly typed parameter-binder state.
+        /// </summary>
+        /// <typeparam name="TParameterBinderState">The type of state passed to the parameter-binding delegate.</typeparam>
+        /// <param name="connection">The database connection to use for creating the command. Must be an open connection.</param>
+        /// <param name="transaction">An optional database transaction within which the command will be executed. If null, the current active
+        /// transaction is used if available.</param>
+        /// <param name="commandType">The type of command to execute, such as text, stored procedure, or table direct.</param>
+        /// <param name="sql">The SQL statement or stored procedure name to execute against the database.</param>
+        /// <param name="parameterBinderState">The state object consumed by <paramref name="parameterBinder"/> when binding parameters.</param>
+        /// <param name="parameterBinder">The callback that binds parameters to the created command using <paramref name="parameterBinderState"/>.</param>
+        /// <param name="timeout">An optional command timeout, in seconds, to use for this command.</param>
+        /// <returns>An IDbCommand instance configured with the specified command type, SQL, parameters, and transaction context.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the database connection is not open when attempting to create the command.</exception>
+        private static IDbCommand CreateCommandCore<TParameterBinderState>(
+            IDbConnection connection,
+            IDbTransaction transaction,
+            CommandType commandType,
+            string sql,
+            TParameterBinderState parameterBinderState,
+            Action<IDbCommand, TParameterBinderState> parameterBinder,
+            int? timeout = null)
         {
             if (connection.State != ConnectionState.Open)
                 throw new InvalidOperationException("Database connection is not open.");
@@ -262,11 +286,38 @@ namespace Hydrix.Engines
             command.CommandTimeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             command.Transaction = transaction;
 
-            parameterBinder?.Invoke(command);
+            parameterBinder?.Invoke(
+                command,
+                parameterBinderState);
+
             LogCommand(command);
 
             return command;
         }
+
+        /// <summary>
+        /// Binds an object-parameter payload to the specified command using a precomputed prefix.
+        /// </summary>
+        /// <param name="command">The command that receives the bound parameters.</param>
+        /// <param name="state">The anonymous-object parameter payload and resolved parameter prefix.</param>
+        private static void BindParametersFromObject(
+            IDbCommand command,
+            (object Parameters, string ParameterPrefix) state)
+            => ParameterEngine.BindParametersFromObject(
+                command,
+                state.Parameters,
+                state.ParameterPrefix);
+
+        /// <summary>
+        /// Invokes a prebuilt parameter binder delegate.
+        /// </summary>
+        /// <param name="command">The command whose parameters are being bound.</param>
+        /// <param name="parameterBinder">The binder delegate to invoke. May be null.</param>
+        private static void InvokeParameterBinder(
+            IDbCommand command,
+            Action<IDbCommand> parameterBinder)
+            => parameterBinder?.Invoke(
+                command);
 
         /// <summary>
         /// Logs the details of the specified database command, including its SQL statement and parameters, for

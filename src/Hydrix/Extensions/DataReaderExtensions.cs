@@ -257,6 +257,5 @@ namespace Hydrix.Extensions
                 ordinals,
                 hash.ToHashCode());
         }
-
     }
 }

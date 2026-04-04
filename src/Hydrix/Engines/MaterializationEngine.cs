@@ -1,5 +1,4 @@
 using Hydrix.Caching;
-using Hydrix.Configuration;
 using Hydrix.Engines.Options;
 using Hydrix.Extensions;
 using Hydrix.Schemas.Contract;
@@ -22,6 +21,24 @@ namespace Hydrix.Engines
     /// interface and have a parameterless constructor.</remarks>
     internal static class MaterializationEngine
     {
+        /// <summary>
+        /// Reuses a shared default command-options instance when callers omit materialization command options.
+        /// </summary>
+        /// <remarks>The shared instance contains only stable framework defaults. Runtime-specific values
+        /// such as the connection remain unset, so the normal validation path still enforces explicit
+        /// connection configuration.</remarks>
+        private static readonly MaterializationCommandOptions DefaultCommandOptions =
+            new MaterializationCommandOptions();
+
+        /// <summary>
+        /// Reuses a shared default options instance when callers omit stored-procedure materialization options.
+        /// </summary>
+        /// <remarks>The shared instance contains only stable framework defaults. Runtime-specific values
+        /// such as the connection remain unset, so the normal validation path still enforces explicit
+        /// connection configuration.</remarks>
+        private static readonly MaterializationOptions DefaultOptions =
+            new MaterializationOptions();
+
         /// <summary>
         /// Executes the specified SQL query and maps the result set to a list of entities of type TEntity.
         /// </summary>
@@ -216,27 +233,21 @@ namespace Hydrix.Engines
         }
 
         /// <summary>
-        /// Resolves command execution options, returning a default instance when none is provided.
+        /// Resolves command execution options, returning a shared default instance when none is provided.
         /// </summary>
         /// <param name="options">The command execution options.</param>
         /// <returns>A non-null command execution options instance.</returns>
         private static MaterializationCommandOptions ResolveCommandOptions(
             MaterializationCommandOptions options)
-            => options ?? new MaterializationCommandOptions
-            {
-                ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
-            };
+            => options ?? DefaultCommandOptions;
 
         /// <summary>
-        /// Resolves execution options, returning a default instance when none is provided.
+        /// Resolves execution options, returning a shared default instance when none is provided.
         /// </summary>
         /// <param name="options">The execution options.</param>
         /// <returns>A non-null execution options instance.</returns>
         private static MaterializationOptions ResolveOptions(
             MaterializationOptions options)
-            => options ?? new MaterializationOptions
-            {
-                ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
-            };
+            => options ?? DefaultOptions;
     }
 }

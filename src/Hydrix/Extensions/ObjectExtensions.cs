@@ -21,7 +21,6 @@ namespace Hydrix.Extensions
         /// and writes remain atomically consistent under concurrent access.</remarks>
         private static ConverterCacheEntry _lastConverterCache;
 
-
         /// <summary>
         /// Tracks the number of cached converters without calling ConcurrentDictionary.Count on the hot path.
         /// </summary>
@@ -502,7 +501,7 @@ namespace Hydrix.Extensions
             if (!flowControl)
                 return value;
 
-            // Final fallback: dispatch by (sourceType, targetType) pair.
+            // Final fallback: dispatch known hot-path source types without calling GetType().
             // Builds and caches a typed delegate on first encounter to avoid Convert.ChangeType
             // on heterogeneous-type hot paths after warm-up.
             return data =>
@@ -511,22 +510,116 @@ namespace Hydrix.Extensions
                     data))
                     return data;
 
-                var sourceType = data.GetType();
-                if (!PairConverterCache.TryGetValue(
-                    (sourceType, conversionType),
+                if (TryGetKnownPairConverter(
+                    data,
+                    conversionType,
                     out var pairConverter))
-                {
-                    pairConverter = BuildPairConverter(
-                        sourceType,
-                        conversionType);
+                    return pairConverter(
+                        data);
 
-                    PairConverterCache.TryAdd(
-                        (sourceType, conversionType),
-                        pairConverter);
-                }
-
-                return pairConverter(data);
+                return Convert.ChangeType(
+                    data,
+                    conversionType,
+                    CultureInfo.InvariantCulture);
             };
+        }
+
+        /// <summary>
+        /// Attempts to resolve a cached pair converter for the known runtime source types supported by the hot pair-converter pipeline.
+        /// </summary>
+        /// <param name="data">The runtime value being converted.</param>
+        /// <param name="targetType">The requested target type.</param>
+        /// <param name="pairConverter">When this method returns <see langword="true"/>, contains the converter delegate for the detected
+        /// source/target pair; otherwise <see langword="null"/>.</param>
+        /// <returns><see langword="true"/> when the runtime source type participates in the pair-converter fast path; otherwise
+        /// <see langword="false"/>.</returns>
+        private static bool TryGetKnownPairConverter(
+            object data,
+            Type targetType,
+            out Func<object, object> pairConverter)
+        {
+            if (data is int)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(int), targetType);
+                return true;
+            }
+
+            if (data is long)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(long), targetType);
+                return true;
+            }
+
+            if (data is decimal)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(decimal), targetType);
+                return true;
+            }
+
+            if (data is double)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(double), targetType);
+                return true;
+            }
+
+            if (data is float)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(float), targetType);
+                return true;
+            }
+
+            if (data is short)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(short), targetType);
+                return true;
+            }
+
+            if (data is byte)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(byte), targetType);
+                return true;
+            }
+
+            if (data is char)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(char), targetType);
+                return true;
+            }
+
+            if (data is string)
+            {
+                pairConverter = GetOrAddPairConverter(typeof(string), targetType);
+                return true;
+            }
+
+            pairConverter = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Retrieves or creates a cached pair converter for the specified source and target types.
+        /// </summary>
+        /// <param name="sourceType">The known runtime source type.</param>
+        /// <param name="targetType">The requested target type.</param>
+        /// <returns>A cached converter delegate for the specified source/target pair.</returns>
+        private static Func<object, object> GetOrAddPairConverter(
+            Type sourceType,
+            Type targetType)
+        {
+            if (PairConverterCache.TryGetValue(
+                (sourceType, targetType),
+                out var pairConverter))
+                return pairConverter;
+
+            pairConverter = BuildPairConverter(
+                sourceType,
+                targetType);
+
+            PairConverterCache.TryAdd(
+                (sourceType, targetType),
+                pairConverter);
+
+            return pairConverter;
         }
 
         /// <summary>

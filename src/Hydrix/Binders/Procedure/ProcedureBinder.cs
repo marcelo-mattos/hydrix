@@ -1,4 +1,5 @@
-﻿using System;
+using Hydrix.Extensions;
+using System;
 using System.Data;
 
 namespace Hydrix.Binders.Procedure
@@ -65,21 +66,18 @@ namespace Hydrix.Binders.Procedure
         }
 
         /// <summary>
-        /// Binds the parameters of a stored procedure to the specified command object using values from the provided
-        /// procedure instance.
+        /// Binds the parameters of a stored procedure to the specified command object using a caller-provided callback.
         /// </summary>
-        /// <remarks>This method iterates through the defined parameters and uses the provided delegate to
-        /// add each one to the command. The prefix is applied to each parameter name, and the parameter's direction,
-        /// type, and size are set according to the parameter definition. The caller is responsible for ensuring that
-        /// the addParameter delegate correctly handles null values and type conversions as required by the database
-        /// provider.</remarks>
+        /// <remarks>This overload preserves the delegate-based binding path for callers that need to inspect
+        /// or customize parameter creation. The callback receives the command, parameter name, value, direction, and
+        /// database type for each parameter.</remarks>
         /// <param name="command">The command object to which the parameters will be added. Must not be null.</param>
         /// <param name="procedureInstance">An object instance containing the values to assign to each parameter. Typically, this is an instance of the
         /// procedure's parameter class.</param>
         /// <param name="prefix">A string to prepend to each parameter name when adding it to the command. Can be used to match database
         /// parameter naming conventions.</param>
         /// <param name="addParameter">An action delegate that adds a parameter to the command. Receives the command, parameter name, value,
-        /// direction, type, and size as arguments.</param>
+        /// direction, and database type as arguments.</param>
         public void BindParameters(
             IDbCommand command,
             object procedureInstance,
@@ -88,15 +86,88 @@ namespace Hydrix.Binders.Procedure
         {
             foreach (var parameter in _parameters)
             {
-                var value = parameter.Getter(procedureInstance) ?? DBNull.Value;
-
                 addParameter(
                     command,
                     $"{prefix}{parameter.Name}",
-                    value,
+                    parameter.Getter(procedureInstance) ?? DBNull.Value,
                     parameter.Direction,
                     parameter.DbType);
             }
+        }
+
+        /// <summary>
+        /// Binds the parameters of a stored procedure to the specified command object using values from the provided
+        /// procedure instance.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The concrete parameter type created for each stored procedure argument.</typeparam>
+        /// <remarks>This method iterates through the cached parameter metadata, creates a parameter instance
+        /// for each definition, and appends it directly to the command without allocating a per-call closure. The
+        /// prefix is applied to each parameter name, and the parameter's direction and type are set according to the
+        /// parameter definition. Provider-specific type handling is delegated to
+        /// <paramref name="providerDbTypeSetter"/> when the declared type falls outside the standard
+        /// <see cref="DbType"/> range.</remarks>
+        /// <param name="command">The command object to which the parameters will be added. Must not be null.</param>
+        /// <param name="procedureInstance">An object instance containing the values to assign to each parameter. Typically, this is an instance of the
+        /// procedure's parameter class.</param>
+        /// <param name="prefix">A string to prepend to each parameter name when adding it to the command. Can be used to match database
+        /// parameter naming conventions.</param>
+        /// <param name="providerDbTypeSetter">The provider-specific setter used when a parameter maps to a database type outside the standard
+        /// <see cref="DbType"/> enumeration range.</param>
+        public void BindParameters<TDataParameterDriver>(
+            IDbCommand command,
+            object procedureInstance,
+            string prefix,
+            Action<IDataParameter, int> providerDbTypeSetter)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            foreach (var parameter in _parameters)
+            {
+                AddParameter<TDataParameterDriver>(
+                    command,
+                    prefix,
+                    procedureInstance,
+                    parameter,
+                    providerDbTypeSetter);
+            }
+        }
+
+        /// <summary>
+        /// Creates and appends a parameter for a single stored procedure argument.
+        /// </summary>
+        /// <typeparam name="TDataParameterDriver">The concrete parameter type created for the current argument.</typeparam>
+        /// <param name="command">The command that receives the created parameter.</param>
+        /// <param name="prefix">The prefix applied to the parameter name.</param>
+        /// <param name="procedureInstance">The stored procedure instance that supplies the runtime value.</param>
+        /// <param name="parameter">The cached parameter metadata describing the current argument.</param>
+        /// <param name="providerDbTypeSetter">The provider-specific type setter used for non-standard database types.</param>
+        private static void AddParameter<TDataParameterDriver>(
+            IDbCommand command,
+            string prefix,
+            object procedureInstance,
+            ProcedureParameterBinding parameter,
+            Action<IDataParameter, int> providerDbTypeSetter)
+            where TDataParameterDriver : IDataParameter, new()
+        {
+            var dataParameter = new TDataParameterDriver
+            {
+                ParameterName = $"{prefix}{parameter.Name}",
+                Direction = parameter.Direction,
+                Value = parameter.Getter(procedureInstance) ?? DBNull.Value
+            };
+
+            if (parameter.DbType.IsStandardDbType())
+            {
+                dataParameter.DbType = (DbType)parameter.DbType;
+            }
+            else
+            {
+                providerDbTypeSetter(
+                    dataParameter,
+                    parameter.DbType);
+            }
+
+            command.Parameters.Add(
+                dataParameter);
         }
     }
 }

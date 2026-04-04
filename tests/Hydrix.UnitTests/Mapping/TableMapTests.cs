@@ -1,6 +1,6 @@
 using Hydrix.Attributes.Schemas;
-using Hydrix.Mapping;
 using Hydrix.Internals;
+using Hydrix.Mapping;
 using Hydrix.Metadata.Internals;
 using Hydrix.Metadata.Materializers;
 using Hydrix.Resolvers;
@@ -628,7 +628,6 @@ namespace Hydrix.UnitTests.Mapping
             var record = new Mock<IDataRecord>();
             var ordinals = new Dictionary<string, int>();
 
-
             // Act (should not throw and should not set Nested)
             SetEntityNestedEntities(
                 entity,
@@ -674,7 +673,6 @@ namespace Hydrix.UnitTests.Mapping
 
             // PK column exists, but value is DBNull
             record.Setup(r => r.IsDBNull(0)).Returns(true);
-
 
             // Act (should not throw and should not set Nested)
             SetEntityNestedEntities(

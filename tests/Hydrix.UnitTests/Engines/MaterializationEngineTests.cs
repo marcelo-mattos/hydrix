@@ -1,5 +1,4 @@
 using Hydrix.Attributes.Schemas;
-using Hydrix.Configuration;
 using Hydrix.Engines;
 using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
@@ -481,8 +480,13 @@ namespace Hydrix.UnitTests.Engines
                 "ResolveCommandOptions",
                 null);
 
+            var createdAgain = InvokeMaterializationPrivateMethod<MaterializationCommandOptions>(
+                "ResolveCommandOptions",
+                null);
+
             Assert.NotNull(created);
-            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix);
+            Assert.Same(created, createdAgain);
+            Assert.Null(created.ParameterPrefix);
         }
 
         /// <summary>
@@ -540,8 +544,13 @@ namespace Hydrix.UnitTests.Engines
                 "ResolveOptions",
                 null);
 
+            var createdAgain = InvokeMaterializationPrivateMethod<MaterializationOptions>(
+                "ResolveOptions",
+                null);
+
             Assert.NotNull(created);
-            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix);
+            Assert.Same(created, createdAgain);
+            Assert.Null(created.ParameterPrefix);
         }
 
         /// <summary>

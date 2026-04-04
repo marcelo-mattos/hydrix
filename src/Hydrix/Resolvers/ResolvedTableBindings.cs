@@ -744,6 +744,5 @@ namespace Hydrix.Resolvers
             return currentFieldType == null ||
                    currentFieldType == field.SourceType;
         }
-
     }
 }

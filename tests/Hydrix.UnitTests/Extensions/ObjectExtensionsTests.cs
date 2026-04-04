@@ -1122,6 +1122,76 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that BuildConverter fallback does not cache pair converters for runtime source types outside the known fast-path set.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_FallbackPath_DoesNotCacheUnknownRuntimeSourceType()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+            var pairCacheField = objectExtensionsType.GetField("PairConverterCache", flags);
+            var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
+
+            var pairCache = (ConcurrentDictionary<(Type Source, Type Target), Func<object, object>>)pairCacheField.GetValue(null);
+            var previousEntries = pairCache.ToArray();
+
+            try
+            {
+                pairCache.Clear();
+
+                var converter = (Func<object, object>)buildConverterMethod.Invoke(null, new object[] { typeof(Version) });
+
+                Assert.Throws<InvalidCastException>(() => converter(new ToStringWrapper("1.2.3.4")));
+                Assert.False(pairCache.ContainsKey((typeof(ToStringWrapper), typeof(Version))));
+            }
+            finally
+            {
+                pairCache.Clear();
+                foreach (var entry in previousEntries)
+                    pairCache.TryAdd(entry.Key, entry.Value);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that TryGetKnownPairConverter resolves converters for every runtime source type supported by the fast-path cache.
+        /// </summary>
+        [Fact]
+        public void TryGetKnownPairConverter_ReturnsConverters_ForAllSupportedRuntimeTypes()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "TryGetKnownPairConverter",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var cases = new[]
+            {
+                new { Value = (object)1, TargetType = typeof(long), Expected = (object)1L },
+                new { Value = (object)2L, TargetType = typeof(decimal), Expected = (object)2m },
+                new { Value = (object)3m, TargetType = typeof(double), Expected = (object)3d },
+                new { Value = (object)4d, TargetType = typeof(float), Expected = (object)4f },
+                new { Value = (object)5f, TargetType = typeof(decimal), Expected = (object)5m },
+                new { Value = (object)(short)6, TargetType = typeof(long), Expected = (object)6L },
+                new { Value = (object)(byte)7, TargetType = typeof(double), Expected = (object)7d },
+                new { Value = (object)'H', TargetType = typeof(string), Expected = (object)"H" },
+                new { Value = (object)"I", TargetType = typeof(char), Expected = (object)'I' }
+            };
+
+            foreach (var testCase in cases)
+            {
+                var arguments = new object[] { testCase.Value, testCase.TargetType, null };
+                var resolved = (bool)method.Invoke(
+                    null,
+                    arguments);
+
+                Assert.True(resolved);
+
+                var converter = Assert.IsType<Func<object, object>>(arguments[2]);
+                Assert.Equal(
+                    testCase.Expected,
+                    converter(testCase.Value));
+            }
+        }
+
+        /// <summary>
         /// Verifies that BuildPairConverter uses the generic ChangeType fallback when source type has no registered builder.
         /// </summary>
         [Fact]

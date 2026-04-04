@@ -403,8 +403,6 @@ namespace Hydrix.Mapping
                 : fields.ToArray();
         }
 
-
-
         /// <summary>
         /// Resolves and binds nested entity relationships for the specified data record using the provided
         /// materialization metadata and column ordinals.
@@ -525,7 +523,6 @@ namespace Hydrix.Mapping
                 candidateOrdinals,
                 fieldAssigners);
         }
-
 
         /// <summary>
         /// Resolves an assigner action that sets a field value on an entity from an IDataRecord, using the specified
