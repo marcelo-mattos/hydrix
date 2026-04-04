@@ -355,11 +355,11 @@ while preserving a stable and predictable public API.
 ## [Unreleased]
 
 ### Added
-- No entries yet.
+- Planned removal of mandatory `Hydrix.Schemas.Contract` requirements from domain table, view, and procedure types while preserving compatibility markers.
 
 ### Changed
-- Planned provider-aware performance work for nested materialization, schema binding,
-  and broader EF coexistence scenarios.
+- Planned migration from contract-based eligibility to metadata-driven validation and materialization for broader EF coexistence and domain decoupling.
+- Planned provider-aware performance work for nested materialization, schema binding, and broader EF coexistence scenarios.
 
 ### Fixed
-- Planned internal refactorings and diagnostics improvements based on release feedback.
+- Planned internal refactorings and diagnostics improvements based on release feedback and the 3.1 domain-decoupling transition.

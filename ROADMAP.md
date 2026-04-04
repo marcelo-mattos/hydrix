@@ -116,16 +116,33 @@ Hydrix 3.0 reaches the release line with a mature nested pipeline, lower memory 
 
 ---
 
-## 🔜 v3.1 — EF Ergonomics & More Throughput (Planned)
+## 🔜 v3.1 — Domain Decoupling, EF Coexistence & More Throughput (Planned)
 
-Focus: **deeper coexistence with existing enterprise stacks and further hot-path gains**
+Focus: **removing Hydrix contract requirements from domain types, deepening coexistence with existing enterprise stacks, and continuing hot-path gains**
 
 ### Planned
-- Continued nested-materialization tuning without compromising flat-query speed
+- Remove the requirement for domain entities to implement `Hydrix.Schemas.Contract` interfaces in Hydrix query/materialization flows
+- Keep `ITable`, `IEntity`, and `IProcedure<TDataParameterDriver>` available as compatibility markers instead of mandatory domain contracts
+- Allow plain CLR table and view types to participate in attribute-based and Entity Framework-backed metadata resolution
+- Allow stored procedure descriptor types to execute without mandatory Hydrix contract interfaces when they expose valid Hydrix metadata
+- Replace public API generic constraints that currently enforce Hydrix contracts with runtime validation based on metadata compatibility and constructor availability where required
+- Refactor nested-materialization internals that currently rely on `ITable` so they operate on plain object graphs without changing the existing runtime behavior
+- Expand Entity Framework interoperability so translated `OnModelCreating` metadata no longer depends on domain types implementing Hydrix contracts
+- Preserve backward compatibility for applications that already implement Hydrix marker interfaces
+- Add migration guidance and examples showing contract-free domain models for table, view, and procedure scenarios
+- Continue nested-materialization tuning without compromising flat-query speed
 - More provider-aware fast paths where they materially improve runtime behavior
 - Broader benchmark scenarios and comparative tracking across ADO.NET, Dapper, and Entity Framework
 - Additional diagnostics for migration and runtime observability
 
+### Transition Strategy
+- Phase 1: remove mandatory contract checks from public APIs while keeping the existing interfaces fully supported
+- Phase 2: switch metadata resolution, validation, and nested materialization internals from contract markers to metadata-driven eligibility
+- Phase 3: update docs, benchmarks, and migration guidance to position Hydrix as contract-optional for domain models
+
+### Compatibility Goal
+- Existing applications that already implement Hydrix contract interfaces should continue to work unchanged
+- New or existing domain models should be able to use Hydrix without introducing mandatory dependencies on `Hydrix.Schemas.Contract`
 ---
 
 ## 🚀 v3.x+ — Post-3.0 Performance & Reliability Evolution (Planned)
