@@ -40,6 +40,23 @@ namespace Hydrix.Metadata.Internals
                 nameof(IDataRecord.GetValue));
 
         /// <summary>
+        /// Cached <see cref="MethodInfo"/> for <see cref="Func{T, TResult}.Invoke"/>, used to replace
+        /// <c>Expression.Invoke</c> with a direct <c>Expression.Call</c> in converter
+        /// expression trees, enabling better JIT inlining and reducing indirect-call overhead.
+        /// </summary>
+        private static readonly MethodInfo ConverterInvokeMethod =
+            typeof(Func<object, object>).GetMethod("Invoke");
+
+        /// <summary>
+        /// Cached <see cref="MethodInfo"/> for <see cref="Action{T1, T2}.Invoke"/> where the delegate
+        /// signature is <c>Action&lt;object, IDataRecord&gt;</c>, used to replace
+        /// <c>Expression.Invoke</c> with a direct <c>Expression.Call</c> in nested entity
+        /// materializer expression trees.
+        /// </summary>
+        private static readonly MethodInfo FieldAssignerInvokeMethod =
+            typeof(Action<object, IDataRecord>).GetMethod("Invoke");
+
+        /// <summary>
         /// Provides a mapping between common .NET types and their corresponding strongly-typed getter methods on the
         /// IDataRecord interface.
         /// </summary>
@@ -294,8 +311,9 @@ namespace Hydrix.Metadata.Internals
                         continue;
 
                     body.Add(
-                        Expression.Invoke(
+                        Expression.Call(
                             Expression.Constant(fieldAssigner),
+                            FieldAssignerInvokeMethod,
                             boxedChild,
                             record));
                 }
@@ -756,24 +774,25 @@ namespace Hydrix.Metadata.Internals
 
         /// <summary>
         /// Creates a unary expression that retrieves a value from a record at the specified ordinal position and
-        /// converts it to the given target type.
+        /// converts it to the given target type via a direct delegate method call.
         /// </summary>
-        /// <remarks>The returned expression uses a converter appropriate for the specified target type to
-        /// ensure correct type conversion. This is useful when dynamically constructing expressions for data
-        /// materialization scenarios.</remarks>
+        /// <remarks>Uses <c>Expression.Call</c> on the converter delegate's <c>Invoke</c> method
+        /// instead of <c>Expression.Invoke</c>, eliminating the <c>InvocationExpression</c>
+        /// indirection and enabling better JIT inlining of the compiled expression tree.</remarks>
         /// <param name="record">The expression representing the data record from which to retrieve the value.</param>
         /// <param name="ordinal">The expression representing the zero-based ordinal position of the value within the record.</param>
         /// <param name="targetType">The type to which the retrieved value will be converted.</param>
-        /// <returns>A unary expression that, when executed, invokes a type-specific converter on the value obtained from the
+        /// <returns>A unary expression that, when executed, calls a type-specific converter on the value obtained from the
         /// record at the specified ordinal.</returns>
         private static UnaryExpression CreateConvertedValueExpression(
             Expression record,
             Expression ordinal,
             Type targetType)
             => Expression.Convert(
-                Expression.Invoke(
+                Expression.Call(
                     Expression.Constant(
                         ObjectExtensions.GetConverter(targetType)),
+                    ConverterInvokeMethod,
                     Expression.Call(
                         record,
                         GetValueMethod,

@@ -544,5 +544,31 @@ namespace Hydrix.UnitTests.Metadata.Materializers
             Assert.False(found);
             Assert.Null(hotBindings);
         }
+
+        /// <summary>
+        /// Verifies that <see cref="TableMaterializeMetadata.ReplaceBindings(int, ResolvedTableBindings)"/> stores
+        /// the replacement plan and that subsequent reads return the replaced instance.
+        /// </summary>
+        [Fact]
+        public void ReplaceBindings_ReplacesExistingCachedBinding()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            const int schemaHash = 999;
+            var original = new ResolvedTableBindings(null, null);
+            var replacement = new ResolvedTableBindings(null, null);
+
+            var cached = metadata.GetOrAddBindings(schemaHash, _ => original);
+            Assert.Same(original, cached);
+
+            metadata.ReplaceBindings(schemaHash, replacement);
+
+            var found = metadata.TryGetBindings(schemaHash, out var replaced);
+
+            Assert.True(found);
+            Assert.Same(replacement, replaced);
+        }
     }
 }

@@ -454,72 +454,151 @@ namespace Hydrix.Resolvers
         }
 
         /// <summary>
-        /// Builds a row materializer using delegate invocations for each field assigner and nested
-        /// materializer. This is the fallback path when property metadata is unavailable for
-        /// fully-inlined compilation.
+        /// Builds a row materializer using captured delegate arrays invoked in a tight loop, avoiding
+        /// <c>Expression.Invoke</c> indirection and expression-tree compilation overhead.
+        /// This is the fallback path when property metadata is unavailable for fully-inlined compilation.
         /// </summary>
+        /// <remarks>Single-operation cases return the pre-compiled delegate directly, eliminating loop
+        /// and array overhead entirely. Multi-operation cases capture snapshot arrays of field assigners
+        /// and entity materializers in a closure, trading the <c>Expression.Invoke</c> indirection
+        /// for standard delegate invocations that the JIT can devirtualize more effectively.</remarks>
         /// <param name="fields">The resolved scalar field bindings for this entity level.</param>
         /// <param name="entities">The resolved nested entity bindings for this entity level.</param>
-        /// <returns>A compiled <see cref="Action{T1,T2}"/> covering all assignments with delegate invocations,
-        /// or <see langword="null"/> if the delegate path cannot be applied due to missing metadata or
-        /// unsupported nesting.</returns>
+        /// <returns>A delegate covering all assignments, or <see langword="null"/> if required metadata is
+        /// missing or nesting is unsupported.</returns>
         private static Action<object, IDataRecord> BuildDelegateRowMaterializer(
             ResolvedFieldBinding[] fields,
             ResolvedNestedBinding[] entities)
         {
-            for (var index = 0; index < entities.Length; index++)
+            if (!AreBindingsValid(
+                fields,
+                entities))
             {
-                if (entities[index].Materializer == null)
-                    return null;
+                return null;
             }
 
             var totalOps = fields.Length + entities.Length;
+
             if (totalOps == 0)
                 return null;
 
-            var parent = Expression.Parameter(
-                typeof(object),
-                "parent");
+            if (totalOps == 1)
+                return GetSingleOperation(
+                    fields,
+                    entities);
 
-            var record = Expression.Parameter(
-                typeof(IDataRecord),
-                "record");
+            var fieldAssigners = ExtractFieldAssigners(
+                fields);
 
-            var body = new Expression[totalOps];
+            var entityMaterializers = ExtractEntityMaterializers(
+                entities);
 
+            return CreateCompositeMaterializer(
+                fieldAssigners,
+                entityMaterializers);
+        }
+
+        /// <summary>
+        /// Determines whether all field and entity bindings are valid by checking that required assigners and
+        /// materializers are present.
+        /// </summary>
+        /// <param name="fields">An array of resolved field bindings to validate. Each binding must have a non-null assigner.</param>
+        /// <param name="entities">An array of resolved nested entity bindings to validate. Each binding must have a non-null materializer.</param>
+        /// <returns>true if all field bindings have assigners and all entity bindings have materializers; otherwise, false.</returns>
+        private static bool AreBindingsValid(
+            ResolvedFieldBinding[] fields,
+            ResolvedNestedBinding[] entities)
+        {
             for (var index = 0; index < fields.Length; index++)
             {
                 if (fields[index].Assigner == null)
-                    return null;
-
-                body[index] = Expression.Invoke(
-                    Expression.Constant(
-                        fields[index].Assigner),
-                    parent,
-                    record);
+                    return false;
             }
 
             for (var index = 0; index < entities.Length; index++)
             {
-                body[fields.Length + index] = Expression.Invoke(
-                    Expression.Constant(
-                        entities[index].Materializer),
-                    parent,
-                    record);
+                if (entities[index].Materializer == null)
+                    return false;
             }
 
-            var blockBody = totalOps == 1
-                ? body[0]
-                : (Expression)Expression.Block(
-                    body);
-
-            return Expression
-                .Lambda<Action<object, IDataRecord>>(
-                    blockBody,
-                    parent,
-                    record)
-                .Compile();
+            return true;
         }
+
+        /// <summary>
+        /// Selects the appropriate assignment or materialization operation for a single field or nested entity based on
+        /// the provided bindings.
+        /// </summary>
+        /// <remarks>If only one field binding is provided, the method returns its associated assignment
+        /// action. If multiple fields are present, the method returns the materializer action from the first nested
+        /// entity binding.</remarks>
+        /// <param name="fields">An array of field bindings representing the fields to be assigned. Must contain at least one element.</param>
+        /// <param name="entities">An array of nested entity bindings used for materialization when multiple fields are present. Must contain
+        /// at least one element if more than one field is specified.</param>
+        /// <returns>An action that assigns a single field or materializes a nested entity from an IDataRecord, depending on the
+        /// number of fields provided.</returns>
+        private static Action<object, IDataRecord> GetSingleOperation(
+            ResolvedFieldBinding[] fields,
+            ResolvedNestedBinding[] entities)
+            => fields.Length == 1
+                ? fields[0].Assigner
+                : entities[0].Materializer;
+
+        /// <summary>
+        /// Creates an array of delegate actions that assign field values from a data record to an object, based on the
+        /// specified field bindings.
+        /// </summary>
+        /// <param name="fields">An array of field binding definitions that specify how each field should be assigned from a data record.</param>
+        /// <returns>An array of actions, each of which assigns a value from an IDataRecord to a target object according to the
+        /// corresponding field binding.</returns>
+        private static Action<object, IDataRecord>[] ExtractFieldAssigners(
+            ResolvedFieldBinding[] fields)
+        {
+            var result = new Action<object, IDataRecord>[fields.Length];
+
+            for (var index = 0; index < fields.Length; index++)
+                result[index] = fields[index].Assigner;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Extracts an array of materializer actions from the specified collection of resolved nested bindings.
+        /// </summary>
+        /// <param name="entities">An array of resolved nested bindings from which to extract materializer actions. Cannot be null.</param>
+        /// <returns>An array of actions that materialize entities from data records, corresponding to each resolved nested
+        /// binding in the input array.</returns>
+        private static Action<object, IDataRecord>[] ExtractEntityMaterializers(
+            ResolvedNestedBinding[] entities)
+        {
+            var result = new Action<object, IDataRecord>[entities.Length];
+
+            for (var index = 0; index < entities.Length; index++)
+                result[index] = entities[index].Materializer;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a composite materializer action that applies a sequence of field assigners and entity materializers
+        /// to a parent object using data from an IDataRecord.
+        /// </summary>
+        /// <param name="fieldAssigners">An array of actions that assign individual fields from the data record to the parent object. Each action is
+        /// invoked in order.</param>
+        /// <param name="entityMaterializers">An array of actions that materialize related entities or complex properties on the parent object using the
+        /// data record. Each action is invoked in order after the field assigners.</param>
+        /// <returns>An action that, when invoked with a parent object and an IDataRecord, executes all field assigners followed
+        /// by all entity materializers on the parent object.</returns>
+        private static Action<object, IDataRecord> CreateCompositeMaterializer(
+            Action<object, IDataRecord>[] fieldAssigners,
+            Action<object, IDataRecord>[] entityMaterializers)
+            => (parent, record) =>
+                {
+                    for (var index = 0; index < fieldAssigners.Length; index++)
+                        fieldAssigners[index](parent, record);
+
+                    for (var index = 0; index < entityMaterializers.Length; index++)
+                        entityMaterializers[index](parent, record);
+                };
 
         /// <summary>
         /// Determines whether the specified data reader matches the expected column names and field types.
@@ -635,11 +714,16 @@ namespace Hydrix.Resolvers
         }
 
         /// <summary>
-        /// Checks if a single field matches the expected type.
+        /// Checks if a single field matches the expected type using provider-level metadata only.
         /// </summary>
+        /// <remarks>When <see cref="GetFieldType"/> is unavailable (returns <see langword="null"/>) the
+        /// method trusts the column name match instead of falling back to
+        /// <c>reader.GetValue(ordinal).GetType()</c>, which would box value types and increase GC
+        /// pressure on every validation pass.</remarks>
         /// <param name="reader">The data reader to compare against the expected field type.</param>
         /// <param name="field">The field binding to check.</param>
-        /// <returns>true if the field matches; otherwise, false.</returns>
+        /// <returns><see langword="true"/> if the field matches or provider type metadata is unavailable;
+        /// otherwise, <see langword="false"/>.</returns>
         private static bool FieldMatches(
             IDataReader reader,
             ResolvedFieldBinding field)
@@ -652,16 +736,10 @@ namespace Hydrix.Resolvers
 
             var currentFieldType = GetFieldType(reader, field.Ordinal);
 
-            if (currentFieldType != null)
-                return currentFieldType == field.SourceType;
-
-            if (!reader.IsDBNull(field.Ordinal) &&
-                reader.GetValue(field.Ordinal)?.GetType() != field.SourceType)
-            {
-                return false;
-            }
-
-            return true;
+            // When the provider does not support GetFieldType, trust the column name match
+            // instead of boxing via GetValue().GetType().
+            return currentFieldType == null ||
+                   currentFieldType == field.SourceType;
         }
 
         /// <summary>

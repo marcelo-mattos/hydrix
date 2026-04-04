@@ -238,7 +238,8 @@ namespace Hydrix.UnitTests.Resolvers
         }
 
         /// <summary>
-        /// Verifies that matching fails when field value runtime type differs from cached source type.
+        /// Verifies that matching fails when the provider-reported field type differs from the cached
+        /// source type, even when column names are identical.
         /// </summary>
         [Fact]
         public void Matches_ReturnsFalse_WhenFieldValueTypeDiffersFromCachedSourceType()
@@ -248,9 +249,7 @@ namespace Hydrix.UnitTests.Resolvers
             var reader = new Mock<IDataReader>();
             reader.SetupGet(r => r.FieldCount).Returns(1);
             reader.Setup(r => r.GetName(0)).Returns("Id");
-            reader.Setup(r => r.GetFieldType(0)).Returns((Type)null);
-            reader.Setup(r => r.IsDBNull(0)).Returns(false);
-            reader.Setup(r => r.GetValue(0)).Returns(1L);
+            reader.Setup(r => r.GetFieldType(0)).Returns(typeof(long));
 
             var result = bindings.Matches(reader.Object);
 
@@ -258,7 +257,28 @@ namespace Hydrix.UnitTests.Resolvers
         }
 
         /// <summary>
-        /// Verifies that matching fails when nested bindings do not match provider field types.
+        /// Verifies that matching trusts the column name match when the provider does not support
+        /// <see cref="IDataRecord.GetFieldType"/>, avoiding allocation from boxing via
+        /// <c>GetValue().GetType()</c>.
+        /// </summary>
+        [Fact]
+        public void Matches_ReturnsTrue_WhenGetFieldTypeReturnsNull()
+        {
+            var field = new ResolvedFieldBinding(null, 0, typeof(int));
+            var bindings = new ResolvedTableBindings(new[] { field }, null, new[] { "Id" });
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Returns((Type)null);
+
+            var result = bindings.Matches(reader.Object);
+
+            Assert.True(result);
+        }
+
+        /// <summary>
+        /// Verifies that matching fails when the provider-reported field type for a nested binding
+        /// differs from the cached source type.
         /// </summary>
         [Fact]
         public void Matches_ReturnsFalse_WhenNestedBindingsDoNotMatchFieldTypes()
@@ -276,13 +296,14 @@ namespace Hydrix.UnitTests.Resolvers
             var bindings = new ResolvedTableBindings(
                 new[] { rootField },
                 new[] { nestedBinding },
-                new[] { "Id" });
+                new[] { "Id", "ChildId" });
 
             var reader = new Mock<IDataReader>();
-            reader.SetupGet(r => r.FieldCount).Returns(1);
+            reader.SetupGet(r => r.FieldCount).Returns(2);
             reader.Setup(r => r.GetName(0)).Returns("Id");
-            reader.Setup(r => r.GetFieldType(0)).Returns((Type)null);
-            reader.Setup(r => r.IsDBNull(0)).Returns(true);
+            reader.Setup(r => r.GetName(1)).Returns("ChildId");
+            reader.Setup(r => r.GetFieldType(0)).Returns(typeof(int));
+            reader.Setup(r => r.GetFieldType(1)).Returns(typeof(string));
 
             var result = bindings.Matches(reader.Object);
 
@@ -426,6 +447,42 @@ namespace Hydrix.UnitTests.Resolvers
                 Array.Empty<ResolvedNestedBinding>());
 
             Assert.NotNull(bindings.RowMaterializer);
+        }
+
+        /// <summary>
+        /// Verifies that delegate fallback returns the nested entity materializer directly when there is exactly one
+        /// operation and no scalar fields.
+        /// </summary>
+        /// <remarks>This covers the <c>fields.Length != 1</c> branch of <c>GetSingleOperation</c>.
+        /// The setup forces the inlined path to be skipped by using a null navigation property.</remarks>
+        [Fact]
+        public void Constructor_RowMaterializer_IsEntityMaterializer_WhenSingleOperationComesFromEntity()
+        {
+            var childBindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                Array.Empty<ResolvedNestedBinding>());
+
+            var nestedCalled = false;
+            Action<object, IDataRecord> nestedMaterializer = (e, r) => nestedCalled = true;
+            var entity = new ResolvedNestedBinding(
+                usesPrimaryKey: false,
+                primaryKeyOrdinal: -1,
+                candidateOrdinals: null,
+                activator: _ => new DummyTable(),
+                bindings: childBindings,
+                materializer: nestedMaterializer,
+                navigationProperty: null);
+
+            var bindings = new ResolvedTableBindings(
+                Array.Empty<ResolvedFieldBinding>(),
+                new[] { entity });
+
+            Assert.Same(nestedMaterializer, bindings.RowMaterializer);
+
+            var record = new Mock<IDataRecord>();
+            bindings.RowMaterializer(new DummyTable(), record.Object);
+
+            Assert.True(nestedCalled);
         }
 
         /// <summary>

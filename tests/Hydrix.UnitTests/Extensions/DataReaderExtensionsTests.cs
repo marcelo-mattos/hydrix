@@ -4,6 +4,7 @@ using Moq;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -432,6 +433,50 @@ namespace Hydrix.UnitTests.Extensions
             var entity = Assert.Single(entities);
             Assert.Equal(11, entity.Id);
             Assert.Equal("NotSupported", entity.Name);
+        }
+
+        /// <summary>
+        /// Verifies that the GetFieldType method returns null when the underlying IDataReader throws an
+        /// InvalidOperationException.
+        /// </summary>
+        /// <remarks>This test ensures that the GetFieldType extension method gracefully handles scenarios
+        /// where the data reader cannot provide field type metadata, such as when the metadata is unavailable or
+        /// inaccessible.</remarks>
+        [Fact]
+        public void GetFieldType_ReturnsNull_WhenReaderThrowsInvalidOperationException()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.GetFieldType(0)).Throws(new InvalidOperationException("metadata unavailable"));
+
+            var method = typeof(Hydrix.Extensions.DataReaderExtensions).GetMethod(
+                "GetFieldType",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var result = (Type)method.Invoke(null, new object[] { reader.Object, 0 });
+
+            Assert.Null(result);
+        }
+
+        /// <summary>
+        /// Verifies that the GetFieldType method returns null when the underlying IDataReader throws a
+        /// NotSupportedException.
+        /// </summary>
+        /// <remarks>This test ensures that the extension method gracefully handles scenarios where field
+        /// type metadata is unavailable from the data reader, returning null instead of propagating the
+        /// exception.</remarks>
+        [Fact]
+        public void GetFieldType_ReturnsNull_WhenReaderThrowsNotSupportedException()
+        {
+            var reader = new Mock<IDataReader>();
+            reader.Setup(r => r.GetFieldType(0)).Throws(new NotSupportedException("metadata unavailable"));
+
+            var method = typeof(Hydrix.Extensions.DataReaderExtensions).GetMethod(
+                "GetFieldType",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var result = (Type)method.Invoke(null, new object[] { reader.Object, 0 });
+
+            Assert.Null(result);
         }
 
         /// <summary>
