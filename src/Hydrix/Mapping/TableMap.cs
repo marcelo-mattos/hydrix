@@ -20,43 +20,61 @@ namespace Hydrix.Mapping
     internal sealed class TableMap
     {
         /// <summary>
-        /// Gets the metadata for the property represented by this instance.
+        /// Gets the reflected navigation property represented by this mapping.
         /// </summary>
+        /// <remarks>The property metadata is used to derive the nested-column prefix and to compile
+        /// delegates responsible for creating and assigning nested entity instances during materialization.</remarks>
         public PropertyInfo Property { get; private set; }
 
         /// <summary>
-        /// Gets the metadata that describes the characteristics of the associated foreign table.
+        /// Gets the foreign-table attribute associated with the navigation property when the mapping originates from
+        /// Hydrix attributes.
         /// </summary>
+        /// <remarks>This value is null when the mapping was translated from an Entity Framework model instead
+        /// of the traditional attribute-based configuration.</remarks>
         public ForeignTableAttribute Attribute { get; private set; }
 
         /// <summary>
-        /// Compiled factory delegate for nested entity instantiation.
+        /// Gets the compiled factory delegate used to instantiate the nested entity represented by this mapping.
         /// </summary>
+        /// <remarks>The factory is created once and then reused for every materialization operation that needs
+        /// to create a nested entity instance.</remarks>
         public Func<object> Factory { get; }
 
         /// <summary>
-        /// Compiled setter delegate for assigning the nested entity.
+        /// Gets the compiled setter delegate used to assign the nested entity back to the parent entity.
         /// </summary>
+        /// <remarks>The setter is resolved once from the reflected property and avoids repeated late-bound
+        /// assignment during materialization.</remarks>
         public Action<object, object> Setter { get; }
 
         /// <summary>
-        /// Compiled activator that creates and assigns the nested entity in a single delegate call.
+        /// Gets the compiled activator delegate that creates and assigns the nested entity in a single operation.
         /// </summary>
+        /// <remarks>This delegate is used by optimized nested materializers so instance creation and assignment
+        /// can happen without additional reflection or manual coordination at runtime.</remarks>
         public Func<object, ITable> Activator { get; }
 
         /// <summary>
-        /// Gets the prefix and suffix used for formatting string values.
+        /// Gets the alias prefix derived from the navigation property name.
         /// </summary>
+        /// <remarks>The value includes the trailing dot so it can be concatenated directly with nested column
+        /// names when Hydrix resolves aliases such as <c>Customer.Id</c>.</remarks>
         private string PrefixSuffix { get; }
 
         /// <summary>
-        /// Gets the primary key value associated with the entity.
+        /// Gets the primary-key column name resolved for the nested entity represented by this mapping.
         /// </summary>
+        /// <remarks>The value is used to decide whether a nested entity should be instantiated for the current
+        /// data record and to infer the key suffix used by the optimized nested-materialization path.</remarks>
         public string PrimaryKey { get; }
 
         /// <summary>
-        /// Gets the suffix that is appended to key column names.
+        /// Gets the suffix appended to candidate key column names when checking whether the nested entity is present
+        /// in the current record.
         /// </summary>
+        /// <remarks>The suffix is precomputed once so the nested-materialization path can avoid rebuilding the
+        /// key-column token every time a row is processed.</remarks>
         public string KeyColumnSuffix { get; }
 
         /// <summary>
@@ -94,16 +112,57 @@ namespace Hydrix.Mapping
         public TableMap(
             PropertyInfo property,
             ForeignTableAttribute attribute)
+            : this(
+                property,
+                attribute,
+                attribute != null &&
+                attribute.PrimaryKeys != null &&
+                attribute.PrimaryKeys.Length > 0
+                    ? attribute.PrimaryKeys[0]
+                    : null)
+        { }
+
+        /// <summary>
+        /// Initializes a new instance of the TableMap class using metadata translated from Entity Framework.
+        /// </summary>
+        /// <remarks>This overload preserves the existing Hydrix materialization structure while allowing the
+        /// navigation metadata to come from an Entity Framework model instead of Hydrix attributes.</remarks>
+        /// <param name="property">The navigation property represented by this instance. Cannot be null.</param>
+        /// <param name="primaryKey">The mapped nested primary-key column name when available. Can be null when the
+        /// target entity does not expose a resolvable primary key.</param>
+        internal TableMap(
+            PropertyInfo property,
+            string primaryKey)
+            : this(
+                property,
+                attribute: null,
+                primaryKey: primaryKey)
+        { }
+
+        /// <summary>
+        /// Initializes a new instance of the TableMap class using the supplied navigation metadata.
+        /// </summary>
+        /// <remarks>This constructor centralizes the common initialization path shared by attribute-based and
+        /// Entity Framework-translated mappings.</remarks>
+        /// <param name="property">The navigation property represented by this instance. Cannot be null.</param>
+        /// <param name="attribute">The foreign-table attribute when the mapping comes from Hydrix attributes.
+        /// Can be null when the mapping originates from Entity Framework metadata.</param>
+        /// <param name="primaryKey">The mapped nested primary-key column name when available. Can be null when Hydrix
+        /// cannot determine a nested primary key.</param>
+        private TableMap(
+            PropertyInfo property,
+            ForeignTableAttribute attribute,
+            string primaryKey)
         {
-            Property = property;
+            Property = property ?? throw new ArgumentNullException(nameof(property));
             Attribute = attribute;
             Factory = MetadataFactory.CreateFactory(property.PropertyType);
             Setter = MetadataFactory.CreateSetter(property);
             Activator = MetadataFactory.CreateNestedEntityActivator(property);
             PrefixSuffix = string.Concat(property.Name, ".");
-            PrimaryKey = attribute.PrimaryKeys != null && attribute.PrimaryKeys.Length > 0
-                ? attribute.PrimaryKeys[0]
-                : null;
+            PrimaryKey = string.IsNullOrWhiteSpace(primaryKey)
+                ? null
+                : primaryKey;
             KeyColumnSuffix = !string.IsNullOrWhiteSpace(PrimaryKey)
                 ? string.Concat(PrefixSuffix, PrimaryKey)
                 : null;

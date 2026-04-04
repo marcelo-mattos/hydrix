@@ -1,4 +1,4 @@
-﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Attributes.Schemas;
 using Hydrix.Metadata.Builders;
 using Hydrix.Metadata.Internals;
 using System;
@@ -17,7 +17,9 @@ namespace Hydrix.Caching
     /// </summary>
     /// <remarks>This class is intended for internal use and ensures efficient, concurrent access to entity
     /// metadata in multi-threaded scenarios. By caching metadata for each entity type, it reduces overhead when
-    /// building entities repeatedly within the application.</remarks>
+    /// building entities repeatedly within the application. When metadata translated from Entity Framework is
+    /// registered, that metadata is preferred so the query-building pipeline can continue consuming the same
+    /// <see cref="EntityBuilderMetadata"/> shape used by the attribute-based path.</remarks>
     internal static class EntityBuilderMetadataCache
     {
         /// <summary>
@@ -33,23 +35,35 @@ namespace Hydrix.Caching
         /// Retrieves the metadata associated with the specified entity type, utilizing caching to optimize repeated
         /// access.
         /// </summary>
-        /// <remarks>This method uses an internal cache to avoid reconstructing metadata for the same
-        /// type, improving performance when called multiple times with the same argument.</remarks>
+        /// <remarks>This method first checks whether Entity Framework metadata was already registered for
+        /// the specified type. If so, that translated metadata is returned immediately. Otherwise, the internal cache is
+        /// used to avoid reconstructing metadata for the same type, improving performance when called multiple times
+        /// with the same argument.</remarks>
         /// <param name="type">The type of the entity for which metadata is to be retrieved. Must be a valid entity type; cannot be null.</param>
-        /// <returns>An instance of EntityBuilderMetadata containing the metadata for the specified entity type.</returns>
+        /// <returns>An instance of <see cref="EntityBuilderMetadata"/> containing the metadata for the specified entity type.</returns>
         public static EntityBuilderMetadata GetMetadata(
             Type type)
-            => Cache.GetOrAdd(
+        {
+            if (EntityFrameworkMetadataCache.TryGet(
+                type,
+                out var registered))
+            {
+                return registered.BuilderMetadata;
+            }
+
+            return Cache.GetOrAdd(
                 type,
                 BuildMetadata);
+        }
 
         /// <summary>
         /// Resolves the schema name, primary key columns, and foreign key columns for a specified navigation property
         /// using the provided foreign table attributes.
         /// </summary>
         /// <remarks>If the schema is not specified in the attribute or table metadata, the method
-        /// defaults to using "[dbo]" as the schema name. The method ensures that both primary and foreign keys are
-        /// present and that their counts match, enforcing referential integrity for the navigation property.</remarks>
+        /// defaults to using the schema associated with the foreign table type. The method ensures that both primary
+        /// and foreign keys are present and that their counts match, enforcing referential integrity for the
+        /// navigation property.</remarks>
         /// <param name="mainType">The type of the main entity containing the navigation property. Must not be null.</param>
         /// <param name="navigationProperty">The navigation property representing the relationship for which foreign metadata is being resolved. Must not
         /// be null.</param>
@@ -57,6 +71,7 @@ namespace Hydrix.Caching
         /// null.</param>
         /// <returns>A tuple containing the resolved schema name, an array of primary key column names, and an array of foreign
         /// key column names associated with the navigation property.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="navigationProperty"/> is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the primary keys or foreign keys cannot be resolved, or if the number of primary keys does not
         /// match the number of foreign keys.</exception>
         private static (string schema, string[] primaryKeys, string[] foreignKeys) ResolveForeignMetadata(
@@ -92,7 +107,7 @@ namespace Hydrix.Caching
 
             if (primaryKeys.Length > 0 && primaryKeys.Length != foreignKeys.Length)
                 throw new InvalidOperationException(
-                    $"PrimaryKeys and ForeignKeys count mismatch.");
+                    "PrimaryKeys and ForeignKeys count mismatch.");
 
             var schema = string.IsNullOrWhiteSpace(attr.Schema)
                 ? foreignTable?.Schema
@@ -109,13 +124,22 @@ namespace Hydrix.Caching
         /// </summary>
         /// <remarks>This method inspects the properties of the provided type to determine which columns
         /// and joins are relevant for the entity's database representation. It skips properties marked with
-        /// NotMappedAttribute and resolves foreign key relationships using ForeignTableAttribute.</remarks>
+        /// <see cref="NotMappedAttribute"/> and resolves foreign key relationships using
+        /// <see cref="ForeignTableAttribute"/>. If Entity Framework metadata was registered for the type, the
+        /// translated metadata is returned immediately to preserve the existing builder pipeline.</remarks>
         /// <param name="type">The type of the entity for which metadata is being built. This type must be a class that represents a
         /// database entity.</param>
-        /// <returns>An instance of EntityBuilderMetadata containing the metadata for the specified entity type.</returns>
+        /// <returns>An instance of <see cref="EntityBuilderMetadata"/> containing the metadata for the specified entity type.</returns>
         private static EntityBuilderMetadata BuildMetadata(
             Type type)
         {
+            if (EntityFrameworkMetadataCache.TryGet(
+                type,
+                out var registered))
+            {
+                return registered.BuilderMetadata;
+            }
+
             var tableAttr = type.GetCustomAttribute<TableAttribute>();
 
             var table = tableAttr?.Name ?? type.Name;

@@ -17,7 +17,9 @@ namespace Hydrix.Caching
     /// <remarks>This class is intended for internal use to optimize performance by avoiding repeated
     /// reflection and attribute inspection when mapping entities. The cache is keyed by the entity type and stores
     /// metadata describing how properties are mapped to database columns and related tables. Access to the cache is
-    /// thread-safe, making it suitable for use in multi-threaded scenarios.</remarks>
+    /// thread-safe, making it suitable for use in multi-threaded scenarios. When Entity Framework metadata is
+    /// registered, the translated metadata is reused directly so the materialization pipeline can keep using the same
+    /// <see cref="TableMaterializeMetadata"/> contract it already understands.</remarks>
     internal static class EntityMetadataCache
     {
         /// <summary>
@@ -25,7 +27,8 @@ namespace Hydrix.Caching
         /// </summary>
         /// <remarks>This field enables efficient retrieval of metadata required for table materialization
         /// operations. Access to the cache is thread-safe, allowing concurrent read and write operations without
-        /// additional synchronization.</remarks>
+        /// additional synchronization. The dictionary stores metadata created by the traditional attribute-based path,
+        /// while Entity Framework registrations are resolved from a dedicated cache.</remarks>
         private static readonly ConcurrentDictionary<Type, TableMaterializeMetadata> Cache
             = new ConcurrentDictionary<Type, TableMaterializeMetadata>();
 
@@ -33,30 +36,50 @@ namespace Hydrix.Caching
         /// Retrieves the metadata associated with the specified type, adding it to the cache if it does not already
         /// exist.
         /// </summary>
-        /// <remarks>This method uses a caching mechanism to improve performance by avoiding repeated
-        /// metadata generation for the same type. The operation is thread-safe.</remarks>
+        /// <remarks>This method first checks whether Entity Framework metadata has already been registered
+        /// for the specified type. If so, the translated metadata is returned immediately. Otherwise, a caching
+        /// mechanism is used to avoid repeated metadata generation for the same type. The operation is thread-safe.</remarks>
         /// <param name="type">The type for which to retrieve or add metadata. This parameter must not be null.</param>
         /// <returns>The metadata associated with the specified type. If the metadata is not already cached, it is created and
         /// added to the cache.</returns>
         public static TableMaterializeMetadata GetOrAdd(
             Type type)
-            => Cache.GetOrAdd(
+        {
+            if (EntityFrameworkMetadataCache.TryGet(
+                type,
+                out var registered))
+            {
+                return registered.MaterializeMetadata;
+            }
+
+            return Cache.GetOrAdd(
                 type,
                 BuildMetadata);
+        }
 
         /// <summary>
         /// Builds metadata for the specified type by mapping its properties decorated with column and foreign table
         /// attributes.
         /// </summary>
         /// <remarks>Use this method to generate metadata required for materializing entities from data
-        /// sources. Only properties that are writable and explicitly marked with ColumnAttribute or
-        /// ForeignTableAttribute are included in the resulting metadata.</remarks>
+        /// sources. Only properties that are writable and explicitly marked with <see cref="ColumnAttribute"/> or
+        /// <see cref="ForeignTableAttribute"/> are included in the resulting metadata. If Entity Framework metadata has
+        /// already been translated for the type, that metadata is reused instead of rebuilding the maps from
+        /// attributes.</remarks>
         /// <param name="type">The type whose properties are inspected to generate metadata. The type must have writable properties marked
-        /// with either the ColumnAttribute or ForeignTableAttribute.</param>
-        /// <returns>A TableMaterializeMetadata instance containing mappings for the type's column and foreign table properties.</returns>
+        /// with either the <see cref="ColumnAttribute"/> or <see cref="ForeignTableAttribute"/>.</param>
+        /// <returns>A <see cref="TableMaterializeMetadata"/> instance containing mappings for the type's column and foreign
+        /// table properties.</returns>
         internal static TableMaterializeMetadata BuildMetadata(
             Type type)
         {
+            if (EntityFrameworkMetadataCache.TryGet(
+                type,
+                out var registered))
+            {
+                return registered.MaterializeMetadata;
+            }
+
             var properties = type
                 .GetProperties(
                     BindingFlags.Instance |

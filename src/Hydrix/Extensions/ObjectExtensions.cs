@@ -53,18 +53,18 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> NumberConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(int)]     = value => Convert.ToInt32(value, CultureInfo.InvariantCulture),
-                [typeof(long)]    = value => Convert.ToInt64(value, CultureInfo.InvariantCulture),
-                [typeof(short)]   = value => Convert.ToInt16(value, CultureInfo.InvariantCulture),
-                [typeof(byte)]    = value => Convert.ToByte(value, CultureInfo.InvariantCulture),
+                [typeof(int)] = value => Convert.ToInt32(value, CultureInfo.InvariantCulture),
+                [typeof(long)] = value => Convert.ToInt64(value, CultureInfo.InvariantCulture),
+                [typeof(short)] = value => Convert.ToInt16(value, CultureInfo.InvariantCulture),
+                [typeof(byte)] = value => Convert.ToByte(value, CultureInfo.InvariantCulture),
                 [typeof(decimal)] = value => Convert.ToDecimal(value, CultureInfo.InvariantCulture),
-                [typeof(double)]  = value => Convert.ToDouble(value, CultureInfo.InvariantCulture),
-                [typeof(float)]   = value => Convert.ToSingle(value, CultureInfo.InvariantCulture),
-                [typeof(sbyte)]   = value => Convert.ToSByte(value, CultureInfo.InvariantCulture),
-                [typeof(ushort)]  = value => Convert.ToUInt16(value, CultureInfo.InvariantCulture),
-                [typeof(uint)]    = value => Convert.ToUInt32(value, CultureInfo.InvariantCulture),
-                [typeof(ulong)]   = value => Convert.ToUInt64(value, CultureInfo.InvariantCulture),
-                [typeof(char)]    = value => Convert.ToChar(value, CultureInfo.InvariantCulture)
+                [typeof(double)] = value => Convert.ToDouble(value, CultureInfo.InvariantCulture),
+                [typeof(float)] = value => Convert.ToSingle(value, CultureInfo.InvariantCulture),
+                [typeof(sbyte)] = value => Convert.ToSByte(value, CultureInfo.InvariantCulture),
+                [typeof(ushort)] = value => Convert.ToUInt16(value, CultureInfo.InvariantCulture),
+                [typeof(uint)] = value => Convert.ToUInt32(value, CultureInfo.InvariantCulture),
+                [typeof(ulong)] = value => Convert.ToUInt64(value, CultureInfo.InvariantCulture),
+                [typeof(char)] = value => Convert.ToChar(value, CultureInfo.InvariantCulture)
             };
 
         /// <summary>
@@ -76,15 +76,15 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<Type, Func<object, object>>> PairBuilders =
             new Dictionary<Type, Func<Type, Func<object, object>>>()
             {
-                [typeof(int)]     = BuildPairConverterFromInt,
-                [typeof(long)]    = BuildPairConverterFromLong,
+                [typeof(int)] = BuildPairConverterFromInt,
+                [typeof(long)] = BuildPairConverterFromLong,
                 [typeof(decimal)] = BuildPairConverterFromDecimal,
-                [typeof(double)]  = BuildPairConverterFromDouble,
-                [typeof(float)]   = BuildPairConverterFromFloat,
-                [typeof(short)]   = BuildPairConverterFromShort,
-                [typeof(byte)]    = BuildPairConverterFromByte,
-                [typeof(char)]    = BuildPairConverterFromChar,
-                [typeof(string)]  = BuildPairConverterFromString
+                [typeof(double)] = BuildPairConverterFromDouble,
+                [typeof(float)] = BuildPairConverterFromFloat,
+                [typeof(short)] = BuildPairConverterFromShort,
+                [typeof(byte)] = BuildPairConverterFromByte,
+                [typeof(char)] = BuildPairConverterFromChar,
+                [typeof(string)] = BuildPairConverterFromString
             };
 
         /// <summary>
@@ -98,17 +98,17 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> IntPairConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(long)]    = value => (long)(int)value,
-                [typeof(short)]   = value => (short)(int)value,
-                [typeof(byte)]    = value => (byte)(int)value,
-                [typeof(sbyte)]   = value => (sbyte)(int)value,
-                [typeof(ushort)]  = value => (ushort)(int)value,
-                [typeof(uint)]    = value => (uint)(int)value,
-                [typeof(ulong)]   = value => (ulong)(long)(int)value,
+                [typeof(long)] = value => (long)(int)value,
+                [typeof(short)] = value => (short)(int)value,
+                [typeof(byte)] = value => (byte)(int)value,
+                [typeof(sbyte)] = value => (sbyte)(int)value,
+                [typeof(ushort)] = value => (ushort)(int)value,
+                [typeof(uint)] = value => (uint)(int)value,
+                [typeof(ulong)] = value => (ulong)(long)(int)value,
                 [typeof(decimal)] = value => (decimal)(int)value,
-                [typeof(double)]  = value => (double)(int)value,
-                [typeof(float)]   = value => (float)(int)value,
-                [typeof(char)]    = value => (char)(int)value
+                [typeof(double)] = value => (double)(int)value,
+                [typeof(float)] = value => (float)(int)value,
+                [typeof(char)] = value => (char)(int)value
             };
 
         /// <summary>
@@ -122,16 +122,16 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> LongPairConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(int)]     = value => (int)(long)value,
-                [typeof(short)]   = value => (short)(long)value,
-                [typeof(byte)]    = value => (byte)(long)value,
-                [typeof(sbyte)]   = value => (sbyte)(long)value,
-                [typeof(ushort)]  = value => (ushort)(long)value,
-                [typeof(uint)]    = value => (uint)(long)value,
-                [typeof(ulong)]   = value => (ulong)(long)value,
+                [typeof(int)] = value => (int)(long)value,
+                [typeof(short)] = value => (short)(long)value,
+                [typeof(byte)] = value => (byte)(long)value,
+                [typeof(sbyte)] = value => (sbyte)(long)value,
+                [typeof(ushort)] = value => (ushort)(long)value,
+                [typeof(uint)] = value => (uint)(long)value,
+                [typeof(ulong)] = value => (ulong)(long)value,
                 [typeof(decimal)] = value => (decimal)(long)value,
-                [typeof(double)]  = value => (double)(long)value,
-                [typeof(float)]   = value => (float)(long)value
+                [typeof(double)] = value => (double)(long)value,
+                [typeof(float)] = value => (float)(long)value
             };
 
         /// <summary>
@@ -143,12 +143,12 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> DecimalPairConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(int)]    = value => (int)(decimal)value,
-                [typeof(long)]   = value => (long)(decimal)value,
-                [typeof(short)]  = value => (short)(decimal)value,
-                [typeof(byte)]   = value => (byte)(decimal)value,
+                [typeof(int)] = value => (int)(decimal)value,
+                [typeof(long)] = value => (long)(decimal)value,
+                [typeof(short)] = value => (short)(decimal)value,
+                [typeof(byte)] = value => (byte)(decimal)value,
                 [typeof(double)] = value => (double)(decimal)value,
-                [typeof(float)]  = value => (float)(decimal)value
+                [typeof(float)] = value => (float)(decimal)value
             };
 
         /// <summary>
@@ -162,11 +162,11 @@ namespace Hydrix.Extensions
             new Dictionary<Type, Func<object, object>>()
             {
                 [typeof(decimal)] = value => (decimal)(double)value,
-                [typeof(float)]   = value => (float)(double)value,
-                [typeof(int)]     = value => (int)(double)value,
-                [typeof(long)]    = value => (long)(double)value,
-                [typeof(short)]   = value => (short)(double)value,
-                [typeof(byte)]    = value => (byte)(double)value
+                [typeof(float)] = value => (float)(double)value,
+                [typeof(int)] = value => (int)(double)value,
+                [typeof(long)] = value => (long)(double)value,
+                [typeof(short)] = value => (short)(double)value,
+                [typeof(byte)] = value => (byte)(double)value
             };
 
         /// <summary>
@@ -179,12 +179,12 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> FloatPairConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(double)]  = value => (double)(float)value,
+                [typeof(double)] = value => (double)(float)value,
                 [typeof(decimal)] = value => (decimal)(double)(float)value,
-                [typeof(int)]     = value => (int)(float)value,
-                [typeof(long)]    = value => (long)(float)value,
-                [typeof(short)]   = value => (short)(float)value,
-                [typeof(byte)]    = value => (byte)(float)value
+                [typeof(int)] = value => (int)(float)value,
+                [typeof(long)] = value => (long)(float)value,
+                [typeof(short)] = value => (short)(float)value,
+                [typeof(byte)] = value => (byte)(float)value
             };
 
         /// <summary>
@@ -197,13 +197,13 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> ShortPairConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(int)]     = value => (int)(short)value,
-                [typeof(long)]    = value => (long)(short)value,
-                [typeof(byte)]    = value => (byte)(short)value,
-                [typeof(sbyte)]   = value => (sbyte)(short)value,
+                [typeof(int)] = value => (int)(short)value,
+                [typeof(long)] = value => (long)(short)value,
+                [typeof(byte)] = value => (byte)(short)value,
+                [typeof(sbyte)] = value => (sbyte)(short)value,
                 [typeof(decimal)] = value => (decimal)(short)value,
-                [typeof(double)]  = value => (double)(short)value,
-                [typeof(float)]   = value => (float)(short)value
+                [typeof(double)] = value => (double)(short)value,
+                [typeof(float)] = value => (float)(short)value
             };
 
         /// <summary>
@@ -216,12 +216,12 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> BytePairConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(int)]     = value => (int)(byte)value,
-                [typeof(long)]    = value => (long)(byte)value,
-                [typeof(short)]   = value => (short)(byte)value,
+                [typeof(int)] = value => (int)(byte)value,
+                [typeof(long)] = value => (long)(byte)value,
+                [typeof(short)] = value => (short)(byte)value,
                 [typeof(decimal)] = value => (decimal)(byte)value,
-                [typeof(double)]  = value => (double)(byte)value,
-                [typeof(float)]   = value => (float)(byte)value
+                [typeof(double)] = value => (double)(byte)value,
+                [typeof(float)] = value => (float)(byte)value
             };
 
         /// <summary>
@@ -233,7 +233,7 @@ namespace Hydrix.Extensions
         private static readonly Dictionary<Type, Func<object, object>> CharPairConverters =
             new Dictionary<Type, Func<object, object>>()
             {
-                [typeof(int)]    = value => (int)(char)value,
+                [typeof(int)] = value => (int)(char)value,
                 [typeof(string)] = value => ((char)value).ToString()
             };
 
