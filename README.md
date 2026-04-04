@@ -54,7 +54,12 @@ Hydrix does not attempt to abstract SQL away from you.
 - `HydrixDataCore` extension-first runtime model
 - Explicit SQL execution for text commands and stored procedures
 - Strongly typed stored procedure support with `IProcedure<TDataParameter>`
-- Entity materialization via standard .NET DataAnnotations
+- Entity materialization via DataAnnotations or additive Entity Framework
+  model translation
+- Entity Framework interoperability through
+  `HydrixEntityFramework.RegisterModel(...)`,
+  `AddHydrixEntityFrameworkModel<TDbContext>()`, and
+  `UseHydrixEntityFrameworkModels()`
 - Nested entity support for flat JOIN projections
 - Schema-aware metadata and binding caches
 - Zero reflection in the materialization hot path
@@ -71,11 +76,23 @@ Hydrix does not attempt to abstract SQL away from you.
 
 - `Materializer` and `IMaterializer` were removed from the public runtime model.
 - `HydrixDataCore` is now the only supported way to execute commands and queries.
-- `ObjectExtensions` gained faster conversion paths for numeric values, `DateTimeOffset`, `TimeSpan`, and broader boolean aliases.
+- Entity Framework interoperability arrived through
+  `HydrixEntityFramework.RegisterModel(...)`, with startup/DI automation via
+  `AddHydrixEntityFrameworkModel<TDbContext>()` and
+  `UseHydrixEntityFrameworkModels()`, allowing Hydrix to read
+  `OnModelCreating` metadata and cache it alongside the existing
+  attribute-based pipeline.
+- `ObjectExtensions` gained faster conversion paths for numeric values,
+  `DateTimeOffset`, `TimeSpan`, and broader boolean aliases.
 - Converter resolution now uses cache entries keyed by `(sourceType, targetType)`.
+- Command and procedure execution hot paths now avoid per-call
+  parameter-binding closures and use atomic hot-cache entries for
+  stronger concurrency correctness.
 - `HydrixOptions` gained `EnableCommandLogging` for explicit logging control.
-- Row materializer execution was tightened through direct delegate invocation and cached `MethodInfo`.
-- Fallback type matching and schema binding were improved to reduce allocations and improve throughput in provider edge cases.
+- Row materializer execution was tightened through direct delegate invocation and
+  cached `MethodInfo`.
+- Fallback type matching and schema binding were improved to reduce allocations
+  and improve throughput in provider edge cases.
 
 ---
 
@@ -93,7 +110,9 @@ If your project is already using the connection extension methods such as `Execu
 
 ## 📊 Benchmark Snapshot vs Dapper
 
-Current benchmark snapshot:
+The benchmark suite used for Hydrix 3.0.0 compares Hydrix against ADO.NET,
+Dapper, and Entity Framework. The release snapshot below highlights the Dapper
+baseline:
 
 ### Flat
 
@@ -129,7 +148,9 @@ Hydrix 3.0 continues the performance work started in 2.x and tightens the runtim
 
 - Metadata is built once per type and reused
 - Row materializers use direct delegate invocation in hot paths
+- Command and procedure parameter binding avoid per-call closure allocations
 - Schema binding and matching avoid unnecessary work under contention
+- Converter and binder hot caches use atomic entries for low-overhead correctness under concurrency
 - Conversion fallbacks rely less on generic `Convert.ChangeType`
 - Provider fallback type matching avoids extra boxing when metadata is incomplete
 - Limit-based reads stop as early as possible
@@ -212,8 +233,67 @@ services.AddHydrix(options =>
 
 Use this configuration to centralize timeout, parameter conventions, and logging behavior.
 
+If your application already resolves `DbContext` instances through dependency injection, you can queue the Entity Framework model registration during service setup and apply it once during startup:
+
+```csharp
+using Hydrix.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+
+services.AddDbContext<SalesDbContext>(options =>
+    options.UseSqlite("Data Source=app.db"));
+
+services.AddHydrix();
+services.AddHydrixEntityFrameworkModel<SalesDbContext>();
+
+using var serviceProvider = services.BuildServiceProvider();
+serviceProvider.UseHydrixEntityFrameworkModels();
+```
+
 ---
 
+## 🤝 Entity Framework Interoperability
+
+Hydrix 3.0.0 can work alongside existing Entity Framework models without
+replacing the current attribute-based approach. You can register the `DbContext`
+or its `Model` manually, or queue the translation through dependency injection
+and execute it once during application startup.
+
+```csharp
+using Hydrix.DependencyInjection;
+using Hydrix.EntityFramework;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+// Manual registration
+using var dbContext = new SalesDbContext(...);
+HydrixEntityFramework.RegisterModel(dbContext);
+HydrixEntityFramework.RegisterModel(dbContext.Model);
+
+// Startup + DI registration
+var services = new ServiceCollection();
+services.AddDbContext<SalesDbContext>(options =>
+    options.UseSqlite("Data Source=app.db"));
+services.AddHydrix();
+services.AddHydrixEntityFrameworkModel<SalesDbContext>();
+
+using var serviceProvider = services.BuildServiceProvider();
+serviceProvider.UseHydrixEntityFrameworkModels();
+```
+
+After registration, Hydrix can reuse the table names, schemas, column names,
+keys, and supported reference navigations defined in `OnModelCreating`.
+
+Current 3.0.0 scope:
+
+- additive to the existing DataAnnotations-based pipeline
+- only CLR types that implement `ITable` are registered
+- reference navigations are translated for nested mappings
+- collection navigations are intentionally ignored in 3.0.0
+
+---
 ## 🧱 Defining Entities
 
 ### Simple Entity

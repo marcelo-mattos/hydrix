@@ -1,5 +1,6 @@
 using Hydrix.Attributes.Schemas;
 using Hydrix.Caching;
+using Hydrix.DependencyInjection;
 using Hydrix.EntityFramework;
 using Hydrix.Extensions;
 using Hydrix.Mapping;
@@ -9,6 +10,7 @@ using Hydrix.Metadata.Internals;
 using Hydrix.Schemas;
 using Hydrix.Schemas.Contract;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -62,6 +64,28 @@ namespace Hydrix.UnitTests.EntityFramework
             using var context = CreateContext();
             HydrixEntityFramework.RegisterModel(context);
 
+            Assert.True(EntityRequestValidationCache.Validate(typeof(SalesOrder)));
+        }
+
+        /// <summary>
+        /// Ensures the dependency-injection startup helper resolves queued DbContext registrations and applies them to Hydrix.
+        /// </summary>
+        [Fact]
+        public void UseHydrixEntityFrameworkModels_RegistersQueuedDbContextsFromDependencyInjection()
+        {
+            Assert.Throws<MissingMemberException>(() =>
+                EntityRequestValidationCache.Validate(typeof(SalesOrder)));
+
+            var services = new ServiceCollection();
+            services.AddDbContext<SalesDbContext>(options =>
+                options.UseSqlite("Data Source=:memory:"));
+            services.AddHydrix();
+            services.AddHydrixEntityFrameworkModel<SalesDbContext>();
+
+            using var serviceProvider = services.BuildServiceProvider();
+            var result = serviceProvider.UseHydrixEntityFrameworkModels();
+
+            Assert.Same(serviceProvider, result);
             Assert.True(EntityRequestValidationCache.Validate(typeof(SalesOrder)));
         }
 

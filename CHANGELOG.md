@@ -17,6 +17,13 @@ above Dapper in both flat and nested scenarios.
 ### ✨ Added
 
 - Opt-in command logging control through `HydrixOptions.EnableCommandLogging`.
+- Additive Entity Framework interoperability through
+  `Hydrix.EntityFramework.HydrixEntityFramework.RegisterModel(...)`, allowing
+  Hydrix to translate `DbContext` / `Model` metadata into the existing
+  query-building, validation, and materialization caches.
+- Startup and dependency-injection automation for Entity Framework model
+  registration through `AddHydrixEntityFrameworkModel<TDbContext>()` and
+  `UseHydrixEntityFrameworkModels()`.
 - Faster conversion paths in `ObjectExtensions` for numeric values,
   `DateTimeOffset`, `TimeSpan`, and extended boolean aliases.
 - Converter caching by `(sourceType, targetType)` to avoid repeated runtime
@@ -24,7 +31,7 @@ above Dapper in both flat and nested scenarios.
 - Stronger schema-binding concurrency in `TableMaterializeMetadata`, including
   `Lazy<T>`-backed initialization and safer binding replacement behavior.
 - Expanded test coverage for logging, conversion, provider edge cases,
-  concurrency, and materialization fallbacks.
+  concurrency, materialization fallbacks, and Entity Framework interoperability.
 
 ### 🔄 Changed
 
@@ -32,10 +39,19 @@ above Dapper in both flat and nested scenarios.
   scalar, reader, and query execution.
 - Legacy `Materializer` and `IMaterializer` paths were removed from the
   runtime and test surface.
+- Entity Framework model translation now coexists with the existing
+  attribute-based pipeline instead of replacing it, so projects can register
+  `OnModelCreating` metadata without changing Hydrix's internal structures.
 - Row materializer construction now favors direct delegate invocation and
   cached `MethodInfo`, reducing indirection and improving JIT inlining.
+- Command and procedure parameter-binding paths were refactored to avoid
+  per-call closure allocations.
+- Process-wide hot caches for binders and converters now use atomic immutable
+  entries, improving formal concurrency correctness.
 - Type matching in binding resolution avoids unnecessary boxing when provider
   metadata is incomplete or unavailable.
+- Conversion fallback dispatch no longer depends on `data.GetType()` for the
+  known hot-path runtime types.
 - Limit-based loops in `DataReaderExtensions` were tightened to avoid extra
   iterations during bounded reads.
 - Internal architecture was simplified around the new execution model, with
@@ -76,6 +92,10 @@ Allocation snapshot against Dapper:
 - Reduced fallback overhead in binding/type resolution for providers that do
   not expose full metadata.
 - Improved stability of concurrent schema-binding initialization paths.
+- Fixed hot-cache consistency windows by storing converter and binder cache
+  pairs atomically.
+- Table entities with no materializable members now fail fast instead of
+  proceeding with a silent invalid contract.
 - Tightened command logging behavior so logging is explicitly opt-in.
 
 ### 🧪 Tests
@@ -335,10 +355,11 @@ while preserving a stable and predictable public API.
 ## [Unreleased]
 
 ### Added
-- Planned work for Entity Framework model interoperability via `OnModelCreating` translation.
+- No entries yet.
 
 ### Changed
-- Planned provider-aware performance work for nested materialization and schema binding.
+- Planned provider-aware performance work for nested materialization, schema binding,
+  and broader EF coexistence scenarios.
 
 ### Fixed
 - Planned internal refactorings and diagnostics improvements based on release feedback.

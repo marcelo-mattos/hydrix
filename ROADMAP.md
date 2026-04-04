@@ -85,12 +85,17 @@ Focus: **API simplification, migration closure, and higher throughput**
 ### Delivered
 - Removal of the legacy `Materializer` and `IMaterializer` stacks
 - `HydrixDataCore` established as the only supported execution/query entry point
+- Additive Entity Framework interoperability through `HydrixEntityFramework.RegisterModel(...)`
+- Startup and dependency-injection automation for Entity Framework model registration through `AddHydrixEntityFrameworkModel<TDbContext>()` and `UseHydrixEntityFrameworkModels()`
+- Translation of `OnModelCreating` metadata into Hydrix's existing validation, query-building, and materialization caches
 - Faster conversion pipeline with per `(sourceType, targetType)` converter caches
 - Optimized conversions for numeric values, `DateTimeOffset`, `TimeSpan`, and boolean aliases
 - Opt-in command logging via `HydrixOptions.EnableCommandLogging`
 - Improved schema-binding concurrency in `TableMaterializeMetadata`
 - Lower-overhead row materializer execution via direct delegate invocation and cached `MethodInfo`
+- Lower-allocation command/procedure execution through closure-free parameter binding paths and shared default options
 - Stronger fallback type matching with reduced boxing in provider edge cases
+- Atomic hot-cache entries for converters and binders
 - Expanded unit test coverage and XML documentation standardization
 
 ### Breaking Change
@@ -111,15 +116,14 @@ Hydrix 3.0 reaches the release line with a mature nested pipeline, lower memory 
 
 ---
 
-## 🔜 v3.1 — EF Interoperability & More Throughput (Planned)
+## 🔜 v3.1 — EF Ergonomics & More Throughput (Planned)
 
-Focus: **seamless coexistence with existing enterprise stacks and further hot-path gains**
+Focus: **deeper coexistence with existing enterprise stacks and further hot-path gains**
 
 ### Planned
-- Entity Framework model interoperability through `OnModelCreating` translation and caching
 - Continued nested-materialization tuning without compromising flat-query speed
 - More provider-aware fast paths where they materially improve runtime behavior
-- Broader benchmark scenarios, including comparative tracking against Entity Framework
+- Broader benchmark scenarios and comparative tracking across ADO.NET, Dapper, and Entity Framework
 - Additional diagnostics for migration and runtime observability
 
 ---
