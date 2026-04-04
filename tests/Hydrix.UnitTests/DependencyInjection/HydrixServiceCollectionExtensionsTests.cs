@@ -1,6 +1,7 @@
 using Hydrix.Configuration;
 using Hydrix.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Linq;
 using Xunit;
 
@@ -37,6 +38,14 @@ namespace Hydrix.UnitTests.DependencyInjection
                 Assert.Same(services, result);
             });
         }
+
+        /// <summary>
+        /// Verifies that the AddHydrix extension method rejects a null service collection.
+        /// </summary>
+        [Fact]
+        public void AddHydrix_Throws_WhenServiceCollectionIsNull()
+            => Assert.Throws<ArgumentNullException>(() =>
+                HydrixServiceCollectionExtensions.AddHydrix(null, null));
 
         /// <summary>
         /// Verifies that the AddHydrix method correctly configures Hydrix options using a delegate.
@@ -155,8 +164,53 @@ namespace Hydrix.UnitTests.DependencyInjection
 
                 Assert.NotNull(resolved);
                 Assert.Equal(20, resolved.CommandTimeout);
-                Assert.Same(resolved, HydrixConfiguration.Options);
             });
+        }
+
+        /// <summary>
+        /// Verifies that AddHydrixEntityFrameworkModel returns the same IServiceCollection instance it was called on.
+        /// </summary>
+        [Fact]
+        public void AddHydrixEntityFrameworkModel_ReturnsSameServiceCollection()
+        {
+            var services = new ServiceCollection();
+            var result = services.AddHydrixEntityFrameworkModel<object>();
+
+            Assert.Same(services, result);
+        }
+
+        /// <summary>
+        /// Verifies that AddHydrixEntityFrameworkModel rejects a null service collection.
+        /// </summary>
+        [Fact]
+        public void AddHydrixEntityFrameworkModel_Throws_WhenServiceCollectionIsNull()
+            => Assert.Throws<ArgumentNullException>(() =>
+                HydrixServiceCollectionExtensions.AddHydrixEntityFrameworkModel<object>(null));
+
+        /// <summary>
+        /// Verifies that UseHydrixEntityFrameworkModels rejects a null service provider.
+        /// </summary>
+        [Fact]
+        public void UseHydrixEntityFrameworkModels_Throws_WhenServiceProviderIsNull()
+        {
+            IServiceProvider serviceProvider = null;
+
+            Assert.Throws<ArgumentNullException>(() =>
+                serviceProvider.UseHydrixEntityFrameworkModels());
+        }
+
+        /// <summary>
+        /// Verifies that UseHydrixEntityFrameworkModels returns the same service provider when no registrations were queued.
+        /// </summary>
+        [Fact]
+        public void UseHydrixEntityFrameworkModels_ReturnsSameServiceProvider_WhenNoRegistrationsWereQueued()
+        {
+            var services = new ServiceCollection();
+
+            using var serviceProvider = services.BuildServiceProvider();
+            var result = serviceProvider.UseHydrixEntityFrameworkModels();
+
+            Assert.Same(serviceProvider, result);
         }
 
         /// <summary>
@@ -164,7 +218,7 @@ namespace Hydrix.UnitTests.DependencyInjection
         /// </summary>
         /// <param name="action">The test action that may mutate <see cref="HydrixConfiguration.Options"/>.</param>
         private static void ExecuteWithIsolatedConfiguration(
-            System.Action action)
+            Action action)
         {
             lock (ConfigurationSyncRoot)
             {

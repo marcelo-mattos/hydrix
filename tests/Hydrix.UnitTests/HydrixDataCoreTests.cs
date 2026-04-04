@@ -1,6 +1,4 @@
 ﻿using Hydrix.Attributes.Schemas;
-using Hydrix.Orchestrator.Materializers;
-using Hydrix.Orchestrator.Materializers.Contract;
 using Hydrix.Schemas.Contract;
 using Microsoft.Data.SqlClient;
 using Moq;
@@ -294,7 +292,7 @@ namespace Hydrix.UnitTests
         /// <returns>A DataTable with two columns, "Id" and "Name", and two rows of sample data.</returns>
         private static DataTable CreateSampleTable(IList<DummyEntity> entities)
         {
-            var table = new DataTable(nameof(Materializer));
+            var table = new DataTable(nameof(DummyEntity));
 
             table.Columns.Add("Id", typeof(int));
             table.Columns.Add("Name", typeof(string));
@@ -375,109 +373,41 @@ namespace Hydrix.UnitTests
         }
 
         /// <summary>
-        /// Creates a mock implementation of the IMaterializer interface configured to return a specified result for all
-        /// ExecuteNonQuery method overloads.
+        /// Creates a mock <see cref="IDbConnection"/> configured to return a specified result for all
+        /// non-query execution paths, both synchronous and asynchronous.
         /// </summary>
-        /// <remarks>Use this method in unit tests to simulate database command execution without
-        /// requiring a real database connection.</remarks>
-        /// <param name="result">The value to be returned by the ExecuteNonQuery methods. Defaults to 1.</param>
-        /// <returns>A mock IMaterializer instance that returns the specified result when any ExecuteNonQuery overload is called.</returns>
-        private static Mock<IMaterializer> SetupMaterializerForExecuteNonQuery(int result = 1)
+        /// <param name="result">The value to be returned by <see cref="IDbCommand.ExecuteNonQuery"/>. Defaults to 1.</param>
+        /// <returns>An <see cref="IDbConnection"/> whose underlying command returns the specified result on non-query execution.</returns>
+        private static IDbConnection CreateConnectionForNonQuery(int result = 1)
         {
-            var mat = new Mock<IMaterializer>();
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteNonQuery()).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<string>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteNonQuery(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.DbConnection).Returns(CreateConnectionMock(commandMock).Object);
-            return mat;
+            return CreateConnectionMock(commandMock).Object;
         }
 
         /// <summary>
-        /// Creates and configures a mock implementation of the IMaterializer interface to return a specified result for
-        /// asynchronous non-query execution methods.
+        /// Creates a mock <see cref="IDbConnection"/> configured to return a specified result for all
+        /// scalar execution paths, both synchronous and asynchronous.
         /// </summary>
-        /// <remarks>Use this method in unit tests to simulate the behavior of IMaterializer when
-        /// executing non-query commands asynchronously. This allows for consistent and controlled testing of code that
-        /// depends on database write operations.</remarks>
-        /// <param name="result">The number of rows affected to be returned by the mocked ExecuteNonQueryAsync methods. Defaults to 1.</param>
-        /// <returns>A mock IMaterializer instance set up to return the specified result for all supported ExecuteNonQueryAsync
-        /// method overloads.</returns>
-        private static Mock<IMaterializer> SetupMaterializerForExecuteNonQueryAsync(int result = 1)
+        /// <param name="result">The value to be returned by <see cref="IDbCommand.ExecuteScalar"/>. Defaults to null.</param>
+        /// <returns>An <see cref="IDbConnection"/> whose underlying command returns the specified result on scalar execution.</returns>
+        private static IDbConnection CreateConnectionForScalar(object result = null)
         {
-            var mat = new Mock<IMaterializer>();
-            var commandMock = new Mock<IDbCommand>();
-            commandMock.Setup(c => c.ExecuteNonQuery()).Returns(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.ExecuteNonQueryAsync(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-            mat.Setup(m => m.DbConnection).Returns(CreateConnectionMock(commandMock).Object);
-            return mat;
-        }
-
-        /// <summary>
-        /// Creates and configures a mock implementation of the IMaterializer interface for unit testing scenarios
-        /// involving the ExecuteScalar method.
-        /// </summary>
-        /// <remarks>Use this method to simulate database scalar query results in tests without requiring
-        /// a live database connection. This approach enables consistent and isolated testing of components that depend
-        /// on IMaterializer.</remarks>
-        /// <param name="result">An optional object specifying the value to be returned by all mocked ExecuteScalar method calls. If not
-        /// provided, the default value is null.</param>
-        /// <returns>A Mock&lt;IMaterializer&gt; instance set up to return the specified result for various ExecuteScalar method
-        /// overloads.</returns>
-        private static Mock<IMaterializer> SetupMaterializerForExecuteScalar(object result = null)
-        {
-            var mat = new Mock<IMaterializer>();
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteScalar()).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<string>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.ExecuteScalar(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.DbConnection).Returns(CreateConnectionMock(commandMock).Object);
-            return mat;
+            return CreateConnectionMock(commandMock).Object;
         }
 
         /// <summary>
-        /// Creates a mock implementation of the IMaterializer interface that returns a predefined result for queries
-        /// involving DummyEntity objects.
+        /// Creates a mock <see cref="IDbConnection"/> configured to return a mocked data reader for query execution.
         /// </summary>
-        /// <remarks>Use this method in unit tests to simulate database query results without requiring a
-        /// real database connection.</remarks>
-        /// <param name="result">An optional list of DummyEntity objects to be returned by the mock's query methods. If not specified, the
-        /// default is null.</param>
-        /// <returns>A mock IMaterializer instance configured to return the specified result for various query method overloads.</returns>
-        private static Mock<IMaterializer> SetupMaterializerForQuery(IList<DummyEntity> result = null)
+        /// <param name="result">The list of entities to be served by the reader. Defaults to null.</param>
+        /// <returns>An <see cref="IDbConnection"/> whose underlying command returns a reader over the specified entity list.</returns>
+        private static IDbConnection CreateConnectionForQuery(IList<DummyEntity> result = null)
         {
-            var mat = new Mock<IMaterializer>();
             var commandMock = new Mock<IDbCommand>();
             commandMock.Setup(c => c.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(CreateMockReader(result).Object);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IEnumerable<IDataParameter>>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.Query<DummyEntity>(It.IsAny<CommandType>(), It.IsAny<string>(), It.IsAny<IDbTransaction>(), It.IsAny<int>(), It.IsAny<int>())).Returns(result);
-            mat.Setup(m => m.DbConnection).Returns(CreateConnectionMock(commandMock).Object);
-            return mat;
+            return CreateConnectionMock(commandMock).Object;
         }
 
         /// <summary>
@@ -526,28 +456,28 @@ namespace Hydrix.UnitTests
         [Fact]
         public void Execute_CallsMaterializer_ForAllParameterCombinations()
         {
-            var mat = SetupMaterializerForExecuteNonQuery().Object;
+            var conn = CreateConnectionForNonQuery();
             var sql = "UPDATE T SET X=1";
             var param = new { Id = 1 };
             var procParam = new SqlParameter("p_Id", 1);
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql, param));
+            Assert.Equal(1, conn.Execute(sql, param));
             // Text, with params, with tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql, param, tran));
+            Assert.Equal(1, conn.Execute(sql, param, tran));
             // Text, no params, no tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql));
+            Assert.Equal(1, conn.Execute(sql));
             // Text, no params, with tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql, null, tran));
+            Assert.Equal(1, conn.Execute(sql, null, tran));
             // Non-Text, with params, no tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql, procParam, null, CommandType.StoredProcedure));
+            Assert.Equal(1, conn.Execute(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql, procParam, tran, CommandType.StoredProcedure));
+            Assert.Equal(1, conn.Execute(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql, null, null, CommandType.StoredProcedure));
+            Assert.Equal(1, conn.Execute(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            Assert.Equal(1, mat.DbConnection.Execute(sql, null, tran, CommandType.StoredProcedure));
+            Assert.Equal(1, conn.Execute(sql, null, tran, CommandType.StoredProcedure));
         }
 
         /// <summary>
@@ -562,29 +492,28 @@ namespace Hydrix.UnitTests
         [Fact]
         public async Task ExecuteAsync_CallsMaterializer_ForAllParameterCombinations()
         {
-            var mat = SetupMaterializerForExecuteNonQueryAsync().Object;
+            var conn = CreateConnectionForNonQuery();
             var sql = "UPDATE T SET X=1";
             var param = new { Id = 1 };
             var procParam = new SqlParameter("p_Id", 1);
             var tran = new Mock<IDbTransaction>().Object;
-            var token = CancellationToken.None;
 
             // Text, with params, no tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql, param));
+            Assert.Equal(1, await conn.ExecuteAsync(sql, param));
             // Text, with params, with tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql, param, tran));
+            Assert.Equal(1, await conn.ExecuteAsync(sql, param, tran));
             // Text, no params, no tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql));
+            Assert.Equal(1, await conn.ExecuteAsync(sql));
             // Text, no params, with tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql, null, tran));
+            Assert.Equal(1, await conn.ExecuteAsync(sql, null, tran));
             // Non-Text, with params, no tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql, procParam, null, CommandType.StoredProcedure));
+            Assert.Equal(1, await conn.ExecuteAsync(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql, procParam, tran, CommandType.StoredProcedure));
+            Assert.Equal(1, await conn.ExecuteAsync(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql, null, null, CommandType.StoredProcedure));
+            Assert.Equal(1, await conn.ExecuteAsync(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            Assert.Equal(1, await mat.DbConnection.ExecuteAsync(sql, null, tran, CommandType.StoredProcedure));
+            Assert.Equal(1, await conn.ExecuteAsync(sql, null, tran, CommandType.StoredProcedure));
         }
 
         /// <summary>
@@ -597,28 +526,28 @@ namespace Hydrix.UnitTests
         [Fact]
         public void ExecuteScalar_CallsMaterializer_ForAllParameterCombinations()
         {
-            var mat = SetupMaterializerForExecuteScalar(42).Object;
+            var conn = CreateConnectionForScalar(42);
             var sql = "SELECT COUNT(*) FROM T";
             var param = new { Id = 1 };
             var procParam = new SqlParameter("p_Id", 1);
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql, param));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql, param));
             // Text, with params, with tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql, param, tran));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql, param, tran));
             // Text, no params, no tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql));
             // Text, no params, with tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql, null, tran));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql, null, tran));
             // Non-Text, with params, no tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql, procParam, null, CommandType.StoredProcedure));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql, procParam, tran, CommandType.StoredProcedure));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql, null, null, CommandType.StoredProcedure));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            Assert.Equal(42, mat.DbConnection.ExecuteScalar<int>(sql, null, tran, CommandType.StoredProcedure));
+            Assert.Equal(42, conn.ExecuteScalar<int>(sql, null, tran, CommandType.StoredProcedure));
         }
 
         /// <summary>
@@ -632,28 +561,28 @@ namespace Hydrix.UnitTests
         [Fact]
         public async Task ExecuteScalarAsync_CallsMaterializer_ForAllParameterCombinations()
         {
-            var mat = SetupMaterializerForExecuteScalar(42).Object;
+            var conn = CreateConnectionForScalar(42);
             var sql = "SELECT COUNT(*) FROM T";
             var param = new { Id = 1 };
             var procParam = new SqlParameter("p_Id", 1);
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql, param));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql, param));
             // Text, with params, with tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql, param, tran));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql, param, tran));
             // Text, no params, no tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql));
             // Text, no params, with tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql, null, tran));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql, null, tran));
             // Non-Text, with params, no tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql, procParam, null, CommandType.StoredProcedure));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql, procParam, tran, CommandType.StoredProcedure));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql, null, null, CommandType.StoredProcedure));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            Assert.Equal(42, await mat.DbConnection.ExecuteScalarAsync<int>(sql, null, tran, CommandType.StoredProcedure));
+            Assert.Equal(42, await conn.ExecuteScalarAsync<int>(sql, null, tran, CommandType.StoredProcedure));
         }
 
         /// <summary>
@@ -673,29 +602,29 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, mat.DbConnection.Query<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, conn.Query<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
         }
 
         /// <summary>
@@ -717,29 +646,29 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyList, await mat.DbConnection.QueryAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyList, await conn.QueryAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
         }
 
         /// <summary>
@@ -760,33 +689,33 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirst<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirst<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
             // Throws if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            Assert.Throws<InvalidOperationException>(() => matEmpty.DbConnection.QueryFirst<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            Assert.Throws<InvalidOperationException>(() => connEmpty.QueryFirst<DummyEntity>(sql));
         }
 
         /// <summary>
@@ -808,33 +737,33 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
             // Throws if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await matEmpty.DbConnection.QueryFirstAsync<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => connEmpty.QueryFirstAsync<DummyEntity>(sql));
         }
 
         /// <summary>
@@ -855,34 +784,34 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QueryFirstOrDefault<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QueryFirstOrDefault<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
 
             // Returns default if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            Assert.Null(matEmpty.DbConnection.QueryFirstOrDefault<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            Assert.Null(connEmpty.QueryFirstOrDefault<DummyEntity>(sql));
         }
 
         /// <summary>
@@ -904,34 +833,34 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QueryFirstOrDefaultAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
 
             // Returns default if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            Assert.Null(await matEmpty.DbConnection.QueryFirstOrDefaultAsync<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            Assert.Null(await connEmpty.QueryFirstOrDefaultAsync<DummyEntity>(sql));
         }
 
         /// <summary>
@@ -952,39 +881,39 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingle<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingle<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
 
             // Throws if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            Assert.Throws<InvalidOperationException>(() => matEmpty.DbConnection.QuerySingle<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            Assert.Throws<InvalidOperationException>(() => connEmpty.QuerySingle<DummyEntity>(sql));
 
             // Throws if more than one
             var twoList = new List<DummyEntity> { new DummyEntity() { Id = 1, Name = "Alice" }, new DummyEntity() { Id = 2, Name = "Bob" } };
-            var matTwo = SetupMaterializerForQuery(twoList).Object;
-            Assert.Throws<InvalidOperationException>(() => matTwo.DbConnection.QuerySingle<DummyEntity>(sql));
+            var connTwo = CreateConnectionForQuery(twoList);
+            Assert.Throws<InvalidOperationException>(() => connTwo.QuerySingle<DummyEntity>(sql));
         }
 
         /// <summary>
@@ -1008,39 +937,39 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
 
             // Throws if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await matEmpty.DbConnection.QuerySingleAsync<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => connEmpty.QuerySingleAsync<DummyEntity>(sql));
 
             // Throws if more than one
             var twoList = new List<DummyEntity> { new DummyEntity() { Id = 1, Name = "Alice" }, new DummyEntity() { Id = 2, Name = "Bob" } };
-            var matTwo = SetupMaterializerForQuery(twoList).Object;
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await matTwo.DbConnection.QuerySingleAsync<DummyEntity>(sql));
+            var connTwo = CreateConnectionForQuery(twoList);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => connTwo.QuerySingleAsync<DummyEntity>(sql));
         }
 
         /// <summary>
@@ -1062,39 +991,39 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, mat.DbConnection.QuerySingleOrDefault<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, conn.QuerySingleOrDefault<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
 
             // Returns default if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            Assert.Null(matEmpty.DbConnection.QuerySingleOrDefault<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            Assert.Null(connEmpty.QuerySingleOrDefault<DummyEntity>(sql));
 
             // Throws if more than one
             var twoList = new List<DummyEntity> { new DummyEntity() { Id = 1, Name = "Alice" }, new DummyEntity() { Id = 2, Name = "Bob" } };
-            var matTwo = SetupMaterializerForQuery(twoList).Object;
-            Assert.Throws<InvalidOperationException>(() => matTwo.DbConnection.QuerySingleOrDefault<DummyEntity>(sql));
+            var connTwo = CreateConnectionForQuery(twoList);
+            Assert.Throws<InvalidOperationException>(() => connTwo.QuerySingleOrDefault<DummyEntity>(sql));
         }
 
         /// <summary>
@@ -1118,39 +1047,39 @@ namespace Hydrix.UnitTests
             var tran = new Mock<IDbTransaction>().Object;
 
             // Text, with params, no tran
-            var mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql, param));
+            var conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql, param));
             // Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql, param, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql, param, tran));
             // Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql));
             // Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql, null, tran));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql, null, tran));
             // Non-Text, with params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql, procParam, null, CommandType.StoredProcedure));
             // Non-Text, with params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql, procParam, tran, CommandType.StoredProcedure));
             // Non-Text, no params, no tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql, null, null, CommandType.StoredProcedure));
             // Non-Text, no params, with tran
-            mat = SetupMaterializerForQuery(dummyList).Object;
-            Assert.Equivalent(dummyEntity, await mat.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
+            conn = CreateConnectionForQuery(dummyList);
+            Assert.Equivalent(dummyEntity, await conn.QuerySingleOrDefaultAsync<DummyEntity>(sql, null, tran, CommandType.StoredProcedure));
 
             // Returns default if empty
             var emptyList = new List<DummyEntity>();
-            var matEmpty = SetupMaterializerForQuery(emptyList).Object;
-            Assert.Null(await matEmpty.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql));
+            var connEmpty = CreateConnectionForQuery(emptyList);
+            Assert.Null(await connEmpty.QuerySingleOrDefaultAsync<DummyEntity>(sql));
 
             // Throws if more than one
             var twoList = new List<DummyEntity> { new DummyEntity() { Id = 1, Name = "Alice" }, new DummyEntity() { Id = 2, Name = "Bob" } };
-            var matTwo = SetupMaterializerForQuery(twoList).Object;
-            Assert.Throws<InvalidOperationException>(() => matTwo.DbConnection.QuerySingleOrDefaultAsync<DummyEntity>(sql).GetAwaiter().GetResult());
+            var connTwo = CreateConnectionForQuery(twoList);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => connTwo.QuerySingleOrDefaultAsync<DummyEntity>(sql));
         }
 
         /// <summary>

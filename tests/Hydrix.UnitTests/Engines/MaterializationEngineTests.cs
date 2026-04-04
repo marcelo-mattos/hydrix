@@ -1,5 +1,4 @@
 using Hydrix.Attributes.Schemas;
-using Hydrix.Configuration;
 using Hydrix.Engines;
 using Hydrix.Engines.Options;
 using Hydrix.Schemas.Contract;
@@ -61,6 +60,19 @@ namespace Hydrix.UnitTests.Engines
             /// </summary>
             [Column]
             public int Id { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity marked as a table but without any members that Hydrix can materialize.
+        /// </summary>
+        [Table("NoMappedMembers")]
+        private class NoMappedMembersEntity : ITable
+        {
+            /// <summary>
+            /// Gets or sets a value that Hydrix must ignore during materialization.
+            /// </summary>
+            [NotMapped]
+            public int Ignored { get; set; }
         }
 
         /// <summary>
@@ -468,8 +480,13 @@ namespace Hydrix.UnitTests.Engines
                 "ResolveCommandOptions",
                 null);
 
+            var createdAgain = InvokeMaterializationPrivateMethod<MaterializationCommandOptions>(
+                "ResolveCommandOptions",
+                null);
+
             Assert.NotNull(created);
-            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix);
+            Assert.Same(created, createdAgain);
+            Assert.Null(created.ParameterPrefix);
         }
 
         /// <summary>
@@ -527,8 +544,13 @@ namespace Hydrix.UnitTests.Engines
                 "ResolveOptions",
                 null);
 
+            var createdAgain = InvokeMaterializationPrivateMethod<MaterializationOptions>(
+                "ResolveOptions",
+                null);
+
             Assert.NotNull(created);
-            Assert.Equal(HydrixConfiguration.Options.ParameterPrefix, created.ParameterPrefix);
+            Assert.Same(created, createdAgain);
+            Assert.Null(created.ParameterPrefix);
         }
 
         /// <summary>
@@ -882,6 +904,62 @@ namespace Hydrix.UnitTests.Engines
                 {
                     Connection = connection.Object
                 }));
+        }
+
+        /// <summary>
+        /// Verifies entity requests throw an explicit exception when the entity is marked as a table but exposes no
+        /// mapped members.
+        /// </summary>
+        [Fact]
+        public void Query_NoMappedMembersEntity_ThrowsInvalidOperationException()
+        {
+            var exception = Assert.Throws<InvalidOperationException>(() => MaterializationEngine.Query<NoMappedMembersEntity>(
+                "select 1"));
+
+            Assert.Contains(typeof(NoMappedMembersEntity).FullName, exception.Message);
+            Assert.Contains("mapped property", exception.Message);
+        }
+
+        /// <summary>
+        /// Verifies procedure entity requests throw an explicit exception when the entity is marked as a table but
+        /// exposes no mapped members.
+        /// </summary>
+        [Fact]
+        public void Query_Procedure_NoMappedMembersEntity_ThrowsInvalidOperationException()
+        {
+            var exception = Assert.Throws<InvalidOperationException>(() => MaterializationEngine.Query<NoMappedMembersEntity, TestParameter>(
+                new TestProcedure()));
+
+            Assert.Contains(typeof(NoMappedMembersEntity).FullName, exception.Message);
+            Assert.Contains("mapped property", exception.Message);
+        }
+
+        /// <summary>
+        /// Verifies asynchronous entity requests throw an explicit exception when the entity is marked as a table but
+        /// exposes no mapped members.
+        /// </summary>
+        [Fact]
+        public async Task QueryAsync_NoMappedMembersEntity_ThrowsInvalidOperationException()
+        {
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => MaterializationEngine.QueryAsync<NoMappedMembersEntity>(
+                "select 1"));
+
+            Assert.Contains(typeof(NoMappedMembersEntity).FullName, exception.Message);
+            Assert.Contains("mapped property", exception.Message);
+        }
+
+        /// <summary>
+        /// Verifies asynchronous procedure entity requests throw an explicit exception when the entity is marked as a
+        /// table but exposes no mapped members.
+        /// </summary>
+        [Fact]
+        public async Task QueryAsync_Procedure_NoMappedMembersEntity_ThrowsInvalidOperationException()
+        {
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => MaterializationEngine.QueryAsync<NoMappedMembersEntity, TestParameter>(
+                new TestProcedure()));
+
+            Assert.Contains(typeof(NoMappedMembersEntity).FullName, exception.Message);
+            Assert.Contains("mapped property", exception.Message);
         }
 
         /// <summary>

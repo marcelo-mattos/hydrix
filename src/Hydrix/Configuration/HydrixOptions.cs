@@ -35,10 +35,19 @@ namespace Hydrix.Configuration
         public string ParameterPrefix { get; set; } = DefaultParameterPrefix;
 
         /// <summary>
+        /// Gets or sets a value indicating whether per-command logging is enabled.
+        /// </summary>
+        /// <remarks>When <see langword="false"/> (the default), the logging path is skipped entirely before any
+        /// string allocation or StringBuilder work occurs, regardless of the configured log level. Enable only during
+        /// development or targeted diagnostics to avoid per-command allocation overhead in high-throughput
+        /// production scenarios.</remarks>
+        public bool EnableCommandLogging { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the logger instance to use for logging operations.
         /// </summary>
-        /// <remarks>If logging is enabled, this logger instance will be used to log operations.
-        /// Otherwise, this property is ignored.</remarks>
+        /// <remarks>If <see cref="EnableCommandLogging"/> is false this property is ignored.
+        /// Must be set together with <see cref="EnableCommandLogging"/> to produce any output.</remarks>
         public ILogger Logger { get; set; }
     }
 }

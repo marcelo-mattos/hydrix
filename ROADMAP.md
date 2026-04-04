@@ -19,137 +19,142 @@ Features are added deliberately, prioritizing correctness, transparency, and lon
 
 ---
 
-## ✅ v1.0 — Stabilization & Refinement (Completed)
+## ✅ v1.0 — Foundation (Completed)
 
-Focus: **robustness, performance, and developer experience**  
-_No breaking changes._
+Focus: **explicit SQL, transparent mapping, and lightweight adoption**
 
 ### Delivered
-- Metadata caching optimizations to further reduce reflection overhead
-- Improved diagnostics and debugging helpers for generated SQL
-- Additional guardrails and validations for SQL builders
-- Minor performance optimizations in entity materialization
-- Improved XML documentation and code comments
-- Expanded test coverage, including edge cases for nested entities
+- SQL-first ORM core for .NET
+- Attribute-based metadata for entities, procedures, parameters, and commands
+- Fluent `WhereBuilder` support for explicit filtering
+- Provider-agnostic ADO.NET foundation
+- Support for `netcoreapp3.1`, `net6.0`, `net8.0`, and `net10.0`
 
 ---
 
-## 🔄 v1.1 — Stabilization & Core Solidification (Completed)
+## ✅ v1.1 — Stabilization & Core Solidification (Completed)
 
-Focus: **robustness, internal consistency, and metadata correctness**  
-_No breaking changes._
+Focus: **robustness, internal consistency, and metadata correctness**
 
 ### Delivered
 - Thread-safe metadata caching
 - Nested entity materialization
 - SQL `IN` clause expansion
 - Stored procedure mapping
-- SQL command logging
-- Guardrails for SQL builder statefulness
-- Improved internal validations
-- Expanded test coverage
+- SQL command logging foundations
+- Improved internal validations and test coverage
 
 ---
 
-## 🚀 v2.0 — Performance & Architectural Maturity (Completed)
+## ✅ v2.0 — Performance & Architectural Maturity (Completed)
 
-Focus: **runtime efficiency and internal architecture**  
-_**Breaking change**: consumers must migrate entities, procedures, and parameters to the new DataAnnotations-based attribute model._
+Focus: **runtime efficiency and internal architecture**
 
 ### Delivered
 - Removal of reflection from materialization hot paths
 - Compiled property setters and factory delegates
-- Compiled enum converters (no Enum.ToObject per row)
+- Compiled enum converters
 - Improved metadata conflict validation
-- Fail-fast detection for invalid attribute combinations
-- Optimized nested entity resolution
-- Reduced allocations during materialization
-- Improved internal caching structure
-- Refined error messages and mapping validation
+- Reduced allocations during nested materialization
+- More deterministic and fail-fast mapping behavior
 
-Hydrix 2.0 establishes a stable, performance-oriented foundation for long-term evolution.
+### Breaking Change
+- Entities, procedures, and parameters migrated to the DataAnnotations-based attribute model.
 
 ---
 
-## 🔬 v2.1 — Core Evolution, Performance & Stability (Completed)
+## ✅ v2.1 — Core Evolution, Performance & Stability (Completed)
 
 Focus: **execution architecture modernization, conversion correctness, and stronger runtime stability**
 
 ### Delivered
-- Hydrix configuration model with centralized runtime options (`HydrixOptions`)
+- `HydrixOptions` and centralized runtime configuration
 - Dependency Injection integration via `AddHydrix(...)`
-- `HydrixDataCore` and extension-first usage paths
+- `HydrixDataCore` extension-first usage paths
 - Strongly typed stored procedure support via `IProcedure<TDataParameter>`
 - Optional timeout support across execution and query APIs
-- Materialization and execution pipeline refactoring (`CommandEngine`/`ParameterEngine` split)
-- Conversion flow improvements (`As<T>`, `Guid`, provider `DbType` handling)
-- Process-wide hot cache refinements and cache architecture improvements
-- Expanded unit test coverage and validation hardening
-- Benchmarking foundation for regression tracking
-
-Hydrix 2.1 consolidates the transition to a more modular and performance-oriented runtime model.
+- Process-wide hot cache refinements
+- Broader benchmark and regression-testing foundations
 
 ---
 
-## 🧩 v2.2 — Transitional Performance Release (Planned)
+## ✅ v3.0 — HydrixDataCore-Only Runtime (Completed)
 
-Focus: **higher throughput, safer migration, and legacy bridge stabilization**
+Focus: **API simplification, migration closure, and higher throughput**
+
+### Delivered
+- Removal of the legacy `Materializer` and `IMaterializer` stacks
+- `HydrixDataCore` established as the only supported execution/query entry point
+- Additive Entity Framework interoperability through `HydrixEntityFramework.RegisterModel(...)`
+- Startup and dependency-injection automation for Entity Framework model registration through `AddHydrixEntityFrameworkModel<TDbContext>()` and `UseHydrixEntityFrameworkModels()`
+- Translation of `OnModelCreating` metadata into Hydrix's existing validation, query-building, and materialization caches
+- Faster conversion pipeline with per `(sourceType, targetType)` converter caches
+- Optimized conversions for numeric values, `DateTimeOffset`, `TimeSpan`, and boolean aliases
+- Opt-in command logging via `HydrixOptions.EnableCommandLogging`
+- Improved schema-binding concurrency in `TableMaterializeMetadata`
+- Lower-overhead row materializer execution via direct delegate invocation and cached `MethodInfo`
+- Lower-allocation command/procedure execution through closure-free parameter binding paths and shared default options
+- Stronger fallback type matching with reduced boxing in provider edge cases
+- Atomic hot-cache entries for converters and binders
+- Expanded unit test coverage and XML documentation standardization
+
+### Breaking Change
+- Materializer-based usage was completely removed. Hydrix 3.x must be consumed through `HydrixDataCore`.
+
+### Benchmark Snapshot
+
+Against Dapper, the current benchmark suite shows:
+
+- Flat / Take 1000: Hydrix `986.3 us` vs Dapper `1,062.0 us` (`7.1%` faster)
+- Flat / Take 10000: Hydrix `10,362.5 us` vs Dapper `12,731.9 us` (`18.6%` faster)
+- Nested / Take 1000: Hydrix `1.684 ms` vs Dapper `1.744 ms` (`3.4%` faster)
+- Nested / Take 10000: Hydrix `17.805 ms` vs Dapper `21.089 ms` (`15.6%` faster)
+- Flat allocations: `42.4%` less at `Take 1000`, `40.4%` less at `Take 10000`
+- Nested allocations: `46.5%` less at `Take 1000`, `45.0%` less at `Take 10000`
+
+Hydrix 3.0 reaches the release line with a mature nested pipeline, lower memory pressure, and benchmark results consistently above Dapper in the current suite.
+
+---
+
+## 🔜 v3.1 — Domain Decoupling, EF Coexistence & More Throughput (Planned)
+
+Focus: **removing Hydrix contract requirements from domain types, deepening coexistence with existing enterprise stacks, and continuing hot-path gains**
 
 ### Planned
+- Remove the requirement for domain entities to implement `Hydrix.Schemas.Contract` interfaces in Hydrix query/materialization flows
+- Keep `ITable`, `IEntity`, and `IProcedure<TDataParameterDriver>` available as compatibility markers instead of mandatory domain contracts
+- Allow plain CLR table and view types to participate in attribute-based and Entity Framework-backed metadata resolution
+- Allow stored procedure descriptor types to execute without mandatory Hydrix contract interfaces when they expose valid Hydrix metadata
+- Replace public API generic constraints that currently enforce Hydrix contracts with runtime validation based on metadata compatibility and constructor availability where required
+- Refactor nested-materialization internals that currently rely on `ITable` so they operate on plain object graphs without changing the existing runtime behavior
+- Expand Entity Framework interoperability so translated `OnModelCreating` metadata no longer depends on domain types implementing Hydrix contracts
+- Preserve backward compatibility for applications that already implement Hydrix marker interfaces
+- Add migration guidance and examples showing contract-free domain models for table, view, and procedure scenarios
+- Continue nested-materialization tuning without compromising flat-query speed
+- More provider-aware fast paths where they materially improve runtime behavior
+- Broader benchmark scenarios and comparative tracking across ADO.NET, Dapper, and Entity Framework
+- Additional diagnostics for migration and runtime observability
 
-- Keep the legacy `Materializer` API available as `[Obsolete]` (migration bridge)
-- Prioritize `HydrixDataCore` extension-based API in documentation and examples
-- Add migration diagnostics/warnings to help identify remaining legacy API usage
-- Improve async execution throughput and reduce allocations in query/command pipelines
-- Expand hot-cache invalidation and reuse strategies for metadata/materialization internals
-- Add more microbenchmarks for high-volume reads, joins, and scalar/non-query workloads
-- Improve resilience under concurrent load and long-running process scenarios
-- Refine error classification/messages for faster troubleshooting in production
-- Increase regression and stress test coverage focused on performance and stability
+### Transition Strategy
+- Phase 1: remove mandatory contract checks from public APIs while keeping the existing interfaces fully supported
+- Phase 2: switch metadata resolution, validation, and nested materialization internals from contract markers to metadata-driven eligibility
+- Phase 3: update docs, benchmarks, and migration guidance to position Hydrix as contract-optional for domain models
 
-#### All enhancements will preserve:
-
-- Explicit SQL
-- No hidden behavior
-- No implicit query generation
-
+### Compatibility Goal
+- Existing applications that already implement Hydrix contract interfaces should continue to work unchanged
+- New or existing domain models should be able to use Hydrix without introducing mandatory dependencies on `Hydrix.Schemas.Contract`
 ---
 
-## 🏗 v3.0 (LTS) — HydrixDataCore-Only Runtime (Planned)
-
-Focus: **long-term support baseline with maximum runtime efficiency and API stability**
-
-### Planned (Breaking Changes)
-
-- Remove legacy `Materializer` API completely
-- Adopt `HydrixDataCore` extension-based API as the only supported access model
-- Finalize and simplify public API surface around extension-first contracts
-- Remove compatibility layers kept only for 2.x transition support
-
-### LTS Goals
-
-- Strong backward stability guarantees within the 3.x LTS line
-- Lower steady-state memory footprint and reduced GC pressure
-- Predictable latency under concurrent workloads
-- Stable diagnostics and observability primitives for production operations
-
-Any breaking changes will strictly follow semantic versioning.
-
----
-
-## 🚀 v3.x+ — Post-LTS Performance & Reliability Evolution (Planned)
+## 🚀 v3.x+ — Post-3.0 Performance & Reliability Evolution (Planned)
 
 Focus: **continuous throughput gains and operational stability**
 
 ### Direction
-
-- Adaptive command/materialization pipelines tuned by workload profile
-- Deeper provider-specific fast paths (without compromising provider-agnostic defaults)
 - Advanced batching and streaming strategies for large result sets
-- Optional compile-time metadata generation where it clearly improves hot-path latency
-- Additional safeguards for cold-start determinism and cache warm-up behavior
-- Expanded chaos/stress testing for connection failures, timeouts, and retries
-- Performance regression gates in CI/CD using benchmark baselines
+- Optional compile-time metadata generation where it clearly improves latency
+- Faster cold-start and cache warm-up behavior
+- Stronger stress and chaos testing for connection failures, timeouts, and retries
+- Benchmark regression gates in CI/CD
 
 ---
 
@@ -184,12 +189,12 @@ Every new feature must:
 
 ## 🤝 Contributions & Feedback
 
-Community feedback is welcome and helps guide the roadmap.  
+Community feedback is welcome and helps guide the roadmap.
 Feature requests should align with Hydrix’s guiding principles and avoid introducing hidden behaviors or excessive abstraction.
 
 ---
 
 ## 👨‍💻 Author
 
-**Marcelo Matos dos Santos**  
+**Marcelo Matos dos Santos**
 Software Engineer • Open Source Maintainer

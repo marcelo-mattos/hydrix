@@ -1,0 +1,573 @@
+﻿using Hydrix.Attributes.Schemas;
+using Hydrix.Mapping;
+using Hydrix.Metadata.Materializers;
+using Hydrix.Resolvers;
+using Hydrix.Schemas.Contract;
+using Moq;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+using System.Reflection;
+using Xunit;
+
+namespace Hydrix.UnitTests.Metadata.Materializers
+{
+    /// <summary>
+    /// Unit tests for <see cref="TableMaterializeMetadata"/>.
+    /// </summary>
+    public class TableMaterializeMetadataTests
+    {
+        /// <summary>
+        /// Test entity with no mapping attributes.
+        /// </summary>
+        private class NoAttributesEntity : ITable
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name associated with the object.
+            /// </summary>
+            public string Name { get; set; }
+        }
+
+        /// <summary>
+        /// Test child entity for nested mapping.
+        /// </summary>
+        [Table("Child", Schema = "tests")]
+        private class TestChildEntity : ITable
+        {
+            /// <summary>
+            /// Gets or sets the identifier of the child entity associated with this record.
+            /// </summary>
+            [Column("ChildId")]
+            public int ChildId { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name of the child associated with this entity.
+            /// </summary>
+            [Column("ChildName")]
+            public string ChildName { get; set; }
+        }
+
+        /// <summary>
+        /// Test entity with scalar and nested mappings.
+        /// </summary>
+        [Table("Test", Schema = "tests")]
+        private class TestEntity : ITable
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            [Column("Id")]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name associated with the entity.
+            /// </summary>
+            [Column("Name")]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// Gets or sets the nullable integer value associated with this instance.
+            /// </summary>
+            [Column("NullableValue")]
+            public int? NullableValue { get; set; }
+
+            /// <summary>
+            /// Gets or sets the child entity associated with this instance.
+            /// </summary>
+            [ForeignTable("Child", Schema = "tests", PrimaryKeys = new[] { "ChildId" })]
+            public TestChildEntity Child { get; set; }
+
+            /// <summary>
+            /// Gets or sets the value that is not mapped to any database column.
+            /// </summary>
+            public string NotMapped { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a product in the inventory system, including its identification, name, price, and associated
+        /// category.
+        /// </summary>
+        /// <remarks>The product's price is nullable, indicating that it may not be set. Each product is
+        /// linked to a category, which provides context for its classification.</remarks>
+        [Table("products")]
+        private class Product
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            [Column("id")]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name associated with the entity.
+            /// </summary>
+            [Column("name")]
+            public string Name { get; set; }
+
+            /// <summary>
+            /// Gets or sets the price of the item. This property may be null if the price is not specified.
+            /// </summary>
+            /// <remarks>The price is represented as a nullable decimal value, allowing for scenarios
+            /// where the price may be unknown or not applicable.</remarks>
+            [Column("price")]
+            public decimal? Price { get; set; }
+
+            /// <summary>
+            /// Gets or sets the category associated with the current entity.
+            /// </summary>
+            /// <remarks>The category provides a way to classify the entity, allowing for better
+            /// organization and retrieval of related items.</remarks>
+            [ForeignTable("categories", Alias = "c", Schema = "dbo", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CategoryId" })]
+            public Category Category { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a category entity with an identifier and a name.
+        /// </summary>
+        /// <remarks>This class is typically used to organize or classify items within the application.
+        /// Each instance corresponds to a record in the 'categories' database table.</remarks>
+        [Table("categories")]
+        private class Category
+        {
+            /// <summary>
+            /// Gets or sets the unique identifier for the entity.
+            /// </summary>
+            [Column("id")]
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the name associated with the entity.
+            /// </summary>
+            [Column("name")]
+            public string Name { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an entity with an immutable identifier and a reference to a related child entity.
+        /// </summary>
+        /// <remarks>All properties except 'NotMapped' are read-only and can only be set during object
+        /// construction. The 'Id' property is mapped to a database column, while the 'Child' property represents a
+        /// foreign relationship to another entity. The 'NotMapped' property is not persisted in the database.</remarks>
+        private class NoSetterEntity
+        {
+            /// <summary>
+            /// Gets the unique identifier for the entity.
+            /// </summary>
+            [Column("id")]
+            public int Id { get; }
+
+            /// <summary>
+            /// Gets the child object associated with this instance.
+            /// </summary>
+            /// <remarks>The child object is retrieved from the foreign table 'child'. This property
+            /// is read-only and cannot be set directly.</remarks>
+            [ForeignTable("child")]
+            public object Child { get; }
+
+            /// <summary>
+            /// Gets or sets the value indicating that this property is not mapped to a database column.
+            /// </summary>
+            /// <remarks>Use this property to mark data members that should be excluded from database
+            /// persistence. This is useful for properties that are used only within the application and do not require
+            /// storage in the database schema.</remarks>
+            public string NotMapped { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a placeholder class with no fields or entities defined.
+        /// </summary>
+        private class NoFieldsOrEntities
+        { }
+
+        /// <summary>
+        /// Verifies that the TableMaterializeMetadata constructor correctly assigns the provided fields and entities to
+        /// the corresponding properties.
+        /// </summary>
+        /// <remarks>This test ensures that the constructor does not create copies of the input lists, but
+        /// instead assigns the references directly. This behavior is important for scenarios where reference equality
+        /// is required or when the caller expects changes to the original lists to be reflected in the metadata
+        /// instance.</remarks>
+        [Fact]
+        public void Constructor_SetsFieldsAndEntities()
+        {
+            // Arrange
+            var fields = new List<ColumnMap>();
+            var entities = new List<TableMap>();
+
+            // Act
+            var metadata = new TableMaterializeMetadata(fields, entities);
+
+            // Assert
+            Assert.Same(fields, metadata.Fields);
+            Assert.Same(entities, metadata.Entities);
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddBindings caches the first binding for a schema hash and reuses it on subsequent
+        /// requests.
+        /// </summary>
+        [Fact]
+        public void GetOrAddBindings_ReusesCachedBinding_ForSameSchemaHash()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            var invocationCount = 0;
+
+            var first = metadata.GetOrAddBindings(
+                1,
+                _ =>
+                {
+                    invocationCount++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            var second = metadata.GetOrAddBindings(
+                1,
+                _ =>
+                {
+                    invocationCount++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            Assert.Same(first, second);
+            Assert.Equal(1, invocationCount);
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddBindings stops caching new schema hashes once the configured cache cap is reached.
+        /// </summary>
+        [Fact]
+        public void GetOrAddBindings_DoesNotCacheNewSchemaHash_WhenCacheCapIsReached()
+        {
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+
+            var maxCacheSizeField = metadataType.GetField("MaxBindingsCacheSize", flags);
+            var bindingsCacheSizeField = metadataType.GetField("_bindingsCacheSize", flags);
+
+            Assert.NotNull(maxCacheSizeField);
+            Assert.NotNull(bindingsCacheSizeField);
+
+            var maxCacheSize = (int)maxCacheSizeField.GetRawConstantValue();
+
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            for (var schemaHash = 0; schemaHash < maxCacheSize; schemaHash++)
+            {
+                metadata.GetOrAddBindings(
+                    schemaHash,
+                    _ => new ResolvedTableBindings(null, null));
+            }
+
+            var cacheSizeBefore = (int)bindingsCacheSizeField.GetValue(metadata);
+            Assert.Equal(maxCacheSize, cacheSizeBefore);
+
+            var missesFactoryInvocations = 0;
+
+            var first = metadata.GetOrAddBindings(
+                maxCacheSize + 1,
+                _ =>
+                {
+                    missesFactoryInvocations++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            var second = metadata.GetOrAddBindings(
+                maxCacheSize + 1,
+                _ =>
+                {
+                    missesFactoryInvocations++;
+                    return new ResolvedTableBindings(null, null);
+                });
+
+            Assert.NotSame(first, second);
+            Assert.Equal(2, missesFactoryInvocations);
+            Assert.False(metadata.TryGetBindings(maxCacheSize + 1, out _));
+            Assert.Equal(maxCacheSize, (int)bindingsCacheSizeField.GetValue(metadata));
+        }
+
+        /// <summary>
+        /// Verifies that GetOrAddBindings rolls back reserved cache size and returns the cached bindings when cache
+        /// insertion loses a race for the same schema hash.
+        /// </summary>
+        [Fact]
+        public void GetOrAddBindings_InvokesFactoryExactlyOnce_WhenCalledConcurrently()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            var schemaHash = 42;
+            var expectedBindings = new ResolvedTableBindings(null, null);
+            var factoryCallCount = 0;
+            var gate = new System.Threading.ManualResetEventSlim(false);
+
+            Func<int, ResolvedTableBindings> factory = _ =>
+            {
+                System.Threading.Interlocked.Increment(ref factoryCallCount);
+                gate.Wait();
+                return expectedBindings;
+            };
+
+            var tasks = new System.Threading.Tasks.Task<ResolvedTableBindings>[8];
+            for (var i = 0; i < tasks.Length; i++)
+                tasks[i] = System.Threading.Tasks.Task.Run(() => metadata.GetOrAddBindings(schemaHash, factory));
+
+            gate.Set();
+            var results = System.Threading.Tasks.Task.WhenAll(tasks).GetAwaiter().GetResult();
+
+            Assert.Equal(1, factoryCallCount);
+            Assert.All(results, r => Assert.Same(expectedBindings, r));
+            Assert.True(metadata.TryGetBindings(schemaHash, out var fromCache));
+            Assert.Same(expectedBindings, fromCache);
+        }
+
+        /// <summary>
+        /// Verifies that, under heavy contention, callers that lose the dictionary insertion race still return the
+        /// winning cached bindings while keeping the cache-size accounting consistent.
+        /// </summary>
+        /// <remarks>This test repeatedly coordinates many simultaneous calls for the same schema hash to maximize the
+        /// race window between the initial cache probe and the dictionary insertion path, exercising the
+        /// GetOrAdd-race rollback flow.</remarks>
+        [Fact]
+        public void GetOrAddBindings_MaintainsCacheSizeConsistency_WhenManyThreadsRaceForSameSchemaHash()
+        {
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            var cacheSizeField = metadataType.GetField("_bindingsCacheSize", flags);
+
+            Assert.NotNull(cacheSizeField);
+
+            const int attempts = 24;
+            const int schemaHash = 777;
+
+            for (var attempt = 0; attempt < attempts; attempt++)
+            {
+                var metadata = new TableMaterializeMetadata(
+                    new List<ColumnMap>(),
+                    new List<TableMap>());
+
+                var expectedBindings = new ResolvedTableBindings(null, null);
+                var factoryCalls = 0;
+                var start = new System.Threading.ManualResetEventSlim(false);
+                var workers = Math.Max(Environment.ProcessorCount * 8, 32);
+                var tasks = new System.Threading.Tasks.Task<ResolvedTableBindings>[workers];
+
+                Func<int, ResolvedTableBindings> factory = _ =>
+                {
+                    System.Threading.Interlocked.Increment(ref factoryCalls);
+                    System.Threading.Thread.SpinWait(200_000);
+                    return expectedBindings;
+                };
+
+                for (var i = 0; i < tasks.Length; i++)
+                {
+                    tasks[i] = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        start.Wait();
+                        return metadata.GetOrAddBindings(schemaHash, factory);
+                    });
+                }
+
+                start.Set();
+
+                var results = System.Threading.Tasks.Task.WhenAll(tasks).GetAwaiter().GetResult();
+
+                Assert.Equal(1, factoryCalls);
+                Assert.All(results, r => Assert.Same(expectedBindings, r));
+                Assert.True(metadata.TryGetBindings(schemaHash, out var fromCache));
+                Assert.Same(expectedBindings, fromCache);
+                Assert.Equal(1, (int)cacheSizeField.GetValue(metadata));
+            }
+        }
+
+        /// <summary>
+        /// Verifies that cache slot reservation core retries after a failed update attempt and succeeds on a later
+        /// attempt.
+        /// </summary>
+        [Fact]
+        public void TryReserveBindingsCacheSlotCore_RetriesAfterFailedUpdate_AndThenSucceeds()
+        {
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var method = metadataType.GetMethod("TryReserveBindingsCacheSlotCore", flags);
+
+            Assert.NotNull(method);
+
+            var reads = new Queue<int>(new[] { 0, 0 });
+            Func<int> readCacheSize = () => reads.Dequeue();
+
+            var updateCalls = 0;
+            Func<int, int, bool> tryUpdate = (current, updated) =>
+            {
+                updateCalls++;
+                return updateCalls == 2;
+            };
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { readCacheSize, tryUpdate });
+
+            Assert.True(result);
+            Assert.Equal(2, updateCalls);
+        }
+
+        /// <summary>
+        /// Verifies that cache slot reservation core returns false when the cache size has reached the configured
+        /// maximum.
+        /// </summary>
+        [Fact]
+        public void TryReserveBindingsCacheSlotCore_ReturnsFalse_WhenCacheIsFull()
+        {
+            var metadataType = typeof(TableMaterializeMetadata);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+
+            var method = metadataType.GetMethod("TryReserveBindingsCacheSlotCore", flags);
+            var maxCacheSizeField = metadataType.GetField("MaxBindingsCacheSize", flags);
+
+            Assert.NotNull(method);
+            Assert.NotNull(maxCacheSizeField);
+
+            var maxCacheSize = (int)maxCacheSizeField.GetRawConstantValue();
+
+            Func<int> readCacheSize = () => maxCacheSize;
+
+            var updateCalls = 0;
+            Func<int, int, bool> tryUpdate = (current, updated) =>
+            {
+                updateCalls++;
+                return true;
+            };
+
+            var result = (bool)method.Invoke(
+                null,
+                new object[] { readCacheSize, tryUpdate });
+
+            Assert.False(result);
+            Assert.Equal(0, updateCalls);
+        }
+
+        /// <summary>
+        /// Verifies that RememberBindings ignores null bindings and keeps hot bindings unset.
+        /// </summary>
+        [Fact]
+        public void RememberBindings_DoesNothing_WhenBindingsIsNull()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(null);
+
+            var reader = new Mock<IDataReader>().Object;
+            Assert.False(metadata.TryGetHotBindings(reader, out var hotBindings));
+            Assert.Null(hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that RememberBindings ignores bindings with empty schema snapshots.
+        /// </summary>
+        [Fact]
+        public void RememberBindings_DoesNothing_WhenBindingsHasEmptyColumnNames()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(new ResolvedTableBindings(null, null, Array.Empty<string>()));
+
+            var reader = new Mock<IDataReader>().Object;
+            Assert.False(metadata.TryGetHotBindings(reader, out var hotBindings));
+            Assert.Null(hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that TryGetHotBindings returns true when remembered bindings match the reader schema.
+        /// </summary>
+        [Fact]
+        public void TryGetHotBindings_ReturnsTrue_WhenRememberedBindingsMatchReader()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            var remembered = new ResolvedTableBindings(
+                null,
+                null,
+                new[] { "Id", "Name" });
+
+            metadata.RememberBindings(remembered);
+
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(2);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetName(1)).Returns("Name");
+
+            var found = metadata.TryGetHotBindings(reader.Object, out var hotBindings);
+
+            Assert.True(found);
+            Assert.Same(remembered, hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that TryGetHotBindings returns false when remembered bindings do not match the reader schema.
+        /// </summary>
+        [Fact]
+        public void TryGetHotBindings_ReturnsFalse_WhenRememberedBindingsDoNotMatchReader()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            metadata.RememberBindings(new ResolvedTableBindings(
+                null,
+                null,
+                new[] { "Id", "Name" }));
+
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(1);
+
+            var found = metadata.TryGetHotBindings(reader.Object, out var hotBindings);
+
+            Assert.False(found);
+            Assert.Null(hotBindings);
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="TableMaterializeMetadata.ReplaceBindings(int, ResolvedTableBindings)"/> stores
+        /// the replacement plan and that subsequent reads return the replaced instance.
+        /// </summary>
+        [Fact]
+        public void ReplaceBindings_ReplacesExistingCachedBinding()
+        {
+            var metadata = new TableMaterializeMetadata(
+                new List<ColumnMap>(),
+                new List<TableMap>());
+
+            const int schemaHash = 999;
+            var original = new ResolvedTableBindings(null, null);
+            var replacement = new ResolvedTableBindings(null, null);
+
+            var cached = metadata.GetOrAddBindings(schemaHash, _ => original);
+            Assert.Same(original, cached);
+
+            metadata.ReplaceBindings(schemaHash, replacement);
+
+            var found = metadata.TryGetBindings(schemaHash, out var replaced);
+
+            Assert.True(found);
+            Assert.Same(replacement, replaced);
+        }
+    }
+}

@@ -1,7 +1,6 @@
-using Hydrix.Configuration;
+using Hydrix.Caching;
 using Hydrix.Engines.Options;
 using Hydrix.Extensions;
-using Hydrix.Orchestrator.Caching;
 using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
@@ -22,6 +21,24 @@ namespace Hydrix.Engines
     /// interface and have a parameterless constructor.</remarks>
     internal static class MaterializationEngine
     {
+        /// <summary>
+        /// Reuses a shared default command-options instance when callers omit materialization command options.
+        /// </summary>
+        /// <remarks>The shared instance contains only stable framework defaults. Runtime-specific values
+        /// such as the connection remain unset, so the normal validation path still enforces explicit
+        /// connection configuration.</remarks>
+        private static readonly MaterializationCommandOptions DefaultCommandOptions =
+            new MaterializationCommandOptions();
+
+        /// <summary>
+        /// Reuses a shared default options instance when callers omit stored-procedure materialization options.
+        /// </summary>
+        /// <remarks>The shared instance contains only stable framework defaults. Runtime-specific values
+        /// such as the connection remain unset, so the normal validation path still enforces explicit
+        /// connection configuration.</remarks>
+        private static readonly MaterializationOptions DefaultOptions =
+            new MaterializationOptions();
+
         /// <summary>
         /// Executes the specified SQL query and maps the result set to a list of entities of type TEntity.
         /// </summary>
@@ -180,12 +197,21 @@ namespace Hydrix.Engines
         /// Validates that the specified entity type meets the requirements for use in entity requests.
         /// </summary>
         /// <remarks>This method ensures that the entity type conforms to the expected structure for
-        /// entity requests. If the type is invalid, an exception may be thrown by the underlying validation
-        /// logic.</remarks>
+        /// entity requests. Entity types that lack mapped members are rejected early so materialization cannot proceed
+        /// with an invalid contract.</remarks>
         /// <typeparam name="TEntity">The type of entity to validate. Must implement the ITable interface and have a parameterless constructor.</typeparam>
+        /// <exception cref="InvalidOperationException">Thrown when the entity type is decorated as a table but does not expose any mapped members that Hydrix can materialize.</exception>
+        /// <exception cref="MissingMemberException">Thrown when the entity type does not define the metadata required by the active validation path.</exception>
         private static void EnsureValidEntityRequest<TEntity>()
             where TEntity : ITable, new()
-            => EntityRequestValidationCache.Validate(typeof(TEntity));
+        {
+            var entityType = typeof(TEntity);
+            if (EntityRequestValidationCache.Validate(entityType))
+                return;
+
+            throw new InvalidOperationException(
+                $"Entity '{entityType.FullName}' is not valid for Hydrix materialization. Ensure it has at least one mapped property.");
+        }
 
         /// <summary>
         /// Validates that command execution options include a database connection.
@@ -207,27 +233,21 @@ namespace Hydrix.Engines
         }
 
         /// <summary>
-        /// Resolves command execution options, returning a default instance when none is provided.
+        /// Resolves command execution options, returning a shared default instance when none is provided.
         /// </summary>
         /// <param name="options">The command execution options.</param>
         /// <returns>A non-null command execution options instance.</returns>
         private static MaterializationCommandOptions ResolveCommandOptions(
             MaterializationCommandOptions options)
-            => options ?? new MaterializationCommandOptions
-            {
-                ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
-            };
+            => options ?? DefaultCommandOptions;
 
         /// <summary>
-        /// Resolves execution options, returning a default instance when none is provided.
+        /// Resolves execution options, returning a shared default instance when none is provided.
         /// </summary>
         /// <param name="options">The execution options.</param>
         /// <returns>A non-null execution options instance.</returns>
         private static MaterializationOptions ResolveOptions(
             MaterializationOptions options)
-            => options ?? new MaterializationOptions
-            {
-                ParameterPrefix = HydrixConfiguration.Options.ParameterPrefix
-            };
+            => options ?? DefaultOptions;
     }
 }

@@ -35,6 +35,7 @@ namespace Hydrix.Tests
                 {
                     services.AddHydrix(options =>
                     {
+                        options.EnableCommandLogging = true;
                         options.Logger = hydrixLoggerFactory.CreateLogger("Hydrix");
                     });
                     services.AddTransient<App>();

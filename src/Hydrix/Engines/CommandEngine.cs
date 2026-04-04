@@ -1,7 +1,7 @@
-﻿using Hydrix.Configuration;
-using Hydrix.Extensions;
-using Hydrix.Orchestrator.Binders.Procedure;
-using Hydrix.Orchestrator.Caching;
+using Hydrix.Binders.Procedure;
+using Hydrix.Caching;
+using Hydrix.Caching.Entries;
+using Hydrix.Configuration;
 using Hydrix.Schemas.Contract;
 using Microsoft.Extensions.Logging;
 using System;
@@ -22,32 +22,30 @@ namespace Hydrix.Engines
     internal static class CommandEngine
     {
         /// <summary>
-        /// Holds the last procedure type used in the process-wide hot cache.
+        /// Holds the most recently used procedure-binder cache entry in the process-wide hot cache.
         /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to reduce repeated cache
-        /// lookups in high-throughput and async execution paths.</remarks>
-        private static Type _lastProcedureType;
+        /// <remarks>This field stores the type/binder pair as a single immutable object so volatile reads and writes
+        /// remain atomically consistent under concurrent access.</remarks>
+        private static ProcedureBinderCacheEntry _lastProcedureCache;
 
         /// <summary>
-        /// Holds the last used procedure binder for the process-wide hot cache.
+        /// Holds the most recently used provider-specific setter cache entry in the process-wide hot cache.
         /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to reduce repeated binder
-        /// resolution in high-throughput and async execution paths.</remarks>
-        private static ProcedureBinder _lastProcedureBinder;
+        /// <remarks>This field stores the parameter-type/setter pair as a single immutable object so volatile reads
+        /// and writes remain atomically consistent under concurrent access.</remarks>
+        private static ProviderDbTypeSetterCacheEntry _lastProviderSetterCache;
 
         /// <summary>
-        /// Holds the parameter type of the last provider-specific setter stored in the process-wide hot cache.
+        /// Reuses a static delegate for binding anonymous-object parameters without allocating a per-call closure.
         /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to reduce repeated provider
-        /// setter lookup in high-throughput and async execution paths.</remarks>
-        private static Type _lastProviderSetterParameterType;
+        private static readonly Action<IDbCommand, (object Parameters, string ParameterPrefix)> BindParametersFromObjectDelegate =
+            BindParametersFromObject;
 
         /// <summary>
-        /// Stores the last provider-specific parameter setter action used in the process-wide hot cache.
+        /// Reuses a static delegate for invoking prebuilt parameter binders without allocating a per-call closure.
         /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to optimize repeated
-        /// parameter assignments in high-throughput and async execution paths.</remarks>
-        private static Action<IDataParameter, int> _lastProviderSetter;
+        private static readonly Action<IDbCommand, Action<IDbCommand>> InvokeParameterBinderDelegate =
+            InvokeParameterBinder;
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -81,16 +79,18 @@ namespace Hydrix.Engines
             object parameters,
             string parameterPrefix = null,
             int? timeout = null)
-            => CreateCommandCore(
+        {
+            var resolvedParameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
+
+            return CreateCommandCore(
                 connection,
                 transaction,
                 commandType,
                 sql,
-                command => ParameterEngine.BindParametersFromObject(
-                    command,
-                    parameters,
-                    parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix),
+                (parameters, resolvedParameterPrefix),
+                BindParametersFromObjectDelegate,
                 timeout);
+        }
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -143,34 +143,15 @@ namespace Hydrix.Engines
             binder.ApplyCommand(command);
             command.CommandTimeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             command.Transaction = transaction;
+
+            var resolvedParameterPrefix = parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix;
             var providerDbTypeSetter = GetOrAddProviderDbTypeSetter(typeof(TDataParameterDriver));
 
-            binder.BindParameters(
+            binder.BindParameters<TDataParameterDriver>(
                 command,
                 procedure,
-                parameterPrefix ?? HydrixConfiguration.Options.ParameterPrefix,
-                (cmd, name, value, direction, dbType) =>
-                {
-                    var dataParameter = new TDataParameterDriver
-                    {
-                        ParameterName = name,
-                        Direction = direction,
-                        Value = value
-                    };
-
-                    if (dbType.IsStandardDbType())
-                    {
-                        dataParameter.DbType = (DbType)dbType;
-                    }
-                    else
-                    {
-                        providerDbTypeSetter(
-                            dataParameter,
-                            dbType);
-                    }
-
-                    cmd.Parameters.Add(dataParameter);
-                });
+                resolvedParameterPrefix,
+                providerDbTypeSetter);
 
             LogCommand(command);
 
@@ -189,27 +170,23 @@ namespace Hydrix.Engines
         private static ProcedureBinder GetOrAddProcedureBinder(
             Type procedureType)
         {
-            var cachedType = Volatile.Read(ref _lastProcedureType);
-            var cachedBinder = Volatile.Read(ref _lastProcedureBinder);
-
-            if (ReferenceEquals(
-                    cachedType,
-                    procedureType) &&
-                cachedBinder != null)
+            var cachedEntry = Volatile.Read(ref _lastProcedureCache);
+            if (cachedEntry != null &&
+                ReferenceEquals(
+                    cachedEntry.ProcedureType,
+                    procedureType))
             {
-                return cachedBinder;
+                return cachedEntry.Binder;
             }
 
             var binder = ProcedureBinderCache.GetOrAdd(
                 procedureType);
 
             Volatile.Write(
-                ref _lastProcedureBinder,
-                binder);
-
-            Volatile.Write(
-                ref _lastProcedureType,
-                procedureType);
+                ref _lastProcedureCache,
+                new ProcedureBinderCacheEntry(
+                    procedureType,
+                    binder));
 
             return binder;
         }
@@ -226,26 +203,22 @@ namespace Hydrix.Engines
         private static Action<IDataParameter, int> GetOrAddProviderDbTypeSetter(
             Type parameterType)
         {
-            var cachedType = Volatile.Read(ref _lastProviderSetterParameterType);
-            var cachedSetter = Volatile.Read(ref _lastProviderSetter);
-
-            if (ReferenceEquals(
-                    cachedType,
-                    parameterType) &&
-                cachedSetter != null)
+            var cachedEntry = Volatile.Read(ref _lastProviderSetterCache);
+            if (cachedEntry != null &&
+                ReferenceEquals(
+                    cachedEntry.ParameterType,
+                    parameterType))
             {
-                return cachedSetter;
+                return cachedEntry.Setter;
             }
 
             var setter = ProviderDbTypeSetterCache.GetOrAdd(parameterType);
 
             Volatile.Write(
-                ref _lastProviderSetter,
-                setter);
-
-            Volatile.Write(
-                ref _lastProviderSetterParameterType,
-                parameterType);
+                ref _lastProviderSetterCache,
+                new ProviderDbTypeSetterCacheEntry(
+                    parameterType,
+                    setter));
 
             return setter;
         }
@@ -272,6 +245,37 @@ namespace Hydrix.Engines
             string sql,
             Action<IDbCommand> parameterBinder,
             int? timeout = null)
+            => CreateCommandCore(
+                connection,
+                transaction,
+                commandType,
+                sql,
+                parameterBinder,
+                InvokeParameterBinderDelegate,
+                timeout);
+
+        /// <summary>
+        /// Creates and configures a database command using strongly typed parameter-binder state.
+        /// </summary>
+        /// <typeparam name="TParameterBinderState">The type of state passed to the parameter-binding delegate.</typeparam>
+        /// <param name="connection">The database connection to use for creating the command. Must be an open connection.</param>
+        /// <param name="transaction">An optional database transaction within which the command will be executed. If null, the current active
+        /// transaction is used if available.</param>
+        /// <param name="commandType">The type of command to execute, such as text, stored procedure, or table direct.</param>
+        /// <param name="sql">The SQL statement or stored procedure name to execute against the database.</param>
+        /// <param name="parameterBinderState">The state object consumed by <paramref name="parameterBinder"/> when binding parameters.</param>
+        /// <param name="parameterBinder">The callback that binds parameters to the created command using <paramref name="parameterBinderState"/>.</param>
+        /// <param name="timeout">An optional command timeout, in seconds, to use for this command.</param>
+        /// <returns>An IDbCommand instance configured with the specified command type, SQL, parameters, and transaction context.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the database connection is not open when attempting to create the command.</exception>
+        private static IDbCommand CreateCommandCore<TParameterBinderState>(
+            IDbConnection connection,
+            IDbTransaction transaction,
+            CommandType commandType,
+            string sql,
+            TParameterBinderState parameterBinderState,
+            Action<IDbCommand, TParameterBinderState> parameterBinder,
+            int? timeout = null)
         {
             if (connection.State != ConnectionState.Open)
                 throw new InvalidOperationException("Database connection is not open.");
@@ -282,11 +286,38 @@ namespace Hydrix.Engines
             command.CommandTimeout = timeout ?? HydrixConfiguration.Options.CommandTimeout;
             command.Transaction = transaction;
 
-            parameterBinder?.Invoke(command);
+            parameterBinder?.Invoke(
+                command,
+                parameterBinderState);
+
             LogCommand(command);
 
             return command;
         }
+
+        /// <summary>
+        /// Binds an object-parameter payload to the specified command using a precomputed prefix.
+        /// </summary>
+        /// <param name="command">The command that receives the bound parameters.</param>
+        /// <param name="state">The anonymous-object parameter payload and resolved parameter prefix.</param>
+        private static void BindParametersFromObject(
+            IDbCommand command,
+            (object Parameters, string ParameterPrefix) state)
+            => ParameterEngine.BindParametersFromObject(
+                command,
+                state.Parameters,
+                state.ParameterPrefix);
+
+        /// <summary>
+        /// Invokes a prebuilt parameter binder delegate.
+        /// </summary>
+        /// <param name="command">The command whose parameters are being bound.</param>
+        /// <param name="parameterBinder">The binder delegate to invoke. May be null.</param>
+        private static void InvokeParameterBinder(
+            IDbCommand command,
+            Action<IDbCommand> parameterBinder)
+            => parameterBinder?.Invoke(
+                command);
 
         /// <summary>
         /// Logs the details of the specified database command, including its SQL statement and parameters, for
@@ -299,7 +330,12 @@ namespace Hydrix.Engines
         private static void LogCommand(
             IDbCommand command)
         {
-            var logger = HydrixConfiguration.Options.Logger;
+            var options = HydrixConfiguration.Options;
+
+            if (!options.EnableCommandLogging)
+                return;
+
+            var logger = options.Logger;
 
             if (logger is null)
                 return;

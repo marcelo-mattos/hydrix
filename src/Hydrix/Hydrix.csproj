@@ -7,12 +7,12 @@
     <Title>Hydrix</Title>
     <Company>Marcelo Matos dos Santos</Company>
     <Description>Hydrix SQL Materializer Library</Description>
-    <Copyright>© 2025 Marcelo Matos dos Santos</Copyright>
+    <Copyright>© 2026 Marcelo Matos dos Santos</Copyright>
     <PackageTags>hydrix sql data orm micro-orm hydration materializer</PackageTags>
     <Product>Hydrix</Product>
     <ApplicationIcon>Hydrix.ico</ApplicationIcon>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <Version>2.1.0</Version>
+    <Version>3.0.0</Version>
     <RepositoryUrl>https://github.com/marcelo-mattos/hydrix</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**</DefaultItemExcludes>
@@ -20,33 +20,43 @@
 
   <PropertyGroup>
     <PackageReleaseNotes>
-      - (2.1.0) Add configuration system, dependency injection support,
-      extension APIs, and benchmarking suite
+      - (3.0.0) Removed Materializer, IMaterializer, and all related APIs,
+      including query execution, command handling, and entity materialization
+      abstractions, simplifying the library to its core high-performance
+      mapping capabilities.
 
-      - Introduced Hydrix.Configuration with HydrixOptions to centralize
-      global settings such as command timeout, parameter prefix, and
-      logging integration.
+      - Introduced a new optimized materialization pipeline based on
+      schema-aware binding plans, hot-path caching, and expression-based
+      compiled delegates for maximum performance and predictability.
 
-      - Added Hydrix.DependencyInjection to simplify registration and
-      configuration through the Microsoft.Extensions.DependencyInjection
-      container, enabling seamless integration in modern .NET applications.
+      - Implemented fast-path row materializers, including fully inlined
+      expression-tree-based execution for leaf and nested entities, reducing
+      allocations, eliminating delegate indirection, and improving throughput.
 
-      - Implemented extension APIs including IDbConnection execution
-      helpers (Execute, ExecuteScalar, Query, QueryFirst, QuerySingle,
-      and async variants), parameter normalization utilities, and
-      object conversion helpers.
+      - Enhanced schema matching with precomputed field snapshots and
+      flattened binding structures, replacing recursive traversal with
+      efficient linear matching strategies.
 
-      - Refactored Materializer to consume HydrixOptions, expose the
-      underlying DbConnection for internal scenarios and tests, and
-      introduce support for limiting result records in queries.
+      - Strengthened type validation across all mappings, ensuring provider
+      CLR type compatibility for fields and nested entities.
 
-      - Expanded unit test coverage for configuration, dependency
-      injection integration, extension methods, and Materializer
-      behaviors, improving reliability and maintainability.
+      - Refactored internal architecture to improve separation of concerns,
+      metadata propagation, and execution clarity across mapping components.
 
-      - Fixed minor typos, improved XML documentation comments, and
-      updated repository housekeeping files including .gitignore and
-      cleanup scripts.
+      - Expanded and consolidated unit tests to cover all materialization
+      paths, edge cases, schema variations, and concurrency scenarios,
+      ensuring high reliability.
+
+      - Improved developer tooling with an enhanced benchmark runner,
+      including interactive selection of frameworks, jobs, diagnosers,
+      and exporters.
+
+      - Updated documentation, XML comments, and README to reflect the new
+      architecture and clarified that the library has no non-Microsoft
+      dependencies.
+
+      - General code cleanup, improved exception handling, and internal
+      optimizations across the codebase.
     </PackageReleaseNotes>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

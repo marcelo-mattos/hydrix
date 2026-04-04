@@ -1,3 +1,4 @@
+using Hydrix.Caching.Entries;
 using Hydrix.Extensions;
 using System;
 using System.Collections.Concurrent;
@@ -9,12 +10,20 @@ using Xunit;
 namespace Hydrix.UnitTests.Extensions
 {
     /// <summary>
+    /// Defines a non-parallelized test collection for tests that mutate the shared ObjectExtensions converter caches.
+    /// </summary>
+    [CollectionDefinition("ObjectExtensionsSequential", DisableParallelization = true)]
+    public class ObjectExtensionsSequentialCollection
+    { }
+
+    /// <summary>
     /// Contains unit tests for the ObjectExtensions class, verifying the behavior of the As&lt;T&gt;() extension method under
     /// various input scenarios.
     /// </summary>
     /// <remarks>These tests ensure that the As&lt;T&gt;() method correctly handles null values, DBNull, convertible
     /// types, and non-convertible types, returning default values or throwing exceptions as appropriate. The tests help
     /// validate the robustness and correctness of type conversion logic implemented in ObjectExtensions.</remarks>
+    [Collection("ObjectExtensionsSequential")]
     public class ObjectExtensionsTests
     {
         /// <summary>
@@ -225,22 +234,22 @@ namespace Hydrix.UnitTests.Extensions
         /// Verifies that As&lt;T&gt; throws when target is Guid and source is neither Guid nor string.
         /// </summary>
         [Fact]
-        public void As_ThrowsInvalidCastException_WhenGuidTargetAndSourceIsUnsupported()
+        public void As_ThrowsFormatException_WhenGuidTargetAndSourceIsUnsupported()
         {
             object value = 10;
 
-            Assert.Throws<InvalidCastException>(() => value.As<Guid>());
+            Assert.Throws<FormatException>(() => value.As<Guid>());
         }
 
         /// <summary>
         /// Verifies that As&lt;T&gt; throws when target is nullable Guid and source is neither Guid nor string.
         /// </summary>
         [Fact]
-        public void As_ThrowsInvalidCastException_WhenNullableGuidTargetAndSourceIsUnsupported()
+        public void As_ThrowsFormatException_WhenNullableGuidTargetAndSourceIsUnsupported()
         {
             object value = 10;
 
-            Assert.Throws<InvalidCastException>(() => value.As<Guid?>());
+            Assert.Throws<FormatException>(() => value.As<Guid?>());
         }
 
         /// <summary>
@@ -463,6 +472,42 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that the DateTimeOffset converter delegate executes the direct DateTimeOffset switch arm.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_DateTimeOffsetDelegate_ReturnsDirectDateTimeOffset_WhenValueIsDateTimeOffset()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildConverter",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(DateTimeOffset) });
+            var value = new DateTimeOffset(2025, 1, 2, 3, 4, 5, TimeSpan.Zero);
+
+            var result = converter(value);
+
+            Assert.Equal(value, result);
+        }
+
+        /// <summary>
+        /// Verifies that the TimeSpan converter delegate executes the direct TimeSpan switch arm.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_TimeSpanDelegate_ReturnsDirectTimeSpan_WhenValueIsTimeSpan()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildConverter",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(TimeSpan) });
+            var value = TimeSpan.FromMinutes(2);
+
+            var result = converter(value);
+
+            Assert.Equal(value, result);
+        }
+
+        /// <summary>
         /// Verifies that As&lt;T&gt; builds converters on demand without growing the shared cache when the cache is at its
         /// configured maximum size.
         /// </summary>
@@ -474,22 +519,19 @@ namespace Hydrix.UnitTests.Extensions
 
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
-            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
             var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
             var previousCacheSize = (int)cacheSizeField.GetValue(null);
-            var previousLastType = lastConverterTargetTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 cache.Clear();
                 cacheSizeField.SetValue(null, 0);
-                lastConverterTargetTypeField.SetValue(null, null);
-                lastConverterField.SetValue(null, null);
+                lastConverterCacheField.SetValue(null, null);
 
                 var assemblyName = new AssemblyName($"Hydrix.DynamicTypes.{Guid.NewGuid():N}");
                 var assembly = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
@@ -523,8 +565,7 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(entry.Key, entry.Value);
 
                 cacheSizeField.SetValue(null, previousCacheSize);
-                lastConverterTargetTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -541,20 +582,17 @@ namespace Hydrix.UnitTests.Extensions
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
             var maxCacheSizeField = objectExtensionsType.GetField("MaxConverterCacheSize", flags);
-            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
             var previousCacheSize = (int)cacheSizeField.GetValue(null);
-            var previousLastType = lastConverterTargetTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 cache.Clear();
-                lastConverterTargetTypeField.SetValue(null, null);
-                lastConverterField.SetValue(null, null);
+                lastConverterCacheField.SetValue(null, null);
 
                 var maxCacheSize = (int)maxCacheSizeField.GetValue(null);
                 cacheSizeField.SetValue(null, maxCacheSize);
@@ -564,8 +602,8 @@ namespace Hydrix.UnitTests.Extensions
 
                 Assert.NotNull(converter);
                 Assert.False(cache.ContainsKey(targetType));
-                Assert.Equal(targetType, lastConverterTargetTypeField.GetValue(null));
-                Assert.Same(converter, lastConverterField.GetValue(null));
+                Assert.Equal(targetType, ReadConverterHotCacheTargetType(lastConverterCacheField.GetValue(null)));
+                Assert.Same(converter, ReadConverterHotCacheConverter(lastConverterCacheField.GetValue(null)));
             }
             finally
             {
@@ -574,8 +612,7 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(entry.Key, entry.Value);
 
                 cacheSizeField.SetValue(null, previousCacheSize);
-                lastConverterTargetTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -880,20 +917,17 @@ namespace Hydrix.UnitTests.Extensions
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
             var maxCacheSizeField = objectExtensionsType.GetField("MaxConverterCacheSize", flags);
-            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
             var previousCacheSize = (int)cacheSizeField.GetValue(null);
-            var previousLastType = lastConverterTargetTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 cache.Clear();
-                lastConverterTargetTypeField.SetValue(null, null);
-                lastConverterField.SetValue(null, null);
+                lastConverterCacheField.SetValue(null, null);
 
                 var maxCacheSize = (int)maxCacheSizeField.GetValue(null);
                 cacheSizeField.SetValue(null, maxCacheSize);
@@ -913,8 +947,7 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(entry.Key, entry.Value);
 
                 cacheSizeField.SetValue(null, previousCacheSize);
-                lastConverterTargetTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -939,6 +972,571 @@ namespace Hydrix.UnitTests.Extensions
         }
 
         /// <summary>
+        /// Verifies that As&lt;T&gt; converts floating-point and decimal values to boolean using numeric zero checks.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsFloatingPointAndDecimalValues_ToBoolean()
+        {
+            object floatNonZero = 0.1f;
+            object floatZero = 0f;
+            object doubleNonZero = 0.1d;
+            object doubleZero = 0d;
+            object decimalNonZero = 1m;
+            object decimalZero = 0m;
+
+            Assert.True(floatNonZero.As<bool>());
+            Assert.False(floatZero.As<bool>());
+            Assert.True(doubleNonZero.As<bool>());
+            Assert.False(doubleZero.As<bool>());
+            Assert.True(decimalNonZero.As<bool>());
+            Assert.False(decimalZero.As<bool>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts string aliases to boolean values through ParseBooleanFromString.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsStringAliases_ToBoolean()
+        {
+            Assert.True("1".As<bool>());
+            Assert.False("0".As<bool>());
+            Assert.True("yes".As<bool>());
+            Assert.False("NO".As<bool>());
+            Assert.True("On".As<bool>());
+            Assert.False("off".As<bool>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; throws for unsupported boolean string values.
+        /// </summary>
+        [Fact]
+        public void As_ThrowsFormatException_WhenBooleanStringIsInvalid()
+        {
+            Assert.Throws<FormatException>(() => "not-bool".As<bool>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts all supported DateTimeOffset source variants.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsDateTimeOffset_FromAllSupportedSources()
+        {
+            var dto = new DateTimeOffset(2025, 2, 3, 4, 5, 6, TimeSpan.Zero);
+            var dt = dto.UtcDateTime;
+            object fromDto = dto;
+            object fromDateTime = dt;
+            object fromString = dto.ToString("o");
+            object fromTicks = dt.Ticks;
+            object fromFallbackToString = new ToStringWrapper(dto.ToString("o"));
+
+            Assert.Equal(dto, fromDto.As<DateTimeOffset>());
+            Assert.Equal(new DateTimeOffset(dt), fromDateTime.As<DateTimeOffset>());
+            Assert.Equal(dto, fromString.As<DateTimeOffset>());
+            Assert.Equal(new DateTimeOffset(new DateTime(dt.Ticks, DateTimeKind.Utc)), fromTicks.As<DateTimeOffset>());
+            Assert.Equal(dto, fromFallbackToString.As<DateTimeOffset>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts all supported TimeSpan source variants.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsTimeSpan_FromAllSupportedSources()
+        {
+            var ts = TimeSpan.FromSeconds(90);
+            object fromTimeSpan = ts;
+            object fromTicks = ts.Ticks;
+            object fromMilliseconds = 1500;
+            object fromString = "00:00:02";
+            object fromFallbackToString = new ToStringWrapper("00:00:03");
+
+            Assert.Equal(ts, fromTimeSpan.As<TimeSpan>());
+            Assert.Equal(new TimeSpan(ts.Ticks), fromTicks.As<TimeSpan>());
+            Assert.Equal(TimeSpan.FromMilliseconds(1500), fromMilliseconds.As<TimeSpan>());
+            Assert.Equal(TimeSpan.Parse("00:00:02"), fromString.As<TimeSpan>());
+            Assert.Equal(TimeSpan.Parse("00:00:03"), fromFallbackToString.As<TimeSpan>());
+        }
+
+        /// <summary>
+        /// Verifies that As&lt;T&gt; converts string values to remaining supported numeric target types.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsString_ToRemainingSupportedNumericTypes()
+        {
+            Assert.Equal((sbyte)-8, "-8".As<sbyte>());
+            Assert.Equal((ushort)12, "12".As<ushort>());
+            Assert.Equal((uint)13, "13".As<uint>());
+            Assert.Equal((ulong)14, "14".As<ulong>());
+            Assert.Equal('A', "A".As<char>());
+        }
+
+        /// <summary>
+        /// Verifies that BuildConverter fallback returns the same object when source already matches target type.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_FallbackPath_ReturnsSameObject_WhenSourceAlreadyMatchesTargetType()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildConverter",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(Version) });
+            var value = new Version(1, 2, 3, 4);
+
+            var result = converter(value);
+
+            Assert.Same(value, result);
+        }
+
+        /// <summary>
+        /// Verifies that BuildConverter fallback populates PairConverterCache and reuses cached pair converters.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_FallbackPath_UsesPairConverterCache_OnSubsequentCalls()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+            var pairCacheField = objectExtensionsType.GetField("PairConverterCache", flags);
+            var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
+
+            var pairCache = (ConcurrentDictionary<(Type Source, Type Target), Func<object, object>>)pairCacheField.GetValue(null);
+            var previousEntries = pairCache.ToArray();
+
+            try
+            {
+                pairCache.Clear();
+
+                var converter = (Func<object, object>)buildConverterMethod.Invoke(null, new object[] { typeof(Version) });
+
+                Assert.Throws<InvalidCastException>(() => converter("1.2.3.4"));
+                Assert.True(pairCache.ContainsKey((typeof(string), typeof(Version))));
+
+                Assert.Throws<InvalidCastException>(() => converter("5.6.7.8"));
+                Assert.True(pairCache.ContainsKey((typeof(string), typeof(Version))));
+            }
+            finally
+            {
+                pairCache.Clear();
+                foreach (var entry in previousEntries)
+                    pairCache.TryAdd(entry.Key, entry.Value);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that BuildConverter fallback does not cache pair converters for runtime source types outside the known fast-path set.
+        /// </summary>
+        [Fact]
+        public void BuildConverter_FallbackPath_DoesNotCacheUnknownRuntimeSourceType()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+            var pairCacheField = objectExtensionsType.GetField("PairConverterCache", flags);
+            var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
+
+            var pairCache = (ConcurrentDictionary<(Type Source, Type Target), Func<object, object>>)pairCacheField.GetValue(null);
+            var previousEntries = pairCache.ToArray();
+
+            try
+            {
+                pairCache.Clear();
+
+                var converter = (Func<object, object>)buildConverterMethod.Invoke(null, new object[] { typeof(Version) });
+
+                Assert.Throws<InvalidCastException>(() => converter(new ToStringWrapper("1.2.3.4")));
+                Assert.False(pairCache.ContainsKey((typeof(ToStringWrapper), typeof(Version))));
+            }
+            finally
+            {
+                pairCache.Clear();
+                foreach (var entry in previousEntries)
+                    pairCache.TryAdd(entry.Key, entry.Value);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that TryGetKnownPairConverter resolves converters for every runtime source type supported by the fast-path cache.
+        /// </summary>
+        [Fact]
+        public void TryGetKnownPairConverter_ReturnsConverters_ForAllSupportedRuntimeTypes()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "TryGetKnownPairConverter",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var cases = new[]
+            {
+                new { Value = (object)1, TargetType = typeof(long), Expected = (object)1L },
+                new { Value = (object)2L, TargetType = typeof(decimal), Expected = (object)2m },
+                new { Value = (object)3m, TargetType = typeof(double), Expected = (object)3d },
+                new { Value = (object)4d, TargetType = typeof(float), Expected = (object)4f },
+                new { Value = (object)5f, TargetType = typeof(decimal), Expected = (object)5m },
+                new { Value = (object)(short)6, TargetType = typeof(long), Expected = (object)6L },
+                new { Value = (object)(byte)7, TargetType = typeof(double), Expected = (object)7d },
+                new { Value = (object)'H', TargetType = typeof(string), Expected = (object)"H" },
+                new { Value = (object)"I", TargetType = typeof(char), Expected = (object)'I' }
+            };
+
+            foreach (var testCase in cases)
+            {
+                var arguments = new object[] { testCase.Value, testCase.TargetType, null };
+                var resolved = (bool)method.Invoke(
+                    null,
+                    arguments);
+
+                Assert.True(resolved);
+
+                var converter = Assert.IsType<Func<object, object>>(arguments[2]);
+                Assert.Equal(
+                    testCase.Expected,
+                    converter(testCase.Value));
+            }
+        }
+
+        /// <summary>
+        /// Verifies that BuildPairConverter uses the generic ChangeType fallback when source type has no registered builder.
+        /// </summary>
+        [Fact]
+        public void BuildPairConverter_UsesChangeTypeFallback_WhenSourceTypeHasNoRegisteredBuilder()
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                "BuildPairConverter",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var converter = (Func<object, object>)method.Invoke(null, new object[] { typeof(bool), typeof(int) });
+            var result = converter(true);
+
+            Assert.Equal(1, result);
+        }
+
+        /// <summary>
+        /// Verifies that pair-converter builders execute both dictionary hit and fallback branches.
+        /// </summary>
+        [Fact]
+        public void BuildPairConverterBuilders_ExecuteHitAndFallbackBranches()
+        {
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromInt", 7, typeof(long), 7L, typeof(bool), true);
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromLong", 7L, typeof(int), 7, typeof(bool), true);
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromDecimal", 7m, typeof(int), 7, typeof(bool), true);
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromDouble", 7d, typeof(int), 7, typeof(bool), true);
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromFloat", 7f, typeof(int), 7, typeof(bool), true);
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromShort", (short)7, typeof(int), 7, typeof(bool), true);
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromByte", (byte)7, typeof(int), 7, typeof(bool), true);
+            AssertPairBuilderHitAndFallback("BuildPairConverterFromString", "Z", typeof(char), 'Z', typeof(int), 12, fallbackInput: "12");
+
+            var charBuilder = typeof(ObjectExtensions).GetMethod(
+                "BuildPairConverterFromChar",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            var charHit = (Func<object, object>)charBuilder.Invoke(null, new object[] { typeof(string) });
+            Assert.Equal("A", charHit('A'));
+
+            var charFallback = (Func<object, object>)charBuilder.Invoke(null, new object[] { typeof(double) });
+            Assert.Throws<InvalidCastException>(() => charFallback('A'));
+        }
+
+        /// <summary>
+        /// Verifies that <c>BuildPairConverterFromInt</c> covers every dictionary-mapped cast branch.
+        /// </summary>
+        [Fact]
+        public void BuildPairConverterFromInt_CoversAllMappedTargets()
+        {
+            const int value = 65;
+
+            Assert.Equal((short)65, InvokePairBuilder("BuildPairConverterFromInt", typeof(short), value));
+            Assert.Equal((byte)65, InvokePairBuilder("BuildPairConverterFromInt", typeof(byte), value));
+            Assert.Equal((sbyte)65, InvokePairBuilder("BuildPairConverterFromInt", typeof(sbyte), value));
+            Assert.Equal((ushort)65, InvokePairBuilder("BuildPairConverterFromInt", typeof(ushort), value));
+            Assert.Equal((uint)65, InvokePairBuilder("BuildPairConverterFromInt", typeof(uint), value));
+            Assert.Equal((ulong)65, InvokePairBuilder("BuildPairConverterFromInt", typeof(ulong), value));
+            Assert.Equal(65m, InvokePairBuilder("BuildPairConverterFromInt", typeof(decimal), value));
+            Assert.Equal(65d, InvokePairBuilder("BuildPairConverterFromInt", typeof(double), value));
+            Assert.Equal(65f, InvokePairBuilder("BuildPairConverterFromInt", typeof(float), value));
+            Assert.Equal('A', InvokePairBuilder("BuildPairConverterFromInt", typeof(char), value));
+        }
+
+        /// <summary>
+        /// Verifies that <c>BuildPairConverterFromLong</c> covers every dictionary-mapped cast branch.
+        /// </summary>
+        [Fact]
+        public void BuildPairConverterFromLong_CoversAllMappedTargets()
+        {
+            const long value = 66L;
+
+            Assert.Equal((short)66, InvokePairBuilder("BuildPairConverterFromLong", typeof(short), value));
+            Assert.Equal((byte)66, InvokePairBuilder("BuildPairConverterFromLong", typeof(byte), value));
+            Assert.Equal((sbyte)66, InvokePairBuilder("BuildPairConverterFromLong", typeof(sbyte), value));
+            Assert.Equal((ushort)66, InvokePairBuilder("BuildPairConverterFromLong", typeof(ushort), value));
+            Assert.Equal((uint)66, InvokePairBuilder("BuildPairConverterFromLong", typeof(uint), value));
+            Assert.Equal((ulong)66, InvokePairBuilder("BuildPairConverterFromLong", typeof(ulong), value));
+            Assert.Equal(66m, InvokePairBuilder("BuildPairConverterFromLong", typeof(decimal), value));
+            Assert.Equal(66d, InvokePairBuilder("BuildPairConverterFromLong", typeof(double), value));
+            Assert.Equal(66f, InvokePairBuilder("BuildPairConverterFromLong", typeof(float), value));
+        }
+
+        /// <summary>
+        /// Verifies that decimal, double, float, short, and byte pair builders cover every dictionary-mapped cast branch.
+        /// </summary>
+        [Fact]
+        public void BuildPairConverters_NumericBuilders_CoverAllMappedTargets()
+        {
+            Assert.Equal(67L, InvokePairBuilder("BuildPairConverterFromDecimal", typeof(long), 67m));
+            Assert.Equal((short)67, InvokePairBuilder("BuildPairConverterFromDecimal", typeof(short), 67m));
+            Assert.Equal((byte)67, InvokePairBuilder("BuildPairConverterFromDecimal", typeof(byte), 67m));
+            Assert.Equal(67d, InvokePairBuilder("BuildPairConverterFromDecimal", typeof(double), 67m));
+            Assert.Equal(67f, InvokePairBuilder("BuildPairConverterFromDecimal", typeof(float), 67m));
+
+            Assert.Equal(68m, InvokePairBuilder("BuildPairConverterFromDouble", typeof(decimal), 68d));
+            Assert.Equal(68f, InvokePairBuilder("BuildPairConverterFromDouble", typeof(float), 68d));
+            Assert.Equal(68L, InvokePairBuilder("BuildPairConverterFromDouble", typeof(long), 68d));
+            Assert.Equal((short)68, InvokePairBuilder("BuildPairConverterFromDouble", typeof(short), 68d));
+            Assert.Equal((byte)68, InvokePairBuilder("BuildPairConverterFromDouble", typeof(byte), 68d));
+
+            Assert.Equal(69d, InvokePairBuilder("BuildPairConverterFromFloat", typeof(double), 69f));
+            Assert.Equal(69m, InvokePairBuilder("BuildPairConverterFromFloat", typeof(decimal), 69f));
+            Assert.Equal(69L, InvokePairBuilder("BuildPairConverterFromFloat", typeof(long), 69f));
+            Assert.Equal((short)69, InvokePairBuilder("BuildPairConverterFromFloat", typeof(short), 69f));
+            Assert.Equal((byte)69, InvokePairBuilder("BuildPairConverterFromFloat", typeof(byte), 69f));
+
+            Assert.Equal(70L, InvokePairBuilder("BuildPairConverterFromShort", typeof(long), (short)70));
+            Assert.Equal((byte)70, InvokePairBuilder("BuildPairConverterFromShort", typeof(byte), (short)70));
+            Assert.Equal((sbyte)70, InvokePairBuilder("BuildPairConverterFromShort", typeof(sbyte), (short)70));
+            Assert.Equal(70m, InvokePairBuilder("BuildPairConverterFromShort", typeof(decimal), (short)70));
+            Assert.Equal(70d, InvokePairBuilder("BuildPairConverterFromShort", typeof(double), (short)70));
+            Assert.Equal(70f, InvokePairBuilder("BuildPairConverterFromShort", typeof(float), (short)70));
+
+            Assert.Equal(71L, InvokePairBuilder("BuildPairConverterFromByte", typeof(long), (byte)71));
+            Assert.Equal((short)71, InvokePairBuilder("BuildPairConverterFromByte", typeof(short), (byte)71));
+            Assert.Equal(71m, InvokePairBuilder("BuildPairConverterFromByte", typeof(decimal), (byte)71));
+            Assert.Equal(71d, InvokePairBuilder("BuildPairConverterFromByte", typeof(double), (byte)71));
+            Assert.Equal(71f, InvokePairBuilder("BuildPairConverterFromByte", typeof(float), (byte)71));
+        }
+
+        /// <summary>
+        /// Verifies that char and string pair builders execute all mapped branches, including empty-string failure.
+        /// </summary>
+        [Fact]
+        public void BuildPairConverters_CharAndStringBuilders_CoverAllMappedTargetsAndThrowOnEmptyString()
+        {
+            Assert.Equal(65, InvokePairBuilder("BuildPairConverterFromChar", typeof(int), 'A'));
+            Assert.Equal("A", InvokePairBuilder("BuildPairConverterFromChar", typeof(string), 'A'));
+
+            var toChar = GetPairBuilderConverter("BuildPairConverterFromString", typeof(char));
+            Assert.Equal('Z', toChar("Z"));
+            Assert.Throws<InvalidCastException>(() => toChar(string.Empty));
+        }
+
+        /// <summary>
+        /// Verifies that converting an empty string to char throws through the string pair-converter path.
+        /// </summary>
+        [Fact]
+        public void As_ThrowsFormatException_WhenConvertingEmptyStringToChar()
+        {
+            Assert.Throws<FormatException>(() => "".As<char>());
+        }
+
+        /// <summary>
+        /// Verifies that GetConverter uses and returns the process-wide hot cache converter when type matches.
+        /// </summary>
+        [Fact]
+        public void GetConverter_ReturnsHotCachedConverter_WhenLastTypeMatches()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
+
+            var previousLastCache = lastConverterCacheField.GetValue(null);
+
+            try
+            {
+                Func<object, object> hotConverter = _ => "hot";
+                lastConverterCacheField.SetValue(null, CreateConverterCacheEntry(typeof(Guid), hotConverter));
+
+                var converter = ObjectExtensions.GetConverter(typeof(Guid));
+
+                Assert.Same(hotConverter, converter);
+                Assert.Equal("hot", converter(Guid.NewGuid()));
+            }
+            finally
+            {
+                lastConverterCacheField.SetValue(null, previousLastCache);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that GetConverter stores converters in cache when below the configured cache size limit.
+        /// </summary>
+        [Fact]
+        public void GetConverter_AddsConverterToCache_WhenCacheHasCapacity()
+        {
+            var objectExtensionsType = typeof(ObjectExtensions);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+            var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
+            var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
+
+            var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
+            var previousEntries = cache.ToArray();
+            var previousCacheSize = (int)cacheSizeField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
+
+            try
+            {
+                cache.Clear();
+                cacheSizeField.SetValue(null, 0);
+                lastConverterCacheField.SetValue(null, null);
+
+                var converter = ObjectExtensions.GetConverter(typeof(DateTimeOffset));
+
+                Assert.NotNull(converter);
+                Assert.True(cache.ContainsKey(typeof(DateTimeOffset)));
+                Assert.Equal(1, (int)cacheSizeField.GetValue(null));
+            }
+            finally
+            {
+                cache.Clear();
+                foreach (var entry in previousEntries)
+                    cache.TryAdd(entry.Key, entry.Value);
+
+                cacheSizeField.SetValue(null, previousCacheSize);
+                lastConverterCacheField.SetValue(null, previousLastCache);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that nullable DateTimeOffset conversion executes the direct DateTimeOffset switch arm.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsDirectDateTimeOffset_ToNullableDateTimeOffset_ThroughConverterSwitchArm()
+        {
+            var value = new DateTimeOffset(2025, 2, 3, 4, 5, 6, TimeSpan.Zero);
+            object source = value;
+
+            var converted = source.As<DateTimeOffset?>();
+
+            Assert.True(converted.HasValue);
+            Assert.Equal(value, converted.Value);
+        }
+
+        /// <summary>
+        /// Verifies that nullable TimeSpan conversion executes the direct TimeSpan switch arm.
+        /// </summary>
+        [Fact]
+        public void As_ConvertsDirectTimeSpan_ToNullableTimeSpan_ThroughConverterSwitchArm()
+        {
+            var value = TimeSpan.FromSeconds(42);
+            object source = value;
+
+            var converted = source.As<TimeSpan?>();
+
+            Assert.True(converted.HasValue);
+            Assert.Equal(value, converted.Value);
+        }
+
+        /// <summary>
+        /// Verifies that boolean conversion reaches the default switch branch for unsupported runtime types.
+        /// </summary>
+        [Fact]
+        public void As_BooleanConversion_UsesDefaultSwitchBranch_ForUnsupportedRuntimeType()
+        {
+            object source = DateTime.UtcNow;
+
+            Assert.Throws<InvalidCastException>(() => source.As<bool>());
+        }
+
+        /// <summary>
+        /// Represents a simple wrapper whose string representation can be controlled in tests.
+        /// </summary>
+        private sealed class ToStringWrapper
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ToStringWrapper"/> class.
+            /// </summary>
+            /// <param name="text">The string value returned by <see cref="ToString"/>.</param>
+            public ToStringWrapper(string text)
+            {
+                Text = text;
+            }
+
+            /// <summary>
+            /// Gets the text returned by <see cref="ToString"/>.
+            /// </summary>
+            public string Text { get; }
+
+            /// <summary>
+            /// Returns the configured text value.
+            /// </summary>
+            /// <returns>The configured text.</returns>
+            public override string ToString()
+                => Text;
+        }
+
+        /// <summary>
+        /// Invokes a pair-converter builder method and validates both dictionary hit and fallback behavior.
+        /// </summary>
+        /// <param name="methodName">The private static builder method name.</param>
+        /// <param name="hitInput">Input value used for the dictionary-hit branch.</param>
+        /// <param name="hitTargetType">Target type that exists in the builder dictionary.</param>
+        /// <param name="expectedHit">Expected conversion result for the dictionary-hit branch.</param>
+        /// <param name="fallbackTargetType">Target type that forces Convert.ChangeType fallback branch.</param>
+        /// <param name="expectedFallback">Expected conversion result for the fallback branch.</param>
+        /// <param name="fallbackInput">Optional fallback input; when null, <paramref name="hitInput"/> is used.</param>
+        private static void AssertPairBuilderHitAndFallback(
+            string methodName,
+            object hitInput,
+            Type hitTargetType,
+            object expectedHit,
+            Type fallbackTargetType,
+            object expectedFallback,
+            object fallbackInput = null)
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            var hitConverter = (Func<object, object>)method.Invoke(null, new object[] { hitTargetType });
+            var hitResult = hitConverter(hitInput);
+
+            Assert.Equal(expectedHit, hitResult);
+
+            var fallbackConverter = (Func<object, object>)method.Invoke(null, new object[] { fallbackTargetType });
+            var fallbackResult = fallbackConverter(fallbackInput ?? hitInput);
+
+            Assert.Equal(expectedFallback, fallbackResult);
+        }
+
+        /// <summary>
+        /// Resolves and executes a private pair-builder converter method for a given target type and input value.
+        /// </summary>
+        /// <param name="methodName">Name of the private static pair-builder method.</param>
+        /// <param name="targetType">Target type requested from the pair-builder.</param>
+        /// <param name="input">Input value passed to the resulting converter delegate.</param>
+        /// <returns>The converted value returned by the resolved converter delegate.</returns>
+        private static object InvokePairBuilder(
+            string methodName,
+            Type targetType,
+            object input)
+            => GetPairBuilderConverter(
+                methodName,
+                targetType)(input);
+
+        /// <summary>
+        /// Resolves a private pair-builder method and returns the converter delegate for the provided target type.
+        /// </summary>
+        /// <param name="methodName">Name of the private static pair-builder method.</param>
+        /// <param name="targetType">Target type passed to the pair-builder.</param>
+        /// <returns>A converter delegate produced by the specified pair-builder method.</returns>
+        private static Func<object, object> GetPairBuilderConverter(
+            string methodName,
+            Type targetType)
+        {
+            var method = typeof(ObjectExtensions).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            return (Func<object, object>)method.Invoke(
+                null,
+                new object[] { targetType });
+        }
+
+        /// <summary>
         /// Verifies that the GetConverter method throws an ArgumentNullException when the target type parameter is
         /// null.
         /// </summary>
@@ -950,5 +1548,40 @@ namespace Hydrix.UnitTests.Extensions
         {
             Assert.Throws<ArgumentNullException>(() => ObjectExtensions.GetConverter(null));
         }
+
+        /// <summary>
+        /// Creates an instance of the converter hot-cache entry used by <see cref="ObjectExtensions"/>.
+        /// </summary>
+        /// <param name="targetType">The target type associated with the cached converter.</param>
+        /// <param name="converter">The converter delegate to store in the hot-cache entry.</param>
+        /// <returns>An object instance representing the converter hot-cache entry.</returns>
+        private static object CreateConverterCacheEntry(
+            Type targetType,
+            Func<object, object> converter)
+            => new ConverterCacheEntry(
+                targetType,
+                converter);
+
+        /// <summary>
+        /// Reads the cached target type from a converter hot-cache entry.
+        /// </summary>
+        /// <param name="cacheEntry">The hot-cache entry instance to inspect. May be null.</param>
+        /// <returns>The cached target type, or null when <paramref name="cacheEntry"/> is null.</returns>
+        private static Type ReadConverterHotCacheTargetType(
+            object cacheEntry)
+            => cacheEntry == null
+                ? null
+                : ((ConverterCacheEntry)cacheEntry).TargetType;
+
+        /// <summary>
+        /// Reads the cached converter delegate from a converter hot-cache entry.
+        /// </summary>
+        /// <param name="cacheEntry">The hot-cache entry instance to inspect. May be null.</param>
+        /// <returns>The cached converter delegate, or null when <paramref name="cacheEntry"/> is null.</returns>
+        private static Func<object, object> ReadConverterHotCacheConverter(
+            object cacheEntry)
+            => cacheEntry == null
+                ? null
+                : ((ConverterCacheEntry)cacheEntry).Converter;
     }
 }
