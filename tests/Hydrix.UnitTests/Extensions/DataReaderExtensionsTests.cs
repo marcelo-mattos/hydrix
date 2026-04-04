@@ -452,6 +452,7 @@ namespace Hydrix.UnitTests.Extensions
                 "GetFieldType",
                 BindingFlags.NonPublic | BindingFlags.Static);
 
+            Assert.NotNull(method);
             var result = (Type)method.Invoke(null, new object[] { reader.Object, 0 });
 
             Assert.Null(result);
@@ -474,6 +475,7 @@ namespace Hydrix.UnitTests.Extensions
                 "GetFieldType",
                 BindingFlags.NonPublic | BindingFlags.Static);
 
+            Assert.NotNull(method);
             var result = (Type)method.Invoke(null, new object[] { reader.Object, 0 });
 
             Assert.Null(result);

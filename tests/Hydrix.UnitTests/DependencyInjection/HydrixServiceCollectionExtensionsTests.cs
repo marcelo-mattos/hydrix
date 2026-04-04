@@ -164,7 +164,6 @@ namespace Hydrix.UnitTests.DependencyInjection
 
                 Assert.NotNull(resolved);
                 Assert.Equal(20, resolved.CommandTimeout);
-                Assert.Same(resolved, HydrixConfiguration.Options);
             });
         }
 

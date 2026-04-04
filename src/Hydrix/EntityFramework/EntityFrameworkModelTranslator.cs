@@ -37,6 +37,11 @@ namespace Hydrix.EntityFramework
         private const string ColumnNameAnnotation = "Relational:ColumnName";
 
         /// <summary>
+        /// Represents the metadata property name used by Entity Framework for key and foreign-key property collections.
+        /// </summary>
+        private const string PropertiesMemberName = "Properties";
+
+        /// <summary>
         /// Translates the supplied Entity Framework model object into a collection of Hydrix registrations.
         /// </summary>
         /// <remarks>The translation process first materializes the scalar metadata for every compatible CLR
@@ -412,7 +417,7 @@ namespace Hydrix.EntityFramework
             => GetSequence(
                     GetPropertyValue(
                         foreignKey,
-                        "Properties"))
+                        PropertiesMemberName))
                 .Select(property => ResolveColumnName(property))
                 .ToArray();
 
@@ -428,7 +433,7 @@ namespace Hydrix.EntityFramework
                         GetPropertyValue(
                             foreignKey,
                             "PrincipalKey"),
-                        "Properties"))
+                        PropertiesMemberName))
                 .Select(property => ResolveColumnName(property))
                 .ToArray();
 
@@ -449,7 +454,7 @@ namespace Hydrix.EntityFramework
             return GetSequence(
                     GetPropertyValue(
                         primaryKey,
-                        "Properties"))
+                        PropertiesMemberName))
                 .Select(property =>
                     TryGetPropertyValue(
                         property,
@@ -477,7 +482,7 @@ namespace Hydrix.EntityFramework
             return GetSequence(
                     GetPropertyValue(
                         primaryKey,
-                        "Properties"))
+                        PropertiesMemberName))
                 .Select(property => ResolveColumnName(property))
                 .ToArray();
         }
@@ -599,7 +604,7 @@ namespace Hydrix.EntityFramework
 
             var method = instance.GetType().GetMethod(
                 methodName,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                BindingFlags.Instance | BindingFlags.Public,
                 binder: null,
                 Type.EmptyTypes,
                 modifiers: null);
@@ -642,7 +647,7 @@ namespace Hydrix.EntityFramework
             => instance != null &&
                instance.GetType().GetMethod(
                    methodName,
-                   BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                   BindingFlags.Instance | BindingFlags.Public,
                    binder: null,
                    Type.EmptyTypes,
                    modifiers: null) != null;
@@ -676,7 +681,7 @@ namespace Hydrix.EntityFramework
 
             var findAnnotation = annotatable.GetType().GetMethod(
                 "FindAnnotation",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                BindingFlags.Instance | BindingFlags.Public,
                 binder: null,
                 new[] { typeof(string) },
                 modifiers: null);
@@ -707,7 +712,7 @@ namespace Hydrix.EntityFramework
 
             var property = instance.GetType().GetProperty(
                 propertyName,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.Public);
 
             return property?.GetValue(instance);
         }

@@ -498,6 +498,8 @@ namespace Hydrix.UnitTests.Engines
             var flags = BindingFlags.NonPublic | BindingFlags.Static;
             var lastBinderCacheField = parameterEngineType.GetField("_lastBinderCache", flags);
             var getOrAddBinderMethod = parameterEngineType.GetMethod("GetOrAddBinder", flags);
+            Assert.NotNull(lastBinderCacheField);
+            Assert.NotNull(getOrAddBinderMethod);
             var previousLastCache = lastBinderCacheField.GetValue(null);
 
             try
