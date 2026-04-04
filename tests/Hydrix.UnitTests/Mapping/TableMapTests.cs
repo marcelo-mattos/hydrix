@@ -1,5 +1,6 @@
 using Hydrix.Attributes.Schemas;
 using Hydrix.Mapping;
+using Hydrix.Internals;
 using Hydrix.Metadata.Internals;
 using Hydrix.Metadata.Materializers;
 using Hydrix.Resolvers;
@@ -627,21 +628,15 @@ namespace Hydrix.UnitTests.Mapping
             var record = new Mock<IDataRecord>();
             var ordinals = new Dictionary<string, int>();
 
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act (should not throw and should not set Nested)
-            method.Invoke(
-                null,
-                new object[]
-                {
-                    entity,
-                    record.Object,
-                    metadata,
-                    string.Empty,
-                    ordinals,
-                    0
-                });
-
+            SetEntityNestedEntities(
+                entity,
+                record.Object,
+                metadata,
+                string.Empty,
+                ordinals,
+                0);
             // Assert
             Assert.Null(entity.Nested);
         }
@@ -680,21 +675,15 @@ namespace Hydrix.UnitTests.Mapping
             // PK column exists, but value is DBNull
             record.Setup(r => r.IsDBNull(0)).Returns(true);
 
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act (should not throw and should not set Nested)
-            method.Invoke(
-                null,
-                new object[]
-                {
-                    entity,
-                    record.Object,
-                    metadata,
-                    string.Empty,
-                    ordinals,
-                    0
-                });
-
+            SetEntityNestedEntities(
+                entity,
+                record.Object,
+                metadata,
+                string.Empty,
+                ordinals,
+                0);
             // Assert
             Assert.Null(entity.Nested);
         }
@@ -714,11 +703,15 @@ namespace Hydrix.UnitTests.Mapping
                 fields: new List<ColumnMap>(),
                 entities: new List<TableMap>()
             );
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act
-            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>(), 0 });
-
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                new Dictionary<string, int>(),
+                0);
             // Assert
             Assert.Null(parent.Child);
         }
@@ -740,10 +733,15 @@ namespace Hydrix.UnitTests.Mapping
                 fields: new List<ColumnMap>(),
                 entities: new List<TableMap> { tableMap }
             );
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act
-            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>(), 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                new Dictionary<string, int>(),
+                0);
 
             // Assert
             Assert.Null(parent.Child);
@@ -757,7 +755,13 @@ namespace Hydrix.UnitTests.Mapping
             );
 
             // Act
-            result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>(), 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                new Dictionary<string, int>(),
+                0);
 
             // Assert
             Assert.Null(parent.Child);
@@ -780,11 +784,15 @@ namespace Hydrix.UnitTests.Mapping
                 fields: new List<ColumnMap>(),
                 entities: new List<TableMap> { tableMap }
             );
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act
-            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", new Dictionary<string, int>(), 0 });
-
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                new Dictionary<string, int>(),
+                0);
             // Assert
             Assert.Null(parent.Child);
         }
@@ -809,11 +817,15 @@ namespace Hydrix.UnitTests.Mapping
                 entities: new List<TableMap> { tableMap }
             );
             var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act
-            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
-
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
             // Assert
             Assert.Null(parent.Child);
         }
@@ -839,11 +851,15 @@ namespace Hydrix.UnitTests.Mapping
                 entities: new List<TableMap> { tableMap }
             );
             var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
-            var method = typeof(TableMap).GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static);
 
             // Act
-            var result = method.Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
-
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
             // Assert
             Assert.NotNull(parent.Child);
         }
@@ -866,9 +882,12 @@ namespace Hydrix.UnitTests.Mapping
             var ordinals = new Dictionary<string, int>(); // Empty, so field not found
 
             // Should not throw or set anything
-            typeof(TableMap)
-                .GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { entity, record, metadata, "", ordinals });
+            SetEntityFields(
+                entity,
+                record,
+                metadata,
+                "",
+                ordinals);
 
             Assert.Equal(0, entity.Id); // Not set
         }
@@ -889,9 +908,12 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = MetadataFactory.CreateEntity(new[] { field }, new TableMap[0]);
             var ordinals = new Dictionary<string, int> { { "Id", 0 } };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { entity, record, metadata, "", ordinals });
+            SetEntityFields(
+                entity,
+                record,
+                metadata,
+                "",
+                ordinals);
 
             Assert.Equal(99, entity.Id);
         }
@@ -912,9 +934,12 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = MetadataFactory.CreateEntity(new[] { field }, new TableMap[0]);
             var ordinals = new Dictionary<string, int> { { "prefixName", 1 } };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityFields", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { entity, record, metadata, "prefix", ordinals });
+            SetEntityFields(
+                entity,
+                record,
+                metadata,
+                "prefix",
+                ordinals);
 
             Assert.Equal("Hydrix", entity.Name);
         }
@@ -935,9 +960,13 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = CreateMetadata(child);
             var ordinals = new Dictionary<string, int>(); // key not present
 
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
 
             Assert.Null(parent.Child);
         }
@@ -958,9 +987,13 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = CreateMetadata(child);
             var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
 
             Assert.Null(parent.Child);
         }
@@ -983,9 +1016,13 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = CreateMetadata(child);
             var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
 
             Assert.NotNull(parent.Child);
         }
@@ -1006,9 +1043,13 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = CreateMetadata(child);
             var ordinals = new Dictionary<string, int> { { "Other.Id", 0 } };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
 
             Assert.Null(parent.Child);
         }
@@ -1030,9 +1071,13 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = CreateMetadata(child);
             var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
 
             Assert.Null(parent.Child);
         }
@@ -1055,9 +1100,13 @@ namespace Hydrix.UnitTests.Mapping
             var metadata = CreateMetadata(child);
             var ordinals = new Dictionary<string, int> { { "Child.Id", 0 } };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { parent, record.Object, metadata, "", ordinals, 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                "",
+                ordinals,
+                0);
 
             Assert.NotNull(parent.Child);
         }
@@ -1218,9 +1267,13 @@ namespace Hydrix.UnitTests.Mapping
                 { "LevelOne.LevelTwo.Id", 1 }
             };
 
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { entity, record.Object, metadata, string.Empty, ordinals, 987 });
+            SetEntityNestedEntities(
+                entity,
+                record.Object,
+                metadata,
+                string.Empty,
+                ordinals,
+                987);
 
             Assert.NotNull(entity.LevelOne);
             Assert.NotNull(entity.LevelOne.LevelTwo);
@@ -1371,9 +1424,13 @@ namespace Hydrix.UnitTests.Mapping
             var ordinals = new Dictionary<string, int> { { "pre.Child.Id", 0 } };
 
             // Act
-            typeof(TableMap)
-                .GetMethod("SetEntityNestedEntities", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { parent, record.Object, metadata, prefix, ordinals, 0 });
+            SetEntityNestedEntities(
+                parent,
+                record.Object,
+                metadata,
+                prefix,
+                ordinals,
+                0);
 
             // Assert
             Assert.NotNull(parent.Child);
@@ -1724,8 +1781,7 @@ namespace Hydrix.UnitTests.Mapping
                 (entity, value) => ((Child)entity).Id = (int)value,
                 null);
 
-            var result = InvokePrivate<Action<object, IDataRecord>>(
-                "ResolveFieldAssigner",
+            var result = ResolveFieldAssigner(
                 new Mock<IDataRecord>().Object,
                 field,
                 0);
@@ -1775,8 +1831,7 @@ namespace Hydrix.UnitTests.Mapping
                 null,
                 (record, ordinal) => 5);
 
-            var result = InvokePrivate<Action<object, IDataRecord>>(
-                "ResolveFieldAssigner",
+            var result = ResolveFieldAssigner(
                 new Mock<IDataRecord>().Object,
                 field,
                 0);
@@ -1804,7 +1859,7 @@ namespace Hydrix.UnitTests.Mapping
                 (reader, ordinal) => 1,
                 typeof(int));
 
-            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+            var reader = ResolveFieldReader(record.Object, field, 0);
             var value = reader(record.Object, 0);
 
             Assert.Equal(12, value);
@@ -1831,7 +1886,7 @@ namespace Hydrix.UnitTests.Mapping
                 (reader, ordinal) => 1,
                 typeof(int));
 
-            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+            var reader = ResolveFieldReader(record.Object, field, 0);
 
             Assert.Equal(7, reader(record.Object, 0));
         }
@@ -1856,7 +1911,7 @@ namespace Hydrix.UnitTests.Mapping
                 (reader, ordinal) => 1,
                 typeof(int));
 
-            var reader = InvokePrivate<FieldReader>("ResolveFieldReader", record.Object, field, 0);
+            var reader = ResolveFieldReader(record.Object, field, 0);
 
             Assert.Equal(8, reader(record.Object, 0));
         }
@@ -2208,6 +2263,89 @@ namespace Hydrix.UnitTests.Mapping
             Assert.True(activatorCalled);
             Assert.NotNull(parent.Child);
         }
+
+        /// <summary>
+        /// Resolves a field assigner using the provider source type exposed by the supplied record.
+        /// </summary>
+        /// <param name="record">The data record used to resolve the provider source type.</param>
+        /// <param name="field">The field mapping for which the assigner will be resolved.</param>
+        /// <param name="ordinal">The zero-based column ordinal associated with the field.</param>
+        /// <returns>An assigner action when resolution succeeds; otherwise, <see langword="null"/>.</returns>
+        private static Action<object, IDataRecord> ResolveFieldAssigner(
+            IDataRecord record,
+            ColumnMap field,
+            int ordinal)
+            => InvokePrivate<Action<object, IDataRecord>>(
+                "ResolveFieldAssignerWithSourceType",
+                field,
+                ordinal,
+                FieldTypeHelper.GetFieldType(
+                    record,
+                    ordinal));
+
+        /// <summary>
+        /// Resolves a field reader using the provider source type exposed by the supplied record.
+        /// </summary>
+        /// <param name="record">The data record used to resolve the provider source type.</param>
+        /// <param name="field">The field mapping for which the reader will be resolved.</param>
+        /// <param name="ordinal">The zero-based column ordinal associated with the field.</param>
+        /// <returns>A resolved field reader delegate, or <see langword="null"/> when no reader is available.</returns>
+        private static FieldReader ResolveFieldReader(
+            IDataRecord record,
+            ColumnMap field,
+            int ordinal)
+            => InvokePrivate<FieldReader>(
+                "ResolveFieldReaderWithSourceType",
+                field,
+                FieldTypeHelper.GetFieldType(
+                    record,
+                    ordinal));
+
+        /// <summary>
+        /// Executes the production entity-materialization path for scalar-field-only test scenarios.
+        /// </summary>
+        /// <param name="entity">The entity instance to populate.</param>
+        /// <param name="record">The data record containing source values.</param>
+        /// <param name="metadata">The metadata describing the scalar fields to materialize.</param>
+        /// <param name="prefix">The prefix used when resolving column names.</param>
+        /// <param name="ordinals">The mapping between column names and ordinals.</param>
+        private static void SetEntityFields(
+            ITable entity,
+            IDataRecord record,
+            TableMaterializeMetadata metadata,
+            string prefix,
+            IReadOnlyDictionary<string, int> ordinals)
+            => TableMap.SetEntity(
+                entity,
+                record,
+                metadata,
+                prefix,
+                ordinals,
+                0);
+
+        /// <summary>
+        /// Executes the production entity-materialization path for nested-entity test scenarios.
+        /// </summary>
+        /// <param name="entity">The entity instance to populate.</param>
+        /// <param name="record">The data record containing source values.</param>
+        /// <param name="metadata">The metadata describing the nested mappings to materialize.</param>
+        /// <param name="prefix">The prefix used when resolving column names.</param>
+        /// <param name="ordinals">The mapping between column names and ordinals.</param>
+        /// <param name="schemaHash">The schema hash associated with the resolved binding cache.</param>
+        private static void SetEntityNestedEntities(
+            ITable entity,
+            IDataRecord record,
+            TableMaterializeMetadata metadata,
+            string prefix,
+            IReadOnlyDictionary<string, int> ordinals,
+            int schemaHash)
+            => TableMap.SetEntity(
+                entity,
+                record,
+                metadata,
+                prefix,
+                ordinals,
+                schemaHash);
 
         /// <summary>
         /// Invokes a non-public static method of the TableMap type by name and returns its result cast to the specified

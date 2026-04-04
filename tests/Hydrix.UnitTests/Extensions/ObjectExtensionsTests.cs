@@ -1,3 +1,4 @@
+using Hydrix.Caching.Entries;
 using Hydrix.Extensions;
 using System;
 using System.Collections.Concurrent;
@@ -9,12 +10,20 @@ using Xunit;
 namespace Hydrix.UnitTests.Extensions
 {
     /// <summary>
+    /// Defines a non-parallelized test collection for tests that mutate the shared ObjectExtensions converter caches.
+    /// </summary>
+    [CollectionDefinition("ObjectExtensionsSequential", DisableParallelization = true)]
+    public class ObjectExtensionsSequentialCollection
+    { }
+
+    /// <summary>
     /// Contains unit tests for the ObjectExtensions class, verifying the behavior of the As&lt;T&gt;() extension method under
     /// various input scenarios.
     /// </summary>
     /// <remarks>These tests ensure that the As&lt;T&gt;() method correctly handles null values, DBNull, convertible
     /// types, and non-convertible types, returning default values or throwing exceptions as appropriate. The tests help
     /// validate the robustness and correctness of type conversion logic implemented in ObjectExtensions.</remarks>
+    [Collection("ObjectExtensionsSequential")]
     public class ObjectExtensionsTests
     {
         /// <summary>
@@ -510,22 +519,19 @@ namespace Hydrix.UnitTests.Extensions
 
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
-            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
             var buildConverterMethod = objectExtensionsType.GetMethod("BuildConverter", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
             var previousCacheSize = (int)cacheSizeField.GetValue(null);
-            var previousLastType = lastConverterTargetTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 cache.Clear();
                 cacheSizeField.SetValue(null, 0);
-                lastConverterTargetTypeField.SetValue(null, null);
-                lastConverterField.SetValue(null, null);
+                lastConverterCacheField.SetValue(null, null);
 
                 var assemblyName = new AssemblyName($"Hydrix.DynamicTypes.{Guid.NewGuid():N}");
                 var assembly = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
@@ -559,8 +565,7 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(entry.Key, entry.Value);
 
                 cacheSizeField.SetValue(null, previousCacheSize);
-                lastConverterTargetTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -577,20 +582,17 @@ namespace Hydrix.UnitTests.Extensions
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
             var maxCacheSizeField = objectExtensionsType.GetField("MaxConverterCacheSize", flags);
-            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
             var previousCacheSize = (int)cacheSizeField.GetValue(null);
-            var previousLastType = lastConverterTargetTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 cache.Clear();
-                lastConverterTargetTypeField.SetValue(null, null);
-                lastConverterField.SetValue(null, null);
+                lastConverterCacheField.SetValue(null, null);
 
                 var maxCacheSize = (int)maxCacheSizeField.GetValue(null);
                 cacheSizeField.SetValue(null, maxCacheSize);
@@ -600,8 +602,8 @@ namespace Hydrix.UnitTests.Extensions
 
                 Assert.NotNull(converter);
                 Assert.False(cache.ContainsKey(targetType));
-                Assert.Equal(targetType, lastConverterTargetTypeField.GetValue(null));
-                Assert.Same(converter, lastConverterField.GetValue(null));
+                Assert.Equal(targetType, ReadConverterHotCacheTargetType(lastConverterCacheField.GetValue(null)));
+                Assert.Same(converter, ReadConverterHotCacheConverter(lastConverterCacheField.GetValue(null)));
             }
             finally
             {
@@ -610,8 +612,7 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(entry.Key, entry.Value);
 
                 cacheSizeField.SetValue(null, previousCacheSize);
-                lastConverterTargetTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -916,20 +917,17 @@ namespace Hydrix.UnitTests.Extensions
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
             var maxCacheSizeField = objectExtensionsType.GetField("MaxConverterCacheSize", flags);
-            var lastConverterTargetTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
             var previousCacheSize = (int)cacheSizeField.GetValue(null);
-            var previousLastType = lastConverterTargetTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 cache.Clear();
-                lastConverterTargetTypeField.SetValue(null, null);
-                lastConverterField.SetValue(null, null);
+                lastConverterCacheField.SetValue(null, null);
 
                 var maxCacheSize = (int)maxCacheSizeField.GetValue(null);
                 cacheSizeField.SetValue(null, maxCacheSize);
@@ -949,8 +947,7 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(entry.Key, entry.Value);
 
                 cacheSizeField.SetValue(null, previousCacheSize);
-                lastConverterTargetTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -1273,17 +1270,14 @@ namespace Hydrix.UnitTests.Extensions
         {
             var objectExtensionsType = typeof(ObjectExtensions);
             var flags = BindingFlags.NonPublic | BindingFlags.Static;
-            var lastTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
 
-            var previousLastType = lastTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 Func<object, object> hotConverter = _ => "hot";
-                lastTypeField.SetValue(null, typeof(Guid));
-                lastConverterField.SetValue(null, hotConverter);
+                lastConverterCacheField.SetValue(null, CreateConverterCacheEntry(typeof(Guid), hotConverter));
 
                 var converter = ObjectExtensions.GetConverter(typeof(Guid));
 
@@ -1292,8 +1286,7 @@ namespace Hydrix.UnitTests.Extensions
             }
             finally
             {
-                lastTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -1307,21 +1300,18 @@ namespace Hydrix.UnitTests.Extensions
             var flags = BindingFlags.NonPublic | BindingFlags.Static;
             var cacheField = objectExtensionsType.GetField("ConverterCache", flags);
             var cacheSizeField = objectExtensionsType.GetField("_converterCacheSize", flags);
-            var lastTypeField = objectExtensionsType.GetField("_lastConverterTargetType", flags);
-            var lastConverterField = objectExtensionsType.GetField("_lastConverter", flags);
+            var lastConverterCacheField = objectExtensionsType.GetField("_lastConverterCache", flags);
 
             var cache = (ConcurrentDictionary<Type, Func<object, object>>)cacheField.GetValue(null);
             var previousEntries = cache.ToArray();
             var previousCacheSize = (int)cacheSizeField.GetValue(null);
-            var previousLastType = lastTypeField.GetValue(null);
-            var previousLastConverter = lastConverterField.GetValue(null);
+            var previousLastCache = lastConverterCacheField.GetValue(null);
 
             try
             {
                 cache.Clear();
                 cacheSizeField.SetValue(null, 0);
-                lastTypeField.SetValue(null, null);
-                lastConverterField.SetValue(null, null);
+                lastConverterCacheField.SetValue(null, null);
 
                 var converter = ObjectExtensions.GetConverter(typeof(DateTimeOffset));
 
@@ -1336,8 +1326,7 @@ namespace Hydrix.UnitTests.Extensions
                     cache.TryAdd(entry.Key, entry.Value);
 
                 cacheSizeField.SetValue(null, previousCacheSize);
-                lastTypeField.SetValue(null, previousLastType);
-                lastConverterField.SetValue(null, previousLastConverter);
+                lastConverterCacheField.SetValue(null, previousLastCache);
             }
         }
 
@@ -1489,5 +1478,40 @@ namespace Hydrix.UnitTests.Extensions
         {
             Assert.Throws<ArgumentNullException>(() => ObjectExtensions.GetConverter(null));
         }
+
+        /// <summary>
+        /// Creates an instance of the converter hot-cache entry used by <see cref="ObjectExtensions"/>.
+        /// </summary>
+        /// <param name="targetType">The target type associated with the cached converter.</param>
+        /// <param name="converter">The converter delegate to store in the hot-cache entry.</param>
+        /// <returns>An object instance representing the converter hot-cache entry.</returns>
+        private static object CreateConverterCacheEntry(
+            Type targetType,
+            Func<object, object> converter)
+            => new ConverterCacheEntry(
+                targetType,
+                converter);
+
+        /// <summary>
+        /// Reads the cached target type from a converter hot-cache entry.
+        /// </summary>
+        /// <param name="cacheEntry">The hot-cache entry instance to inspect. May be null.</param>
+        /// <returns>The cached target type, or null when <paramref name="cacheEntry"/> is null.</returns>
+        private static Type ReadConverterHotCacheTargetType(
+            object cacheEntry)
+            => cacheEntry == null
+                ? null
+                : ((ConverterCacheEntry)cacheEntry).TargetType;
+
+        /// <summary>
+        /// Reads the cached converter delegate from a converter hot-cache entry.
+        /// </summary>
+        /// <param name="cacheEntry">The hot-cache entry instance to inspect. May be null.</param>
+        /// <returns>The cached converter delegate, or null when <paramref name="cacheEntry"/> is null.</returns>
+        private static Func<object, object> ReadConverterHotCacheConverter(
+            object cacheEntry)
+            => cacheEntry == null
+                ? null
+                : ((ConverterCacheEntry)cacheEntry).Converter;
     }
 }

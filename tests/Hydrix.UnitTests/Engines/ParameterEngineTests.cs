@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using Xunit;
 
 namespace Hydrix.UnitTests.Engines
@@ -28,6 +29,17 @@ namespace Hydrix.UnitTests.Engines
             /// </summary>
             /// <returns>A deterministic string value.</returns>
             public override string ToString() => "non-formattable";
+        }
+
+        /// <summary>
+        /// Represents a parameter object used to validate the process-wide binder hot cache.
+        /// </summary>
+        private sealed class BinderProbeParameters
+        {
+            /// <summary>
+            /// Gets or sets the identifier value exposed to the binder cache.
+            /// </summary>
+            public int Id { get; set; }
         }
 
         /// <summary>
@@ -473,6 +485,35 @@ namespace Hydrix.UnitTests.Engines
             var cmd = new FakeDbCommand();
             ParameterEngine.BindParametersFromObject(cmd, null, "@");
             Assert.Empty(cmd.Parameters);
+        }
+
+        /// <summary>
+        /// Verifies that the internal binder hot cache returns the cached binder when the same parameter type is
+        /// requested consecutively.
+        /// </summary>
+        [Fact]
+        public void GetOrAddBinder_ReturnsCachedBinder_WhenSameTypeIsRequestedTwice()
+        {
+            var parameterEngineType = typeof(ParameterEngine);
+            var flags = BindingFlags.NonPublic | BindingFlags.Static;
+            var lastBinderCacheField = parameterEngineType.GetField("_lastBinderCache", flags);
+            var getOrAddBinderMethod = parameterEngineType.GetMethod("GetOrAddBinder", flags);
+            var previousLastCache = lastBinderCacheField.GetValue(null);
+
+            try
+            {
+                lastBinderCacheField.SetValue(null, null);
+
+                var first = getOrAddBinderMethod.Invoke(null, new object[] { typeof(BinderProbeParameters) });
+                var second = getOrAddBinderMethod.Invoke(null, new object[] { typeof(BinderProbeParameters) });
+
+                Assert.NotNull(first);
+                Assert.Same(first, second);
+            }
+            finally
+            {
+                lastBinderCacheField.SetValue(null, previousLastCache);
+            }
         }
     }
 }

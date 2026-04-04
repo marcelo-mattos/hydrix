@@ -1,3 +1,4 @@
+using Hydrix.Internals;
 using Hydrix.Mapping;
 using Hydrix.Metadata.Internals;
 using System;
@@ -716,7 +717,7 @@ namespace Hydrix.Resolvers
         /// <summary>
         /// Checks if a single field matches the expected type using provider-level metadata only.
         /// </summary>
-        /// <remarks>When <see cref="GetFieldType"/> is unavailable (returns <see langword="null"/>) the
+        /// <remarks>When <see cref="FieldTypeHelper.GetFieldType(IDataRecord, int)"/> is unavailable (returns <see langword="null"/>) the
         /// method trusts the column name match instead of falling back to
         /// <c>reader.GetValue(ordinal).GetType()</c>, which would box value types and increase GC
         /// pressure on every validation pass.</remarks>
@@ -734,7 +735,9 @@ namespace Hydrix.Resolvers
             if (field.SourceType == null)
                 return false;
 
-            var currentFieldType = GetFieldType(reader, field.Ordinal);
+            var currentFieldType = FieldTypeHelper.GetFieldType(
+                reader,
+                field.Ordinal);
 
             // When the provider does not support GetFieldType, trust the column name match
             // instead of boxing via GetValue().GetType().
@@ -742,32 +745,5 @@ namespace Hydrix.Resolvers
                    currentFieldType == field.SourceType;
         }
 
-        /// <summary>
-        /// Retrieves the data type of the specified column in the provided data reader.
-        /// </summary>
-        /// <remarks>If the data reader does not support retrieving the field type or if the operation is
-        /// invalid for the current state of the reader, the method returns null instead of throwing an
-        /// exception.</remarks>
-        /// <param name="reader">The data reader from which to obtain the column type information. Cannot be null.</param>
-        /// <param name="ordinal">The zero-based column ordinal indicating which column's data type to retrieve. Must be within the range of
-        /// available columns in the reader.</param>
-        /// <returns>A Type object representing the data type of the specified column, or null if the type cannot be determined.</returns>
-        private static Type GetFieldType(
-            IDataReader reader,
-            int ordinal)
-        {
-            try
-            {
-                return reader.GetFieldType(ordinal);
-            }
-            catch (InvalidOperationException)
-            {
-                return null;
-            }
-            catch (NotSupportedException)
-            {
-                return null;
-            }
-        }
     }
 }

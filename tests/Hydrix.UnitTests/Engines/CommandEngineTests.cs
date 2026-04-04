@@ -1186,8 +1186,7 @@ namespace Hydrix.UnitTests.Engines
             var commandEngineType = typeof(CommandEngine);
             var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
 
-            commandEngineType.GetField("_lastProcedureType", flags).SetValue(null, null);
-            commandEngineType.GetField("_lastProcedureBinder", flags).SetValue(null, null);
+            commandEngineType.GetField("_lastProcedureCache", flags).SetValue(null, null);
 
             var conn = new FakeDbConnection();
 
@@ -1221,12 +1220,10 @@ namespace Hydrix.UnitTests.Engines
             var commandEngineType = typeof(CommandEngine);
             var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
 
-            var lastProcedureTypeField = commandEngineType.GetField("_lastProcedureType", flags);
-            var lastProcedureBinderField = commandEngineType.GetField("_lastProcedureBinder", flags);
+            var lastProcedureCacheField = commandEngineType.GetField("_lastProcedureCache", flags);
             var getOrAddProcedureBinderMethod = commandEngineType.GetMethod("GetOrAddProcedureBinder", flags);
 
-            lastProcedureTypeField.SetValue(null, null);
-            lastProcedureBinderField.SetValue(null, null);
+            lastProcedureCacheField.SetValue(null, null);
 
             var first = getOrAddProcedureBinderMethod.Invoke(null, new object[] { typeof(CustomProcedure) });
             var second = getOrAddProcedureBinderMethod.Invoke(null, new object[] { typeof(CustomProcedure) });
@@ -1245,12 +1242,10 @@ namespace Hydrix.UnitTests.Engines
             var commandEngineType = typeof(CommandEngine);
             var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
 
-            var lastProviderSetterParameterTypeField = commandEngineType.GetField("_lastProviderSetterParameterType", flags);
-            var lastProviderSetterField = commandEngineType.GetField("_lastProviderSetter", flags);
+            var lastProviderSetterCacheField = commandEngineType.GetField("_lastProviderSetterCache", flags);
             var getOrAddProviderDbTypeSetterMethod = commandEngineType.GetMethod("GetOrAddProviderDbTypeSetter", flags);
 
-            lastProviderSetterParameterTypeField.SetValue(null, null);
-            lastProviderSetterField.SetValue(null, null);
+            lastProviderSetterCacheField.SetValue(null, null);
 
             var first = (Action<IDataParameter, int>)getOrAddProviderDbTypeSetterMethod.Invoke(
                 null,

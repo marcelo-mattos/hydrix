@@ -1,5 +1,6 @@
-﻿using Hydrix.Binders.Procedure;
+using Hydrix.Binders.Procedure;
 using Hydrix.Caching;
+using Hydrix.Caching.Entries;
 using Hydrix.Configuration;
 using Hydrix.Extensions;
 using Hydrix.Schemas.Contract;
@@ -22,32 +23,19 @@ namespace Hydrix.Engines
     internal static class CommandEngine
     {
         /// <summary>
-        /// Holds the last procedure type used in the process-wide hot cache.
+        /// Holds the most recently used procedure-binder cache entry in the process-wide hot cache.
         /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to reduce repeated cache
-        /// lookups in high-throughput and async execution paths.</remarks>
-        private static Type _lastProcedureType;
+        /// <remarks>This field stores the type/binder pair as a single immutable object so volatile reads and writes
+        /// remain atomically consistent under concurrent access.</remarks>
+        private static ProcedureBinderCacheEntry _lastProcedureCache;
 
         /// <summary>
-        /// Holds the last used procedure binder for the process-wide hot cache.
+        /// Holds the most recently used provider-specific setter cache entry in the process-wide hot cache.
         /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to reduce repeated binder
-        /// resolution in high-throughput and async execution paths.</remarks>
-        private static ProcedureBinder _lastProcedureBinder;
+        /// <remarks>This field stores the parameter-type/setter pair as a single immutable object so volatile reads
+        /// and writes remain atomically consistent under concurrent access.</remarks>
+        private static ProviderDbTypeSetterCacheEntry _lastProviderSetterCache;
 
-        /// <summary>
-        /// Holds the parameter type of the last provider-specific setter stored in the process-wide hot cache.
-        /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to reduce repeated provider
-        /// setter lookup in high-throughput and async execution paths.</remarks>
-        private static Type _lastProviderSetterParameterType;
-
-        /// <summary>
-        /// Stores the last provider-specific parameter setter action used in the process-wide hot cache.
-        /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache to optimize repeated
-        /// parameter assignments in high-throughput and async execution paths.</remarks>
-        private static Action<IDataParameter, int> _lastProviderSetter;
 
         /// <summary>
         /// Creates and returns a Command object associated with the connection.
@@ -189,27 +177,23 @@ namespace Hydrix.Engines
         private static ProcedureBinder GetOrAddProcedureBinder(
             Type procedureType)
         {
-            var cachedType = Volatile.Read(ref _lastProcedureType);
-            var cachedBinder = Volatile.Read(ref _lastProcedureBinder);
-
-            if (ReferenceEquals(
-                    cachedType,
-                    procedureType) &&
-                cachedBinder != null)
+            var cachedEntry = Volatile.Read(ref _lastProcedureCache);
+            if (cachedEntry != null &&
+                ReferenceEquals(
+                    cachedEntry.ProcedureType,
+                    procedureType))
             {
-                return cachedBinder;
+                return cachedEntry.Binder;
             }
 
             var binder = ProcedureBinderCache.GetOrAdd(
                 procedureType);
 
             Volatile.Write(
-                ref _lastProcedureBinder,
-                binder);
-
-            Volatile.Write(
-                ref _lastProcedureType,
-                procedureType);
+                ref _lastProcedureCache,
+                new ProcedureBinderCacheEntry(
+                    procedureType,
+                    binder));
 
             return binder;
         }
@@ -226,26 +210,22 @@ namespace Hydrix.Engines
         private static Action<IDataParameter, int> GetOrAddProviderDbTypeSetter(
             Type parameterType)
         {
-            var cachedType = Volatile.Read(ref _lastProviderSetterParameterType);
-            var cachedSetter = Volatile.Read(ref _lastProviderSetter);
-
-            if (ReferenceEquals(
-                    cachedType,
-                    parameterType) &&
-                cachedSetter != null)
+            var cachedEntry = Volatile.Read(ref _lastProviderSetterCache);
+            if (cachedEntry != null &&
+                ReferenceEquals(
+                    cachedEntry.ParameterType,
+                    parameterType))
             {
-                return cachedSetter;
+                return cachedEntry.Setter;
             }
 
             var setter = ProviderDbTypeSetterCache.GetOrAdd(parameterType);
 
             Volatile.Write(
-                ref _lastProviderSetter,
-                setter);
-
-            Volatile.Write(
-                ref _lastProviderSetterParameterType,
-                parameterType);
+                ref _lastProviderSetterCache,
+                new ProviderDbTypeSetterCacheEntry(
+                    parameterType,
+                    setter));
 
             return setter;
         }

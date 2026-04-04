@@ -1,5 +1,6 @@
 using Hydrix.Attributes.Schemas;
 using Hydrix.Caching;
+using Hydrix.Internals;
 using Hydrix.Metadata.Internals;
 using Hydrix.Metadata.Materializers;
 using Hydrix.Resolvers;
@@ -7,6 +8,7 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 
@@ -23,7 +25,7 @@ namespace Hydrix.Mapping
         /// </summary>
         /// <remarks>The property metadata is used to derive the nested-column prefix and to compile
         /// delegates responsible for creating and assigning nested entity instances during materialization.</remarks>
-        public PropertyInfo Property { get; private set; }
+        public PropertyInfo Property { get; }
 
         /// <summary>
         /// Gets the foreign-table attribute associated with the navigation property when the mapping originates from
@@ -31,7 +33,7 @@ namespace Hydrix.Mapping
         /// </summary>
         /// <remarks>This value is null when the mapping was translated from an Entity Framework model instead
         /// of the traditional attribute-based configuration.</remarks>
-        public ForeignTableAttribute Attribute { get; private set; }
+        public ForeignTableAttribute Attribute { get; }
 
         /// <summary>
         /// Gets the compiled factory delegate used to instantiate the nested entity represented by this mapping.
@@ -292,6 +294,10 @@ namespace Hydrix.Mapping
         /// <param name="schemaHash">A hash value representing the current schema. Used to determine whether cached results can be reused.</param>
         /// <returns>An array of integers containing the ordinals of all dictionary entries whose keys start with the specified
         /// prefix. Returns an empty array if no matches are found.</returns>
+        [SuppressMessage(
+            "Minor Code Smell",
+            "S3267",
+            Justification = "Loop intentionally used to avoid LINQ allocations and improve performance in hot path")]
         private int[] GetCandidateOrdinals(
             IReadOnlyDictionary<string, int> ordinals,
             string fullPrefix,
@@ -373,7 +379,7 @@ namespace Hydrix.Mapping
                 if (!ordinals.TryGetValue(columnName, out var ordinal))
                     continue;
 
-                var sourceType = GetFieldType(
+                var sourceType = FieldTypeHelper.GetFieldType(
                     record,
                     ordinal);
 
@@ -397,70 +403,7 @@ namespace Hydrix.Mapping
                 : fields.ToArray();
         }
 
-        /// <summary>
-        /// Resolves a field assigner for the specified field using source type information from the record.
-        /// </summary>
-        /// <param name="record">The data record used to infer the source type at the provided ordinal.</param>
-        /// <param name="field">The field mapping for which to resolve an assigner.</param>
-        /// <param name="ordinal">The zero-based column ordinal in the data record.</param>
-        /// <returns>An assigner action when resolution succeeds; otherwise, <see langword="null"/>.</returns>
-        private static Action<object, IDataRecord> ResolveFieldAssigner(
-            IDataRecord record,
-            ColumnMap field,
-            int ordinal)
-            => ResolveFieldAssignerWithSourceType(
-                field,
-                ordinal,
-                GetFieldType(
-                    record,
-                    ordinal));
 
-        /// <summary>
-        /// Resolves a field reader for the specified field using source type information from the record.
-        /// </summary>
-        /// <param name="record">The data record used to infer the source type at the provided ordinal.</param>
-        /// <param name="field">The field mapping for which to resolve a reader.</param>
-        /// <param name="ordinal">The zero-based column ordinal in the data record.</param>
-        /// <returns>A resolved field reader delegate, or <see langword="null"/> when no reader is available.</returns>
-        private static FieldReader ResolveFieldReader(
-            IDataRecord record,
-            ColumnMap field,
-            int ordinal)
-            => ResolveFieldReaderWithSourceType(
-                field,
-                GetFieldType(
-                    record,
-                    ordinal));
-
-        /// <summary>
-        /// Assigns scalar fields to the target entity using metadata and ordinal mappings.
-        /// </summary>
-        /// <param name="entity">The entity instance to populate.</param>
-        /// <param name="record">The data record containing source values.</param>
-        /// <param name="metadata">The table metadata containing scalar field mappings.</param>
-        /// <param name="prefix">The field prefix used when resolving column names.</param>
-        /// <param name="ordinals">A mapping between column names and ordinals.</param>
-        private static void SetEntityFields(
-            ITable entity,
-            IDataRecord record,
-            TableMaterializeMetadata metadata,
-            string prefix,
-            IReadOnlyDictionary<string, int> ordinals)
-        {
-            var fields = ResolveFieldBindings(
-                record,
-                metadata,
-                prefix,
-                ordinals);
-
-            if (fields.Length == 0)
-                return;
-
-            SetResolvedEntityFields(
-                entity,
-                record,
-                fields);
-        }
 
         /// <summary>
         /// Resolves and binds nested entity relationships for the specified data record using the provided
@@ -583,38 +526,6 @@ namespace Hydrix.Mapping
                 fieldAssigners);
         }
 
-        /// <summary>
-        /// Assigns nested entities to the target entity using metadata and ordinal mappings.
-        /// </summary>
-        /// <param name="entity">The root entity instance to populate with nested entities.</param>
-        /// <param name="record">The data record containing source values.</param>
-        /// <param name="metadata">The table metadata containing nested entity mappings.</param>
-        /// <param name="prefix">The field prefix used when resolving column names.</param>
-        /// <param name="ordinals">A mapping between column names and ordinals.</param>
-        /// <param name="schemaHash">The schema hash used for candidate-ordinal cache resolution.</param>
-        private static void SetEntityNestedEntities(
-            ITable entity,
-            IDataRecord record,
-            TableMaterializeMetadata metadata,
-            string prefix,
-            IReadOnlyDictionary<string, int> ordinals,
-            int schemaHash)
-        {
-            var nestedEntities = ResolveNestedBindings(
-                record,
-                metadata,
-                prefix,
-                ordinals,
-                schemaHash);
-
-            if (nestedEntities.Length == 0)
-                return;
-
-            SetResolvedEntityNestedEntities(
-                entity,
-                record,
-                nestedEntities);
-        }
 
         /// <summary>
         /// Resolves an assigner action that sets a field value on an entity from an IDataRecord, using the specified
@@ -673,33 +584,6 @@ namespace Hydrix.Mapping
             return FieldReaderFactory.Create(
                 field.TargetType,
                 sourceType);
-        }
-
-        /// <summary>
-        /// Retrieves the data type of the specified field in the given data record.
-        /// </summary>
-        /// <remarks>If the underlying data record does not support retrieving the field type or is in an
-        /// invalid state, this method returns null instead of throwing an exception.</remarks>
-        /// <param name="record">The data record from which to obtain the field type. Cannot be null.</param>
-        /// <param name="ordinal">The zero-based column ordinal indicating which field's type to retrieve. Must be within the valid range of
-        /// field indices for the record.</param>
-        /// <returns>A Type object representing the data type of the specified field, or null if the type cannot be determined.</returns>
-        private static Type GetFieldType(
-            IDataRecord record,
-            int ordinal)
-        {
-            try
-            {
-                return record.GetFieldType(ordinal);
-            }
-            catch (InvalidOperationException)
-            {
-                return null;
-            }
-            catch (NotSupportedException)
-            {
-                return null;
-            }
         }
 
         /// <summary>

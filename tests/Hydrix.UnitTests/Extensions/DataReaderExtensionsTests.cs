@@ -448,7 +448,7 @@ namespace Hydrix.UnitTests.Extensions
             var reader = new Mock<IDataReader>();
             reader.Setup(r => r.GetFieldType(0)).Throws(new InvalidOperationException("metadata unavailable"));
 
-            var method = typeof(Hydrix.Extensions.DataReaderExtensions).GetMethod(
+            var method = typeof(Hydrix.Internals.FieldTypeHelper).GetMethod(
                 "GetFieldType",
                 BindingFlags.NonPublic | BindingFlags.Static);
 
@@ -470,7 +470,7 @@ namespace Hydrix.UnitTests.Extensions
             var reader = new Mock<IDataReader>();
             reader.Setup(r => r.GetFieldType(0)).Throws(new NotSupportedException("metadata unavailable"));
 
-            var method = typeof(Hydrix.Extensions.DataReaderExtensions).GetMethod(
+            var method = typeof(Hydrix.Internals.FieldTypeHelper).GetMethod(
                 "GetFieldType",
                 BindingFlags.NonPublic | BindingFlags.Static);
 

@@ -1,5 +1,6 @@
-﻿using Hydrix.Binders.Parameter;
+using Hydrix.Binders.Parameter;
 using Hydrix.Caching;
+using Hydrix.Caching.Entries;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,16 +24,12 @@ namespace Hydrix.Engines
         private static readonly IFormatProvider InvariantCulture = CultureInfo.InvariantCulture;
 
         /// <summary>
-        /// Holds the last parameter type used in the process-wide hot cache.
+        /// Holds the most recently used parameter-binder cache entry in the process-wide hot cache.
         /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache key for binder reuse.</remarks>
-        private static Type _lastParameterType;
+        /// <remarks>This field stores the parameter-type/binder pair as a single immutable object so volatile reads
+        /// and writes remain atomically consistent under concurrent access.</remarks>
+        private static ParameterBinderCacheEntry _lastBinderCache;
 
-        /// <summary>
-        /// Holds the last instance of the parameter object binder used in the process-wide hot cache.
-        /// </summary>
-        /// <remarks>This field is used with volatile reads/writes as a lock-free hot cache value for binder reuse.</remarks>
-        private static ParameterObjectBinder _lastBinder;
 
         /// <summary>
         /// Binds parameters to the specified database command by extracting values from the provided object or
@@ -94,27 +91,23 @@ namespace Hydrix.Engines
         private static ParameterObjectBinder GetOrAddBinder(
             Type parameterType)
         {
-            var cachedType = Volatile.Read(ref _lastParameterType);
-            var cachedBinder = Volatile.Read(ref _lastBinder);
-
-            if (ReferenceEquals(
-                    cachedType,
-                    parameterType) &&
-                cachedBinder != null)
+            var cachedEntry = Volatile.Read(ref _lastBinderCache);
+            if (cachedEntry != null &&
+                ReferenceEquals(
+                    cachedEntry.ParameterType,
+                    parameterType))
             {
-                return cachedBinder;
+                return cachedEntry.Binder;
             }
 
             var binder = ParameterBinderCache.GetOrAdd(
                 parameterType);
 
             Volatile.Write(
-                ref _lastBinder,
-                binder);
-
-            Volatile.Write(
-                ref _lastParameterType,
-                parameterType);
+                ref _lastBinderCache,
+                new ParameterBinderCacheEntry(
+                    parameterType,
+                    binder));
 
             return binder;
         }

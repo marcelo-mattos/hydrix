@@ -1,3 +1,4 @@
+using Hydrix.Caching.Entries;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,14 +15,12 @@ namespace Hydrix.Extensions
     internal static class ObjectExtensions
     {
         /// <summary>
-        /// Holds the target type of the most recently used converter in the process-wide hot cache.
+        /// Holds the most recently used converter cache entry in the process-wide hot cache.
         /// </summary>
-        private static Type _lastConverterTargetType;
+        /// <remarks>This field stores the target-type/converter pair as a single immutable object so volatile reads
+        /// and writes remain atomically consistent under concurrent access.</remarks>
+        private static ConverterCacheEntry _lastConverterCache;
 
-        /// <summary>
-        /// Holds the converter delegate of the most recently used converter in the process-wide hot cache.
-        /// </summary>
-        private static Func<object, object> _lastConverter;
 
         /// <summary>
         /// Tracks the number of cached converters without calling ConcurrentDictionary.Count on the hot path.
@@ -307,15 +306,13 @@ namespace Hydrix.Extensions
             if (targetType == null)
                 throw new ArgumentNullException(nameof(targetType));
 #endif
-            var cachedTargetType = Volatile.Read(ref _lastConverterTargetType);
-            var cachedConverter = Volatile.Read(ref _lastConverter);
-
-            if (ReferenceEquals(
-                    cachedTargetType,
-                    targetType) &&
-                cachedConverter != null)
+            var cachedEntry = Volatile.Read(ref _lastConverterCache);
+            if (cachedEntry != null &&
+                ReferenceEquals(
+                    cachedEntry.TargetType,
+                    targetType))
             {
-                return cachedConverter;
+                return cachedEntry.Converter;
             }
 
             if (!ConverterCache.TryGetValue(
@@ -339,12 +336,10 @@ namespace Hydrix.Extensions
             }
 
             Volatile.Write(
-                ref _lastConverter,
-                converter);
-
-            Volatile.Write(
-                ref _lastConverterTargetType,
-                targetType);
+                ref _lastConverterCache,
+                new ConverterCacheEntry(
+                    targetType,
+                    converter));
 
             return converter;
         }

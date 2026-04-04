@@ -1,4 +1,5 @@
 using Hydrix.Caching;
+using Hydrix.Internals;
 using Hydrix.Mapping;
 using Hydrix.Resolvers;
 using Hydrix.Schemas.Contract;
@@ -240,7 +241,9 @@ namespace Hydrix.Extensions
             for (var index = 0; index < reader.FieldCount; index++)
             {
                 var name = reader.GetName(index) ?? string.Empty;
-                var fieldType = GetFieldType(reader, index);
+                var fieldType = FieldTypeHelper.GetFieldType(
+                    reader,
+                    index);
 
                 columnNames[index] = name;
                 ordinals[name] = index;
@@ -255,28 +258,5 @@ namespace Hydrix.Extensions
                 hash.ToHashCode());
         }
 
-        /// <summary>
-        /// Retrieves the provider CLR type for the specified ordinal when the reader supports it.
-        /// </summary>
-        /// <param name="reader">The data reader to inspect.</param>
-        /// <param name="ordinal">The target field ordinal.</param>
-        /// <returns>The provider CLR type for the specified ordinal, or null if the reader does not support retrieving field types.</returns>
-        private static Type GetFieldType(
-            IDataReader reader,
-            int ordinal)
-        {
-            try
-            {
-                return reader.GetFieldType(ordinal);
-            }
-            catch (InvalidOperationException)
-            {
-                return null;
-            }
-            catch (NotSupportedException)
-            {
-                return null;
-            }
-        }
     }
 }
