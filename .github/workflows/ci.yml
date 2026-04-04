@@ -39,17 +39,19 @@ jobs:
 
       - name: Test netcoreapp3.1 with coverage
         run: |
-          dotnet test \
+          dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
             --framework netcoreapp3.1 \
             --configuration Release \
-            --collect:"XPlat Code Coverage"
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=$GITHUB_WORKSPACE/tests/Hydrix.UnitTests/TestResults/netcoreapp3.1/
 
       - name: Upload coverage netcoreapp3.1
         uses: actions/upload-artifact@v4
         with:
           name: coverage-netcore31
-          path: |
-            **/TestResults/**/coverage.cobertura.xml
+          path: tests/Hydrix.UnitTests/TestResults/netcoreapp3.1/coverage.opencover.xml
+          if-no-files-found: error
 
   sonar:
     name: sonar-quality-gate
@@ -81,12 +83,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-netcore31
-          path: .
+          path: tests/Hydrix.UnitTests/TestResults/netcoreapp3.1
 
       - name: Debug coverage files
         run: |
           echo "=== Coverage files found ==="
-          find . -name "coverage.cobertura.xml"
+          find . -name "coverage.opencover.xml"
 
       - name: Sonar Begin
         env:
@@ -100,7 +102,7 @@ jobs:
             /o:"marcelo-mattos" \
             /d:sonar.login="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.cobertura.reportsPaths="tests/**/TestResults/**/coverage.cobertura.xml" \
+            /d:sonar.cs.opencover.reportsPaths="tests/**/TestResults/**/coverage.opencover.xml" \
             /d:sonar.pullrequest.key="$PR_NUMBER" \
             /d:sonar.pullrequest.branch="$PR_BRANCH" \
             /d:sonar.pullrequest.base="$PR_BASE"
@@ -112,23 +114,29 @@ jobs:
 
       - name: Test with coverage
         run: |
-          dotnet test \
+          dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
             --framework net6.0 \
             --no-build \
             --configuration Release \
-            --collect:"XPlat Code Coverage"
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=$GITHUB_WORKSPACE/tests/Hydrix.UnitTests/TestResults/net6.0/
 
-          dotnet test \
+          dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
             --framework net8.0 \
             --no-build \
             --configuration Release \
-            --collect:"XPlat Code Coverage"
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=$GITHUB_WORKSPACE/tests/Hydrix.UnitTests/TestResults/net8.0/
 
-          dotnet test \
+          dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
             --framework net10.0 \
             --no-build \
             --configuration Release \
-            --collect:"XPlat Code Coverage"
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=$GITHUB_WORKSPACE/tests/Hydrix.UnitTests/TestResults/net10.0/
 
       - name: Sonar End
         env:
