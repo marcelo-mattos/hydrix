@@ -302,40 +302,94 @@ namespace Hydrix.UnitTests.Metadata.Materializers
         /// insertion loses a race for the same schema hash.
         /// </summary>
         [Fact]
-        public void GetOrAddBindings_DecrementsCacheSizeAndReturnsCachedBindings_WhenTryAddLosesRace()
+        public void GetOrAddBindings_InvokesFactoryExactlyOnce_WhenCalledConcurrently()
         {
             var metadata = new TableMaterializeMetadata(
                 new List<ColumnMap>(),
                 new List<TableMap>());
 
+            var schemaHash = 42;
+            var expectedBindings = new ResolvedTableBindings(null, null);
+            var factoryCallCount = 0;
+            var gate = new System.Threading.ManualResetEventSlim(false);
+
+            Func<int, ResolvedTableBindings> factory = _ =>
+            {
+                System.Threading.Interlocked.Increment(ref factoryCallCount);
+                gate.Wait();
+                return expectedBindings;
+            };
+
+            var tasks = new System.Threading.Tasks.Task<ResolvedTableBindings>[8];
+            for (var i = 0; i < tasks.Length; i++)
+                tasks[i] = System.Threading.Tasks.Task.Run(() => metadata.GetOrAddBindings(schemaHash, factory));
+
+            gate.Set();
+            var results = System.Threading.Tasks.Task.WhenAll(tasks).GetAwaiter().GetResult();
+
+            Assert.Equal(1, factoryCallCount);
+            Assert.All(results, r => Assert.Same(expectedBindings, r));
+            Assert.True(metadata.TryGetBindings(schemaHash, out var fromCache));
+            Assert.Same(expectedBindings, fromCache);
+        }
+
+        /// <summary>
+        /// Verifies that, under heavy contention, callers that lose the dictionary insertion race still return the
+        /// winning cached bindings while keeping the cache-size accounting consistent.
+        /// </summary>
+        /// <remarks>This test repeatedly coordinates many simultaneous calls for the same schema hash to maximize the
+        /// race window between the initial cache probe and the dictionary insertion path, exercising the
+        /// GetOrAdd-race rollback flow.</remarks>
+        [Fact]
+        public void GetOrAddBindings_MaintainsCacheSizeConsistency_WhenManyThreadsRaceForSameSchemaHash()
+        {
             var metadataType = typeof(TableMaterializeMetadata);
             var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            var cacheSizeField = metadataType.GetField("_bindingsCacheSize", flags);
 
-            var bindingsBySchemaHashField = metadataType.GetField("_bindingsBySchemaHash", flags);
-            var bindingsCacheSizeField = metadataType.GetField("_bindingsCacheSize", flags);
+            Assert.NotNull(cacheSizeField);
 
-            Assert.NotNull(bindingsBySchemaHashField);
-            Assert.NotNull(bindingsCacheSizeField);
+            const int attempts = 24;
+            const int schemaHash = 777;
 
-            var bindingsBySchemaHash =
-                (ConcurrentDictionary<int, ResolvedTableBindings>)bindingsBySchemaHashField.GetValue(metadata);
+            for (var attempt = 0; attempt < attempts; attempt++)
+            {
+                var metadata = new TableMaterializeMetadata(
+                    new List<ColumnMap>(),
+                    new List<TableMap>());
 
-            var schemaHash = 42;
-            var cachedBindings = new ResolvedTableBindings(null, null);
-            var currentBindings = new ResolvedTableBindings(null, null);
+                var expectedBindings = new ResolvedTableBindings(null, null);
+                var factoryCalls = 0;
+                var start = new System.Threading.ManualResetEventSlim(false);
+                var workers = Math.Max(Environment.ProcessorCount * 8, 32);
+                var tasks = new System.Threading.Tasks.Task<ResolvedTableBindings>[workers];
 
-            var result = metadata.GetOrAddBindings(
-                schemaHash,
-                _ =>
+                Func<int, ResolvedTableBindings> factory = _ =>
                 {
-                    bindingsBySchemaHash.TryAdd(schemaHash, cachedBindings);
-                    return currentBindings;
-                });
+                    System.Threading.Interlocked.Increment(ref factoryCalls);
+                    System.Threading.Thread.SpinWait(200_000);
+                    return expectedBindings;
+                };
 
-            Assert.Same(cachedBindings, result);
-            Assert.Equal(0, (int)bindingsCacheSizeField.GetValue(metadata));
-            Assert.True(metadata.TryGetBindings(schemaHash, out var fromCache));
-            Assert.Same(cachedBindings, fromCache);
+                for (var i = 0; i < tasks.Length; i++)
+                {
+                    tasks[i] = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        start.Wait();
+                        return metadata.GetOrAddBindings(schemaHash, factory);
+                    });
+                }
+
+                start.Set();
+
+                var results = System.Threading.Tasks.Task.WhenAll(tasks).GetAwaiter().GetResult();
+
+                Assert.Equal(1, factoryCalls);
+                Assert.All(results, r => Assert.Same(expectedBindings, r));
+                Assert.True(metadata.TryGetBindings(schemaHash, out var fromCache));
+                Assert.Same(expectedBindings, fromCache);
+                Assert.Equal(1, (int)cacheSizeField.GetValue(metadata));
+            }
         }
 
         /// <summary>

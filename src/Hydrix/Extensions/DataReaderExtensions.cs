@@ -57,15 +57,15 @@ namespace Hydrix.Extensions
             else
             {
                 var count = 0;
-                while (dataReader.Read())
+                while (count < limit &&
+                    dataReader.Read())
                 {
-                    if (count >= limit)
-                        break;
                     bindings ??= CreateBindings<TEntity>(dataReader);
                     MapCurrentEntity(
                         dataReader,
                         bindings,
                         entities);
+
                     count++;
                 }
             }
@@ -117,17 +117,17 @@ namespace Hydrix.Extensions
             else
             {
                 var count = 0;
-                while (await dbDataReader
-                    .ReadAsync(cancellationToken)
-                    .ConfigureAwait(false))
+                while (count < limit &&
+                    await dbDataReader
+                        .ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
                 {
-                    if (count >= limit)
-                        break;
                     bindings ??= CreateBindings<TEntity>(dbDataReader);
                     MapCurrentEntity(
                         dbDataReader,
                         bindings,
                         entities);
+
                     count++;
                 }
             }
@@ -168,13 +168,22 @@ namespace Hydrix.Extensions
 
             if (hasCachedBinding)
             {
-                return TableMap.Bind(
+                var rebuilt = TableMap.Bind(
                     dataReader,
                     metadata,
                     string.Empty,
                     ordinalMap.Ordinals,
                     ordinalMap.SchemaHash,
                     columnNames);
+
+                metadata.ReplaceBindings(
+                    ordinalMap.SchemaHash,
+                    rebuilt);
+
+                metadata.RememberBindings(
+                    rebuilt);
+
+                return rebuilt;
             }
 
             return metadata.GetOrAddBindings(

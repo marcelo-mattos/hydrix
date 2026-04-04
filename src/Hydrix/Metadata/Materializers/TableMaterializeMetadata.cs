@@ -21,11 +21,11 @@ namespace Hydrix.Metadata.Materializers
     {
         /// <summary>
         /// Stores resolved table bindings indexed by the schema hash value.
+        /// Each entry is wrapped in a Lazy to guarantee the factory executes exactly once per schema hash,
+        /// even under concurrent access, preventing redundant delegate compilation during warm-up.
         /// </summary>
-        /// <remarks>This dictionary enables efficient retrieval of table binding information based on a
-        /// computed schema hash. It is thread-safe for concurrent read and write operations.</remarks>
-        private readonly ConcurrentDictionary<int, ResolvedTableBindings> _bindingsBySchemaHash =
-            new ConcurrentDictionary<int, ResolvedTableBindings>();
+        private readonly ConcurrentDictionary<int, Lazy<ResolvedTableBindings>> _bindingsBySchemaHash =
+            new ConcurrentDictionary<int, Lazy<ResolvedTableBindings>>();
 
         /// <summary>
         /// Stores the most recently reused binding plan for fast schema matches.
@@ -47,28 +47,19 @@ namespace Hydrix.Metadata.Materializers
         /// <summary>
         /// Gets the collection of column mappings that define the structure of the data.
         /// </summary>
-        /// <remarks>The returned collection is read-only and reflects the mapping between data fields and
-        /// their corresponding database columns. The collection is initialized when the object is constructed and
-        /// cannot be modified directly.</remarks>
         public IReadOnlyList<ColumnMap> Fields { get; private set; }
 
         /// <summary>
         /// Gets the collection of table mappings that represent the entities managed by the context.
         /// </summary>
-        /// <remarks>Each table mapping defines how an entity is associated with a database table,
-        /// including schema and relationship information. The collection is read-only and reflects the entities
-        /// currently tracked by the context.</remarks>
         public IReadOnlyList<TableMap> Entities { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the TableMaterializeMetadata class using the specified fields and entities.
         /// </summary>
-        /// <remarks>Both fields and entities are required to accurately describe the structure and
-        /// context for table materialization. Supplying null for either parameter will result in an error.</remarks>
-        /// <param name="fields">A read-only list of ColumnMap objects that defines the fields to be materialized. This parameter cannot be
-        /// null.</param>
+        /// <param name="fields">A read-only list of ColumnMap objects that defines the fields to be materialized.</param>
         /// <param name="entities">A read-only list of TableMap objects that specifies the entities associated with the materialization
-        /// process. This parameter cannot be null.</param>
+        /// process.</param>
         public TableMaterializeMetadata(
             IReadOnlyList<ColumnMap> fields,
             IReadOnlyList<TableMap> entities)
@@ -78,41 +69,48 @@ namespace Hydrix.Metadata.Materializers
         }
 
         /// <summary>
-        /// Retrieves a cached schema-bound binding plan or materializes it once for future reuse.
+        /// Retrieves a cached schema-bound binding plan or materializes it exactly once for future reuse.
         /// </summary>
+        /// <remarks>Uses <see cref="Lazy{T}"/> with <see cref="LazyThreadSafetyMode.ExecutionAndPublication"/>
+        /// to guarantee the factory is called at most once per schema hash, even under high concurrency.
+        /// This prevents redundant expression-tree compilation during parallel warm-up.</remarks>
+        /// <param name="schemaHash">The schema hash that uniquely identifies the column layout of the current data reader.</param>
+        /// <param name="factory">A delegate invoked at most once to build the binding plan when no cached entry exists.</param>
+        /// <returns>The cached or newly built <see cref="ResolvedTableBindings"/> for the given schema hash.</returns>
         public ResolvedTableBindings GetOrAddBindings(
             int schemaHash,
             Func<int, ResolvedTableBindings> factory)
         {
             if (_bindingsBySchemaHash.TryGetValue(
                 schemaHash,
-                out var cachedBindings))
+                out var existingLazy))
             {
-                RememberBindings(cachedBindings);
-                return cachedBindings;
+                var cached = existingLazy.Value;
+                RememberBindings(cached);
+                return cached;
             }
 
-            var currentBindings = factory(schemaHash);
-
-            if (TryReserveBindingsCacheSlot())
+            if (!TryReserveBindingsCacheSlot())
             {
-                if (_bindingsBySchemaHash.TryAdd(
-                    schemaHash,
-                    currentBindings))
-                {
-                    RememberBindings(currentBindings);
-                    return currentBindings;
-                }
+                // Over capacity — build without caching, single execution guaranteed by caller context.
+                var uncached = factory(schemaHash);
+                RememberBindings(uncached);
+                return uncached;
+            }
 
+            var newLazy = new Lazy<ResolvedTableBindings>(
+                () => factory(schemaHash),
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+            var winningLazy = _bindingsBySchemaHash.GetOrAdd(schemaHash, newLazy);
+
+            if (!ReferenceEquals(winningLazy, newLazy))
+            {
+                // Lost the GetOrAdd race — roll back the reserved slot.
                 Interlocked.Decrement(ref _bindingsCacheSize);
             }
 
-            var bindings = _bindingsBySchemaHash.TryGetValue(
-                schemaHash,
-                out cachedBindings)
-                ? cachedBindings
-                : currentBindings;
-
+            var bindings = winningLazy.Value;
             RememberBindings(bindings);
             return bindings;
         }
@@ -120,12 +118,42 @@ namespace Hydrix.Metadata.Materializers
         /// <summary>
         /// Attempts to retrieve a cached schema-bound binding plan.
         /// </summary>
+        /// <param name="schemaHash">The schema hash that uniquely identifies the column layout to look up.</param>
+        /// <param name="bindings">When this method returns, contains the cached binding plan if found; otherwise, <see langword="null"/>.</param>
+        /// <returns><see langword="true"/> if a cached binding plan was found for the given schema hash; otherwise, <see langword="false"/>.</returns>
         public bool TryGetBindings(
             int schemaHash,
             out ResolvedTableBindings bindings)
-            => _bindingsBySchemaHash.TryGetValue(
+        {
+            if (_bindingsBySchemaHash.TryGetValue(
                 schemaHash,
-                out bindings);
+                out var lazy))
+            {
+                bindings = lazy.Value;
+                return true;
+            }
+
+            bindings = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Replaces the cached binding plan for a schema hash with a newly built one.
+        /// Used when an existing cached binding fails schema validation (e.g. hash collision or schema drift),
+        /// preventing repeated rebuilds on subsequent requests for the same schema.
+        /// </summary>
+        /// <param name="schemaHash">The schema hash key to replace.</param>
+        /// <param name="bindings">The newly built binding plan to store.</param>
+        public void ReplaceBindings(
+            int schemaHash,
+            ResolvedTableBindings bindings)
+        {
+            var replacement = new Lazy<ResolvedTableBindings>(
+                () => bindings,
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+            _bindingsBySchemaHash[schemaHash] = replacement;
+        }
 
         /// <summary>
         /// Attempts to reuse the most recently matched binding plan without recomputing schema hashes.
@@ -168,7 +196,7 @@ namespace Hydrix.Metadata.Materializers
         /// <summary>
         /// Attempts to reserve a cache slot while enforcing the maximum bindings cache size under concurrency.
         /// </summary>
-        /// <returns><see langword="true"/> when a cache slot is reserved; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if a cache slot was successfully reserved; <see langword="false"/> if the cache is already at capacity.</returns>
         private bool TryReserveBindingsCacheSlot()
             => TryReserveBindingsCacheSlotCore(
                 () => Volatile.Read(ref _bindingsCacheSize),
@@ -177,9 +205,12 @@ namespace Hydrix.Metadata.Materializers
         /// <summary>
         /// Attempts to reserve a cache slot using pluggable read and update delegates.
         /// </summary>
-        /// <param name="readCacheSize">Delegate used to read the current cache size.</param>
-        /// <param name="tryUpdate">Delegate used to atomically attempt the cache size update.</param>
-        /// <returns><see langword="true"/> when a cache slot is reserved; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>Spins until either the cache is found to be full or the atomic update succeeds,
+        /// allowing the caller to inject test doubles for both operations.</remarks>
+        /// <param name="readCacheSize">A delegate that returns the current observed cache size on each spin iteration.</param>
+        /// <param name="tryUpdate">A delegate that attempts an atomic compare-and-swap from <c>current</c> to <c>updated</c>,
+        /// returning <see langword="true"/> on success and <see langword="false"/> when a concurrent update was detected.</param>
+        /// <returns><see langword="true"/> if a cache slot was successfully reserved; <see langword="false"/> if the cache is at capacity.</returns>
         private static bool TryReserveBindingsCacheSlotCore(
             Func<int> readCacheSize,
             Func<int, int, bool> tryUpdate)
@@ -201,11 +232,15 @@ namespace Hydrix.Metadata.Materializers
         }
 
         /// <summary>
-        /// Attempts to update bindings cache size atomically for a single reservation attempt.
+        /// Attempts to update the bindings cache size field atomically from
+        /// <paramref name="currentSize"/> to <paramref name="updatedSize"/>.
         /// </summary>
-        /// <param name="currentSize">The expected current cache size value.</param>
-        /// <param name="updatedSize">The cache size value to set when the expected value matches.</param>
-        /// <returns><see langword="true"/> when the update succeeds; otherwise, <see langword="false"/>.</returns>
+        /// <param name="currentSize">The expected current value of <see cref="_bindingsCacheSize"/>.</param>
+        /// <param name="updatedSize">The value to store when the expected value is confirmed.</param>
+        /// <returns>
+        /// <see langword="true"/> when the compare-exchange succeeds; <see langword="false"/> when another thread
+        /// modified the value concurrently and the caller must retry.
+        /// </returns>
         private bool TryUpdateBindingsCacheSize(
             int currentSize,
             int updatedSize)

@@ -796,6 +796,7 @@ namespace Hydrix.UnitTests.Engines
                 var conn = new FakeDbConnection();
                 var loggerMock = new Mock<ILogger>();
                 loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+                HydrixConfiguration.Options.EnableCommandLogging = true;
                 HydrixConfiguration.Options.Logger = loggerMock.Object;
                 var cmd = CommandEngine.CreateCommandCore(
                     conn,
@@ -867,6 +868,7 @@ namespace Hydrix.UnitTests.Engines
                 var conn = new FakeDbConnection();
                 var loggerMock = new Mock<ILogger>();
                 loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+                HydrixConfiguration.Options.EnableCommandLogging = true;
                 HydrixConfiguration.Options.Logger = loggerMock.Object;
 
                 CommandEngine.CreateCommandCore(
@@ -1006,6 +1008,7 @@ namespace Hydrix.UnitTests.Engines
                 var procedure = new CustomProcedure { Id = 11, Name = "Epsilon" };
                 var loggerMock = new Mock<ILogger>();
                 loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(true);
+                HydrixConfiguration.Options.EnableCommandLogging = true;
                 HydrixConfiguration.Options.Logger = loggerMock.Object;
 
                 _ = CommandEngine.CreateCommand<CustomDataParameter>(conn, null, procedure, "@", 10);
@@ -1262,6 +1265,71 @@ namespace Hydrix.UnitTests.Engines
         }
 
         /// <summary>
+        /// Verifies that <see cref="CommandEngine"/> does not throw when command logging is enabled but no logger
+        /// instance has been configured.
+        /// </summary>
+        /// <remarks>This test covers the early-return branch inside <c>LogCommand</c> where
+        /// <c>EnableCommandLogging</c> is <see langword="true"/> and <c>Logger</c> is <see langword="null"/>.</remarks>
+        [Fact]
+        public void LogCommand_LoggerIsNull_AndLoggingEnabled_DoesNotThrow()
+        {
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                HydrixConfiguration.Options.EnableCommandLogging = true;
+                HydrixConfiguration.Options.Logger = null;
+
+                var conn = new FakeDbConnection();
+                var exception = Record.Exception(() =>
+                    CommandEngine.CreateCommandCore(
+                        conn,
+                        null,
+                        CommandType.Text,
+                        "SELECT 1",
+                        null,
+                        null));
+
+                Assert.Null(exception);
+            });
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="CommandEngine"/> does not emit any log entries when command logging is enabled,
+        /// a logger is configured, but the <see cref="LogLevel.Information"/> level is disabled.
+        /// </summary>
+        /// <remarks>This test covers the early-return branch inside <c>LogCommand</c> where
+        /// <c>EnableCommandLogging</c> is <see langword="true"/> and <c>logger.IsEnabled(LogLevel.Information)</c>
+        /// returns <see langword="false"/>.</remarks>
+        [Fact]
+        public void LogCommand_InformationLevelDisabled_AndLoggingEnabled_DoesNotLog()
+        {
+            ExecuteWithIsolatedConfiguration(() =>
+            {
+                var loggerMock = new Mock<ILogger>();
+                loggerMock.Setup(l => l.IsEnabled(LogLevel.Information)).Returns(false);
+                HydrixConfiguration.Options.EnableCommandLogging = true;
+                HydrixConfiguration.Options.Logger = loggerMock.Object;
+
+                var conn = new FakeDbConnection();
+                CommandEngine.CreateCommandCore(
+                    conn,
+                    null,
+                    CommandType.Text,
+                    "SELECT 1",
+                    null,
+                    null);
+
+                loggerMock.Verify(
+                    l => l.Log(
+                        It.IsAny<LogLevel>(),
+                        It.IsAny<EventId>(),
+                        It.IsAny<It.IsAnyType>(),
+                        It.IsAny<Exception>(),
+                        It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    Times.Never);
+            });
+        }
+
+        /// <summary>
         /// Executes a test action while isolating and restoring mutable global Hydrix configuration state.
         /// </summary>
         /// <param name="action">The test action that may mutate <see cref="HydrixConfiguration.Options"/>.</param>
@@ -1271,6 +1339,7 @@ namespace Hydrix.UnitTests.Engines
             lock (ConfigurationSyncRoot)
             {
                 var originalLogger = HydrixConfiguration.Options.Logger;
+                var originalEnableCommandLogging = HydrixConfiguration.Options.EnableCommandLogging;
 
                 try
                 {
@@ -1279,6 +1348,7 @@ namespace Hydrix.UnitTests.Engines
                 finally
                 {
                     HydrixConfiguration.Options.Logger = originalLogger;
+                    HydrixConfiguration.Options.EnableCommandLogging = originalEnableCommandLogging;
                 }
             }
         }

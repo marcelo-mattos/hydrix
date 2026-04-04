@@ -72,6 +72,12 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command asynchronously and returns the number of affected rows.
         /// </summary>
+        /// <remarks>When the underlying connection provides a <see cref="System.Data.Common.DbCommand"/>, true
+        /// asynchronous I/O is used and <paramref name="cancellationToken"/> can cancel the in-flight I/O.
+        /// Otherwise the execution falls back to <see cref="System.Threading.Tasks.Task.Run(System.Action)"/>,
+        /// which offloads the synchronous call to a thread-pool thread. In that fallback mode the operation
+        /// occupies a thread and the cancellation token cannot interrupt the provider I/O. For true async
+        /// support ensure the connection provider exposes <see cref="System.Data.Common.DbCommand"/>.</remarks>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
         /// <param name="options">The command execution options.</param>
@@ -109,6 +115,12 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a stored procedure command asynchronously and returns the number of affected rows.
         /// </summary>
+        /// <remarks>When the underlying connection provides a <see cref="System.Data.Common.DbCommand"/>, true
+        /// asynchronous I/O is used and <paramref name="cancellationToken"/> can cancel the in-flight I/O.
+        /// Otherwise the execution falls back to <see cref="System.Threading.Tasks.Task.Run(System.Action)"/>,
+        /// which offloads the synchronous call to a thread-pool thread. In that fallback mode the operation
+        /// occupies a thread and the cancellation token cannot interrupt the provider I/O. For true async
+        /// support ensure the connection provider exposes <see cref="System.Data.Common.DbCommand"/>.</remarks>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
         /// <param name="options">The command execution options.</param>
@@ -196,6 +208,12 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command asynchronously and returns the first column of the first row.
         /// </summary>
+        /// <remarks>When the underlying connection provides a <see cref="System.Data.Common.DbCommand"/>, true
+        /// asynchronous I/O is used and <paramref name="cancellationToken"/> can cancel the in-flight I/O.
+        /// Otherwise the execution falls back to <see cref="System.Threading.Tasks.Task.Run{TResult}(System.Func{TResult})"/>,
+        /// which offloads the synchronous call to a thread-pool thread. In that fallback mode the operation
+        /// occupies a thread and the cancellation token cannot interrupt the provider I/O. For true async
+        /// support ensure the connection provider exposes <see cref="System.Data.Common.DbCommand"/>.</remarks>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
         /// <param name="options">The command execution options.</param>
@@ -233,6 +251,12 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a stored procedure command asynchronously and returns the first column of the first row.
         /// </summary>
+        /// <remarks>When the underlying connection provides a <see cref="System.Data.Common.DbCommand"/>, true
+        /// asynchronous I/O is used and <paramref name="cancellationToken"/> can cancel the in-flight I/O.
+        /// Otherwise the execution falls back to <see cref="System.Threading.Tasks.Task.Run{TResult}(System.Func{TResult})"/>,
+        /// which offloads the synchronous call to a thread-pool thread. In that fallback mode the operation
+        /// occupies a thread and the cancellation token cannot interrupt the provider I/O. For true async
+        /// support ensure the connection provider exposes <see cref="System.Data.Common.DbCommand"/>.</remarks>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
         /// <param name="options">The command execution options.</param>
@@ -328,6 +352,12 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a command asynchronously and returns a data reader.
         /// </summary>
+        /// <remarks>When the underlying connection provides a <see cref="System.Data.Common.DbCommand"/>, true
+        /// asynchronous I/O is used and <paramref name="cancellationToken"/> can cancel the in-flight I/O.
+        /// Otherwise the execution falls back to <see cref="System.Threading.Tasks.Task.Run{TResult}(System.Func{TResult})"/>,
+        /// which offloads the synchronous call to a thread-pool thread. In that fallback mode the operation
+        /// occupies a thread and the cancellation token cannot interrupt the provider I/O. For true async
+        /// support ensure the connection provider exposes <see cref="System.Data.Common.DbCommand"/>.</remarks>
         /// <param name="sql">The SQL command text or stored procedure name.</param>
         /// <param name="parameters">The optional parameters object or parameter collection.</param>
         /// <param name="behavior">The command behavior flags.</param>
@@ -363,6 +393,12 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a stored procedure command asynchronously and returns a data reader.
         /// </summary>
+        /// <remarks>When the underlying connection provides a <see cref="System.Data.Common.DbCommand"/>, true
+        /// asynchronous I/O is used and <paramref name="cancellationToken"/> can cancel the in-flight I/O.
+        /// Otherwise the execution falls back to <see cref="System.Threading.Tasks.Task.Run{TResult}(System.Func{TResult})"/>,
+        /// which offloads the synchronous call to a thread-pool thread. In that fallback mode the operation
+        /// occupies a thread and the cancellation token cannot interrupt the provider I/O. For true async
+        /// support ensure the connection provider exposes <see cref="System.Data.Common.DbCommand"/>.</remarks>
         /// <typeparam name="TDataParameterDriver">The procedure parameter driver type.</typeparam>
         /// <param name="procedure">The procedure descriptor and parameters.</param>
         /// <param name="behavior">The command behavior flags.</param>
@@ -396,6 +432,10 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a reader-producing command and transfers command disposal to the returned reader.
         /// </summary>
+        /// <param name="command">The configured command to execute. Ownership is transferred to the returned reader on success,
+        /// or disposed immediately if execution throws.</param>
+        /// <param name="behavior">The command behavior flags to pass to <see cref="IDbCommand.ExecuteReader(CommandBehavior)"/>.</param>
+        /// <returns>An <see cref="IDataReader"/> that owns the underlying command and disposes it when closed.</returns>
         private static IDataReader ExecuteReaderAndOwnCommand(
             IDbCommand command,
             CommandBehavior behavior)
@@ -416,6 +456,12 @@ namespace Hydrix.Engines
         /// <summary>
         /// Executes a reader-producing command asynchronously and transfers command disposal to the returned reader.
         /// </summary>
+        /// <param name="command">The configured command to execute. Ownership is transferred to the returned reader on success,
+        /// or disposed immediately if execution throws.</param>
+        /// <param name="behavior">The command behavior flags to pass to the underlying execute call.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests. Effective only when the command
+        /// is a <see cref="DbCommand"/>; ignored in the <see cref="Task.Run{TResult}(System.Func{TResult})"/> fallback path.</param>
+        /// <returns>A task containing an <see cref="IDataReader"/> that owns the underlying command and disposes it when closed.</returns>
         private static async Task<IDataReader> ExecuteReaderAsyncAndOwnCommand(
             IDbCommand command,
             CommandBehavior behavior,

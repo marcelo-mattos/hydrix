@@ -299,7 +299,12 @@ namespace Hydrix.Engines
         private static void LogCommand(
             IDbCommand command)
         {
-            var logger = HydrixConfiguration.Options.Logger;
+            var options = HydrixConfiguration.Options;
+
+            if (!options.EnableCommandLogging)
+                return;
+
+            var logger = options.Logger;
 
             if (logger is null)
                 return;

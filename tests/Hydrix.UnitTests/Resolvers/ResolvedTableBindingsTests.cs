@@ -113,6 +113,27 @@ namespace Hydrix.UnitTests.Resolvers
         }
 
         /// <summary>
+        /// Verifies that matching tolerates provider field-type metadata failures caused by
+        /// <see cref="InvalidOperationException"/> and continues using runtime value checks.
+        /// </summary>
+        [Fact]
+        public void Matches_ReturnsTrue_WhenGetFieldTypeThrowsInvalidOperationException_AndValueTypeMatches()
+        {
+            var field = new ResolvedFieldBinding(null, 0, typeof(int));
+            var bindings = new ResolvedTableBindings(new[] { field }, null, new[] { "Id" });
+            var reader = new Mock<IDataReader>();
+            reader.SetupGet(r => r.FieldCount).Returns(1);
+            reader.Setup(r => r.GetName(0)).Returns("Id");
+            reader.Setup(r => r.GetFieldType(0)).Throws(new InvalidOperationException());
+            reader.Setup(r => r.IsDBNull(0)).Returns(false);
+            reader.Setup(r => r.GetValue(0)).Returns(1);
+
+            var result = bindings.Matches(reader.Object);
+
+            Assert.True(result);
+        }
+
+        /// <summary>
         /// Verifies that schema matching treats null column names from the reader as empty strings.
         /// </summary>
         [Fact]
