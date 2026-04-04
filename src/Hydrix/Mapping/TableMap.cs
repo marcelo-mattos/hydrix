@@ -7,7 +7,6 @@ using Hydrix.Schemas.Contract;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 
@@ -306,14 +305,33 @@ namespace Hydrix.Mapping
                 if (_candidateOrdinalsInitialized && _candidateOrdinalsSchemaHash == schemaHash)
                     return _candidateOrdinals;
 
-                var list = ordinals
-                    .Where(ordinal => ordinal.Key.StartsWith(fullPrefix, StringComparison.OrdinalIgnoreCase))
-                    .Select(ordinal => ordinal.Value)
-                    .ToList();
+                var matches = 0;
+                foreach (var ordinal in ordinals)
+                {
+                    if (ordinal.Key.StartsWith(fullPrefix, StringComparison.OrdinalIgnoreCase))
+                        matches++;
+                }
 
-                _candidateOrdinals = list.Count == 0
-                    ? Array.Empty<int>()
-                    : list.ToArray();
+                if (matches == 0)
+                {
+                    _candidateOrdinals = Array.Empty<int>();
+                }
+                else
+                {
+                    var candidateOrdinals = new int[matches];
+                    var index = 0;
+
+                    foreach (var ordinal in ordinals)
+                    {
+                        if (!ordinal.Key.StartsWith(fullPrefix, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        candidateOrdinals[index++] = ordinal.Value;
+                    }
+
+                    _candidateOrdinals = candidateOrdinals;
+                }
+
                 _candidateOrdinalsSchemaHash = schemaHash;
                 _candidateOrdinalsInitialized = true;
 

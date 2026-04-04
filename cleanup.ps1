@@ -1,6 +1,6 @@
 $root = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 
-@("obj","dbg","bin") | ForEach-Object {
+@("obj","dbg","bin","TestResults") | ForEach-Object {
     $p = Join-Path $root $_
     if (Test-Path $p) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue }
 }
