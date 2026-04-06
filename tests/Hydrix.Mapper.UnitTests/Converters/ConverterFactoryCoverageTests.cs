@@ -54,6 +54,12 @@ namespace Hydrix.Mapper.UnitTests.Converters
             "ResolveStringTransform");
 
         /// <summary>
+        /// Stores the private BuildToStringConversion method used by string destination conversions.
+        /// </summary>
+        private static readonly MethodInfo BuildToStringConversionMethod = GetRequiredPrivateStaticMethod(
+            "BuildToStringConversion");
+
+        /// <summary>
         /// Verifies that BuildNumericCast delegates clamp conversions for long inputs and respects the destination range.
         /// </summary>
         [Fact]
@@ -227,6 +233,33 @@ namespace Hydrix.Mapper.UnitTests.Converters
             Assert.Equal(
                 StringTransform.Uppercase,
                 transform);
+        }
+
+        /// <summary>
+        /// Verifies that BuildToStringConversion throws for unsupported source types and reaches the fallback branch.
+        /// </summary>
+        [Fact]
+        public void BuildToStringConversion_ThrowsNotSupportedException_WhenSourceTypeIsUnsupported()
+        {
+            var exception = Assert.Throws<TargetInvocationException>(
+                () => BuildToStringConversionMethod.Invoke(
+                    null,
+                    new object[]
+                    {
+                        Expression.Constant(123),
+                        typeof(int),
+                        new HydrixMapperOptions(),
+                        null,
+                    }));
+
+            var inner = Assert.IsType<NotSupportedException>(
+                exception.InnerException);
+            Assert.Contains(
+                "System.Int32",
+                inner.Message);
+            Assert.Contains(
+                "System.String",
+                inner.Message);
         }
 
         /// <summary>

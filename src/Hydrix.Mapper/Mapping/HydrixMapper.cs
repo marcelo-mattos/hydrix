@@ -5,6 +5,9 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 
 namespace Hydrix.Mapper.Mapping
 {
@@ -136,18 +139,26 @@ namespace Hydrix.Mapper.Mapping
             var result = CreateResultBuffer<TTarget>(
                 sources);
             var destinationType = typeof(TTarget);
+            Type lastSourceType = null;
+            MapPlan lastPlan = null;
 
             foreach (var source in sources)
             {
                 if (source == null)
                     continue;
 
+                var sourceType = source.GetType();
+                if (sourceType != lastSourceType)
+                {
+                    lastSourceType = sourceType;
+                    lastPlan = GetPlan(
+                        sourceType,
+                        destinationType);
+                }
+
                 result.Add(
-                    (TTarget)GetPlan(
-                            source.GetType(),
-                            destinationType)
-                        .Execute(
-                            source));
+                    (TTarget)lastPlan.Execute(
+                        source));
             }
 
             return result;
@@ -175,23 +186,60 @@ namespace Hydrix.Mapper.Mapping
             if (sources == null)
                 return Array.Empty<TTarget>();
 
-            var result = CreateResultBuffer<TSource, TTarget>(
-                sources);
-
             var plan = GetPlan(
                 typeof(TSource),
                 typeof(TTarget));
 
+#if NET6_0_OR_GREATER
+            if (sources is List<TSource> list)
+            {
+                var span = CollectionsMarshal.AsSpan(
+                    list);
+                if (span.IsEmpty)
+                    return Array.Empty<TTarget>();
+                var spanResult = new List<TTarget>(
+                    span.Length);
+                for (var i = 0; i < span.Length; i++)
+                {
+                    if (span[i] is null)
+                        continue;
+                    spanResult.Add(
+                        (TTarget)plan.Execute(
+                            span[i]));
+                }
+                return spanResult;
+            }
+#endif
+
+            if (sources is IList<TSource> ilist)
+            {
+                var count = ilist.Count;
+                if (count == 0)
+                    return Array.Empty<TTarget>();
+                var ilistResult = new List<TTarget>(
+                    count);
+                for (var i = 0; i < count; i++)
+                {
+                    var item = ilist[i];
+                    if (item is null)
+                        continue;
+                    ilistResult.Add(
+                        (TTarget)plan.Execute(
+                            item));
+                }
+                return ilistResult;
+            }
+
+            var result = CreateResultBuffer<TSource, TTarget>(
+                sources);
             foreach (var source in sources)
             {
                 if (source is null)
                     continue;
-
                 result.Add(
                     (TTarget)plan.Execute(
                         source));
             }
-
             return result;
         }
 

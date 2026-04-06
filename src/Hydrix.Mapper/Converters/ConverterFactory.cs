@@ -17,6 +17,11 @@ namespace Hydrix.Mapper.Converters
     internal static class ConverterFactory
     {
         /// <summary>
+        /// Stores the method name shared by all <c>ToString</c> reflection lookups in this class.
+        /// </summary>
+        private const string ToStringMethodName = "ToString";
+
+        /// <summary>
         /// Caches the reflection metadata for <see cref="string.Trim()"/>.
         /// </summary>
         private static readonly MethodInfo StringTrim = typeof(string).GetMethod(
@@ -55,7 +60,7 @@ namespace Hydrix.Mapper.Converters
         /// Caches the reflection metadata for <see cref="Guid.ToString(string)"/>.
         /// </summary>
         private static readonly MethodInfo GuidToStringFormat = typeof(Guid).GetMethod(
-            "ToString",
+            ToStringMethodName,
             new[] { typeof(string) });
 
         /// <summary>
@@ -76,7 +81,7 @@ namespace Hydrix.Mapper.Converters
         /// Caches the reflection metadata for <see cref="DateTime.ToString(string,IFormatProvider)"/>.
         /// </summary>
         private static readonly MethodInfo DateTimeToStringFormat = typeof(DateTime).GetMethod(
-            "ToString",
+            ToStringMethodName,
             new[] { typeof(string), typeof(IFormatProvider) });
 
         /// <summary>
@@ -97,7 +102,7 @@ namespace Hydrix.Mapper.Converters
         /// Caches the reflection metadata for <see cref="DateTimeOffset.ToString(string,IFormatProvider)"/>.
         /// </summary>
         private static readonly MethodInfo DateTimeOffsetToStringFormat = typeof(DateTimeOffset).GetMethod(
-            "ToString",
+            ToStringMethodName,
             new[] { typeof(string), typeof(IFormatProvider) });
 
         /// <summary>
@@ -171,38 +176,22 @@ namespace Hydrix.Mapper.Converters
             new[] { typeof(long), typeof(long) });
 
         /// <summary>
-        /// Caches the reflection metadata for <see cref="Math.Min(double,double)"/>.
-        /// </summary>
-        private static readonly MethodInfo MathMinDouble = typeof(Math).GetMethod(
-            "Min",
-            new[] { typeof(double), typeof(double) });
-
-        /// <summary>
-        /// Caches the reflection metadata for <see cref="Math.Max(double,double)"/>.
-        /// </summary>
-        private static readonly MethodInfo MathMaxDouble = typeof(Math).GetMethod(
-            "Max",
-            new[] { typeof(double), typeof(double) });
-
-        /// <summary>
         /// Caches the reflection metadata for <see cref="ClampDecimalToLong(decimal,long,long)"/>.
         /// </summary>
-        private static readonly MethodInfo ClampDecimalToLongMethod = typeof(ConverterFactory).GetMethod(
-            nameof(ClampDecimalToLong),
-            BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ClampDecimalToLongMethod =
+            ((Func<decimal, long, long, long>)ClampDecimalToLong).Method;
 
         /// <summary>
         /// Caches the reflection metadata for <see cref="ClampDoubleToLong(double,long,long)"/>.
         /// </summary>
-        private static readonly MethodInfo ClampDoubleToLongMethod = typeof(ConverterFactory).GetMethod(
-            nameof(ClampDoubleToLong),
-            BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo ClampDoubleToLongMethod =
+            ((Func<double, long, long, long>)ClampDoubleToLong).Method;
 
         /// <summary>
         /// Caches the reflection metadata for <see cref="object.ToString()"/>.
         /// </summary>
         private static readonly MethodInfo ObjectToString = typeof(object).GetMethod(
-            "ToString",
+            ToStringMethodName,
             Type.EmptyTypes);
 
 #if NET6_0_OR_GREATER
@@ -210,7 +199,7 @@ namespace Hydrix.Mapper.Converters
         /// Caches the reflection metadata for <see cref="DateOnly.ToString(string,IFormatProvider)"/>.
         /// </summary>
         private static readonly MethodInfo DateOnlyToStringFormat = typeof(DateOnly).GetMethod(
-            "ToString",
+            ToStringMethodName,
             new[] { typeof(string), typeof(IFormatProvider) });
 #endif
 
@@ -304,21 +293,67 @@ namespace Hydrix.Mapper.Converters
             MapConversionAttribute attr)
         {
             if (srcType == dstType)
-            {
-                if (srcType == typeof(string))
-                {
-                    return BuildStringTransform(
+                return srcType == typeof(string)
+                    ? BuildStringTransform(
                         srcValue,
                         ResolveStringTransform(
                             options,
-                            attr));
-                }
+                            attr))
+                    : srcValue;
 
-                return srcValue;
-            }
+            if (dstType == typeof(string))
+                return BuildToStringConversion(
+                    srcValue,
+                    srcType,
+                    options,
+                    attr);
 
-            if (srcType == typeof(Guid) && dstType == typeof(string))
-            {
+            if (srcType.IsEnum && IsIntegerType(dstType))
+                return Expression.Convert(
+                    srcValue,
+                    dstType);
+
+            if (dstType.IsEnum && IsIntegerType(srcType))
+                return Expression.Convert(
+                    srcValue,
+                    dstType);
+
+            if (IsDecimalFloatType(srcType) && IsIntegerType(dstType))
+                return BuildDecimalToInteger(
+                    srcValue,
+                    srcType,
+                    dstType,
+                    options,
+                    attr);
+
+            if (IsNumericType(srcType) && IsNumericType(dstType))
+                return BuildNumericCast(
+                    srcValue,
+                    dstType,
+                    ResolveOverflow(
+                        options,
+                        attr));
+
+            throw new NotSupportedException(
+                $"Hydrix.Mapper: no built-in conversion from '{srcType.FullName}' to '{dstType.FullName}'. " +
+                "Ensure the property types are compatible or use a supported conversion pair.");
+        }
+
+        /// <summary>
+        /// Builds the conversion expression for any source type whose destination is <see cref="string"/>.
+        /// </summary>
+        /// <param name="srcValue">The expression that yields the non-nullable source value.</param>
+        /// <param name="srcType">The non-nullable source type.</param>
+        /// <param name="options">The global option snapshot.</param>
+        /// <param name="attr">The optional per-property override attribute.</param>
+        /// <returns>The expression that yields the formatted string value.</returns>
+        private static Expression BuildToStringConversion(
+            Expression srcValue,
+            Type srcType,
+            HydrixMapperOptions options,
+            MapConversionAttribute attr)
+        {
+            if (srcType == typeof(Guid))
                 return BuildGuidToString(
                     srcValue,
                     ResolveGuidFormat(
@@ -327,86 +362,42 @@ namespace Hydrix.Mapper.Converters
                     ResolveGuidCase(
                         options,
                         attr));
-            }
 
-            if (srcType == typeof(DateTime) && dstType == typeof(string))
-            {
+            if (srcType == typeof(DateTime))
                 return BuildDateTimeToString(
                     srcValue,
                     options,
                     attr);
-            }
 
-            if (srcType == typeof(DateTimeOffset) && dstType == typeof(string))
-            {
+            if (srcType == typeof(DateTimeOffset))
                 return BuildDateTimeOffsetToString(
                     srcValue,
                     options,
                     attr);
-            }
 
 #if NET6_0_OR_GREATER
-            if (srcType == typeof(DateOnly) && dstType == typeof(string))
-            {
+            if (srcType == typeof(DateOnly))
                 return BuildDateOnlyToString(
                     srcValue,
                     options,
                     attr);
-            }
 #endif
 
-            if (srcType == typeof(bool) && dstType == typeof(string))
-            {
+            if (srcType == typeof(bool))
                 return BuildBoolToString(
                     srcValue,
                     options,
                     attr);
-            }
-            if (srcType.IsEnum && dstType == typeof(string))
-            {
+
+            if (srcType.IsEnum)
                 return Expression.Call(
                     Expression.Convert(
                         srcValue,
                         typeof(object)),
                     ObjectToString);
-            }
-
-            if (srcType.IsEnum && IsIntegerType(dstType))
-            {
-                return Expression.Convert(
-                    srcValue,
-                    dstType);
-            }
-
-            if (dstType.IsEnum && IsIntegerType(srcType))
-            {
-                return Expression.Convert(
-                    srcValue,
-                    dstType);
-            }
-
-            if (IsDecimalFloatType(srcType) && IsIntegerType(dstType))
-            {
-                return BuildDecimalToInteger(
-                    srcValue,
-                    srcType,
-                    dstType,
-                    options,
-                    attr);
-            }
-
-            if (IsNumericType(srcType) && IsNumericType(dstType))
-            {
-                return BuildNumericCast(
-                    srcValue,
-                    dstType,
-                    ResolveOverflow(
-                        options,
-                        attr));
-            }
 
             throw new NotSupportedException(
-                $"Hydrix.Mapper: no built-in conversion from '{srcType.FullName}' to '{dstType.FullName}'. " +
+                $"Hydrix.Mapper: no built-in conversion from '{srcType.FullName}' to 'System.String'. " +
                 "Ensure the property types are compatible or use a supported conversion pair.");
         }
 

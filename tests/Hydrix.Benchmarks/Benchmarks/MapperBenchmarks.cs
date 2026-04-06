@@ -283,20 +283,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// A read-only list containing the small destination objects produced by Hydrix.
         /// </returns>
         [Benchmark(Description = "Hydrix.Mapper - list small x100")]
-        public IReadOnlyList<FlatSmallDto> HydrixMapper_ListSmall100()
-        {
-            var sources = new List<object>(
-                _smallList100.Count);
-
-            foreach (var source in _smallList100)
-            {
-                sources.Add(
-                    source);
-            }
-
-            return _hydrixMapper.MapList<FlatSmallDto>(
-                sources);
-        }
+        public IReadOnlyList<FlatSmallDto> HydrixMapper_ListSmall100() =>
+            _hydrixMapper.MapList<FlatSmallSrc, FlatSmallDto>(
+                _smallList100);
 
         /// <summary>
         /// Maps one thousand small source objects through AutoMapper.
@@ -316,20 +305,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// A read-only list containing the small destination objects produced by Hydrix.
         /// </returns>
         [Benchmark(Description = "Hydrix.Mapper - list small x1000")]
-        public IReadOnlyList<FlatSmallDto> HydrixMapper_ListSmall1000()
-        {
-            var sources = new List<object>(
-                _smallList1000.Count);
-
-            foreach (var source in _smallList1000)
-            {
-                sources.Add(
-                    source);
-            }
-
-            return _hydrixMapper.MapList<FlatSmallDto>(
-                sources);
-        }
+        public IReadOnlyList<FlatSmallDto> HydrixMapper_ListSmall1000() =>
+            _hydrixMapper.MapList<FlatSmallSrc, FlatSmallDto>(
+                _smallList1000);
 
         /// <summary>
         /// Maps one hundred medium source objects through AutoMapper.
@@ -349,20 +327,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// A read-only list containing the medium destination objects produced by Hydrix.
         /// </returns>
         [Benchmark(Description = "Hydrix.Mapper - list medium x100")]
-        public IReadOnlyList<FlatMediumDto> HydrixMapper_ListMedium100()
-        {
-            var sources = new List<object>(
-                _mediumList100.Count);
-
-            foreach (var source in _mediumList100)
-            {
-                sources.Add(
-                    source);
-            }
-
-            return _hydrixMapper.MapList<FlatMediumDto>(
-                sources);
-        }
+        public IReadOnlyList<FlatMediumDto> HydrixMapper_ListMedium100() =>
+            _hydrixMapper.MapList<FlatMediumSrc, FlatMediumDto>(
+                _mediumList100);
 
         /// <summary>
         /// Maps one thousand medium source objects through AutoMapper.
@@ -382,20 +349,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// A read-only list containing the medium destination objects produced by Hydrix.
         /// </returns>
         [Benchmark(Description = "Hydrix.Mapper - list medium x1000")]
-        public IReadOnlyList<FlatMediumDto> HydrixMapper_ListMedium1000()
-        {
-            var sources = new List<object>(
-                _mediumList1000.Count);
-
-            foreach (var source in _mediumList1000)
-            {
-                sources.Add(
-                    source);
-            }
-
-            return _hydrixMapper.MapList<FlatMediumDto>(
-                sources);
-        }
+        public IReadOnlyList<FlatMediumDto> HydrixMapper_ListMedium1000() =>
+            _hydrixMapper.MapList<FlatMediumSrc, FlatMediumDto>(
+                _mediumList1000);
 
         /// <summary>
         /// Maps one hundred wide source objects through AutoMapper.
@@ -415,20 +371,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// A read-only list containing the wide destination objects produced by Hydrix.
         /// </returns>
         [Benchmark(Description = "Hydrix.Mapper - list large x100")]
-        public IReadOnlyList<FlatLargeDto> HydrixMapper_ListLarge100()
-        {
-            var sources = new List<object>(
-                _largeList100.Count);
-
-            foreach (var source in _largeList100)
-            {
-                sources.Add(
-                    source);
-            }
-
-            return _hydrixMapper.MapList<FlatLargeDto>(
-                sources);
-        }
+        public IReadOnlyList<FlatLargeDto> HydrixMapper_ListLarge100() =>
+            _hydrixMapper.MapList<FlatLargeSrc, FlatLargeDto>(
+                _largeList100);
 
         /// <summary>
         /// Maps one thousand wide source objects through AutoMapper.
@@ -448,20 +393,9 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// A read-only list containing the wide destination objects produced by Hydrix.
         /// </returns>
         [Benchmark(Description = "Hydrix.Mapper - list large x1000")]
-        public IReadOnlyList<FlatLargeDto> HydrixMapper_ListLarge1000()
-        {
-            var sources = new List<object>(
-                _largeList1000.Count);
-
-            foreach (var source in _largeList1000)
-            {
-                sources.Add(
-                    source);
-            }
-
-            return _hydrixMapper.MapList<FlatLargeDto>(
-                sources);
-        }
+        public IReadOnlyList<FlatLargeDto> HydrixMapper_ListLarge1000() =>
+            _hydrixMapper.MapList<FlatLargeSrc, FlatLargeDto>(
+                _largeList1000);
 
         /// <summary>
         /// Measures the Hydrix cold path by clearing the cached plans immediately before mapping.

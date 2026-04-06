@@ -219,6 +219,101 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
         /// <summary>
+        /// Wraps a typed sequence as a generic collection without implementing <see cref="IList{T}"/> so the mapper
+        /// reaches the generic collection pre-sizing path in the fallback buffer factory.
+        /// </summary>
+        /// <typeparam name="T">The wrapped element type.</typeparam>
+        private sealed class GenericCollectionOnlySequence<T> : ICollection<T>
+        {
+            /// <summary>
+            /// Stores the wrapped items.
+            /// </summary>
+            private readonly List<T> _items;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="GenericCollectionOnlySequence{T}"/> class.
+            /// </summary>
+            /// <param name="items">The wrapped source items.</param>
+            public GenericCollectionOnlySequence(
+                params T[] items)
+            {
+                _items = new List<T>(
+                    items);
+            }
+
+            /// <summary>
+            /// Gets the number of wrapped elements.
+            /// </summary>
+            public int Count => _items.Count;
+
+            /// <summary>
+            /// Gets a value indicating whether this collection is read-only.
+            /// </summary>
+            public bool IsReadOnly => false;
+
+            /// <summary>
+            /// Adds an item to the wrapped collection.
+            /// </summary>
+            /// <param name="item">The item to add.</param>
+            public void Add(
+                T item) =>
+                _items.Add(
+                    item);
+
+            /// <summary>
+            /// Removes all items from the wrapped collection.
+            /// </summary>
+            public void Clear() =>
+                _items.Clear();
+
+            /// <summary>
+            /// Determines whether the wrapped collection contains the specified item.
+            /// </summary>
+            /// <param name="item">The item to locate.</param>
+            /// <returns><see langword="true"/> when the item is present; otherwise, <see langword="false"/>.</returns>
+            public bool Contains(
+                T item) =>
+                _items.Contains(
+                    item);
+
+            /// <summary>
+            /// Copies wrapped items to the supplied array.
+            /// </summary>
+            /// <param name="array">The destination array.</param>
+            /// <param name="arrayIndex">The start index in the destination array.</param>
+            public void CopyTo(
+                T[] array,
+                int arrayIndex) =>
+                _items.CopyTo(
+                    array,
+                    arrayIndex);
+
+            /// <summary>
+            /// Removes the first matching item from the wrapped collection.
+            /// </summary>
+            /// <param name="item">The item to remove.</param>
+            /// <returns><see langword="true"/> when an item is removed; otherwise, <see langword="false"/>.</returns>
+            public bool Remove(
+                T item) =>
+                _items.Remove(
+                    item);
+
+            /// <summary>
+            /// Returns the generic enumerator for the wrapped items.
+            /// </summary>
+            /// <returns>The generic enumerator.</returns>
+            public IEnumerator<T> GetEnumerator() =>
+                _items.GetEnumerator();
+
+            /// <summary>
+            /// Returns the non-generic enumerator for the wrapped items.
+            /// </summary>
+            /// <returns>The non-generic enumerator.</returns>
+            IEnumerator IEnumerable.GetEnumerator() =>
+                _items.GetEnumerator();
+        }
+
+        /// <summary>
         /// Wraps a typed sequence as a read-only collection without implementing <see cref="ICollection{T}"/>.
         /// </summary>
         /// <typeparam name="T">The wrapped element type.</typeparam>
@@ -538,6 +633,64 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             Assert.Equal(
                 "F",
                 result[1].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the strongly typed list API returns the shared empty array when the source is an empty
+        /// <see cref="List{T}"/>, covering the span fast-path empty branch.
+        /// </summary>
+        [Fact]
+        public void MapList_TypedOverload_ReturnsArrayEmpty_WhenListSourceIsEmpty()
+        {
+            IReadOnlyList<PersonDto> result = CreateMapper().MapList<PersonEntity, PersonDto>(
+                new List<PersonEntity>());
+
+            Assert.Same(
+                Array.Empty<PersonDto>(),
+                result);
+        }
+
+        /// <summary>
+        /// Verifies that the strongly typed list API returns the shared empty array when the source is an empty
+        /// <see cref="IList{T}"/> implementation.
+        /// </summary>
+        [Fact]
+        public void MapList_TypedOverload_ReturnsArrayEmpty_WhenIListSourceIsEmpty()
+        {
+            IReadOnlyList<PersonDto> result = CreateMapper().MapList<PersonEntity, PersonDto>(
+                Array.Empty<PersonEntity>());
+
+            Assert.Same(
+                Array.Empty<PersonDto>(),
+                result);
+        }
+
+        /// <summary>
+        /// Verifies that the fallback typed-sequence path pre-sizes from <see cref="ICollection{T}"/> and skips null
+        /// elements during enumeration.
+        /// </summary>
+        [Fact]
+        public void MapList_TypedOverload_FallbackCollection_SkipsNullElements()
+        {
+            IEnumerable<PersonEntity> sources = new GenericCollectionOnlySequence<PersonEntity>(
+                null,
+                new PersonEntity
+                {
+                    Id = 7,
+                    Name = "G",
+                });
+
+            var result = CreateMapper().MapList<PersonEntity, PersonDto>(
+                sources);
+
+            Assert.Single(
+                result);
+            Assert.Equal(
+                7,
+                result[0].Id);
+            Assert.Equal(
+                "G",
+                result[0].Name);
         }
 
         /// <summary>
