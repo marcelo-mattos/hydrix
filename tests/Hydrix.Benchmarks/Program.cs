@@ -5,34 +5,38 @@ using Hydrix.Benchmarks.Infrastructure;
 namespace Hydrix.Benchmarks
 {
     /// <summary>
-    /// Contains the entry point for the benchmarking application and configures the benchmark execution environment.
+    /// Hosts the benchmark executable and dispatches BenchmarkDotNet with the shared benchmark configuration.
     /// </summary>
-    /// <remarks>This class is intended for internal use and is responsible for setting up the benchmark
-    /// configuration, including memory diagnostics and disabling optimization validation. It launches the benchmark
-    /// suite using the current assembly and the provided command-line arguments.</remarks>
+    /// <remarks>
+    /// This entry point keeps the benchmark startup path intentionally small so every benchmark suite uses the same
+    /// diagnosers and runtime options regardless of the command-line filter passed by the operator.
+    /// </remarks>
     internal static class Program
     {
         /// <summary>
-        /// Runs the benchmark tests defined in the assembly using the specified configuration.
+        /// Builds the benchmark configuration and runs the selected benchmarks from the current assembly.
         /// </summary>
-        /// <remarks>This method initializes the benchmark configuration with memory diagnostics and
-        /// disables optimizations validation to ensure accurate benchmarking results.</remarks>
-        /// <param name="args">An array of command-line arguments that can be used to customize the benchmark execution.</param>
+        /// <param name="args">
+        /// The command-line arguments forwarded to BenchmarkDotNet so callers can filter suites, choose exporters,
+        /// or customize the run without changing source code.
+        /// </param>
         private static void Main(
             string[] args)
         {
-            // NOTE:
-            // 1) Run in Release:
-            //    dotnet run -c Release -f net8.0 -- --filter *
-            // 2) For more stable results, pin CPU governor / disable turbo, close background apps.
             var config = ManualConfig
-                .Create(DefaultConfig.Instance)
-                .AddDiagnoser(BenchmarkConfig.Memory)
-                .WithOptions(ConfigOptions.DisableOptimizationsValidator);
+                .Create(
+                    DefaultConfig.Instance)
+                .AddDiagnoser(
+                    BenchmarkConfig.Memory)
+                .WithOptions(
+                    ConfigOptions.DisableOptimizationsValidator);
 
             BenchmarkSwitcher
-                .FromAssembly(typeof(Program).Assembly)
-                .Run(args, config);
+                .FromAssembly(
+                    typeof(Program).Assembly)
+                .Run(
+                    args,
+                    config);
         }
     }
 }

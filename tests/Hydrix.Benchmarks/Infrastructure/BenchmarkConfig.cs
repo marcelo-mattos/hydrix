@@ -3,19 +3,22 @@ using BenchmarkDotNet.Diagnosers;
 namespace Hydrix.Benchmarks.Infrastructure
 {
     /// <summary>
-    /// Provides centralized configuration settings for benchmarking, including predefined diagnosers for consistent and
-    /// maintainable benchmark setup.
+    /// Centralizes reusable BenchmarkDotNet configuration components shared by the benchmark entry point and suites.
     /// </summary>
-    /// <remarks>This static class is intended to simplify the configuration of benchmarking tools by exposing
-    /// commonly used diagnosers as static members. Centralizing diagnoser configuration helps keep benchmark entry
-    /// points, such as the Program class, clean and focused.</remarks>
+    /// <remarks>
+    /// Keeping reusable diagnosers in one place prevents each benchmark class from instantiating its own infrastructure
+    /// objects and helps every suite report results through the same diagnostic lens.
+    /// </remarks>
     public static class BenchmarkConfig
     {
         /// <summary>
-        /// Provides a centralized instance of the default memory diagnoser for performance benchmarking.
+        /// Gets the shared memory diagnoser used by the benchmark host to capture allocation and garbage-collection data.
         /// </summary>
-        /// <remarks>Use this static field to ensure consistent application of memory diagnostics across
-        /// benchmarks. Centralizing diagnosers helps maintain a clean and organized program structure.</remarks>
-        public static readonly MemoryDiagnoser Memory = MemoryDiagnoser.Default;
+        /// <remarks>
+        /// The default <see cref="MemoryDiagnoser"/> instance is sufficient for the current benchmark project and avoids
+        /// duplicating diagnoser creation logic across the executable entry point.
+        /// </remarks>
+        public static MemoryDiagnoser Memory { get; } =
+            MemoryDiagnoser.Default;
     }
 }

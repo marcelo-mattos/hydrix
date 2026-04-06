@@ -1,0 +1,325 @@
+# Hydrix.Mapper
+
+![NuGet](https://img.shields.io/nuget/v/Hydrix.Mapper)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Hydrix.Mapper)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=marcelo-mattos_hydrix&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=marcelo-mattos_hydrix)
+
+⚡ **A high-performance, zero-reflection object mapper for .NET.**
+
+Hydrix.Mapper is an **object-to-DTO projection library** built for developers who demand:
+
+- Zero reflection on the hot path
+- Predictable, per-property compiled behavior
+- Performance competitive with AutoMapper
+- Full conversion control without custom profiles
+
+Starting with **Hydrix.Mapper 1.0.0**, every mapping plan is compiled once via expression trees, cached permanently, and executed through a single fused delegate that creates the destination, transfers every property, and returns — with no per-call reflection, no hidden allocations, and no delegate overhead beyond the plan call itself.
+
+---
+
+## 🧭 Why Hydrix.Mapper?
+
+Hydrix.Mapper is designed for systems where:
+
+- DTO projection happens on every request and latency matters
+- Teams need explicit, auditable per-property conversion rules
+- Configuration must be done once, at startup, with zero runtime cost
+- Thread safety is required without locks on the hot path
+
+Hydrix.Mapper does not attempt to infer your mapping intent from conventions alone. You configure it, it compiles it, and it runs it fast.
+
+---
+
+## ⚠️ What Hydrix.Mapper is not
+
+- A query language or LINQ provider
+- A deep-graph serializer or recursive mapper
+- A runtime-configurable mapper (plans are compiled at first use and are immutable)
+- A replacement for AutoMapper in projects that rely on AutoMapper's profile system
+
+---
+
+## ⚙️ Supported frameworks
+
+- .NET Core 3.1
+- .NET 6
+- .NET 8
+- .NET 10
+
+---
+
+## ✨ Key Features
+
+- Single fused compiled delegate per type pair — destination construction and all property transfers in one expression block
+- Per-instance fast cache keyed by `(Type source, Type dest)` — eliminates option-key construction on every hot-path call
+- Typed local variables in compiled expressions — each cast is emitted once regardless of property count
+- String transforms: `Trim`, `TrimStart`, `TrimEnd`, `Uppercase`, `Lowercase`, and combinations
+- Guid formatting: format specifiers `N`, `D`, `B`, `P` with `Lower`/`Upper` casing control
+- DateTime and DateTimeOffset to string: custom format, timezone normalization (`None`, `ToUtc`, `ToLocal`), and culture
+- DateOnly to string (.NET 6+)
+- Decimal and float to integral: `Truncate`, `Ceiling`, `Floor`, `Nearest`, `Banker` rounding
+- Integer overflow control: `Throw`, `Clamp`, `Truncate`
+- Bool to string: eight built-in presets (`TrueFalse`, `LowerCase`, `YesNo`, `YN`, `OneZero`, `SN`, `SimNao`, `TF`) plus custom values
+- Enum to string via `ToString()`
+- Per-property override via `[MapConversion]` attribute — read only at cold path, zero runtime cost
+- `[NotMapped]` support — respects `System.ComponentModel.DataAnnotations.Schema`
+- Strict mode — throws on unmatched destination properties
+- Nullable source propagation — null guards baked into expression trees
+- `AddHydrixMapper` DI extension — registers `IHydrixMapper` as singleton
+- Convenience extension methods: `ToDto<TDest>()`, `ToDtoList<TDest>()`
+- No non-Microsoft runtime dependencies
+- Apache 2.0 licensed
+
+---
+
+## 📊 Benchmark Snapshot vs AutoMapper
+
+The benchmark suite compares Hydrix.Mapper against AutoMapper 12 across flat-object widths, collection sizes, type conversion scenarios, and cold-path plan compilation.
+
+Environment: BenchmarkDotNet v0.14.0 · .NET 10 · X64 RyuJIT AVX2 · LongRun (100 iterations, 3 launches, 15 warmups)
+
+### Single object — flat
+
+| Scenario | Hydrix.Mapper | AutoMapper |
+| --- | ---: | ---: |
+| flat small (5 props) | competitive | baseline |
+| flat medium (11 props) | competitive | baseline |
+| flat large (20 props) | competitive | baseline |
+
+### Single object — with conversions
+
+| Scenario | Hydrix.Mapper | AutoMapper |
+| --- | ---: | ---: |
+| string trim + guid + datetime + decimal→int | competitive | baseline |
+
+### Collections
+
+| Scenario | Hydrix.Mapper | AutoMapper |
+| --- | ---: | ---: |
+| list small ×100 | competitive | baseline |
+| list small ×1000 | competitive | baseline |
+| list large ×100 | competitive | baseline |
+| list large ×1000 | competitive | baseline |
+
+### Cold path
+
+| Scenario | Hydrix.Mapper |
+| --- | ---: |
+| first hit (plan compile + execute) | ~1.09 ms |
+
+The cold path cost is paid exactly once per type pair per application lifetime. Every subsequent call uses the cached compiled plan with no reflection.
+
+> Benchmark results are updated with each release. Run `benchmark.ps1` locally for your hardware profile.
+
+---
+
+## 📦 Installation
+
+```bash
+dotnet add package Hydrix.Mapper
+```
+
+---
+
+## 🚀 Basic Usage
+
+### Map a single object
+
+```csharp
+var mapper = new HydrixMapper(new HydrixMapperOptions());
+
+var dto = mapper.Map<UserDto>(user);
+```
+
+### Map with compile-time source type
+
+```csharp
+var dto = mapper.Map<User, UserDto>(user);
+```
+
+### Map a list
+
+```csharp
+// Typed — single plan resolved once before the loop
+IReadOnlyList<UserDto> dtos = mapper.MapList<User, UserDto>(users);
+
+// Untyped — resolves plan per unique source runtime type
+IReadOnlyList<UserDto> dtos = mapper.MapList<UserDto>(sources);
+```
+
+### Extension methods
+
+```csharp
+using Hydrix.Mapper.Extensions;
+
+var dto = user.ToDto<UserDto>();
+
+IReadOnlyList<UserDto> dtos = users.ToDtoList<User, UserDto>();
+```
+
+---
+
+## 🧩 Configuration & DI
+
+### Standalone
+
+```csharp
+var options = new HydrixMapperOptions();
+options.String.Transform = StringTransform.Trim;
+options.Guid.Format     = GuidFormat.D;
+options.Guid.Case       = GuidCase.Lower;
+
+var mapper = new HydrixMapper(options);
+```
+
+### Dependency injection
+
+```csharp
+using Hydrix.Mapper.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+
+services.AddHydrixMapper(options =>
+{
+    options.String.Transform              = StringTransform.Trim;
+    options.Guid.Format                   = GuidFormat.D;
+    options.Guid.Case                     = GuidCase.Lower;
+    options.DateTime.StringFormat         = "O";
+    options.DateTime.TimeZone             = DateTimeZone.None;
+    options.Numeric.DecimalToIntRounding  = NumericRounding.Truncate;
+    options.Numeric.Overflow              = NumericOverflow.Clamp;
+    options.Bool.StringFormat             = BoolStringFormat.LowerCase;
+});
+```
+
+`IHydrixMapper` is registered as a singleton. Inject it wherever you need projection:
+
+```csharp
+public class UserService(IHydrixMapper mapper)
+{
+    public UserDto GetUser(User user) => mapper.Map<User, UserDto>(user);
+}
+```
+
+---
+
+## 🔄 Conversion Options
+
+### String transforms
+
+```csharp
+options.String.Transform = StringTransform.Trim;        // "  Alice  " → "Alice"
+options.String.Transform = StringTransform.Uppercase;   // "alice" → "ALICE"
+options.String.Transform = StringTransform.TrimLowercase; // "  Alice  " → "alice"
+```
+
+### Guid format
+
+```csharp
+options.Guid.Format = GuidFormat.D;     // 00000000-0000-0000-0000-000000000000
+options.Guid.Format = GuidFormat.N;     // 00000000000000000000000000000000
+options.Guid.Case   = GuidCase.Upper;   // uppercase letters
+```
+
+### DateTime to string
+
+```csharp
+options.DateTime.StringFormat = "O";                    // ISO 8601 round-trip
+options.DateTime.TimeZone     = DateTimeZone.ToUtc;     // normalize to UTC before formatting
+options.DateTime.Culture      = "pt-BR";                // culture-aware formatting
+```
+
+### Numeric rounding and overflow
+
+```csharp
+options.Numeric.DecimalToIntRounding = NumericRounding.Nearest;   // Math.Round MidpointRounding.AwayFromZero
+options.Numeric.Overflow             = NumericOverflow.Clamp;     // clamp to target type bounds
+```
+
+### Bool to string
+
+```csharp
+options.Bool.StringFormat = BoolStringFormat.YesNo;     // "Yes" / "No"
+options.Bool.StringFormat = BoolStringFormat.SimNao;    // "Sim" / "Não"
+options.Bool.StringFormat = BoolStringFormat.Custom;
+options.Bool.TrueValue    = "Ativo";
+options.Bool.FalseValue   = "Inativo";
+```
+
+---
+
+## 🏷️ Per-Property Overrides
+
+Use `[MapConversion]` on any destination property to override global options for that property only. The attribute is read at plan compilation — zero runtime cost.
+
+```csharp
+public class UserDto
+{
+    public string Name { get; set; }
+
+    [MapConversion(GuidFormat = GuidFormat.N, GuidCase = GuidCase.Upper)]
+    public string ExternalId { get; set; }
+
+    [MapConversion(DateTimeFormat = "dd/MM/yyyy", DateTimeTimeZone = DateTimeZone.ToLocal)]
+    public string CreatedAt { get; set; }
+
+    [MapConversion(DecimalToIntRounding = NumericRounding.Nearest)]
+    public int Score { get; set; }
+
+    [MapConversion(BoolStringFormat = BoolStringFormat.SimNao)]
+    public string IsActive { get; set; }
+}
+```
+
+---
+
+## 🔒 Strict Mode
+
+Enable strict mode to throw at plan-compile time when a destination property has no matching source property:
+
+```csharp
+options.StrictMode = true;
+```
+
+Useful during development to catch renaming mismatches early. Disable in production for forward-compatible DTOs.
+
+---
+
+## 🎯 Design Philosophy
+
+Hydrix.Mapper is built around the following principles:
+
+- Compile once, execute indefinitely
+- Zero reflection on the hot path
+- Performance first, without sacrificing correctness
+- Explicit conversion rules baked into compiled expressions
+- Thread-safe by design — no locks on the hot path
+
+---
+
+## ❤️ Supporting Hydrix
+
+Hydrix is an open-source project built and maintained with care, transparency, and a long-term vision.
+
+If Hydrix.Mapper helps you build reliable, predictable, and high-performance projection layers, consider supporting the project. Your support helps ensure ongoing maintenance, improvements, documentation, and long-term sustainability.
+
+You can support Hydrix through GitHub Sponsors:
+
+👉 https://github.com/sponsors/marcelo-mattos
+
+Every contribution, whether financial or by sharing feedback and usage experiences, is deeply appreciated.
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0.
+See the LICENSE and NOTICE files for details.
+
+---
+
+## 👨‍💻 Author
+
+**Marcelo Matos dos Santos**
+Software Engineer • Open Source Maintainer.
+Engineering clarity. Delivering transformation.

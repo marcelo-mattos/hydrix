@@ -1,0 +1,157 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net8.0;net6.0;netcoreapp3.1</TargetFrameworks>
+    <Authors>Marcelo Matos dos Santos</Authors>
+    <Owners>Marcelo Matos dos Santos</Owners>
+    <Title>Hydrix.Mapper</Title>
+    <Company>Marcelo Matos dos Santos</Company>
+    <Description>Hydrix Mapper — high-performance entity-to-DTO projection library</Description>
+    <Copyright>© 2026 Marcelo Matos dos Santos</Copyright>
+    <PackageTags>hydrix mapper dto projection performance</PackageTags>
+    <Product>Hydrix.Mapper</Product>
+    <ApplicationIcon>Hydrix.ico</ApplicationIcon>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Version>1.0.0</Version>
+    <RepositoryUrl>https://github.com/marcelo-mattos/hydrix</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageReleaseNotes>
+      - (1.0.0) Introduced Hydrix.Mapper — a high-performance, zero-reflection
+      object-to-DTO projection library for .NET.
+
+      - Implemented expression-tree-based plan compilation with a single fused
+      delegate per type pair that creates the destination instance, transfers
+      every mapped property, and returns — eliminating separate factory and
+      mapper delegate invocations from the hot path.
+
+      - Introduced typed local variables in compiled expressions so the source
+      and destination casts are each emitted once, regardless of property count,
+      reducing redundant castclass instructions in the generated IL.
+
+      - Introduced a per-instance fast cache keyed only by the source and
+      destination type pair, eliminating option-key construction and the
+      associated hash computation on every hot-path call.
+
+      - Implemented a global MapPlanCache keyed by source type, destination type,
+      and option snapshot, ensuring plans are compiled at most once per unique
+      type-pair and configuration combination across all mapper instances.
+
+      - Implemented comprehensive conversion support via ConverterFactory:
+      string transforms, Guid formatting, DateTime and DateTimeOffset to string
+      with timezone normalization and culture control, DateOnly to string,
+      bool to string with eight built-in presets and custom values, decimal and
+      float to integral with configurable rounding, integer overflow handling
+      with Throw, Clamp, and Truncate strategies, and enum to string.
+
+      - Implemented per-property conversion overrides via MapConversionAttribute,
+      read exclusively at plan-compile time with zero runtime cost.
+
+      - Implemented StrictMode that throws at plan-compile time when a destination
+      property has no matching source property in the source type.
+
+      - Implemented full support for NotMappedAttribute on destination properties.
+
+      - Implemented typed and untyped MapList overloads with pre-sized result
+      buffers using ICollection and IReadOnlyCollection count when available.
+
+      - Implemented AddHydrixMapper dependency injection extension registering
+      IHydrixMapper as a singleton with configurable options.
+
+      - Implemented ToDto and ToDtoList convenience extension methods routing
+      through the default global mapper instance.
+
+      - Multi-targeted for net10.0, net8.0, net6.0, and netcoreapp3.1 with
+      conditional ArgumentNullException.ThrowIfNull on net8.0 and above.
+
+      - Shipped 198 unit tests across all supported target frameworks covering
+      all mapping paths, conversion scenarios, cache behavior, DI registration,
+      edge cases, and regression scenarios.
+    </PackageReleaseNotes>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/marcelo-mattos/hydrix</PackageProjectUrl>
+    <PackageIcon>Hydrix.png</PackageIcon>
+    <PackageIconUrl />
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <EnableSourceLink>true</EnableSourceLink>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix.Mapper\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\dbg\Hydrix.Mapper\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix.Mapper\</BaseIntermediateOutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\dbg\Hydrix.Mapper\Hydrix.Mapper.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix.Mapper\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\bin\Hydrix.Mapper\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix.Mapper\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>..\..\obj\Hydrix.Mapper\</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\bin\Hydrix.Mapper\Hydrix.Mapper.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp3.1|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp3.1|AnyCPU'">
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="NOTICE" Pack="true" PackagePath="\" />
+    <None Include="..\Hydrix.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.32" />
+  </ItemGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+</Project>

@@ -1,0 +1,73 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net8.0;net6.0;netcoreapp3.1</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <SonarQubeExclude>true</SonarQubeExclude>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.32" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix.Mapper.UnitTests\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\dbg\Hydrix.Mapper.UnitTests\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix.Mapper.UnitTests\</BaseIntermediateOutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\dbg\Hydrix.Mapper.UnitTests\Hydrix.Mapper.UnitTests.xml</DocumentationFile>
+    <NoWarn>NETSDK1138;NETSDK1206;NU1701;CS0618;CS1591</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <MSBuildProjectExtensionsPath>..\..\obj\Hydrix.Mapper.UnitTests\</MSBuildProjectExtensionsPath>
+    <OutputPath>..\..\bin\Hydrix.Mapper.UnitTests\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\obj\Hydrix.Mapper.UnitTests\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>..\..\obj\Hydrix.Mapper.UnitTests\</IntermediateOutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\bin\Hydrix.Mapper.UnitTests\Hydrix.Mapper.UnitTests.xml</DocumentationFile>
+    <NoWarn>NETSDK1138;NETSDK1206;NU1701;CS0618;CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Hydrix.Mapper\Hydrix.Mapper.csproj" />
+  </ItemGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <ItemGroup>
+    <Compile Remove="TestResults\**" />
+    <EmbeddedResource Remove="TestResults\**" />
+    <None Remove="TestResults\**" />
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="obj\**" />
+    <Compile Remove="bin\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <None Remove="bin\**" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,106 @@
+﻿using Hydrix.Mapper;
+using Hydrix.Mapper.Configuration;
+using Hydrix.Mapper.Extensions;
+using System;
+using Xunit;
+
+namespace Hydrix.Mapper.UnitTests.Extensions
+{
+    /// <summary>
+    /// Covers regression scenarios for the process-wide mapper configuration used by the extension methods.
+    /// </summary>
+    [Collection(GlobalStateTestCollection.Name)]
+    public class MapperExtensionsRegressionTests : IDisposable
+    {
+        /// <summary>
+        /// Represents the source type shared by the global reconfiguration scenario.
+        /// </summary>
+        private sealed class EntityModel
+        {
+            /// <summary>
+            /// Gets or sets the source text copied into the destination model.
+            /// </summary>
+            public string Name { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the destination type shared by the global reconfiguration scenario.
+        /// </summary>
+        private sealed class DestinationModel
+        {
+            /// <summary>
+            /// Gets or sets the mapped text.
+            /// </summary>
+            public string Name { get; set; }
+        }
+
+        /// <summary>
+        /// Restores the process-wide mapper configuration to the default state before each test instance performs
+        /// assertions.
+        /// </summary>
+        public MapperExtensionsRegressionTests()
+        {
+            HydrixMapperConfiguration.Configure(
+                new HydrixMapperOptions());
+        }
+
+        /// <summary>
+        /// Restores the process-wide mapper configuration after each test completes.
+        /// </summary>
+        public void Dispose()
+        {
+            HydrixMapperConfiguration.Configure(
+                new HydrixMapperOptions());
+        }
+
+        /// <summary>
+        /// Verifies that reconfiguring the global mapper invalidates the previously compiled plan for the same type pair.
+        /// </summary>
+        [Fact]
+        public void ToDto_UsesUpdatedGlobalConfiguration_AfterReconfigure()
+        {
+            var uppercase = new HydrixMapperOptions();
+            uppercase.String.Transform = StringTransform.Uppercase;
+            HydrixMapperConfiguration.Configure(
+                uppercase);
+
+            var first = new EntityModel
+            {
+                Name = "Hello",
+            }.ToDto<DestinationModel>();
+
+            var lowercase = new HydrixMapperOptions();
+            lowercase.String.Transform = StringTransform.Lowercase;
+            HydrixMapperConfiguration.Configure(
+                lowercase);
+
+            var second = new EntityModel
+            {
+                Name = "Hello",
+            }.ToDto<DestinationModel>();
+
+            Assert.Equal(
+                "HELLO",
+                first.Name);
+            Assert.Equal(
+                "hello",
+                second.Name);
+        }
+
+        /// <summary>
+        /// Verifies that replacing the global mapper configuration rejects a <see langword="null"/> options instance.
+        /// </summary>
+        [Fact]
+        public void Configure_ThrowsArgumentNullException_WhenOptionsIsNull()
+        {
+            var exception = Assert.Throws<ArgumentNullException>(
+                () => HydrixMapperConfiguration.Configure(
+                    null));
+
+            Assert.Equal(
+                "options",
+                exception.ParamName);
+        }
+    }
+}
+

@@ -4,78 +4,83 @@ using System;
 namespace Hydrix.Benchmarks.Infrastructure
 {
     /// <summary>
-    /// SQLite in-memory database fixture for benchmarks.
-    /// Keeps a single open connection alive for the duration of the benchmark run.
+    /// Maintains the in-memory SQLite database used by the benchmark suites for the duration of a benchmark run.
     /// </summary>
-    /// <remarks>This class is designed to provide a consistent and isolated SQLite in-memory database environment for benchmarking purposes.
-    /// It ensures that the database schema is created and seeded with data before any benchmarks are executed. The single open connection
-    /// approach helps maintain the state of the in-memory database throughout the benchmark lifecycle.</remarks>
+    /// <remarks>
+    /// The fixture keeps a single open connection alive so the in-memory database survives across setup, execution, and
+    /// cleanup, allowing every benchmark implementation to query the same seeded data set.
+    /// </remarks>
     public sealed class SqliteDatabaseFixture :
         IDisposable
     {
         /// <summary>
-        /// Gets the active SQLite connection used for database operations.
+        /// Gets the open SQLite connection backing the benchmark database.
         /// </summary>
-        /// <remarks>This property provides access to the underlying SqliteConnection instance, which is
-        /// essential for executing commands and managing transactions. Ensure that the connection is open before
-        /// performing any database operations.</remarks>
+        /// <remarks>
+        /// Consumers reuse this connection directly when executing raw SQL through Dapper, Hydrix, or manual ADO.NET
+        /// commands, while Entity Framework Core builds its context options around the same connection.
+        /// </remarks>
         public SqliteConnection Connection { get; }
 
         /// <summary>
-        /// Initializes a new instance of the SqliteDatabaseFixture class and establishes a connection to an in-memory
-        /// SQLite database using a shared cache.
+        /// Initializes a new fixture instance, opens the shared in-memory SQLite connection, and creates the schema.
         /// </summary>
-        /// <remarks>This constructor opens a single connection to the in-memory database and creates the
-        /// required schema. The shared cache mode allows multiple connections to access the same database instance, but
-        /// this fixture maintains a single open connection for efficiency and consistency during testing.</remarks>
         public SqliteDatabaseFixture()
         {
-            // Shared cache allows multiple connections, but here we keep a single open connection.
-            Connection = new SqliteConnection("Data Source=:memory:;Cache=Shared");
+            Connection = new SqliteConnection(
+                "Data Source=:memory:;Cache=Shared");
             Connection.Open();
 
-            CreateSchema(Connection);
+            CreateSchema(
+                Connection);
         }
 
         /// <summary>
-        /// Ensures that the database contains the specified number of user records by reseeding if necessary.
+        /// Ensures that the database contains exactly the requested number of benchmark rows.
         /// </summary>
-        /// <remarks>If the number of user records in the database does not match the specified count,
-        /// this method removes all existing user data and inserts new records to reach the desired total. Use with
-        /// caution, as this operation is destructive to existing user data.</remarks>
-        /// <param name="rowCount">The required number of user records to be present in the database. If the current count does not match this
-        /// value, all existing user data will be cleared and new records will be seeded.</param>
+        /// <param name="rowCount">
+        /// The number of user rows, and therefore order rows, that must exist after seeding completes.
+        /// </param>
+        /// <remarks>
+        /// When the current row count already matches the requested value the method does nothing; otherwise it clears
+        /// the existing data set and reseeds the database from scratch so all benchmark suites run against a deterministic
+        /// volume of data.
+        /// </remarks>
         public void EnsureSeeded(
             int rowCount)
         {
-            using var cmd = Connection.CreateCommand();
-            cmd.CommandText = "SELECT COUNT(1) FROM Users";
-            var existing = Convert.ToInt32(cmd.ExecuteScalar());
+            using var command = Connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(1) FROM Users";
+            var existing = Convert.ToInt32(
+                command.ExecuteScalar());
 
             if (existing == rowCount)
+            {
                 return;
+            }
 
-            ClearData(Connection);
-            Seed(Connection, rowCount);
+            ClearData(
+                Connection);
+            Seed(
+                Connection,
+                rowCount);
         }
 
         /// <summary>
-        /// Creates the Users and Orders tables in the SQLite database if they do not already exist, including an index
-        /// on the UserId column of the Orders table.
+        /// Creates the SQLite tables and supporting index required by the benchmark queries.
         /// </summary>
-        /// <remarks>This method ensures that the required database schema is present for user and order
-        /// management. It is safe to call multiple times, as existing tables and indexes will not be
-        /// recreated.</remarks>
-        /// <param name="conn">The open SqliteConnection used to execute the schema creation commands. Must not be null.</param>
+        /// <param name="connection">
+        /// The already-open SQLite connection on which the schema creation script should execute.
+        /// </param>
         private static void CreateSchema(
-            SqliteConnection conn)
+            SqliteConnection connection)
         {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
                 CREATE TABLE IF NOT EXISTS Users (
-                  Id   INTEGER NOT NULL,
-                  Name TEXT    NOT NULL,
-                  Age  INTEGER NOT NULL,
+                  Id     INTEGER NOT NULL,
+                  Name   TEXT    NOT NULL,
+                  Age    INTEGER NOT NULL,
                   Status INTEGER NOT NULL,
                   PRIMARY KEY (Id)
                 );
@@ -89,94 +94,119 @@ namespace Hydrix.Benchmarks.Infrastructure
 
                 CREATE INDEX IF NOT EXISTS IX_Orders_UserId ON Orders(UserId);
                 ";
-            cmd.ExecuteNonQuery();
+            command.ExecuteNonQuery();
         }
 
         /// <summary>
-        /// Removes all records from the Orders and Users tables in the database.
+        /// Removes every existing row from the benchmark tables before reseeding.
         /// </summary>
-        /// <remarks>This operation permanently deletes all data from the specified tables. Use with
-        /// caution, as the deleted data cannot be recovered.</remarks>
-        /// <param name="conn">The open SqliteConnection used to execute the deletion commands. The connection must be valid and open when
-        /// this method is called.</param>
+        /// <param name="connection">
+        /// The already-open SQLite connection on which the delete script should execute.
+        /// </param>
         private static void ClearData(
-            SqliteConnection conn)
+            SqliteConnection connection)
         {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
                 DELETE FROM Orders;
                 DELETE FROM Users;
                 ";
-            cmd.ExecuteNonQuery();
+            command.ExecuteNonQuery();
         }
 
         /// <summary>
-        /// Populates the database with a specified number of user and order records for testing or benchmarking
-        /// purposes.
+        /// Inserts deterministic user and order rows into the in-memory benchmark database.
         /// </summary>
-        /// <remarks>Each user is assigned a unique identifier, a generated name, an age, and a status
-        /// value. For every user, a corresponding order is created with a unique identifier and a total value. All
-        /// insert operations are performed within a single transaction to ensure atomicity.</remarks>
-        /// <param name="conn">The SQLite connection to the database where the records will be inserted. The connection must be open and
-        /// valid.</param>
-        /// <param name="rowCount">The number of user and order records to insert into the database. Must be a positive integer.</param>
+        /// <param name="connection">
+        /// The already-open SQLite connection that will receive the seeded data.
+        /// </param>
+        /// <param name="rowCount">
+        /// The number of user rows, and matching order rows, that must be generated.
+        /// </param>
+        /// <remarks>
+        /// The fixture writes one order per user so nested join benchmarks do not multiply rows unexpectedly, keeping the
+        /// workload stable across Dapper, Hydrix, Entity Framework Core, and manual ADO.NET implementations.
+        /// </remarks>
         private static void Seed(
-            SqliteConnection conn,
+            SqliteConnection connection,
             int rowCount)
         {
-            using var tx = conn.BeginTransaction();
+            using var transaction = connection.BeginTransaction();
 
-            // Users
-            using (var cmd = conn.CreateCommand())
+            using (var userCommand = connection.CreateCommand())
             {
-                cmd.Transaction = tx;
-                cmd.CommandText = "INSERT INTO Users (Id, Name, Age, Status) VALUES ($id, $name, $age, $status)";
+                userCommand.Transaction = transaction;
+                userCommand.CommandText =
+                    "INSERT INTO Users (Id, Name, Age, Status) VALUES ($id, $name, $age, $status)";
 
-                var pId = cmd.CreateParameter(); pId.ParameterName = "$id"; cmd.Parameters.Add(pId);
-                var pName = cmd.CreateParameter(); pName.ParameterName = "$name"; cmd.Parameters.Add(pName);
-                var pAge = cmd.CreateParameter(); pAge.ParameterName = "$age"; cmd.Parameters.Add(pAge);
-                var pStatus = cmd.CreateParameter(); pStatus.ParameterName = "$status"; cmd.Parameters.Add(pStatus);
+                var idParameter = userCommand.CreateParameter();
+                idParameter.ParameterName = "$id";
+                userCommand.Parameters.Add(
+                    idParameter);
 
-                for (int i = 1; i <= rowCount; i++)
+                var nameParameter = userCommand.CreateParameter();
+                nameParameter.ParameterName = "$name";
+                userCommand.Parameters.Add(
+                    nameParameter);
+
+                var ageParameter = userCommand.CreateParameter();
+                ageParameter.ParameterName = "$age";
+                userCommand.Parameters.Add(
+                    ageParameter);
+
+                var statusParameter = userCommand.CreateParameter();
+                statusParameter.ParameterName = "$status";
+                userCommand.Parameters.Add(
+                    statusParameter);
+
+                for (var index = 1; index <= rowCount; index++)
                 {
-                    pId.Value = i;
-                    pName.Value = "User " + i;
-                    pAge.Value = (i % 70) + 10;
-                    pStatus.Value = i % 3; // 0..2
+                    idParameter.Value = index;
+                    nameParameter.Value = "User " + index;
+                    ageParameter.Value = (index % 70) + 10;
+                    statusParameter.Value = index % 3;
 
-                    cmd.ExecuteNonQuery();
+                    userCommand.ExecuteNonQuery();
                 }
             }
 
-            // Orders: 1 order per user to keep JOIN deterministic and avoid 1:N blow-ups.
-            using (var cmd = conn.CreateCommand())
+            using (var orderCommand = connection.CreateCommand())
             {
-                cmd.Transaction = tx;
-                cmd.CommandText = "INSERT INTO Orders (Id, UserId, Total) VALUES ($id, $userId, $total)";
+                orderCommand.Transaction = transaction;
+                orderCommand.CommandText =
+                    "INSERT INTO Orders (Id, UserId, Total) VALUES ($id, $userId, $total)";
 
-                var pId = cmd.CreateParameter(); pId.ParameterName = "$id"; cmd.Parameters.Add(pId);
-                var pUserId = cmd.CreateParameter(); pUserId.ParameterName = "$userId"; cmd.Parameters.Add(pUserId);
-                var pTotal = cmd.CreateParameter(); pTotal.ParameterName = "$total"; cmd.Parameters.Add(pTotal);
+                var idParameter = orderCommand.CreateParameter();
+                idParameter.ParameterName = "$id";
+                orderCommand.Parameters.Add(
+                    idParameter);
 
-                for (int i = 1; i <= rowCount; i++)
+                var userIdParameter = orderCommand.CreateParameter();
+                userIdParameter.ParameterName = "$userId";
+                orderCommand.Parameters.Add(
+                    userIdParameter);
+
+                var totalParameter = orderCommand.CreateParameter();
+                totalParameter.ParameterName = "$total";
+                orderCommand.Parameters.Add(
+                    totalParameter);
+
+                for (var index = 1; index <= rowCount; index++)
                 {
-                    pId.Value = i;
-                    pUserId.Value = i;
-                    pTotal.Value = (i % 1000) + 0.99;
+                    idParameter.Value = index;
+                    userIdParameter.Value = index;
+                    totalParameter.Value = (index % 1000) + 0.99;
 
-                    cmd.ExecuteNonQuery();
+                    orderCommand.ExecuteNonQuery();
                 }
             }
 
-            tx.Commit();
+            transaction.Commit();
         }
 
         /// <summary>
-        /// Releases all resources used by the current instance of the class, including the underlying database
-        /// connection.
+        /// Releases the open SQLite connection held by the fixture.
         /// </summary>
-        /// <remarks>Call this method when the instance is no longer needed to ensure that all associated
-        /// resources are properly released. Failing to call this method may result in resource leaks.</remarks>
         public void Dispose()
         {
             Connection.Dispose();

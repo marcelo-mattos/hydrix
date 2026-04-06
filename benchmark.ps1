@@ -1,120 +1,130 @@
-# ================================
+﻿# ================================
 # Hydrix Benchmarks Runner
 # ================================
 
-Write-Host "🚀 Hydrix Benchmarks Runner" -ForegroundColor Cyan
+function Select-MenuOption {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Title,
+
+        [Parameter(Mandatory = $true)]
+        [object[]]$Options,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DefaultKey,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Prompt
+    )
+
+    Write-Host "`n$Title" -ForegroundColor Yellow
+
+    foreach ($option in $Options) {
+        Write-Host "$($option.Key)) $($option.Label)"
+    }
+
+    $choice = Read-Host "$Prompt (default: $DefaultKey)"
+    if ([string]::IsNullOrWhiteSpace($choice)) {
+        $choice = $DefaultKey
+    }
+
+    $selected = $Options |
+        Where-Object { $_.Key -eq $choice } |
+        Select-Object -First 1
+
+    if ($null -ne $selected) {
+        return $selected
+    }
+
+    Write-Host "Opcao invalida. Usando default $DefaultKey." -ForegroundColor Red
+    return $Options |
+        Where-Object { $_.Key -eq $DefaultKey } |
+        Select-Object -First 1
+}
+
+Write-Host "Hydrix Benchmarks Runner" -ForegroundColor Cyan
 
 # -------------------------------
 # Escolha do Framework
 # -------------------------------
-$frameworks = @(
-    "netcoreapp3.1",
-    "net6.0",
-    "net8.0",
-    "net10.0"
+$frameworkOptions = @(
+    [pscustomobject]@{ Key = '1'; Label = 'netcoreapp3.1'; Value = 'netcoreapp3.1' },
+    [pscustomobject]@{ Key = '2'; Label = 'net6.0'; Value = 'net6.0' },
+    [pscustomobject]@{ Key = '3'; Label = 'net8.0'; Value = 'net8.0' },
+    [pscustomobject]@{ Key = '4'; Label = 'net10.0'; Value = 'net10.0' }
 )
 
-Write-Host "`nSelecione o framework:" -ForegroundColor Yellow
-for ($i = 0; $i -lt $frameworks.Length; $i++) {
-    Write-Host "$($i + 1)) $($frameworks[$i])"
-}
+$frameworkSelection = Select-MenuOption `
+    -Title 'Selecione o framework:' `
+    -Options $frameworkOptions `
+    -DefaultKey '4' `
+    -Prompt 'Digite o numero'
 
-$fwChoice = Read-Host "Digite o número (default: 4)"
-
-if ([string]::IsNullOrWhiteSpace($fwChoice)) {
-    $framework = "net10.0"
-}
-else {
-    $index = [int]$fwChoice - 1
-    if ($index -ge 0 -and $index -lt $frameworks.Length) {
-        $framework = $frameworks[$index]
-    }
-    else {
-        Write-Host "❌ Opção inválida. Usando default net10.0"
-        $framework = "net10.0"
-    }
-}
+$framework = $frameworkSelection.Value
 
 # -------------------------------
 # Escolha do Benchmark
 # -------------------------------
-$benchmarks = @{
-    "1" = "*"
-    "2" = "*Flat*"
-    "3" = "*Nested*"
-}
+$benchmarkOptions = @(
+    [pscustomobject]@{ Key = '1'; Label = 'Todos (*)'; Filter = '*' },
+    [pscustomobject]@{ Key = '2'; Label = 'FlatBenchmarks'; Filter = '*FlatBenchmarks*' },
+    [pscustomobject]@{ Key = '3'; Label = 'NestedBenchmarks'; Filter = '*NestedBenchmarks*' },
+    [pscustomobject]@{ Key = '4'; Label = 'MapperBenchmarks (todos)'; Filter = '*MapperBenchmarks*' },
+    [pscustomobject]@{ Key = '5'; Label = 'MapperBenchmarks - flat small'; Filter = '*MapperBenchmarks*FlatSmall*' },
+    [pscustomobject]@{ Key = '6'; Label = 'MapperBenchmarks - flat medium'; Filter = '*MapperBenchmarks*FlatMedium*' },
+    [pscustomobject]@{ Key = '7'; Label = 'MapperBenchmarks - flat large'; Filter = '*MapperBenchmarks*FlatLarge*' },
+    [pscustomobject]@{ Key = '8'; Label = 'MapperBenchmarks - with conversions'; Filter = '*MapperBenchmarks*WithConversions*' },
+    [pscustomobject]@{ Key = '9'; Label = 'MapperBenchmarks - list small'; Filter = '*MapperBenchmarks*ListSmall*' },
+    [pscustomobject]@{ Key = '10'; Label = 'MapperBenchmarks - list medium'; Filter = '*MapperBenchmarks*ListMedium*' },
+    [pscustomobject]@{ Key = '11'; Label = 'MapperBenchmarks - list large'; Filter = '*MapperBenchmarks*ListLarge*' },
+    [pscustomobject]@{ Key = '12'; Label = 'MapperBenchmarks - first hit (cold path)'; Filter = '*MapperBenchmarks*ColdPath*' }
+)
 
-Write-Host "`nSelecione o benchmark:" -ForegroundColor Yellow
-Write-Host "1) Todos (*)"
-Write-Host "2) Flat"
-Write-Host "3) Nested"
+$benchmarkSelection = Select-MenuOption `
+    -Title 'Selecione o benchmark:' `
+    -Options $benchmarkOptions `
+    -DefaultKey '1' `
+    -Prompt 'Digite o numero'
 
-$bmChoice = Read-Host "Digite o número (default: 1)"
-
-if ([string]::IsNullOrWhiteSpace($bmChoice)) {
-    $filter = "*"
-}
-elseif ($benchmarks.ContainsKey($bmChoice)) {
-    $filter = $benchmarks[$bmChoice]
-}
-else {
-    Write-Host "❌ Opção inválida. Usando todos (*)"
-    $filter = "*"
-}
+$filter = $benchmarkSelection.Filter
 
 # -------------------------------
 # Escolha do Job
 # -------------------------------
-$jobs = @(
-    "short",
-    "medium",
-    "long",
-    "verylong",
-    "dry"
+$jobOptions = @(
+    [pscustomobject]@{ Key = '1'; Label = 'short'; Value = 'short' },
+    [pscustomobject]@{ Key = '2'; Label = 'medium'; Value = 'medium' },
+    [pscustomobject]@{ Key = '3'; Label = 'long'; Value = 'long' },
+    [pscustomobject]@{ Key = '4'; Label = 'verylong'; Value = 'verylong' },
+    [pscustomobject]@{ Key = '5'; Label = 'dry'; Value = 'dry' }
 )
 
-Write-Host "`nSelecione o job:" -ForegroundColor Yellow
-for ($i = 0; $i -lt $jobs.Length; $i++) {
-    Write-Host "$($i + 1)) $($jobs[$i])"
-}
+$jobSelection = Select-MenuOption `
+    -Title 'Selecione o job:' `
+    -Options $jobOptions `
+    -DefaultKey '1' `
+    -Prompt 'Digite o numero'
 
-$jobChoice = Read-Host "Digite o número (default: 1)"
-
-if ([string]::IsNullOrWhiteSpace($jobChoice)) {
-    $job = "short"
-}
-else {
-    $index = [int]$jobChoice - 1
-    if ($index -ge 0 -and $index -lt $jobs.Length) {
-        $job = $jobs[$index]
-    }
-    else {
-        Write-Host "❌ Opção inválida. Usando default short"
-        $job = "short"
-    }
-}
+$job = $jobSelection.Value
 
 # -------------------------------
 # Escolha de Diagnosers
 # -------------------------------
-Write-Host "`nSelecione os diagnosers (separados por vírgula):" -ForegroundColor Yellow
-Write-Host "1) Memory"
-Write-Host "2) Disassembly"
-Write-Host "3) Threading"
-Write-Host "Exemplo: 1,3 ou ENTER para nenhum"
+Write-Host "`nSelecione os diagnosers (separados por virgula):" -ForegroundColor Yellow
+Write-Host '1) Memory'
+Write-Host '2) Disassembly'
+Write-Host '3) Threading'
+Write-Host 'Exemplo: 1,3 ou ENTER para nenhum'
 
-$diagChoice = Read-Host "Opção"
-
+$diagChoice = Read-Host 'Opcao'
 $diagnosers = @()
 
 if (-not [string]::IsNullOrWhiteSpace($diagChoice)) {
-    $choices = $diagChoice.Split(",")
-
-    foreach ($c in $choices) {
-        switch ($c.Trim()) {
-            "1" { $diagnosers += "--memory" }
-            "2" { $diagnosers += "--disasm" }
-            "3" { $diagnosers += "--threading" }
+    foreach ($choice in $diagChoice.Split(',')) {
+        switch ($choice.Trim()) {
+            '1' { $diagnosers += '--memory' }
+            '2' { $diagnosers += '--disasm' }
+            '3' { $diagnosers += '--threading' }
         }
     }
 }
@@ -122,53 +132,53 @@ if (-not [string]::IsNullOrWhiteSpace($diagChoice)) {
 # -------------------------------
 # Escolha de Exporters
 # -------------------------------
-Write-Host "`nSelecione os exporters (separados por vírgula):" -ForegroundColor Yellow
-Write-Host "1) HTML"
-Write-Host "2) Markdown"
-Write-Host "3) GitHub"
-Write-Host "4) CSV"
-Write-Host "Exemplo: 1,2 ou ENTER para nenhum"
+Write-Host "`nSelecione os exporters (separados por virgula):" -ForegroundColor Yellow
+Write-Host '1) HTML'
+Write-Host '2) Markdown'
+Write-Host '3) GitHub'
+Write-Host '4) CSV'
+Write-Host 'Exemplo: 1,2 ou ENTER para nenhum'
 
-$expChoice = Read-Host "Opção"
-
+$exporterChoice = Read-Host 'Opcao'
 $exporters = @()
 
-if (-not [string]::IsNullOrWhiteSpace($expChoice)) {
-    $choices = $expChoice.Split(",")
-
-    foreach ($c in $choices) {
-        switch ($c.Trim()) {
-            "1" { $exporters += "html" }
-            "2" { $exporters += "markdown" }
-            "3" { $exporters += "github" }
-            "4" { $exporters += "csv" }
+if (-not [string]::IsNullOrWhiteSpace($exporterChoice)) {
+    foreach ($choice in $exporterChoice.Split(',')) {
+        switch ($choice.Trim()) {
+            '1' { $exporters += 'html' }
+            '2' { $exporters += 'markdown' }
+            '3' { $exporters += 'github' }
+            '4' { $exporters += 'csv' }
         }
     }
 }
 
 # -------------------------------
-# Execução
+# Execucao
 # -------------------------------
-Write-Host "`n⚙️ Executando benchmarks..." -ForegroundColor Green
+Write-Host "`nExecutando benchmarks..." -ForegroundColor Green
 Write-Host "Framework: $framework"
-Write-Host "Filter: $filter`n"
+Write-Host "Benchmark: $($benchmarkSelection.Label)"
+Write-Host "Filter: $filter"
+Write-Host "Job: $job`n"
 
-$extraArgs = @()
+$extraArgs = @(
+    '--filter', $filter,
+    '--job', $job
+)
 
 if ($diagnosers.Count -gt 0) {
     $extraArgs += $diagnosers
 }
 
 if ($exporters.Count -gt 0) {
-    $extraArgs += "--exporters"
+    $extraArgs += '--exporters'
     $extraArgs += $exporters
 }
 
 dotnet run `
-    --project "tests/Hydrix.Benchmarks/Hydrix.Benchmarks.csproj" `
+    --project 'tests/Hydrix.Benchmarks/Hydrix.Benchmarks.csproj' `
     -c Release `
     -f $framework `
     -- `
-    --filter "$filter" `
-    --job $job `
     @extraArgs
