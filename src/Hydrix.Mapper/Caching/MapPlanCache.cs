@@ -4,7 +4,9 @@ using Hydrix.Mapper.Plans;
 using Hydrix.Mapper.Primitives;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Hydrix.Mapper.Caching
 {
@@ -56,12 +58,14 @@ namespace Hydrix.Mapper.Caching
             }
 
             var snapshot = optionsKey.ToOptions();
+            var plan = MapPlanBuilder.Build(
+                sourceType,
+                destType,
+                snapshot);
+
             return Cache.GetOrAdd(
                 key,
-                cacheKey => MapPlanBuilder.Build(
-                    cacheKey.Source,
-                    cacheKey.Destination,
-                    snapshot));
+                plan);
         }
 
         /// <summary>
@@ -308,6 +312,11 @@ namespace Hydrix.Mapper.Caching
         private readonly bool _strictMode;
 
         /// <summary>
+        /// Stores the reference to the nested-mappings dictionary for identity-based cache segmentation.
+        /// </summary>
+        private readonly object _nestedMappingsRef;
+
+        /// <summary>
         /// Initializes a new immutable option snapshot from the supplied effective values.
         /// </summary>
         /// <param name="stringTransform">
@@ -346,6 +355,9 @@ namespace Hydrix.Mapper.Caching
         /// <param name="strictMode">
         /// The configured strict-mode flag.
         /// </param>
+        /// <param name="nestedMappings">
+        /// The nested-mappings dictionary reference used for identity-based cache segmentation.
+        /// </param>
         [SuppressMessage(
             "Major Code Smell",
             "S107:Methods should not have too many parameters",
@@ -362,7 +374,8 @@ namespace Hydrix.Mapper.Caching
             BoolStringFormat boolStringFormat,
             string boolTrueValue,
             string boolFalseValue,
-            bool strictMode)
+            bool strictMode,
+            Dictionary<Type, Type> nestedMappings)
         {
             _stringTransform = stringTransform;
             _guidFormat = guidFormat;
@@ -376,6 +389,7 @@ namespace Hydrix.Mapper.Caching
             _boolTrueValue = boolTrueValue;
             _boolFalseValue = boolFalseValue;
             _strictMode = strictMode;
+            _nestedMappingsRef = nestedMappings;
         }
 
         /// <summary>
@@ -401,7 +415,10 @@ namespace Hydrix.Mapper.Caching
                 options.Bool.StringFormat,
                 options.Bool.TrueValue,
                 options.Bool.FalseValue,
-                options.StrictMode);
+                options.StrictMode,
+                options.NestedMappings.Count > 0
+                    ? options.NestedMappings
+                    : null);
 
         /// <summary>
         /// Creates a detached options instance that mirrors the captured values.
@@ -427,6 +444,14 @@ namespace Hydrix.Mapper.Caching
             options.Bool.StringFormat = _boolStringFormat;
             options.Bool.TrueValue = _boolTrueValue;
             options.Bool.FalseValue = _boolFalseValue;
+
+            if (_nestedMappingsRef is Dictionary<Type, Type> nestedMappings &&
+                nestedMappings.Count > 0)
+            {
+                options.ImportNestedMappings(
+                    nestedMappings);
+            }
+
             return options;
         }
 
@@ -465,7 +490,11 @@ namespace Hydrix.Mapper.Caching
                 _boolFalseValue,
                 other._boolFalseValue,
                 StringComparison.Ordinal) &&
-            _strictMode == other._strictMode;
+            _strictMode == other._strictMode &&
+            ((_nestedMappingsRef == null && other._nestedMappingsRef == null) ||
+             ReferenceEquals(
+                 _nestedMappingsRef,
+                 other._nestedMappingsRef));
 
         /// <summary>
         /// Determines whether the current option snapshot matches another object instance.
@@ -508,6 +537,10 @@ namespace Hydrix.Mapper.Caching
                 hashCode = (hashCode * 397) ^ GetStringHashCode(
                     _boolFalseValue);
                 hashCode = (hashCode * 397) ^ _strictMode.GetHashCode();
+                hashCode = (hashCode * 397) ^ (_nestedMappingsRef == null
+                    ? 0
+                    : RuntimeHelpers.GetHashCode(
+                        _nestedMappingsRef));
                 return hashCode;
             }
         }

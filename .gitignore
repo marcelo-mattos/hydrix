@@ -16,3 +16,4 @@
 /TestResults/
 *.DotSettings.user
 *.sln.DotSettings.user
+/coverage-results*/

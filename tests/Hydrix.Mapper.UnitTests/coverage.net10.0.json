@@ -1,0 +1,5629 @@
+{
+  "Hydrix.Mapper.dll": {
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\HydrixMapper.cs": {
+      "Hydrix.Mapper.HydrixMapper": {
+        "TTarget Hydrix.Mapper.HydrixMapper::Map(System.Object)": {
+          "Lines": {
+            "80": 238,
+            "81": 238,
+            "87": 236,
+            "88": 236,
+            "89": 236,
+            "90": 236,
+            "91": 236
+          },
+          "Branches": []
+        },
+        "TTarget Hydrix.Mapper.HydrixMapper::Map(TSource)": {
+          "Lines": {
+            "113": 4,
+            "114": 4,
+            "121": 3,
+            "122": 3,
+            "123": 3,
+            "124": 3,
+            "125": 3
+          },
+          "Branches": []
+        },
+        "System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.HydrixMapper::MapList(System.Collections.Generic.IEnumerable`1<System.Object>)": {
+          "Lines": {
+            "143": 8,
+            "144": 2,
+            "146": 6,
+            "147": 6,
+            "148": 6,
+            "149": 6,
+            "150": 6,
+            "152": 40,
+            "154": 14,
+            "157": 13,
+            "158": 13,
+            "160": 7,
+            "161": 7,
+            "162": 7,
+            "163": 7,
+            "166": 13,
+            "167": 13,
+            "168": 13,
+            "171": 6
+          },
+          "Branches": [
+            {
+              "Line": 143,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            },
+            {
+              "Line": 143,
+              "Offset": 1,
+              "EndOffset": 9,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 6
+            },
+            {
+              "Line": 152,
+              "Offset": 117,
+              "EndOffset": 41,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 14
+            },
+            {
+              "Line": 154,
+              "Offset": 52,
+              "EndOffset": 54,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 13
+            },
+            {
+              "Line": 158,
+              "Offset": 71,
+              "EndOffset": 73,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 7
+            },
+            {
+              "Line": 158,
+              "Offset": 71,
+              "EndOffset": 86,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 13
+            },
+            {
+              "Line": 154,
+              "Offset": 52,
+              "EndOffset": 110,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 20
+            },
+            {
+              "Line": 152,
+              "Offset": 117,
+              "EndOffset": 119,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 6
+            }
+          ]
+        },
+        "System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.HydrixMapper::MapList(System.Collections.Generic.IEnumerable`1<TSource>)": {
+          "Lines": {
+            "193": 13,
+            "194": 2,
+            "196": 11,
+            "197": 11,
+            "198": 11,
+            "199": 11,
+            "202": 11,
+            "204": 4,
+            "205": 4,
+            "207": 4,
+            "208": 1,
+            "210": 3,
+            "211": 3,
+            "212": 3,
+            "216": 7,
+            "218": 3,
+            "219": 1,
+            "221": 2,
+            "222": 2,
+            "223": 2,
+            "226": 4,
+            "227": 4,
+            "228": 4
+          },
+          "Branches": [
+            {
+              "Line": 193,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            },
+            {
+              "Line": 193,
+              "Offset": 1,
+              "EndOffset": 9,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 11
+            },
+            {
+              "Line": 202,
+              "Offset": 54,
+              "EndOffset": 56,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 4
+            },
+            {
+              "Line": 207,
+              "Offset": 70,
+              "EndOffset": 72,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 1
+            },
+            {
+              "Line": 207,
+              "Offset": 70,
+              "EndOffset": 78,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 3
+            },
+            {
+              "Line": 202,
+              "Offset": 54,
+              "EndOffset": 86,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 7
+            },
+            {
+              "Line": 216,
+              "Offset": 94,
+              "EndOffset": 96,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 3
+            },
+            {
+              "Line": 218,
+              "Offset": 102,
+              "EndOffset": 104,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 1
+            },
+            {
+              "Line": 218,
+              "Offset": 102,
+              "EndOffset": 110,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 2
+            },
+            {
+              "Line": 216,
+              "Offset": 94,
+              "EndOffset": 118,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 4
+            }
+          ]
+        },
+        "Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.HydrixMapper::GetPlan(System.Type,System.Type)": {
+          "Lines": {
+            "253": 257,
+            "254": 257,
+            "255": 257,
+            "257": 257,
+            "258": 257,
+            "259": 257,
+            "260": 257,
+            "261": 257,
+            "262": 257,
+            "263": 449,
+            "264": 449,
+            "265": 449,
+            "266": 449
+          },
+          "Branches": [
+            {
+              "Line": 257,
+              "Offset": 60,
+              "EndOffset": 62,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 192
+            },
+            {
+              "Line": 257,
+              "Offset": 60,
+              "EndOffset": 87,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 65
+            }
+          ]
+        },
+        "System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::CreateResultBuffer(System.Collections.Generic.IEnumerable`1<System.Object>)": {
+          "Lines": {
+            "285": 6,
+            "287": 4,
+            "288": 4,
+            "291": 2,
+            "293": 1,
+            "294": 1,
+            "297": 1
+          },
+          "Branches": [
+            {
+              "Line": 285,
+              "Offset": 8,
+              "EndOffset": 10,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 4
+            },
+            {
+              "Line": 285,
+              "Offset": 8,
+              "EndOffset": 22,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 291,
+              "Offset": 30,
+              "EndOffset": 32,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 291,
+              "Offset": 30,
+              "EndOffset": 44,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::CreateResultBuffer(System.Collections.Generic.IEnumerable`1<TSource>)": {
+          "Lines": {
+            "319": 4,
+            "320": 1,
+            "321": 1,
+            "323": 3,
+            "324": 1,
+            "325": 1,
+            "327": 2,
+            "328": 1,
+            "329": 1,
+            "331": 1
+          },
+          "Branches": [
+            {
+              "Line": 319,
+              "Offset": 8,
+              "EndOffset": 10,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 319,
+              "Offset": 8,
+              "EndOffset": 22,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 3
+            },
+            {
+              "Line": 323,
+              "Offset": 30,
+              "EndOffset": 32,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 323,
+              "Offset": 30,
+              "EndOffset": 44,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 2
+            },
+            {
+              "Line": 327,
+              "Offset": 52,
+              "EndOffset": 54,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 1
+            },
+            {
+              "Line": 327,
+              "Offset": 52,
+              "EndOffset": 66,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapSpan(System.Span`1<TSource>,System.Func`2<TSource,TTarget>)": {
+          "Lines": {
+            "343": 3,
+            "344": 3,
+            "346": 22,
+            "348": 8,
+            "351": 7,
+            "352": 7,
+            "353": 7,
+            "356": 3
+          },
+          "Branches": [
+            {
+              "Line": 346,
+              "Offset": 74,
+              "EndOffset": 17,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 8
+            },
+            {
+              "Line": 348,
+              "Offset": 35,
+              "EndOffset": 37,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 7
+            },
+            {
+              "Line": 348,
+              "Offset": 35,
+              "EndOffset": 62,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 8
+            },
+            {
+              "Line": 346,
+              "Offset": 74,
+              "EndOffset": 76,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 3
+            }
+          ]
+        },
+        "System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapIList(System.Collections.Generic.IList`1<TSource>,System.Func`2<TSource,TTarget>)": {
+          "Lines": {
+            "369": 2,
+            "370": 2,
+            "371": 2,
+            "373": 14,
+            "375": 5,
+            "376": 5,
+            "379": 4,
+            "380": 4,
+            "381": 4,
+            "384": 2
+          },
+          "Branches": [
+            {
+              "Line": 373,
+              "Offset": 53,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 5
+            },
+            {
+              "Line": 376,
+              "Offset": 32,
+              "EndOffset": 34,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 4
+            },
+            {
+              "Line": 376,
+              "Offset": 32,
+              "EndOffset": 47,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 5
+            },
+            {
+              "Line": 373,
+              "Offset": 53,
+              "EndOffset": 55,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 2
+            }
+          ]
+        },
+        "System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapEnumerable(System.Collections.Generic.IEnumerable`1<TSource>,System.Func`2<TSource,TTarget>)": {
+          "Lines": {
+            "395": 4,
+            "396": 4,
+            "398": 24,
+            "400": 8,
+            "403": 7,
+            "404": 7,
+            "405": 7,
+            "408": 4
+          },
+          "Branches": [
+            {
+              "Line": 398,
+              "Offset": 50,
+              "EndOffset": 16,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 8
+            },
+            {
+              "Line": 400,
+              "Offset": 29,
+              "EndOffset": 31,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 7
+            },
+            {
+              "Line": 400,
+              "Offset": 29,
+              "EndOffset": 44,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 12
+            },
+            {
+              "Line": 398,
+              "Offset": 50,
+              "EndOffset": 52,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 4
+            }
+          ]
+        },
+        "System.Void Hydrix.Mapper.HydrixMapper::.ctor(Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "42": 197,
+            "43": 197,
+            "51": 197,
+            "52": 197,
+            "55": 197,
+            "56": 196,
+            "62": 196
+          },
+          "Branches": []
+        }
+      },
+      "Hydrix.Mapper.HydrixMapper/TypePair": {
+        "System.Boolean Hydrix.Mapper.HydrixMapper/TypePair::Equals(Hydrix.Mapper.HydrixMapper/TypePair)": {
+          "Lines": {
+            "457": 76,
+            "458": 76
+          },
+          "Branches": [
+            {
+              "Line": 457,
+              "Offset": 17,
+              "EndOffset": 19,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 75
+            },
+            {
+              "Line": 457,
+              "Offset": 17,
+              "EndOffset": 37,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.HydrixMapper/TypePair::Equals(System.Object)": {
+          "Lines": {
+            "472": 2,
+            "473": 2
+          },
+          "Branches": [
+            {
+              "Line": 472,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 472,
+              "Offset": 6,
+              "EndOffset": 23,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Int32 Hydrix.Mapper.HydrixMapper/TypePair::GetHashCode()": {
+          "Lines": {
+            "485": 449
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.HydrixMapper/TypePair::.ctor(System.Type,System.Type)": {
+          "Lines": {
+            "441": 264,
+            "442": 264,
+            "443": 264
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Plans\\MapPlan.cs": {
+      "Hydrix.Mapper.Plans.MapPlan": {
+        "System.Void Hydrix.Mapper.Plans.MapPlan::.ctor(System.Func`2<System.Object,System.Object>,System.Delegate)": {
+          "Lines": {
+            "42": 154,
+            "43": 154,
+            "44": 154,
+            "46": 154,
+            "47": 154,
+            "48": 154
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Internals\\NestedCollectionHelper.cs": {
+      "Hydrix.Mapper.Internals.NestedCollectionHelper": {
+        "System.Collections.Generic.List`1<TDest> Hydrix.Mapper.Internals.NestedCollectionHelper::MapList(System.Collections.Generic.IEnumerable`1<TSrc>,System.Func`2<TSrc,TDest>)": {
+          "Lines": {
+            "33": 2,
+            "34": 0,
+            "36": 2,
+            "37": 2,
+            "38": 2,
+            "40": 14,
+            "42": 5,
+            "43": 4,
+            "46": 2
+          },
+          "Branches": [
+            {
+              "Line": 33,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 33,
+              "Offset": 1,
+              "EndOffset": 5,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 36,
+              "Offset": 13,
+              "EndOffset": 15,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 36,
+              "Offset": 13,
+              "EndOffset": 22,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 1
+            },
+            {
+              "Line": 40,
+              "Offset": 77,
+              "EndOffset": 43,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 5
+            },
+            {
+              "Line": 42,
+              "Offset": 56,
+              "EndOffset": 58,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 4
+            },
+            {
+              "Line": 42,
+              "Offset": 56,
+              "EndOffset": 71,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 7
+            },
+            {
+              "Line": 40,
+              "Offset": 77,
+              "EndOffset": 79,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 2
+            }
+          ]
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Extensions\\MapperExtensions.cs": {
+      "Hydrix.Mapper.Extensions.MapperExtensions": {
+        "TTarget Hydrix.Mapper.Extensions.MapperExtensions::ToDto(System.Object)": {
+          "Lines": {
+            "28": 7,
+            "29": 7,
+            "35": 6,
+            "36": 6
+          },
+          "Branches": []
+        },
+        "TTarget Hydrix.Mapper.Extensions.MapperExtensions::ToDto(TSource)": {
+          "Lines": {
+            "58": 2,
+            "59": 1,
+            "60": 1,
+            "62": 1,
+            "63": 1
+          },
+          "Branches": [
+            {
+              "Line": 58,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 58,
+              "Offset": 6,
+              "EndOffset": 19,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.Extensions.MapperExtensions::ToDtoList(System.Collections.Generic.IEnumerable`1<System.Object>)": {
+          "Lines": {
+            "81": 2,
+            "82": 2
+          },
+          "Branches": []
+        },
+        "System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.Extensions.MapperExtensions::ToDtoList(System.Collections.Generic.IEnumerable`1<TSource>)": {
+          "Lines": {
+            "102": 2,
+            "103": 2
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\DependencyInjection\\HydrixMapperServiceCollectionExtensions.cs": {
+      "Hydrix.Mapper.DependencyInjection.HydrixMapperServiceCollectionExtensions": {
+        "Microsoft.Extensions.DependencyInjection.IServiceCollection Hydrix.Mapper.DependencyInjection.HydrixMapperServiceCollectionExtensions::AddHydrixMapper(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action`1<Hydrix.Mapper.Configuration.HydrixMapperOptions>)": {
+          "Lines": {
+            "31": 8,
+            "32": 8,
+            "38": 7,
+            "39": 7,
+            "40": 7,
+            "42": 7,
+            "43": 7,
+            "45": 7,
+            "46": 7,
+            "47": 7,
+            "48": 7,
+            "50": 7
+          },
+          "Branches": [
+            {
+              "Line": 39,
+              "Offset": 18,
+              "EndOffset": 20,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 5
+            },
+            {
+              "Line": 39,
+              "Offset": 18,
+              "EndOffset": 27,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 7
+            }
+          ]
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Converters\\ConverterFactory.cs": {
+      "Hydrix.Mapper.Converters.ConverterFactory": {
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildConversionExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "225": 526,
+            "226": 526,
+            "227": 526,
+            "228": 526,
+            "229": 526,
+            "230": 526,
+            "231": 526,
+            "233": 526,
+            "234": 526,
+            "235": 526,
+            "236": 526,
+            "237": 526,
+            "239": 526,
+            "240": 526,
+            "241": 526,
+            "242": 526,
+            "243": 526,
+            "244": 526,
+            "245": 486,
+            "246": 486,
+            "247": 486,
+            "248": 486,
+            "249": 486,
+            "251": 486,
+            "253": 16,
+            "254": 16,
+            "255": 16,
+            "256": 16,
+            "257": 16,
+            "258": 16,
+            "259": 16,
+            "260": 16,
+            "261": 16,
+            "264": 470,
+            "268": 182,
+            "269": 182,
+            "270": 182,
+            "271": 138,
+            "273": 44,
+            "274": 44,
+            "275": 44,
+            "276": 44,
+            "277": 44,
+            "278": 44,
+            "279": 44,
+            "280": 44,
+            "281": 44,
+            "282": 44,
+            "283": 44,
+            "286": 288
+          },
+          "Branches": [
+            {
+              "Line": 225,
+              "Offset": 7,
+              "EndOffset": 9,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 510
+            },
+            {
+              "Line": 225,
+              "Offset": 7,
+              "EndOffset": 11,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 526
+            },
+            {
+              "Line": 227,
+              "Offset": 19,
+              "EndOffset": 21,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 522
+            },
+            {
+              "Line": 227,
+              "Offset": 19,
+              "EndOffset": 23,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 526
+            },
+            {
+              "Line": 233,
+              "Offset": 50,
+              "EndOffset": 52,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 510
+            },
+            {
+              "Line": 233,
+              "Offset": 50,
+              "EndOffset": 55,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 16
+            },
+            {
+              "Line": 245,
+              "Offset": 83,
+              "EndOffset": 85,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 482
+            },
+            {
+              "Line": 245,
+              "Offset": 83,
+              "EndOffset": 89,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 4
+            },
+            {
+              "Line": 251,
+              "Offset": 99,
+              "EndOffset": 101,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 16
+            },
+            {
+              "Line": 251,
+              "Offset": 99,
+              "EndOffset": 130,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 470
+            },
+            {
+              "Line": 264,
+              "Offset": 131,
+              "EndOffset": 133,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 182
+            },
+            {
+              "Line": 268,
+              "Offset": 137,
+              "EndOffset": 139,
+              "Path": 0,
+              "Ordinal": 12,
+              "Hits": 138
+            },
+            {
+              "Line": 268,
+              "Offset": 137,
+              "EndOffset": 141,
+              "Path": 1,
+              "Ordinal": 13,
+              "Hits": 44
+            },
+            {
+              "Line": 264,
+              "Offset": 131,
+              "EndOffset": 172,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 288
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildCoreConversion(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "305": 526,
+            "306": 342,
+            "307": 342,
+            "308": 342,
+            "309": 342,
+            "310": 342,
+            "311": 342,
+            "312": 342,
+            "314": 184,
+            "315": 84,
+            "316": 84,
+            "317": 84,
+            "318": 84,
+            "319": 84,
+            "321": 100,
+            "322": 2,
+            "323": 2,
+            "324": 2,
+            "326": 98,
+            "327": 2,
+            "328": 2,
+            "329": 2,
+            "331": 96,
+            "332": 54,
+            "333": 54,
+            "334": 54,
+            "335": 54,
+            "336": 54,
+            "337": 54,
+            "339": 42,
+            "340": 2,
+            "341": 2,
+            "342": 2,
+            "343": 2,
+            "344": 2,
+            "345": 2,
+            "347": 40,
+            "348": 40,
+            "349": 40
+          },
+          "Branches": [
+            {
+              "Line": 305,
+              "Offset": 7,
+              "EndOffset": 9,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 342
+            },
+            {
+              "Line": 306,
+              "Offset": 25,
+              "EndOffset": 27,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 160
+            },
+            {
+              "Line": 306,
+              "Offset": 25,
+              "EndOffset": 29,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 182
+            },
+            {
+              "Line": 305,
+              "Offset": 7,
+              "EndOffset": 44,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 184
+            },
+            {
+              "Line": 314,
+              "Offset": 60,
+              "EndOffset": 62,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 84
+            },
+            {
+              "Line": 314,
+              "Offset": 60,
+              "EndOffset": 73,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 100
+            },
+            {
+              "Line": 321,
+              "Offset": 79,
+              "EndOffset": 81,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 2
+            },
+            {
+              "Line": 321,
+              "Offset": 87,
+              "EndOffset": 89,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 2
+            },
+            {
+              "Line": 321,
+              "Offset": 79,
+              "EndOffset": 97,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 98
+            },
+            {
+              "Line": 321,
+              "Offset": 87,
+              "EndOffset": 97,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 98
+            },
+            {
+              "Line": 326,
+              "Offset": 103,
+              "EndOffset": 105,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 2
+            },
+            {
+              "Line": 326,
+              "Offset": 111,
+              "EndOffset": 113,
+              "Path": 0,
+              "Ordinal": 12,
+              "Hits": 2
+            },
+            {
+              "Line": 326,
+              "Offset": 103,
+              "EndOffset": 121,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 96
+            },
+            {
+              "Line": 326,
+              "Offset": 111,
+              "EndOffset": 121,
+              "Path": 1,
+              "Ordinal": 13,
+              "Hits": 96
+            },
+            {
+              "Line": 331,
+              "Offset": 127,
+              "EndOffset": 129,
+              "Path": 0,
+              "Ordinal": 14,
+              "Hits": 54
+            },
+            {
+              "Line": 331,
+              "Offset": 135,
+              "EndOffset": 137,
+              "Path": 0,
+              "Ordinal": 16,
+              "Hits": 54
+            },
+            {
+              "Line": 331,
+              "Offset": 127,
+              "EndOffset": 149,
+              "Path": 1,
+              "Ordinal": 15,
+              "Hits": 42
+            },
+            {
+              "Line": 331,
+              "Offset": 135,
+              "EndOffset": 149,
+              "Path": 1,
+              "Ordinal": 17,
+              "Hits": 42
+            },
+            {
+              "Line": 339,
+              "Offset": 155,
+              "EndOffset": 157,
+              "Path": 0,
+              "Ordinal": 18,
+              "Hits": 2
+            },
+            {
+              "Line": 339,
+              "Offset": 163,
+              "EndOffset": 165,
+              "Path": 0,
+              "Ordinal": 20,
+              "Hits": 2
+            },
+            {
+              "Line": 339,
+              "Offset": 155,
+              "EndOffset": 181,
+              "Path": 1,
+              "Ordinal": 19,
+              "Hits": 40
+            },
+            {
+              "Line": 339,
+              "Offset": 163,
+              "EndOffset": 181,
+              "Path": 1,
+              "Ordinal": 21,
+              "Hits": 40
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildToStringConversion(System.Linq.Expressions.Expression,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "366": 85,
+            "367": 22,
+            "368": 22,
+            "369": 22,
+            "370": 22,
+            "371": 22,
+            "372": 22,
+            "373": 22,
+            "374": 22,
+            "376": 63,
+            "377": 24,
+            "378": 24,
+            "379": 24,
+            "380": 24,
+            "382": 39,
+            "383": 8,
+            "384": 8,
+            "385": 8,
+            "386": 8,
+            "389": 31,
+            "390": 4,
+            "391": 4,
+            "392": 4,
+            "393": 4,
+            "396": 27,
+            "397": 24,
+            "398": 24,
+            "399": 24,
+            "400": 24,
+            "402": 3,
+            "403": 2,
+            "404": 2,
+            "405": 2,
+            "406": 2,
+            "407": 2,
+            "409": 1,
+            "410": 1,
+            "411": 1
+          },
+          "Branches": [
+            {
+              "Line": 366,
+              "Offset": 16,
+              "EndOffset": 18,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 22
+            },
+            {
+              "Line": 366,
+              "Offset": 16,
+              "EndOffset": 39,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 63
+            },
+            {
+              "Line": 376,
+              "Offset": 55,
+              "EndOffset": 57,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 24
+            },
+            {
+              "Line": 376,
+              "Offset": 55,
+              "EndOffset": 66,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 39
+            },
+            {
+              "Line": 382,
+              "Offset": 82,
+              "EndOffset": 84,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 8
+            },
+            {
+              "Line": 382,
+              "Offset": 82,
+              "EndOffset": 93,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 31
+            },
+            {
+              "Line": 389,
+              "Offset": 109,
+              "EndOffset": 111,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 4
+            },
+            {
+              "Line": 389,
+              "Offset": 109,
+              "EndOffset": 120,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 27
+            },
+            {
+              "Line": 396,
+              "Offset": 136,
+              "EndOffset": 138,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 24
+            },
+            {
+              "Line": 396,
+              "Offset": 136,
+              "EndOffset": 147,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 3
+            },
+            {
+              "Line": 402,
+              "Offset": 153,
+              "EndOffset": 155,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 2
+            },
+            {
+              "Line": 402,
+              "Offset": 153,
+              "EndOffset": 182,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildStringTransform(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.StringTransforms)": {
+          "Lines": {
+            "424": 182,
+            "425": 138,
+            "427": 44,
+            "429": 44,
+            "431": 14,
+            "432": 14,
+            "433": 14,
+            "435": 30,
+            "437": 4,
+            "438": 4,
+            "439": 4,
+            "441": 26,
+            "443": 4,
+            "444": 4,
+            "445": 4,
+            "448": 44,
+            "450": 18,
+            "451": 18,
+            "452": 18,
+            "454": 26,
+            "456": 14,
+            "457": 14,
+            "458": 14,
+            "461": 44
+          },
+          "Branches": [
+            {
+              "Line": 424,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 138
+            },
+            {
+              "Line": 424,
+              "Offset": 1,
+              "EndOffset": 5,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 44
+            },
+            {
+              "Line": 429,
+              "Offset": 10,
+              "EndOffset": 12,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 14
+            },
+            {
+              "Line": 429,
+              "Offset": 10,
+              "EndOffset": 26,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 30
+            },
+            {
+              "Line": 435,
+              "Offset": 29,
+              "EndOffset": 31,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 4
+            },
+            {
+              "Line": 435,
+              "Offset": 29,
+              "EndOffset": 45,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 26
+            },
+            {
+              "Line": 441,
+              "Offset": 48,
+              "EndOffset": 50,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 4
+            },
+            {
+              "Line": 441,
+              "Offset": 48,
+              "EndOffset": 62,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 44
+            },
+            {
+              "Line": 448,
+              "Offset": 65,
+              "EndOffset": 67,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 18
+            },
+            {
+              "Line": 448,
+              "Offset": 65,
+              "EndOffset": 81,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 26
+            },
+            {
+              "Line": 454,
+              "Offset": 85,
+              "EndOffset": 87,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 14
+            },
+            {
+              "Line": 454,
+              "Offset": 85,
+              "EndOffset": 99,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 44
+            }
+          ]
+        },
+        "System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildGuidToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.GuidFormat,Hydrix.Mapper.Primitives.GuidCase)": {
+          "Lines": {
+            "476": 22,
+            "477": 22,
+            "478": 4,
+            "479": 4,
+            "480": 4,
+            "481": 10,
+            "482": 22,
+            "484": 22,
+            "485": 22,
+            "486": 22,
+            "487": 22,
+            "488": 22,
+            "490": 22,
+            "491": 22,
+            "492": 22,
+            "493": 22,
+            "494": 22
+          },
+          "Branches": [
+            {
+              "Line": 476,
+              "Offset": 3,
+              "EndOffset": 22,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 4
+            },
+            {
+              "Line": 476,
+              "Offset": 3,
+              "EndOffset": 30,
+              "Path": 2,
+              "Ordinal": 2,
+              "Hits": 4
+            },
+            {
+              "Line": 476,
+              "Offset": 3,
+              "EndOffset": 38,
+              "Path": 3,
+              "Ordinal": 3,
+              "Hits": 4
+            },
+            {
+              "Line": 476,
+              "Offset": 3,
+              "EndOffset": 46,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 10
+            },
+            {
+              "Line": 490,
+              "Offset": 83,
+              "EndOffset": 85,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 18
+            },
+            {
+              "Line": 490,
+              "Offset": 83,
+              "EndOffset": 87,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 4
+            }
+          ]
+        },
+        "System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateTimeToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "509": 24,
+            "510": 24,
+            "511": 24,
+            "512": 24,
+            "514": 24,
+            "516": 4,
+            "517": 4,
+            "518": 4,
+            "520": 20,
+            "522": 2,
+            "523": 2,
+            "524": 2,
+            "527": 24,
+            "528": 24,
+            "529": 24,
+            "530": 24,
+            "531": 24,
+            "532": 24,
+            "533": 24,
+            "534": 24,
+            "535": 24
+          },
+          "Branches": [
+            {
+              "Line": 514,
+              "Offset": 31,
+              "EndOffset": 33,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 4
+            },
+            {
+              "Line": 514,
+              "Offset": 31,
+              "EndOffset": 47,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 20
+            },
+            {
+              "Line": 520,
+              "Offset": 49,
+              "EndOffset": 51,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 2
+            },
+            {
+              "Line": 520,
+              "Offset": 49,
+              "EndOffset": 63,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 24
+            }
+          ]
+        },
+        "System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateTimeOffsetToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "550": 8,
+            "551": 8,
+            "552": 8,
+            "553": 8,
+            "555": 8,
+            "557": 2,
+            "558": 2,
+            "559": 2,
+            "561": 6,
+            "563": 2,
+            "564": 2,
+            "565": 2,
+            "568": 8,
+            "569": 8,
+            "570": 8,
+            "571": 8,
+            "572": 8,
+            "573": 8,
+            "574": 8,
+            "575": 8,
+            "576": 8
+          },
+          "Branches": [
+            {
+              "Line": 555,
+              "Offset": 31,
+              "EndOffset": 33,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            },
+            {
+              "Line": 555,
+              "Offset": 31,
+              "EndOffset": 47,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 6
+            },
+            {
+              "Line": 561,
+              "Offset": 49,
+              "EndOffset": 51,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 2
+            },
+            {
+              "Line": 561,
+              "Offset": 49,
+              "EndOffset": 63,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 8
+            }
+          ]
+        },
+        "System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateOnlyToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "593": 6,
+            "594": 6,
+            "595": 6,
+            "597": 6,
+            "598": 6,
+            "599": 6,
+            "600": 6,
+            "601": 6,
+            "602": 6,
+            "603": 6,
+            "604": 6,
+            "605": 6
+          },
+          "Branches": []
+        },
+        "System.Linq.Expressions.ConditionalExpression Hydrix.Mapper.Converters.ConverterFactory::BuildBoolToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "626": 24,
+            "628": 8,
+            "629": 8,
+            "630": 8,
+            "634": 16,
+            "635": 16,
+            "636": 16,
+            "639": 24,
+            "640": 24,
+            "641": 24,
+            "642": 24,
+            "643": 24,
+            "644": 24,
+            "645": 24,
+            "646": 24,
+            "647": 24,
+            "648": 24
+          },
+          "Branches": [
+            {
+              "Line": 626,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 8
+            },
+            {
+              "Line": 626,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 8
+            },
+            {
+              "Line": 626,
+              "Offset": 1,
+              "EndOffset": 34,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 16
+            },
+            {
+              "Line": 626,
+              "Offset": 9,
+              "EndOffset": 34,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 16
+            }
+          ]
+        },
+        "System.ValueTuple`2<System.String,System.String> Hydrix.Mapper.Converters.ConverterFactory::ResolveBoolStrings(Hydrix.Mapper.Primitives.BoolStringFormat,System.String,System.String)": {
+          "Lines": {
+            "663": 24,
+            "664": 24,
+            "665": 4,
+            "666": 2,
+            "667": 4,
+            "668": 4,
+            "669": 2,
+            "670": 6,
+            "671": 2,
+            "672": 24
+          },
+          "Branches": [
+            {
+              "Line": 663,
+              "Offset": 3,
+              "EndOffset": 34,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 4
+            },
+            {
+              "Line": 663,
+              "Offset": 3,
+              "EndOffset": 52,
+              "Path": 2,
+              "Ordinal": 2,
+              "Hits": 2
+            },
+            {
+              "Line": 663,
+              "Offset": 3,
+              "EndOffset": 70,
+              "Path": 3,
+              "Ordinal": 3,
+              "Hits": 4
+            },
+            {
+              "Line": 663,
+              "Offset": 3,
+              "EndOffset": 88,
+              "Path": 4,
+              "Ordinal": 4,
+              "Hits": 4
+            },
+            {
+              "Line": 663,
+              "Offset": 3,
+              "EndOffset": 106,
+              "Path": 5,
+              "Ordinal": 5,
+              "Hits": 2
+            },
+            {
+              "Line": 663,
+              "Offset": 3,
+              "EndOffset": 124,
+              "Path": 6,
+              "Ordinal": 6,
+              "Hits": 6
+            },
+            {
+              "Line": 670,
+              "Offset": 126,
+              "EndOffset": 128,
+              "Path": 0,
+              "Ordinal": 7,
+              "Hits": 2
+            },
+            {
+              "Line": 670,
+              "Offset": 126,
+              "EndOffset": 134,
+              "Path": 1,
+              "Ordinal": 8,
+              "Hits": 6
+            },
+            {
+              "Line": 670,
+              "Offset": 136,
+              "EndOffset": 138,
+              "Path": 0,
+              "Ordinal": 9,
+              "Hits": 2
+            },
+            {
+              "Line": 670,
+              "Offset": 136,
+              "EndOffset": 144,
+              "Path": 1,
+              "Ordinal": 10,
+              "Hits": 6
+            },
+            {
+              "Line": 663,
+              "Offset": 3,
+              "EndOffset": 152,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            }
+          ]
+        },
+        "System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDecimalToInteger(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "691": 54,
+            "692": 54,
+            "693": 54,
+            "694": 54,
+            "695": 54,
+            "696": 54,
+            "698": 54,
+            "700": 34,
+            "701": 34,
+            "702": 34,
+            "704": 34,
+            "706": 2,
+            "707": 2,
+            "708": 2,
+            "711": 32,
+            "712": 32,
+            "713": 32,
+            "714": 32,
+            "715": 32,
+            "716": 32,
+            "717": 32,
+            "720": 20,
+            "721": 20,
+            "722": 20,
+            "723": 20,
+            "724": 20,
+            "725": 20,
+            "726": 20,
+            "727": 20,
+            "729": 20,
+            "731": 8,
+            "732": 8,
+            "733": 8,
+            "736": 12,
+            "737": 12,
+            "738": 12,
+            "739": 12,
+            "740": 12,
+            "741": 12,
+            "742": 12
+          },
+          "Branches": [
+            {
+              "Line": 698,
+              "Offset": 34,
+              "EndOffset": 36,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 34
+            },
+            {
+              "Line": 704,
+              "Offset": 46,
+              "EndOffset": 48,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 2
+            },
+            {
+              "Line": 704,
+              "Offset": 46,
+              "EndOffset": 56,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 32
+            },
+            {
+              "Line": 698,
+              "Offset": 34,
+              "EndOffset": 80,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 20
+            },
+            {
+              "Line": 720,
+              "Offset": 96,
+              "EndOffset": 98,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 2
+            },
+            {
+              "Line": 720,
+              "Offset": 96,
+              "EndOffset": 116,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 18
+            },
+            {
+              "Line": 729,
+              "Offset": 126,
+              "EndOffset": 128,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 8
+            },
+            {
+              "Line": 729,
+              "Offset": 126,
+              "EndOffset": 136,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 12
+            }
+          ]
+        },
+        "System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::ApplyDecimalRounding(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.NumericRounding)": {
+          "Lines": {
+            "755": 34,
+            "756": 34,
+            "757": 6,
+            "758": 6,
+            "759": 6,
+            "760": 4,
+            "761": 4,
+            "762": 4,
+            "763": 6,
+            "764": 6,
+            "765": 6,
+            "766": 6,
+            "767": 6,
+            "768": 4,
+            "769": 4,
+            "770": 4,
+            "771": 4,
+            "772": 4,
+            "773": 14,
+            "774": 14,
+            "775": 14,
+            "776": 34
+          },
+          "Branches": [
+            {
+              "Line": 755,
+              "Offset": 3,
+              "EndOffset": 26,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 6
+            },
+            {
+              "Line": 755,
+              "Offset": 3,
+              "EndOffset": 40,
+              "Path": 2,
+              "Ordinal": 2,
+              "Hits": 4
+            },
+            {
+              "Line": 755,
+              "Offset": 3,
+              "EndOffset": 54,
+              "Path": 3,
+              "Ordinal": 3,
+              "Hits": 6
+            },
+            {
+              "Line": 755,
+              "Offset": 3,
+              "EndOffset": 79,
+              "Path": 4,
+              "Ordinal": 4,
+              "Hits": 4
+            },
+            {
+              "Line": 755,
+              "Offset": 3,
+              "EndOffset": 104,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 14
+            }
+          ]
+        },
+        "System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::ApplyDoubleRounding(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.NumericRounding)": {
+          "Lines": {
+            "789": 20,
+            "790": 20,
+            "791": 2,
+            "792": 2,
+            "793": 2,
+            "794": 2,
+            "795": 2,
+            "796": 2,
+            "797": 2,
+            "798": 2,
+            "799": 2,
+            "800": 2,
+            "801": 2,
+            "802": 2,
+            "803": 2,
+            "804": 2,
+            "805": 2,
+            "806": 2,
+            "807": 12,
+            "808": 12,
+            "809": 12,
+            "810": 20
+          },
+          "Branches": [
+            {
+              "Line": 789,
+              "Offset": 3,
+              "EndOffset": 26,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 789,
+              "Offset": 3,
+              "EndOffset": 40,
+              "Path": 2,
+              "Ordinal": 2,
+              "Hits": 2
+            },
+            {
+              "Line": 789,
+              "Offset": 3,
+              "EndOffset": 54,
+              "Path": 3,
+              "Ordinal": 3,
+              "Hits": 2
+            },
+            {
+              "Line": 789,
+              "Offset": 3,
+              "EndOffset": 79,
+              "Path": 4,
+              "Ordinal": 4,
+              "Hits": 2
+            },
+            {
+              "Line": 789,
+              "Offset": 3,
+              "EndOffset": 104,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 12
+            }
+          ]
+        },
+        "System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildNumericCast(System.Linq.Expressions.Expression,System.Type,Hydrix.Mapper.Primitives.NumericOverflow)": {
+          "Lines": {
+            "828": 6,
+            "829": 6,
+            "830": 6,
+            "833": 2,
+            "834": 2,
+            "835": 2,
+            "838": 40,
+            "839": 40,
+            "840": 40
+          },
+          "Branches": [
+            {
+              "Line": 828,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 42
+            },
+            {
+              "Line": 828,
+              "Offset": 1,
+              "EndOffset": 9,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 6
+            },
+            {
+              "Line": 828,
+              "Offset": 5,
+              "EndOffset": 17,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 2
+            },
+            {
+              "Line": 828,
+              "Offset": 5,
+              "EndOffset": 25,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 40
+            }
+          ]
+        },
+        "System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildClampedCast(System.Linq.Expressions.Expression,System.Type)": {
+          "Lines": {
+            "854": 15,
+            "855": 15,
+            "856": 15,
+            "857": 15,
+            "859": 15,
+            "861": 2,
+            "862": 2,
+            "863": 2,
+            "864": 2,
+            "865": 2,
+            "866": 2,
+            "867": 2,
+            "868": 2,
+            "869": 2,
+            "870": 2,
+            "871": 2,
+            "872": 2,
+            "875": 13,
+            "877": 2,
+            "878": 2,
+            "879": 2,
+            "880": 2,
+            "881": 2,
+            "882": 2,
+            "883": 2,
+            "884": 2,
+            "885": 2,
+            "886": 2,
+            "889": 11,
+            "890": 11,
+            "891": 11,
+            "892": 11,
+            "893": 11,
+            "894": 11,
+            "895": 11,
+            "896": 11,
+            "897": 11,
+            "898": 11,
+            "899": 11,
+            "900": 11,
+            "901": 11,
+            "902": 11
+          },
+          "Branches": [
+            {
+              "Line": 859,
+              "Offset": 35,
+              "EndOffset": 37,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            },
+            {
+              "Line": 859,
+              "Offset": 35,
+              "EndOffset": 87,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 13
+            },
+            {
+              "Line": 875,
+              "Offset": 108,
+              "EndOffset": 110,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 2
+            },
+            {
+              "Line": 875,
+              "Offset": 108,
+              "EndOffset": 150,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 11
+            },
+            {
+              "Line": 889,
+              "Offset": 176,
+              "EndOffset": 178,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 1
+            },
+            {
+              "Line": 889,
+              "Offset": 176,
+              "EndOffset": 196,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 10
+            }
+          ]
+        },
+        "System.Int64 Hydrix.Mapper.Converters.ConverterFactory::ClampDecimalToLong(System.Decimal,System.Int64,System.Int64)": {
+          "Lines": {
+            "917": 3,
+            "918": 1,
+            "920": 2,
+            "921": 1,
+            "923": 1
+          },
+          "Branches": [
+            {
+              "Line": 917,
+              "Offset": 12,
+              "EndOffset": 14,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 917,
+              "Offset": 12,
+              "EndOffset": 16,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 920,
+              "Offset": 28,
+              "EndOffset": 30,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 920,
+              "Offset": 28,
+              "EndOffset": 32,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Int64 Hydrix.Mapper.Converters.ConverterFactory::ClampDoubleToLong(System.Double,System.Int64,System.Int64)": {
+          "Lines": {
+            "938": 8,
+            "939": 1,
+            "941": 7,
+            "942": 4,
+            "944": 3,
+            "945": 2,
+            "947": 1
+          },
+          "Branches": [
+            {
+              "Line": 938,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 938,
+              "Offset": 6,
+              "EndOffset": 11,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 7
+            },
+            {
+              "Line": 941,
+              "Offset": 14,
+              "EndOffset": 16,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 4
+            },
+            {
+              "Line": 941,
+              "Offset": 14,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 3
+            },
+            {
+              "Line": 944,
+              "Offset": 21,
+              "EndOffset": 23,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 2
+            },
+            {
+              "Line": 944,
+              "Offset": 21,
+              "EndOffset": 25,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 1
+            }
+          ]
+        },
+        "Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Converters.ConverterFactory::ResolveStringTransform(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "960": 183,
+            "961": 18,
+            "963": 165
+          },
+          "Branches": [
+            {
+              "Line": 960,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 19
+            },
+            {
+              "Line": 960,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 960,
+              "Offset": 9,
+              "EndOffset": 19,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 18
+            },
+            {
+              "Line": 960,
+              "Offset": 17,
+              "EndOffset": 19,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 18
+            },
+            {
+              "Line": 960,
+              "Offset": 1,
+              "EndOffset": 26,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 165
+            },
+            {
+              "Line": 960,
+              "Offset": 17,
+              "EndOffset": 26,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 165
+            }
+          ]
+        },
+        "Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Converters.ConverterFactory::ResolveGuidFormat(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "976": 22,
+            "977": 10,
+            "979": 12
+          },
+          "Branches": [
+            {
+              "Line": 976,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 10
+            },
+            {
+              "Line": 976,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 10
+            },
+            {
+              "Line": 976,
+              "Offset": 1,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 12
+            },
+            {
+              "Line": 976,
+              "Offset": 9,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 12
+            }
+          ]
+        },
+        "Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Converters.ConverterFactory::ResolveGuidCase(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "992": 22,
+            "993": 10,
+            "995": 12
+          },
+          "Branches": [
+            {
+              "Line": 992,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 10
+            },
+            {
+              "Line": 992,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 10
+            },
+            {
+              "Line": 992,
+              "Offset": 1,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 12
+            },
+            {
+              "Line": 992,
+              "Offset": 9,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 12
+            }
+          ]
+        },
+        "Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Converters.ConverterFactory::ResolveRounding(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "1008": 54,
+            "1009": 20,
+            "1011": 34
+          },
+          "Branches": [
+            {
+              "Line": 1008,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 20
+            },
+            {
+              "Line": 1008,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 20
+            },
+            {
+              "Line": 1008,
+              "Offset": 1,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 34
+            },
+            {
+              "Line": 1008,
+              "Offset": 9,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 34
+            }
+          ]
+        },
+        "Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Converters.ConverterFactory::ResolveOverflow(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "1024": 56,
+            "1025": 20,
+            "1027": 36
+          },
+          "Branches": [
+            {
+              "Line": 1024,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 20
+            },
+            {
+              "Line": 1024,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 20
+            },
+            {
+              "Line": 1024,
+              "Offset": 1,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 36
+            },
+            {
+              "Line": 1024,
+              "Offset": 9,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 36
+            }
+          ]
+        },
+        "System.ValueTuple`3<System.String,Hydrix.Mapper.Primitives.DateTimeZone,System.String> Hydrix.Mapper.Converters.ConverterFactory::ResolveDateTimeParams(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "1040": 39,
+            "1042": 12,
+            "1043": 12,
+            "1044": 12,
+            "1045": 12,
+            "1048": 27,
+            "1049": 27,
+            "1050": 27,
+            "1051": 27
+          },
+          "Branches": [
+            {
+              "Line": 1040,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 13
+            },
+            {
+              "Line": 1040,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 12
+            },
+            {
+              "Line": 1042,
+              "Offset": 18,
+              "EndOffset": 20,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 4
+            },
+            {
+              "Line": 1042,
+              "Offset": 33,
+              "EndOffset": 35,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 1
+            },
+            {
+              "Line": 1042,
+              "Offset": 18,
+              "EndOffset": 41,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 12
+            },
+            {
+              "Line": 1042,
+              "Offset": 33,
+              "EndOffset": 41,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 12
+            },
+            {
+              "Line": 1042,
+              "Offset": 54,
+              "EndOffset": 56,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 8
+            },
+            {
+              "Line": 1042,
+              "Offset": 69,
+              "EndOffset": 71,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 1
+            },
+            {
+              "Line": 1042,
+              "Offset": 54,
+              "EndOffset": 77,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 12
+            },
+            {
+              "Line": 1042,
+              "Offset": 69,
+              "EndOffset": 77,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 12
+            },
+            {
+              "Line": 1040,
+              "Offset": 1,
+              "EndOffset": 83,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 27
+            },
+            {
+              "Line": 1040,
+              "Offset": 9,
+              "EndOffset": 83,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 27
+            },
+            {
+              "Line": 1048,
+              "Offset": 95,
+              "EndOffset": 97,
+              "Path": 0,
+              "Ordinal": 12,
+              "Hits": 2
+            },
+            {
+              "Line": 1048,
+              "Offset": 95,
+              "EndOffset": 103,
+              "Path": 1,
+              "Ordinal": 13,
+              "Hits": 27
+            },
+            {
+              "Line": 1048,
+              "Offset": 126,
+              "EndOffset": 128,
+              "Path": 0,
+              "Ordinal": 14,
+              "Hits": 2
+            },
+            {
+              "Line": 1048,
+              "Offset": 126,
+              "EndOffset": 134,
+              "Path": 1,
+              "Ordinal": 15,
+              "Hits": 27
+            }
+          ]
+        },
+        "System.Globalization.CultureInfo Hydrix.Mapper.Converters.ConverterFactory::ResolveCulture(System.String)": {
+          "Lines": {
+            "1062": 38,
+            "1063": 30,
+            "1065": 8,
+            "1066": 8
+          },
+          "Branches": [
+            {
+              "Line": 1062,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 30
+            },
+            {
+              "Line": 1062,
+              "Offset": 6,
+              "EndOffset": 14,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 8
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsIntegerType(System.Type)": {
+          "Lines": {
+            "1076": 102,
+            "1077": 102,
+            "1078": 102,
+            "1079": 102,
+            "1080": 102,
+            "1081": 102,
+            "1082": 102,
+            "1083": 102
+          },
+          "Branches": [
+            {
+              "Line": 1076,
+              "Offset": 16,
+              "EndOffset": 18,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 54
+            },
+            {
+              "Line": 1076,
+              "Offset": 34,
+              "EndOffset": 36,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 52
+            },
+            {
+              "Line": 1076,
+              "Offset": 52,
+              "EndOffset": 54,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 52
+            },
+            {
+              "Line": 1076,
+              "Offset": 70,
+              "EndOffset": 72,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 50
+            },
+            {
+              "Line": 1076,
+              "Offset": 88,
+              "EndOffset": 90,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 48
+            },
+            {
+              "Line": 1076,
+              "Offset": 106,
+              "EndOffset": 108,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 46
+            },
+            {
+              "Line": 1076,
+              "Offset": 124,
+              "EndOffset": 126,
+              "Path": 0,
+              "Ordinal": 12,
+              "Hits": 44
+            },
+            {
+              "Line": 1076,
+              "Offset": 16,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 58
+            },
+            {
+              "Line": 1076,
+              "Offset": 34,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 58
+            },
+            {
+              "Line": 1076,
+              "Offset": 52,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 58
+            },
+            {
+              "Line": 1076,
+              "Offset": 70,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 58
+            },
+            {
+              "Line": 1076,
+              "Offset": 88,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 58
+            },
+            {
+              "Line": 1076,
+              "Offset": 106,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 58
+            },
+            {
+              "Line": 1076,
+              "Offset": 124,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 13,
+              "Hits": 58
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsDecimalFloatType(System.Type)": {
+          "Lines": {
+            "1092": 138,
+            "1093": 138,
+            "1094": 138
+          },
+          "Branches": [
+            {
+              "Line": 1092,
+              "Offset": 16,
+              "EndOffset": 18,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 102
+            },
+            {
+              "Line": 1092,
+              "Offset": 34,
+              "EndOffset": 36,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 84
+            },
+            {
+              "Line": 1092,
+              "Offset": 16,
+              "EndOffset": 53,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 54
+            },
+            {
+              "Line": 1092,
+              "Offset": 34,
+              "EndOffset": 53,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 54
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsNumericType(System.Type)": {
+          "Lines": {
+            "1103": 44,
+            "1104": 44,
+            "1105": 44
+          },
+          "Branches": [
+            {
+              "Line": 1103,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 42
+            },
+            {
+              "Line": 1103,
+              "Offset": 6,
+              "EndOffset": 15,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            }
+          ]
+        },
+        "System.Int64 Hydrix.Mapper.Converters.ConverterFactory::GetMinLong(System.Type)": {
+          "Lines": {
+            "1115": 15,
+            "1116": 3,
+            "1117": 12,
+            "1118": 1,
+            "1119": 11,
+            "1120": 2,
+            "1121": 9,
+            "1122": 2,
+            "1123": 7,
+            "1124": 2,
+            "1125": 5,
+            "1126": 2,
+            "1127": 3,
+            "1128": 2,
+            "1130": 1
+          },
+          "Branches": [
+            {
+              "Line": 1115,
+              "Offset": 16,
+              "EndOffset": 18,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 3
+            },
+            {
+              "Line": 1115,
+              "Offset": 16,
+              "EndOffset": 25,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 12
+            },
+            {
+              "Line": 1117,
+              "Offset": 41,
+              "EndOffset": 43,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 1117,
+              "Offset": 41,
+              "EndOffset": 50,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 11
+            },
+            {
+              "Line": 1119,
+              "Offset": 66,
+              "EndOffset": 68,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 2
+            },
+            {
+              "Line": 1119,
+              "Offset": 66,
+              "EndOffset": 71,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 9
+            },
+            {
+              "Line": 1121,
+              "Offset": 87,
+              "EndOffset": 89,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 2
+            },
+            {
+              "Line": 1121,
+              "Offset": 87,
+              "EndOffset": 93,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 7
+            },
+            {
+              "Line": 1123,
+              "Offset": 109,
+              "EndOffset": 111,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 2
+            },
+            {
+              "Line": 1123,
+              "Offset": 109,
+              "EndOffset": 114,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 5
+            },
+            {
+              "Line": 1125,
+              "Offset": 130,
+              "EndOffset": 132,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 2
+            },
+            {
+              "Line": 1125,
+              "Offset": 130,
+              "EndOffset": 135,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 3
+            },
+            {
+              "Line": 1127,
+              "Offset": 151,
+              "EndOffset": 153,
+              "Path": 0,
+              "Ordinal": 12,
+              "Hits": 2
+            },
+            {
+              "Line": 1127,
+              "Offset": 151,
+              "EndOffset": 156,
+              "Path": 1,
+              "Ordinal": 13,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Int64 Hydrix.Mapper.Converters.ConverterFactory::GetMaxLong(System.Type)": {
+          "Lines": {
+            "1141": 15,
+            "1142": 3,
+            "1143": 12,
+            "1144": 1,
+            "1145": 11,
+            "1146": 2,
+            "1147": 9,
+            "1148": 2,
+            "1149": 7,
+            "1150": 2,
+            "1151": 5,
+            "1152": 2,
+            "1153": 3,
+            "1154": 3
+          },
+          "Branches": [
+            {
+              "Line": 1141,
+              "Offset": 16,
+              "EndOffset": 18,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 3
+            },
+            {
+              "Line": 1141,
+              "Offset": 16,
+              "EndOffset": 25,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 12
+            },
+            {
+              "Line": 1143,
+              "Offset": 41,
+              "EndOffset": 43,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 1143,
+              "Offset": 41,
+              "EndOffset": 50,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 11
+            },
+            {
+              "Line": 1145,
+              "Offset": 66,
+              "EndOffset": 68,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 2
+            },
+            {
+              "Line": 1145,
+              "Offset": 66,
+              "EndOffset": 75,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 9
+            },
+            {
+              "Line": 1147,
+              "Offset": 91,
+              "EndOffset": 93,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 2
+            },
+            {
+              "Line": 1147,
+              "Offset": 91,
+              "EndOffset": 97,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 7
+            },
+            {
+              "Line": 1149,
+              "Offset": 113,
+              "EndOffset": 115,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 2
+            },
+            {
+              "Line": 1149,
+              "Offset": 113,
+              "EndOffset": 122,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 5
+            },
+            {
+              "Line": 1151,
+              "Offset": 138,
+              "EndOffset": 140,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 2
+            },
+            {
+              "Line": 1151,
+              "Offset": 138,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 3
+            }
+          ]
+        },
+        "System.Void Hydrix.Mapper.Converters.ConverterFactory::.cctor()": {
+          "Lines": {
+            "28": 1,
+            "29": 1,
+            "30": 1,
+            "35": 1,
+            "36": 1,
+            "37": 1,
+            "42": 1,
+            "43": 1,
+            "44": 1,
+            "49": 1,
+            "50": 1,
+            "51": 1,
+            "56": 1,
+            "57": 1,
+            "58": 1,
+            "63": 1,
+            "64": 1,
+            "65": 1,
+            "70": 1,
+            "71": 1,
+            "72": 1,
+            "77": 1,
+            "78": 1,
+            "79": 1,
+            "84": 1,
+            "85": 1,
+            "86": 1,
+            "91": 1,
+            "92": 1,
+            "93": 1,
+            "98": 1,
+            "99": 1,
+            "100": 1,
+            "105": 1,
+            "106": 1,
+            "107": 1,
+            "112": 1,
+            "113": 1,
+            "114": 1,
+            "119": 1,
+            "120": 1,
+            "121": 1,
+            "126": 1,
+            "127": 1,
+            "128": 1,
+            "133": 1,
+            "134": 1,
+            "135": 1,
+            "140": 1,
+            "141": 1,
+            "142": 1,
+            "147": 1,
+            "148": 1,
+            "149": 1,
+            "154": 1,
+            "155": 1,
+            "156": 1,
+            "161": 1,
+            "162": 1,
+            "163": 1,
+            "168": 1,
+            "169": 1,
+            "170": 1,
+            "175": 1,
+            "176": 1,
+            "177": 1,
+            "182": 1,
+            "183": 1,
+            "188": 1,
+            "189": 1,
+            "194": 1,
+            "195": 1,
+            "196": 1,
+            "203": 1,
+            "204": 1,
+            "205": 1
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Configuration\\BoolOptions.cs": {
+      "Hydrix.Mapper.Configuration.BoolOptions": {
+        "Hydrix.Mapper.Primitives.BoolStringFormat Hydrix.Mapper.Configuration.BoolOptions::get_StringFormat()": {
+          "Lines": {
+            "22": 820
+          },
+          "Branches": []
+        },
+        "System.String Hydrix.Mapper.Configuration.BoolOptions::get_TrueValue()": {
+          "Lines": {
+            "28": 1414
+          },
+          "Branches": []
+        },
+        "System.String Hydrix.Mapper.Configuration.BoolOptions::get_FalseValue()": {
+          "Lines": {
+            "34": 1414
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Configuration\\DateTimeOptions.cs": {
+      "Hydrix.Mapper.Configuration.DateTimeOptions": {
+        "System.String Hydrix.Mapper.Configuration.DateTimeOptions::get_StringFormat()": {
+          "Lines": {
+            "18": 1442
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.DateTimeZone Hydrix.Mapper.Configuration.DateTimeOptions::get_TimeZone()": {
+          "Lines": {
+            "23": 834
+          },
+          "Branches": []
+        },
+        "System.String Hydrix.Mapper.Configuration.DateTimeOptions::get_Culture()": {
+          "Lines": {
+            "32": 1446
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Configuration\\GuidOptions.cs": {
+      "Hydrix.Mapper.Configuration.GuidOptions": {
+        "Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Configuration.GuidOptions::get_Format()": {
+          "Lines": {
+            "13": 822
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Configuration.GuidOptions::get_Case()": {
+          "Lines": {
+            "18": 822
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Configuration\\HydrixMapperConfiguration.cs": {
+      "Hydrix.Mapper.Configuration.HydrixMapperConfiguration": {
+        "Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Configuration.HydrixMapperConfiguration::get_Options()": {
+          "Lines": {
+            "36": 12,
+            "37": 12
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Configuration.HydrixMapperConfiguration::Configure(Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "50": 39,
+            "51": 39,
+            "57": 38,
+            "58": 38,
+            "59": 38,
+            "61": 38,
+            "63": 38,
+            "64": 38,
+            "65": 38,
+            "66": 38
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.HydrixMapper Hydrix.Mapper.Configuration.HydrixMapperConfiguration::GetOrCreateDefaultMapper()": {
+          "Lines": {
+            "76": 11,
+            "77": 11,
+            "79": 11,
+            "80": 1,
+            "82": 10,
+            "83": 10,
+            "85": 10,
+            "86": 10,
+            "87": 10,
+            "88": 10,
+            "90": 10,
+            "91": 10
+          },
+          "Branches": [
+            {
+              "Line": 79,
+              "Offset": 12,
+              "EndOffset": 14,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 79,
+              "Offset": 12,
+              "EndOffset": 16,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 10
+            }
+          ]
+        },
+        "System.Void Hydrix.Mapper.Configuration.HydrixMapperConfiguration::.cctor()": {
+          "Lines": {
+            "21": 1
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Configuration\\HydrixMapperOptions.cs": {
+      "Hydrix.Mapper.Configuration.HydrixMapperOptions": {
+        "Hydrix.Mapper.Configuration.StringOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_String()": {
+          "Lines": {
+            "25": 1590
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Configuration.GuidOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Guid()": {
+          "Lines": {
+            "30": 2243
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Configuration.NumericOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Numeric()": {
+          "Lines": {
+            "35": 2321
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Configuration.DateTimeOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_DateTime()": {
+          "Lines": {
+            "40": 3123
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Configuration.BoolOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Bool()": {
+          "Lines": {
+            "45": 3049
+          },
+          "Branches": []
+        },
+        "System.Boolean Hydrix.Mapper.Configuration.HydrixMapperOptions::get_StrictMode()": {
+          "Lines": {
+            "51": 809
+          },
+          "Branches": []
+        },
+        "System.Collections.Generic.Dictionary`2<System.Type,System.Type> Hydrix.Mapper.Configuration.HydrixMapperOptions::get_NestedMappings()": {
+          "Lines": {
+            "56": 250
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::MapNested()": {
+          "Lines": {
+            "67": 13,
+            "68": 13
+          },
+          "Branches": []
+        },
+        "System.Boolean Hydrix.Mapper.Configuration.HydrixMapperOptions::TryGetNestedSourceType(System.Type,System.Type&)": {
+          "Lines": {
+            "88": 64,
+            "89": 64,
+            "90": 64,
+            "92": 26,
+            "95": 38,
+            "96": 38,
+            "98": 38,
+            "100": 12,
+            "101": 12,
+            "104": 26,
+            "105": 26
+          },
+          "Branches": [
+            {
+              "Line": 88,
+              "Offset": 13,
+              "EndOffset": 15,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 26
+            },
+            {
+              "Line": 88,
+              "Offset": 13,
+              "EndOffset": 17,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 38
+            },
+            {
+              "Line": 98,
+              "Offset": 26,
+              "EndOffset": 28,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 12
+            },
+            {
+              "Line": 98,
+              "Offset": 26,
+              "EndOffset": 38,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 26
+            }
+          ]
+        },
+        "System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::ImportNestedMappings(System.Collections.Generic.Dictionary`2<System.Type,System.Type>)": {
+          "Lines": {
+            "115": 458,
+            "117": 26,
+            "119": 203
+          },
+          "Branches": [
+            {
+              "Line": 115,
+              "Offset": 49,
+              "EndOffset": 9,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 26
+            },
+            {
+              "Line": 115,
+              "Offset": 49,
+              "EndOffset": 51,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 203
+            }
+          ]
+        },
+        "Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::Clone()": {
+          "Lines": {
+            "130": 196,
+            "131": 196,
+            "132": 196,
+            "133": 196,
+            "135": 196,
+            "136": 196,
+            "137": 196,
+            "138": 196,
+            "139": 196,
+            "140": 196,
+            "141": 196,
+            "142": 196,
+            "143": 196,
+            "144": 196,
+            "145": 196,
+            "146": 196,
+            "148": 196
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::.ctor()": {
+          "Lines": {
+            "20": 599
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Configuration\\NumericOptions.cs": {
+      "Hydrix.Mapper.Configuration.NumericOptions": {
+        "Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Configuration.NumericOptions::get_DecimalToIntRounding()": {
+          "Lines": {
+            "15": 860
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Configuration.NumericOptions::get_Overflow()": {
+          "Lines": {
+            "20": 1461
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Configuration\\StringOptions.cs": {
+      "Hydrix.Mapper.Configuration.StringOptions": {
+        "Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Configuration.StringOptions::get_Transform()": {
+          "Lines": {
+            "13": 991
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Caching\\MapPlanCache.cs": {
+      "Hydrix.Mapper.Caching.MapPlanCache": {
+        "Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.Caching.MapPlanCache::GetOrAdd(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "46": 235,
+            "47": 235,
+            "48": 235,
+            "49": 235,
+            "50": 235,
+            "51": 235,
+            "53": 235,
+            "54": 235,
+            "55": 235,
+            "57": 73,
+            "60": 162,
+            "61": 162,
+            "62": 162,
+            "63": 324,
+            "64": 324,
+            "65": 324,
+            "66": 324
+          },
+          "Branches": [
+            {
+              "Line": 53,
+              "Offset": 36,
+              "EndOffset": 38,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 73
+            },
+            {
+              "Line": 53,
+              "Offset": 36,
+              "EndOffset": 40,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 162
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Caching.MapPlanCache::IsCached(System.Type,System.Type)": {
+          "Lines": {
+            "87": 17,
+            "89": 5,
+            "90": 3,
+            "93": 2,
+            "94": 3
+          },
+          "Branches": [
+            {
+              "Line": 87,
+              "Offset": 63,
+              "EndOffset": 18,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 5
+            },
+            {
+              "Line": 89,
+              "Offset": 37,
+              "EndOffset": 39,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 4
+            },
+            {
+              "Line": 89,
+              "Offset": 51,
+              "EndOffset": 53,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 3
+            },
+            {
+              "Line": 89,
+              "Offset": 37,
+              "EndOffset": 57,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 7
+            },
+            {
+              "Line": 89,
+              "Offset": 51,
+              "EndOffset": 57,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 7
+            },
+            {
+              "Line": 87,
+              "Offset": 63,
+              "EndOffset": 65,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 2
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Caching.MapPlanCache::IsCached(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "116": 2,
+            "117": 2,
+            "118": 2,
+            "119": 2,
+            "120": 2,
+            "121": 2
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Caching.MapPlanCache::Clear()": {
+          "Lines": {
+            "127": 48
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Caching.MapPlanCache::.cctor()": {
+          "Lines": {
+            "22": 1,
+            "23": 1
+          },
+          "Branches": []
+        }
+      },
+      "Hydrix.Mapper.Caching.MapPlanKey": {
+        "System.Boolean Hydrix.Mapper.Caching.MapPlanKey::Equals(Hydrix.Mapper.Caching.MapPlanKey)": {
+          "Lines": {
+            "204": 96,
+            "205": 96,
+            "206": 96,
+            "207": 96
+          },
+          "Branches": [
+            {
+              "Line": 204,
+              "Offset": 17,
+              "EndOffset": 19,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 95
+            },
+            {
+              "Line": 204,
+              "Offset": 36,
+              "EndOffset": 38,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 94
+            },
+            {
+              "Line": 204,
+              "Offset": 17,
+              "EndOffset": 56,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 204,
+              "Offset": 36,
+              "EndOffset": 56,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 2
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Caching.MapPlanKey::Equals(System.Object)": {
+          "Lines": {
+            "221": 2,
+            "222": 2
+          },
+          "Branches": [
+            {
+              "Line": 221,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 221,
+              "Offset": 6,
+              "EndOffset": 23,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Int32 Hydrix.Mapper.Caching.MapPlanKey::GetHashCode()": {
+          "Lines": {
+            "234": 403,
+            "235": 403
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Caching.MapPlanKey::.ctor(System.Type,System.Type)": {
+          "Lines": {
+            "164": 8,
+            "165": 8,
+            "166": 8,
+            "167": 8,
+            "168": 8
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Caching.MapPlanKey::.ctor(System.Type,System.Type,Hydrix.Mapper.Caching.MapPlanOptionsKey)": {
+          "Lines": {
+            "187": 247,
+            "188": 247,
+            "189": 247,
+            "190": 247
+          },
+          "Branches": []
+        }
+      },
+      "Hydrix.Mapper.Caching.MapPlanOptionsKey": {
+        "Hydrix.Mapper.Caching.MapPlanOptionsKey Hydrix.Mapper.Caching.MapPlanOptionsKey::Create(Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "404": 243,
+            "405": 243,
+            "406": 243,
+            "407": 243,
+            "408": 243,
+            "409": 243,
+            "410": 243,
+            "411": 243,
+            "412": 243,
+            "413": 243,
+            "414": 243,
+            "415": 243,
+            "416": 243,
+            "417": 243,
+            "418": 243,
+            "419": 243
+          },
+          "Branches": [
+            {
+              "Line": 404,
+              "Offset": 139,
+              "EndOffset": 141,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 236
+            },
+            {
+              "Line": 404,
+              "Offset": 139,
+              "EndOffset": 144,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 7
+            }
+          ]
+        },
+        "Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Caching.MapPlanOptionsKey::ToOptions()": {
+          "Lines": {
+            "429": 162,
+            "430": 162,
+            "431": 162,
+            "432": 162,
+            "434": 162,
+            "435": 162,
+            "436": 162,
+            "437": 162,
+            "438": 162,
+            "439": 162,
+            "440": 162,
+            "441": 162,
+            "442": 162,
+            "443": 162,
+            "444": 162,
+            "446": 162,
+            "447": 162,
+            "449": 7,
+            "450": 7,
+            "453": 162
+          },
+          "Branches": [
+            {
+              "Line": 446,
+              "Offset": 218,
+              "EndOffset": 220,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 7
+            },
+            {
+              "Line": 446,
+              "Offset": 227,
+              "EndOffset": 229,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 7
+            },
+            {
+              "Line": 446,
+              "Offset": 218,
+              "EndOffset": 236,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 162
+            },
+            {
+              "Line": 446,
+              "Offset": 227,
+              "EndOffset": 236,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 162
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Caching.MapPlanOptionsKey::Equals(Hydrix.Mapper.Caching.MapPlanOptionsKey)": {
+          "Lines": {
+            "468": 95,
+            "469": 95,
+            "470": 95,
+            "471": 95,
+            "472": 95,
+            "473": 95,
+            "474": 95,
+            "475": 95,
+            "476": 95,
+            "477": 95,
+            "478": 95,
+            "479": 95,
+            "480": 95,
+            "481": 95,
+            "482": 95,
+            "483": 95,
+            "484": 95,
+            "485": 95,
+            "486": 95,
+            "487": 95,
+            "488": 95,
+            "489": 95,
+            "490": 95,
+            "491": 95,
+            "492": 95,
+            "493": 95,
+            "494": 95,
+            "495": 95
+          },
+          "Branches": [
+            {
+              "Line": 468,
+              "Offset": 12,
+              "EndOffset": 17,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 29,
+              "EndOffset": 34,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 46,
+              "EndOffset": 51,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 63,
+              "EndOffset": 68,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 80,
+              "EndOffset": 85,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 103,
+              "EndOffset": 108,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 120,
+              "EndOffset": 122,
+              "Path": 0,
+              "Ordinal": 12,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 140,
+              "EndOffset": 142,
+              "Path": 0,
+              "Ordinal": 14,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 154,
+              "EndOffset": 156,
+              "Path": 0,
+              "Ordinal": 16,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 174,
+              "EndOffset": 176,
+              "Path": 0,
+              "Ordinal": 18,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 194,
+              "EndOffset": 196,
+              "Path": 0,
+              "Ordinal": 20,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 208,
+              "EndOffset": 210,
+              "Path": 0,
+              "Ordinal": 22,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 216,
+              "EndOffset": 218,
+              "Path": 0,
+              "Ordinal": 24,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 216,
+              "EndOffset": 226,
+              "Path": 1,
+              "Ordinal": 25,
+              "Hits": 0
+            },
+            {
+              "Line": 468,
+              "Offset": 224,
+              "EndOffset": 226,
+              "Path": 0,
+              "Ordinal": 26,
+              "Hits": 0
+            },
+            {
+              "Line": 468,
+              "Offset": 224,
+              "EndOffset": 241,
+              "Path": 1,
+              "Ordinal": 27,
+              "Hits": 94
+            },
+            {
+              "Line": 468,
+              "Offset": 12,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 29,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 46,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 63,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 80,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 103,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 120,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 13,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 140,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 15,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 154,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 17,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 174,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 19,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 194,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 21,
+              "Hits": 1
+            },
+            {
+              "Line": 468,
+              "Offset": 208,
+              "EndOffset": 243,
+              "Path": 1,
+              "Ordinal": 23,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Caching.MapPlanOptionsKey::Equals(System.Object)": {
+          "Lines": {
+            "509": 2,
+            "510": 2
+          },
+          "Branches": [
+            {
+              "Line": 509,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 509,
+              "Offset": 6,
+              "EndOffset": 23,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Int32 Hydrix.Mapper.Caching.MapPlanOptionsKey::GetHashCode()": {
+          "Lines": {
+            "522": 403,
+            "523": 403,
+            "524": 403,
+            "525": 403,
+            "526": 403,
+            "527": 403,
+            "528": 403,
+            "529": 403,
+            "530": 403,
+            "531": 403,
+            "532": 403,
+            "533": 403,
+            "534": 403,
+            "535": 403,
+            "536": 403,
+            "537": 403,
+            "538": 403,
+            "539": 403,
+            "540": 403,
+            "541": 403,
+            "542": 403
+          },
+          "Branches": [
+            {
+              "Line": 538,
+              "Offset": 186,
+              "EndOffset": 188,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 14
+            },
+            {
+              "Line": 538,
+              "Offset": 186,
+              "EndOffset": 201,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 389
+            }
+          ]
+        },
+        "System.Int32 Hydrix.Mapper.Caching.MapPlanOptionsKey::GetStringHashCode(System.String)": {
+          "Lines": {
+            "557": 1612,
+            "558": 1612,
+            "559": 1612,
+            "560": 1612
+          },
+          "Branches": [
+            {
+              "Line": 557,
+              "Offset": 1,
+              "EndOffset": 3,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1604
+            },
+            {
+              "Line": 557,
+              "Offset": 1,
+              "EndOffset": 15,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 8
+            }
+          ]
+        },
+        "System.Void Hydrix.Mapper.Caching.MapPlanOptionsKey::.ctor(Hydrix.Mapper.Primitives.StringTransforms,Hydrix.Mapper.Primitives.GuidFormat,Hydrix.Mapper.Primitives.GuidCase,Hydrix.Mapper.Primitives.NumericRounding,Hydrix.Mapper.Primitives.NumericOverflow,System.String,Hydrix.Mapper.Primitives.DateTimeZone,System.String,Hydrix.Mapper.Primitives.BoolStringFormat,System.String,System.String,System.Boolean,System.Collections.Generic.Dictionary`2<System.Type,System.Type>)": {
+          "Lines": {
+            "378": 243,
+            "379": 243,
+            "380": 243,
+            "381": 243,
+            "382": 243,
+            "383": 243,
+            "384": 243,
+            "385": 243,
+            "386": 243,
+            "387": 243,
+            "388": 243,
+            "389": 243,
+            "390": 243,
+            "391": 243
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Caching.MapPlanOptionsKey::.cctor()": {
+          "Lines": {
+            "249": 1,
+            "250": 1
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Builders\\MapPlanBuilder.cs": {
+      "Hydrix.Mapper.Builders.MapPlanBuilder": {
+        "Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.Builders.MapPlanBuilder::Build(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "58": 162,
+            "60": 162,
+            "61": 162,
+            "62": 0,
+            "63": 0,
+            "64": 0,
+            "65": 0,
+            "69": 162,
+            "71": 2,
+            "72": 2,
+            "75": 160,
+            "76": 160,
+            "78": 157,
+            "79": 157,
+            "80": 157,
+            "81": 157,
+            "85": 157,
+            "86": 157,
+            "87": 157,
+            "88": 157,
+            "89": 157,
+            "90": 157,
+            "92": 156,
+            "93": 156,
+            "94": 156,
+            "95": 156,
+            "96": 156,
+            "97": 156,
+            "99": 154,
+            "100": 154,
+            "101": 154,
+            "102": 154,
+            "103": 154,
+            "104": 154,
+            "106": 154,
+            "107": 154,
+            "108": 154,
+            "112": 162,
+            "113": 162,
+            "114": 162,
+            "115": 154
+          },
+          "Branches": [
+            {
+              "Line": 58,
+              "Offset": 5,
+              "EndOffset": 7,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 21
+            },
+            {
+              "Line": 58,
+              "Offset": 5,
+              "EndOffset": 17,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 162
+            },
+            {
+              "Line": 60,
+              "Offset": 34,
+              "EndOffset": 36,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 60,
+              "Offset": 34,
+              "EndOffset": 143,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 162
+            },
+            {
+              "Line": 69,
+              "Offset": 150,
+              "EndOffset": 152,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 2
+            },
+            {
+              "Line": 69,
+              "Offset": 150,
+              "EndOffset": 179,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 160
+            }
+          ]
+        },
+        "System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>> Hydrix.Mapper.Builders.MapPlanBuilder::ResolvePropertyPairs(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Collections.Generic.Dictionary`2<System.String,System.Reflection.PropertyInfo>,System.Reflection.PropertyInfo[])": {
+          "Lines": {
+            "148": 198,
+            "149": 198,
+            "150": 198,
+            "152": 1061,
+            "154": 333,
+            "157": 331,
+            "160": 329,
+            "163": 328,
+            "164": 328,
+            "165": 328,
+            "170": 327,
+            "171": 327,
+            "172": 327,
+            "174": 10,
+            "176": 1,
+            "177": 1,
+            "178": 1,
+            "179": 1,
+            "185": 317,
+            "186": 317,
+            "188": 317,
+            "189": 317,
+            "192": 197
+          },
+          "Branches": [
+            {
+              "Line": 152,
+              "Offset": 285,
+              "EndOffset": 20,
+              "Path": 1,
+              "Ordinal": 13,
+              "Hits": 333
+            },
+            {
+              "Line": 154,
+              "Offset": 30,
+              "EndOffset": 35,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 331
+            },
+            {
+              "Line": 157,
+              "Offset": 46,
+              "EndOffset": 51,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 329
+            },
+            {
+              "Line": 160,
+              "Offset": 58,
+              "EndOffset": 63,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 328
+            },
+            {
+              "Line": 163,
+              "Offset": 80,
+              "EndOffset": 85,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 327
+            },
+            {
+              "Line": 170,
+              "Offset": 99,
+              "EndOffset": 104,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 10
+            },
+            {
+              "Line": 174,
+              "Offset": 110,
+              "EndOffset": 115,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 1
+            },
+            {
+              "Line": 170,
+              "Offset": 99,
+              "EndOffset": 252,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 317
+            },
+            {
+              "Line": 154,
+              "Offset": 30,
+              "EndOffset": 277,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 332
+            },
+            {
+              "Line": 157,
+              "Offset": 46,
+              "EndOffset": 277,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 332
+            },
+            {
+              "Line": 160,
+              "Offset": 58,
+              "EndOffset": 277,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 332
+            },
+            {
+              "Line": 163,
+              "Offset": 80,
+              "EndOffset": 277,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 332
+            },
+            {
+              "Line": 174,
+              "Offset": 110,
+              "EndOffset": 277,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 332
+            },
+            {
+              "Line": 152,
+              "Offset": 285,
+              "EndOffset": 290,
+              "Path": 0,
+              "Ordinal": 12,
+              "Hits": 197
+            }
+          ]
+        },
+        "System.Delegate Hydrix.Mapper.Builders.MapPlanBuilder::BuildTypedDelegate(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Reflection.ConstructorInfo,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>>)": {
+          "Lines": {
+            "229": 156,
+            "230": 156,
+            "231": 156,
+            "233": 156,
+            "234": 156,
+            "235": 156,
+            "238": 156,
+            "239": 156,
+            "242": 156,
+            "243": 156,
+            "244": 156,
+            "245": 156,
+            "246": 156,
+            "248": 736,
+            "250": 213,
+            "251": 213,
+            "252": 213,
+            "253": 213,
+            "254": 213,
+            "255": 213,
+            "256": 213,
+            "257": 213,
+            "258": 213,
+            "259": 213,
+            "263": 154,
+            "264": 154,
+            "266": 154,
+            "267": 154,
+            "268": 154,
+            "270": 154,
+            "271": 154,
+            "272": 154,
+            "274": 154,
+            "275": 154,
+            "276": 154,
+            "277": 154,
+            "278": 154
+          },
+          "Branches": [
+            {
+              "Line": 248,
+              "Offset": 127,
+              "EndOffset": 68,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 213
+            },
+            {
+              "Line": 248,
+              "Offset": 127,
+              "EndOffset": 129,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 154
+            }
+          ]
+        },
+        "System.Func`2<System.Object,System.Object> Hydrix.Mapper.Builders.MapPlanBuilder::BuildObjectExecute(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Reflection.ConstructorInfo,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>>)": {
+          "Lines": {
+            "316": 154,
+            "317": 154,
+            "318": 154,
+            "321": 154,
+            "322": 154,
+            "323": 154,
+            "324": 154,
+            "325": 154,
+            "326": 154,
+            "329": 154,
+            "330": 154,
+            "333": 154,
+            "334": 154,
+            "335": 154,
+            "336": 154,
+            "337": 154,
+            "338": 154,
+            "341": 154,
+            "342": 154,
+            "343": 154,
+            "344": 154,
+            "345": 154,
+            "347": 730,
+            "349": 211,
+            "350": 211,
+            "351": 211,
+            "352": 211,
+            "353": 211,
+            "354": 211,
+            "355": 211,
+            "356": 211,
+            "357": 211,
+            "358": 211,
+            "362": 154,
+            "363": 154,
+            "364": 154,
+            "365": 154,
+            "367": 154,
+            "368": 154,
+            "369": 154,
+            "371": 154,
+            "372": 154,
+            "373": 154
+          },
+          "Branches": [
+            {
+              "Line": 347,
+              "Offset": 167,
+              "EndOffset": 108,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 211
+            },
+            {
+              "Line": 347,
+              "Offset": 167,
+              "EndOffset": 169,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 154
+            }
+          ]
+        },
+        "System.Collections.Generic.Dictionary`2<System.String,System.Reflection.PropertyInfo> Hydrix.Mapper.Builders.MapPlanBuilder::BuildPropertyLookup(System.Type)": {
+          "Lines": {
+            "388": 198,
+            "389": 198,
+            "390": 198,
+            "391": 198,
+            "392": 198,
+            "394": 1076,
+            "396": 340,
+            "399": 338,
+            "402": 336,
+            "405": 335,
+            "408": 198
+          },
+          "Branches": [
+            {
+              "Line": 394,
+              "Offset": 82,
+              "EndOffset": 27,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 340
+            },
+            {
+              "Line": 396,
+              "Offset": 37,
+              "EndOffset": 39,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 338
+            },
+            {
+              "Line": 399,
+              "Offset": 50,
+              "EndOffset": 52,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 336
+            },
+            {
+              "Line": 402,
+              "Offset": 59,
+              "EndOffset": 61,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 335
+            },
+            {
+              "Line": 396,
+              "Offset": 37,
+              "EndOffset": 74,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 340
+            },
+            {
+              "Line": 399,
+              "Offset": 50,
+              "EndOffset": 74,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 340
+            },
+            {
+              "Line": 402,
+              "Offset": 59,
+              "EndOffset": 74,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 340
+            },
+            {
+              "Line": 394,
+              "Offset": 82,
+              "EndOffset": 84,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 198
+            }
+          ]
+        },
+        "System.Linq.Expressions.BinaryExpression Hydrix.Mapper.Builders.MapPlanBuilder::BuildPropertyAssignment(System.Type,System.Type,System.Linq.Expressions.Expression,System.Linq.Expressions.Expression,System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)": {
+          "Lines": {
+            "456": 526,
+            "457": 526,
+            "458": 526,
+            "463": 526,
+            "464": 526,
+            "465": 526,
+            "466": 526,
+            "467": 526,
+            "468": 526,
+            "469": 486,
+            "470": 40,
+            "472": 40,
+            "473": 40,
+            "474": 40,
+            "475": 40,
+            "476": 40,
+            "478": 40,
+            "479": 40,
+            "480": 40,
+            "481": 40,
+            "482": 40,
+            "483": 40,
+            "484": 38,
+            "486": 524,
+            "487": 524,
+            "488": 524,
+            "489": 524,
+            "490": 524,
+            "491": 524
+          },
+          "Branches": [
+            {
+              "Line": 478,
+              "Offset": 63,
+              "EndOffset": 68,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 2
+            },
+            {
+              "Line": 478,
+              "Offset": 63,
+              "EndOffset": 306,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 38
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::TryBuildNestedExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "513": 40,
+            "514": 40,
+            "515": 40,
+            "516": 40,
+            "518": 14,
+            "519": 14,
+            "520": 14,
+            "521": 14,
+            "522": 14,
+            "526": 26,
+            "527": 26,
+            "528": 26,
+            "529": 26,
+            "530": 26,
+            "531": 26,
+            "532": 26,
+            "533": 26,
+            "534": 26,
+            "535": 26,
+            "537": 24,
+            "538": 24,
+            "539": 24,
+            "540": 24,
+            "541": 24,
+            "542": 24,
+            "545": 2
+          },
+          "Branches": [
+            {
+              "Line": 513,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 14
+            },
+            {
+              "Line": 513,
+              "Offset": 18,
+              "EndOffset": 20,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 14
+            },
+            {
+              "Line": 513,
+              "Offset": 9,
+              "EndOffset": 30,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 26
+            },
+            {
+              "Line": 513,
+              "Offset": 18,
+              "EndOffset": 30,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 26
+            },
+            {
+              "Line": 526,
+              "Offset": 38,
+              "EndOffset": 40,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 25
+            },
+            {
+              "Line": 526,
+              "Offset": 48,
+              "EndOffset": 50,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 24
+            },
+            {
+              "Line": 526,
+              "Offset": 59,
+              "EndOffset": 61,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 24
+            },
+            {
+              "Line": 526,
+              "Offset": 68,
+              "EndOffset": 70,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 24
+            },
+            {
+              "Line": 526,
+              "Offset": 38,
+              "EndOffset": 81,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 2
+            },
+            {
+              "Line": 526,
+              "Offset": 48,
+              "EndOffset": 81,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 2
+            },
+            {
+              "Line": 526,
+              "Offset": 59,
+              "EndOffset": 81,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 2
+            },
+            {
+              "Line": 526,
+              "Offset": 68,
+              "EndOffset": 81,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 2
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildNestedObjectExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "568": 15,
+            "571": 15,
+            "572": 15,
+            "573": 15,
+            "574": 15,
+            "575": 15,
+            "578": 15,
+            "580": 1,
+            "581": 1,
+            "582": 1,
+            "583": 1,
+            "584": 1,
+            "585": 1,
+            "589": 14,
+            "590": 14,
+            "591": 14,
+            "592": 14,
+            "593": 14,
+            "594": 14,
+            "595": 14,
+            "596": 14,
+            "597": 14,
+            "598": 14,
+            "599": 14,
+            "600": 14,
+            "601": 14,
+            "602": 14
+          },
+          "Branches": [
+            {
+              "Line": 578,
+              "Offset": 28,
+              "EndOffset": 30,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 578,
+              "Offset": 28,
+              "EndOffset": 66,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 14
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildInlineNestedBodyBlock(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "635": 41,
+            "636": 41,
+            "637": 41,
+            "638": 41,
+            "639": 41,
+            "640": 41,
+            "641": 41,
+            "642": 41,
+            "643": 41,
+            "644": 41,
+            "646": 41,
+            "647": 41,
+            "649": 41,
+            "650": 41,
+            "651": 41,
+            "652": 41,
+            "654": 286,
+            "656": 102,
+            "657": 102,
+            "658": 102,
+            "659": 102,
+            "660": 102,
+            "661": 102,
+            "662": 102,
+            "663": 102,
+            "664": 102,
+            "665": 102,
+            "668": 41,
+            "670": 41,
+            "671": 41,
+            "672": 41
+          },
+          "Branches": [
+            {
+              "Line": 654,
+              "Offset": 148,
+              "EndOffset": 88,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 102
+            },
+            {
+              "Line": 654,
+              "Offset": 148,
+              "EndOffset": 150,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 41
+            }
+          ]
+        },
+        "System.Reflection.ConstructorInfo Hydrix.Mapper.Builders.MapPlanBuilder::ResolveConstructorOrThrow(System.Type)": {
+          "Lines": {
+            "688": 201,
+            "689": 201,
+            "690": 201,
+            "691": 201,
+            "692": 201,
+            "693": 201,
+            "694": 201
+          },
+          "Branches": [
+            {
+              "Line": 688,
+              "Offset": 16,
+              "EndOffset": 18,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 3
+            },
+            {
+              "Line": 688,
+              "Offset": 16,
+              "EndOffset": 46,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 198
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildNestedCollectionExpression(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "719": 26,
+            "720": 26,
+            "721": 26,
+            "722": 26,
+            "723": 26,
+            "724": 26,
+            "726": 26,
+            "729": 26,
+            "730": 26,
+            "732": 26,
+            "733": 26,
+            "734": 26,
+            "735": 26,
+            "737": 26,
+            "738": 26,
+            "739": 26,
+            "740": 26,
+            "741": 26,
+            "742": 26,
+            "743": 26,
+            "744": 26,
+            "745": 26,
+            "749": 0,
+            "750": 0,
+            "751": 0,
+            "752": 0,
+            "753": 0,
+            "754": 0,
+            "755": 0,
+            "756": 0
+          },
+          "Branches": [
+            {
+              "Line": 729,
+              "Offset": 92,
+              "EndOffset": 94,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 729,
+              "Offset": 92,
+              "EndOffset": 103,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 26
+            },
+            {
+              "Line": 729,
+              "Offset": 101,
+              "EndOffset": 103,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 26
+            },
+            {
+              "Line": 732,
+              "Offset": 110,
+              "EndOffset": 112,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 0
+            },
+            {
+              "Line": 732,
+              "Offset": 110,
+              "EndOffset": 115,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 26
+            },
+            {
+              "Line": 729,
+              "Offset": 101,
+              "EndOffset": 134,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 0
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildIndexedCollectionLoop(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "813": 26,
+            "814": 26,
+            "815": 26,
+            "816": 26,
+            "818": 26,
+            "819": 26,
+            "820": 26,
+            "821": 26,
+            "822": 26,
+            "825": 26,
+            "826": 26,
+            "827": 26,
+            "828": 26,
+            "829": 26,
+            "831": 26,
+            "832": 26,
+            "833": 26,
+            "834": 26,
+            "835": 26,
+            "836": 26,
+            "837": 26,
+            "838": 26,
+            "839": 26,
+            "840": 26,
+            "841": 26,
+            "842": 26,
+            "843": 26,
+            "844": 26,
+            "845": 26,
+            "846": 26,
+            "847": 26,
+            "848": 26,
+            "849": 26,
+            "850": 26,
+            "851": 26,
+            "852": 26,
+            "853": 26,
+            "854": 26,
+            "855": 26,
+            "856": 26,
+            "857": 26,
+            "858": 26,
+            "859": 26,
+            "860": 26,
+            "861": 26,
+            "863": 26,
+            "864": 26,
+            "865": 26,
+            "866": 26,
+            "867": 26,
+            "868": 26,
+            "869": 26,
+            "870": 26,
+            "871": 26,
+            "872": 26,
+            "873": 26,
+            "874": 26,
+            "875": 26,
+            "876": 26,
+            "877": 26,
+            "878": 26,
+            "879": 26,
+            "882": 26,
+            "883": 26,
+            "884": 26,
+            "885": 26,
+            "886": 26,
+            "887": 26,
+            "888": 26,
+            "889": 26,
+            "890": 26,
+            "891": 26,
+            "892": 26,
+            "893": 26,
+            "894": 26,
+            "895": 26,
+            "896": 26,
+            "897": 26,
+            "898": 26,
+            "899": 26,
+            "900": 26,
+            "901": 26,
+            "902": 26,
+            "903": 26,
+            "904": 26,
+            "905": 26,
+            "906": 26,
+            "907": 26,
+            "908": 26,
+            "909": 26,
+            "910": 26,
+            "911": 26,
+            "912": 26,
+            "913": 26,
+            "914": 26
+          },
+          "Branches": [
+            {
+              "Line": 831,
+              "Offset": 179,
+              "EndOffset": 181,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 24
+            },
+            {
+              "Line": 831,
+              "Offset": 179,
+              "EndOffset": 275,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 882,
+              "Offset": 456,
+              "EndOffset": 458,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 882,
+              "Offset": 456,
+              "EndOffset": 467,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 26
+            },
+            {
+              "Line": 882,
+              "Offset": 562,
+              "EndOffset": 564,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 3
+            },
+            {
+              "Line": 882,
+              "Offset": 562,
+              "EndOffset": 575,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 23
+            }
+          ]
+        },
+        "System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildEnumerableFallback(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)": {
+          "Lines": {
+            "944": 0,
+            "945": 0,
+            "946": 0,
+            "948": 0,
+            "949": 0,
+            "950": 0,
+            "951": 0,
+            "952": 0,
+            "954": 0,
+            "955": 0,
+            "956": 0,
+            "958": 0,
+            "959": 0,
+            "960": 0,
+            "961": 0,
+            "962": 0,
+            "963": 0,
+            "965": 0,
+            "966": 0,
+            "967": 0,
+            "968": 0,
+            "969": 0,
+            "970": 0,
+            "972": 0,
+            "973": 0,
+            "974": 0,
+            "976": 0,
+            "977": 0,
+            "979": 0,
+            "980": 0,
+            "981": 0,
+            "982": 0,
+            "983": 0,
+            "985": 0,
+            "986": 0,
+            "987": 0,
+            "988": 0,
+            "989": 0,
+            "990": 0,
+            "991": 0,
+            "993": 0,
+            "994": 0,
+            "995": 0,
+            "996": 0,
+            "997": 0
+          },
+          "Branches": [
+            {
+              "Line": 965,
+              "Offset": 99,
+              "EndOffset": 101,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 965,
+              "Offset": 99,
+              "EndOffset": 113,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            },
+            {
+              "Line": 979,
+              "Offset": 169,
+              "EndOffset": 171,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 979,
+              "Offset": 169,
+              "EndOffset": 181,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 0
+            },
+            {
+              "Line": 993,
+              "Offset": 212,
+              "EndOffset": 214,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 0
+            },
+            {
+              "Line": 993,
+              "Offset": 212,
+              "EndOffset": 224,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 0
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Builders.MapPlanBuilder::TryGetEnumerableElementType(System.Type,System.Type&)": {
+          "Lines": {
+            "1016": 27,
+            "1017": 27,
+            "1019": 1,
+            "1020": 1,
+            "1023": 179,
+            "1025": 76,
+            "1026": 76,
+            "1028": 25,
+            "1029": 25,
+            "1033": 1,
+            "1034": 1
+          },
+          "Branches": [
+            {
+              "Line": 1016,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 25
+            },
+            {
+              "Line": 1016,
+              "Offset": 29,
+              "EndOffset": 31,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 1016,
+              "Offset": 6,
+              "EndOffset": 43,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 26
+            },
+            {
+              "Line": 1016,
+              "Offset": 29,
+              "EndOffset": 43,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 26
+            },
+            {
+              "Line": 1023,
+              "Offset": 109,
+              "EndOffset": 54,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 76
+            },
+            {
+              "Line": 1025,
+              "Offset": 64,
+              "EndOffset": 66,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 73
+            },
+            {
+              "Line": 1025,
+              "Offset": 87,
+              "EndOffset": 89,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 25
+            },
+            {
+              "Line": 1025,
+              "Offset": 64,
+              "EndOffset": 101,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 51
+            },
+            {
+              "Line": 1025,
+              "Offset": 87,
+              "EndOffset": 101,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 51
+            },
+            {
+              "Line": 1023,
+              "Offset": 109,
+              "EndOffset": 111,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 1
+            }
+          ]
+        },
+        "System.Boolean Hydrix.Mapper.Builders.MapPlanBuilder::TryGetCollectionDestElementType(System.Type,System.Type&)": {
+          "Lines": {
+            "1055": 27,
+            "1057": 1,
+            "1058": 1,
+            "1061": 26,
+            "1062": 26,
+            "1063": 26,
+            "1064": 26,
+            "1065": 26,
+            "1067": 25,
+            "1068": 25,
+            "1071": 1,
+            "1072": 1
+          },
+          "Branches": [
+            {
+              "Line": 1055,
+              "Offset": 6,
+              "EndOffset": 8,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 1055,
+              "Offset": 6,
+              "EndOffset": 13,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 26
+            },
+            {
+              "Line": 1062,
+              "Offset": 36,
+              "EndOffset": 38,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 4
+            },
+            {
+              "Line": 1062,
+              "Offset": 54,
+              "EndOffset": 56,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 4
+            },
+            {
+              "Line": 1062,
+              "Offset": 72,
+              "EndOffset": 74,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 2
+            },
+            {
+              "Line": 1062,
+              "Offset": 36,
+              "EndOffset": 92,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 25
+            },
+            {
+              "Line": 1062,
+              "Offset": 54,
+              "EndOffset": 92,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 25
+            },
+            {
+              "Line": 1062,
+              "Offset": 72,
+              "EndOffset": 92,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 25
+            },
+            {
+              "Line": 1062,
+              "Offset": 90,
+              "EndOffset": 92,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 25
+            },
+            {
+              "Line": 1062,
+              "Offset": 90,
+              "EndOffset": 104,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 1
+            }
+          ]
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Attributes\\MapConversionAttribute.cs": {
+      "Hydrix.Mapper.Attributes.MapConversionAttribute": {
+        "Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Attributes.MapConversionAttribute::get_StringTransform()": {
+          "Lines": {
+            "19": 27
+          },
+          "Branches": []
+        },
+        "System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideStringTransform()": {
+          "Lines": {
+            "25": 28
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Attributes.MapConversionAttribute::get_GuidFormat()": {
+          "Lines": {
+            "30": 15
+          },
+          "Branches": []
+        },
+        "System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideGuid()": {
+          "Lines": {
+            "35": 25
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Attributes.MapConversionAttribute::get_GuidCase()": {
+          "Lines": {
+            "40": 12
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Attributes.MapConversionAttribute::get_NumericRounding()": {
+          "Lines": {
+            "46": 26
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Attributes.MapConversionAttribute::get_NumericOverflow()": {
+          "Lines": {
+            "51": 63
+          },
+          "Branches": []
+        },
+        "System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideNumeric()": {
+          "Lines": {
+            "56": 50
+          },
+          "Branches": []
+        },
+        "System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_DateFormat()": {
+          "Lines": {
+            "61": 16
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.DateTimeZone Hydrix.Mapper.Attributes.MapConversionAttribute::get_DateTimeZone()": {
+          "Lines": {
+            "66": 14
+          },
+          "Branches": []
+        },
+        "System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_Culture()": {
+          "Lines": {
+            "71": 14
+          },
+          "Branches": []
+        },
+        "System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideDateTime()": {
+          "Lines": {
+            "76": 20
+          },
+          "Branches": []
+        },
+        "Hydrix.Mapper.Primitives.BoolStringFormat Hydrix.Mapper.Attributes.MapConversionAttribute::get_BoolFormat()": {
+          "Lines": {
+            "81": 12
+          },
+          "Branches": []
+        },
+        "System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_TrueValue()": {
+          "Lines": {
+            "87": 9
+          },
+          "Branches": []
+        },
+        "System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_FalseValue()": {
+          "Lines": {
+            "93": 9
+          },
+          "Branches": []
+        },
+        "System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideBool()": {
+          "Lines": {
+            "98": 12
+          },
+          "Branches": []
+        }
+      }
+    },
+    "C:\\VSO\\hydrix\\src\\Hydrix.Mapper\\Attributes\\MapFromAttribute.cs": {
+      "Hydrix.Mapper.Attributes.MapFromAttribute": {
+        "System.Type Hydrix.Mapper.Attributes.MapFromAttribute::get_SourceType()": {
+          "Lines": {
+            "21": 14
+          },
+          "Branches": []
+        },
+        "System.Void Hydrix.Mapper.Attributes.MapFromAttribute::.ctor(System.Type)": {
+          "Lines": {
+            "28": 15,
+            "30": 15,
+            "31": 15,
+            "32": 14
+          },
+          "Branches": [
+            {
+              "Line": 30,
+              "Offset": 9,
+              "EndOffset": 11,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 30,
+              "Offset": 9,
+              "EndOffset": 23,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 14
+            }
+          ]
+        }
+      }
+    }
+  }
+}

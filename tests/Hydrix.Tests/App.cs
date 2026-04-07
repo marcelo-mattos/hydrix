@@ -2,7 +2,6 @@ using Hydrix.Builders.Query.Conditions;
 using Hydrix.Mapper.Extensions;
 using Hydrix.Tests.Database.Dto;
 using Hydrix.Tests.Database.Entity;
-using Hydrix.Tests.Database.Procedure;
 using Hydrix.Tests.Resources;
 using Hydrix.Tests.Validators;
 using Microsoft.Extensions.Localization;
@@ -337,6 +336,7 @@ namespace Hydrix.Tests
 #endif
             await connection.ExecuteAsync(sql);
 
+#if SQLSERVER_ENV_ENABLED
             // ----------------- INSERT DATA -----------------
 
             var addCustomer = new AddCustomer()
@@ -367,28 +367,22 @@ namespace Hydrix.Tests
 
             var customers = await connection.QueryAsync<
                 Customer,
-#if SQLSERVER_ENV_ENABLED
                 SqlParameter>(new GetCustomer());
-#else
-                NpgsqlParameter>(new GetCustomer());
-#endif
+
             Console.WriteLine($"Customer Count: {customers.Count()}");
 
             await connection.ExecuteAsync(new DelCustomers());
 
             customers = await connection.QueryAsync<
                 Customer,
-#if SQLSERVER_ENV_ENABLED
-                SqlParameter>(new GetCustomer());
-#else
                 NpgsqlParameter>(new GetCustomer());
-#endif
+
             Console.WriteLine($"Customer Count: {customers.Count()}");
 
             // ----------------- DELETE DATA -----------------
 
             await connection.ExecuteAsync(new DelCustomers());
-
+#endif
             Console.ReadKey();
         }
     }

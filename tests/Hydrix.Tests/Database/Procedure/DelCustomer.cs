@@ -21,7 +21,7 @@ namespace Hydrix.Tests.Database.Procedure
         DatabaseEntity, IProcedure<SqlParameter>
 #else
 
-    [Procedure("del_customers()", Schema = "public")]
+    [Procedure("del_customers")]
     public class DelCustomers :
         DatabaseEntity, IProcedure<NpgsqlParameter>
 #endif

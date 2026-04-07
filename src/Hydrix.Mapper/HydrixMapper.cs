@@ -52,13 +52,12 @@ namespace Hydrix.Mapper
             HydrixMapperOptions options)
         {
 #if NET8_0_OR_GREATER
-            ArgumentNullException.ThrowIfNull(
-                options);
-
-            _options = options;
+            ArgumentNullException.ThrowIfNull(options);
+            _options = options.Clone();
 #else
-            _options = options ??
+            if (options == null)
                 throw new ArgumentNullException(nameof(options));
+            _options = options.Clone();
 #endif
         }
 
@@ -110,9 +109,14 @@ namespace Hydrix.Mapper
         public TTarget Map<TSource, TTarget>(
             TSource source)
         {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(
+                source);
+#else
             if (source is null)
                 throw new ArgumentNullException(
                     nameof(source));
+#endif
 
             return ((Func<TSource, TTarget>)GetPlan(
                     typeof(TSource),
@@ -339,14 +343,14 @@ namespace Hydrix.Mapper
             var result = new List<TTarget>(
                 span.Length);
 
-            for (var i = 0; i < span.Length; i++)
+            for (var index = 0; index < span.Length; index++)
             {
-                if (span[i] is null)
+                if (span[index] is null)
                     continue;
 
                 result.Add(
                     execute(
-                        span[i]));
+                        span[index]));
             }
 
             return result;
@@ -366,9 +370,9 @@ namespace Hydrix.Mapper
             var result = new List<TTarget>(
                 count);
 
-            for (var i = 0; i < count; i++)
+            for (var index = 0; index < count; index++)
             {
-                var item = ilist[i];
+                var item = ilist[index];
                 if (item is null)
                     continue;
 

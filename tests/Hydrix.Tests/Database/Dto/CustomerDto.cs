@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Hydrix.Mapper.Attributes;
+using Hydrix.Tests.Database.Entity;
+using System;
 using System.Text.Json.Serialization;
 
 namespace Hydrix.Tests.Database.Dto
@@ -10,13 +12,14 @@ namespace Hydrix.Tests.Database.Dto
     /// <remarks>This class is typically used to transfer customer data between application layers or
     /// services. All properties are mapped to corresponding JSON fields for serialization and deserialization
     /// purposes.</remarks>
+    [MapFrom(typeof(Customer))]
     public class CustomerDto
     {
         /// <summary>
         /// Gets or sets the unique identifier for the entity.
         /// </summary>
         [JsonPropertyName("id")]
-        public Guid Id { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the name associated with this instance.

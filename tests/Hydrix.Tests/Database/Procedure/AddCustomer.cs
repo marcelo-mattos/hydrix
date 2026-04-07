@@ -25,7 +25,7 @@ namespace Hydrix.Tests.Database.Procedure
         DatabaseEntity, IProcedure<SqlParameter>
 #else
 
-    [Procedure("add_customer()", Schema = "public")]
+    [Procedure("add_customer")]
     public class AddCustomer :
         DatabaseEntity, IProcedure<NpgsqlParameter>
 #endif

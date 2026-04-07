@@ -1,6 +1,7 @@
 using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
 using Hydrix.Mapper.Primitives;
+using System;
 using Xunit;
 
 namespace Hydrix.Mapper.UnitTests.Caching
@@ -98,6 +99,45 @@ namespace Hydrix.Mapper.UnitTests.Caching
             Assert.False(
                 key.Equals(
                     new object()));
+        }
+
+        /// <summary>
+        /// Verifies that snapshots with identical string transforms and guid formats but different guid cases compare as
+        /// not equal, exercising the <c>_guidCase</c> branch in the equality chain.
+        /// </summary>
+        [Fact]
+        public void Equals_ReturnsFalse_WhenGuidCaseDiffers()
+        {
+            var upperOptions = new HydrixMapperOptions();
+            upperOptions.Guid.Case = GuidCase.Upper;
+
+            var lowerOptions = new HydrixMapperOptions();
+            lowerOptions.Guid.Case = GuidCase.Lower;
+
+            var upperKey = MapPlanOptionsKey.Create(upperOptions);
+            var lowerKey = MapPlanOptionsKey.Create(lowerOptions);
+
+            Assert.False(upperKey.Equals(lowerKey));
+            Assert.NotEqual(upperKey.GetHashCode(), lowerKey.GetHashCode());
+        }
+
+        /// <summary>
+        /// Verifies that snapshots with all scalar options identical but different nested-mapping registrations compare
+        /// as not equal, exercising the nested-mappings reference branch in the equality chain.
+        /// </summary>
+        [Fact]
+        public void Equals_ReturnsFalse_WhenNestedMappingsDiffer()
+        {
+            var options1 = new HydrixMapperOptions();
+            options1.MapNested<ArgumentException, InvalidOperationException>();
+
+            var options2 = new HydrixMapperOptions();
+            options2.MapNested<ArgumentNullException, InvalidOperationException>();
+
+            var key1 = MapPlanOptionsKey.Create(options1);
+            var key2 = MapPlanOptionsKey.Create(options2);
+
+            Assert.False(key1.Equals(key2));
         }
     }
 }

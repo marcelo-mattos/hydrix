@@ -1,0 +1,2252 @@
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\HydrixMapper.cs
+FN:79,TTarget Hydrix.Mapper.HydrixMapper::Map(System.Object)
+FNDA:238,TTarget Hydrix.Mapper.HydrixMapper::Map(System.Object)
+DA:80,238
+DA:81,238
+DA:87,236
+DA:88,236
+DA:89,236
+DA:90,236
+DA:91,236
+FN:112,TTarget Hydrix.Mapper.HydrixMapper::Map(TSource)
+FNDA:4,TTarget Hydrix.Mapper.HydrixMapper::Map(TSource)
+DA:113,4
+DA:114,4
+DA:121,3
+DA:122,3
+DA:123,3
+DA:124,3
+DA:125,3
+FN:142,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.HydrixMapper::MapList(System.Collections.Generic.IEnumerable`1<System.Object>)
+FNDA:8,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.HydrixMapper::MapList(System.Collections.Generic.IEnumerable`1<System.Object>)
+DA:143,8
+DA:144,2
+DA:146,6
+DA:147,6
+DA:148,6
+DA:149,6
+DA:150,6
+DA:152,40
+DA:154,14
+DA:157,13
+DA:158,13
+DA:160,7
+DA:161,7
+DA:162,7
+DA:163,7
+DA:166,13
+DA:167,13
+DA:168,13
+DA:171,6
+BRDA:143,1,0,2
+BRDA:143,1,1,6
+BRDA:152,117,1,14
+BRDA:154,52,0,13
+BRDA:158,71,0,7
+BRDA:158,71,1,13
+BRDA:154,52,1,20
+BRDA:152,117,0,6
+FN:192,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.HydrixMapper::MapList(System.Collections.Generic.IEnumerable`1<TSource>)
+FNDA:13,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.HydrixMapper::MapList(System.Collections.Generic.IEnumerable`1<TSource>)
+DA:193,13
+DA:194,2
+DA:196,11
+DA:197,11
+DA:198,11
+DA:199,11
+DA:202,11
+DA:204,4
+DA:205,4
+DA:207,4
+DA:208,1
+DA:210,3
+DA:211,3
+DA:212,3
+DA:216,7
+DA:218,3
+DA:219,1
+DA:221,2
+DA:222,2
+DA:223,2
+DA:226,4
+DA:227,4
+DA:228,4
+BRDA:193,1,0,2
+BRDA:193,1,1,11
+BRDA:202,54,0,4
+BRDA:207,70,0,1
+BRDA:207,70,1,3
+BRDA:202,54,1,7
+BRDA:216,94,0,3
+BRDA:218,102,0,1
+BRDA:218,102,1,2
+BRDA:216,94,1,4
+FN:252,Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.HydrixMapper::GetPlan(System.Type,System.Type)
+FNDA:257,Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.HydrixMapper::GetPlan(System.Type,System.Type)
+DA:253,257
+DA:254,257
+DA:255,257
+DA:257,257
+DA:258,257
+DA:259,257
+DA:260,257
+DA:261,257
+DA:262,257
+DA:263,450
+DA:264,450
+DA:265,450
+DA:266,450
+BRDA:257,60,0,193
+BRDA:257,60,1,64
+FN:284,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::CreateResultBuffer(System.Collections.Generic.IEnumerable`1<System.Object>)
+FNDA:6,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::CreateResultBuffer(System.Collections.Generic.IEnumerable`1<System.Object>)
+DA:285,6
+DA:287,4
+DA:288,4
+DA:291,2
+DA:293,1
+DA:294,1
+DA:297,1
+BRDA:285,8,0,4
+BRDA:285,8,1,2
+BRDA:291,30,0,1
+BRDA:291,30,1,1
+FN:318,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::CreateResultBuffer(System.Collections.Generic.IEnumerable`1<TSource>)
+FNDA:4,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::CreateResultBuffer(System.Collections.Generic.IEnumerable`1<TSource>)
+DA:319,4
+DA:320,1
+DA:321,1
+DA:323,3
+DA:324,1
+DA:325,1
+DA:327,2
+DA:328,1
+DA:329,1
+DA:331,1
+BRDA:319,8,0,1
+BRDA:319,8,1,3
+BRDA:323,30,0,1
+BRDA:323,30,1,2
+BRDA:327,52,0,1
+BRDA:327,52,1,1
+FN:342,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapSpan(System.Span`1<TSource>,System.Func`2<TSource,TTarget>)
+FNDA:3,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapSpan(System.Span`1<TSource>,System.Func`2<TSource,TTarget>)
+DA:343,3
+DA:344,3
+DA:346,22
+DA:348,8
+DA:351,7
+DA:352,7
+DA:353,7
+DA:356,3
+BRDA:346,74,1,8
+BRDA:348,35,0,7
+BRDA:348,35,1,8
+BRDA:346,74,0,3
+FN:368,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapIList(System.Collections.Generic.IList`1<TSource>,System.Func`2<TSource,TTarget>)
+FNDA:2,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapIList(System.Collections.Generic.IList`1<TSource>,System.Func`2<TSource,TTarget>)
+DA:369,2
+DA:370,2
+DA:371,2
+DA:373,14
+DA:375,5
+DA:376,5
+DA:379,4
+DA:380,4
+DA:381,4
+DA:384,2
+BRDA:373,53,1,5
+BRDA:376,32,0,4
+BRDA:376,32,1,5
+BRDA:373,53,0,2
+FN:394,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapEnumerable(System.Collections.Generic.IEnumerable`1<TSource>,System.Func`2<TSource,TTarget>)
+FNDA:4,System.Collections.Generic.List`1<TTarget> Hydrix.Mapper.HydrixMapper::MapEnumerable(System.Collections.Generic.IEnumerable`1<TSource>,System.Func`2<TSource,TTarget>)
+DA:395,4
+DA:396,4
+DA:398,24
+DA:400,8
+DA:403,7
+DA:404,7
+DA:405,7
+DA:408,4
+BRDA:398,50,1,8
+BRDA:400,29,0,7
+BRDA:400,29,1,12
+BRDA:398,50,0,4
+FN:41,System.Void Hydrix.Mapper.HydrixMapper::.ctor(Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:197,System.Void Hydrix.Mapper.HydrixMapper::.ctor(Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:42,197
+DA:43,197
+DA:51,197
+DA:52,197
+DA:55,197
+DA:56,196
+DA:62,196
+FN:456,System.Boolean Hydrix.Mapper.HydrixMapper/TypePair::Equals(Hydrix.Mapper.HydrixMapper/TypePair)
+FNDA:76,System.Boolean Hydrix.Mapper.HydrixMapper/TypePair::Equals(Hydrix.Mapper.HydrixMapper/TypePair)
+DA:457,76
+DA:458,76
+BRDA:457,17,0,75
+BRDA:457,17,1,1
+FN:471,System.Boolean Hydrix.Mapper.HydrixMapper/TypePair::Equals(System.Object)
+FNDA:2,System.Boolean Hydrix.Mapper.HydrixMapper/TypePair::Equals(System.Object)
+DA:472,2
+DA:473,2
+BRDA:472,6,0,1
+BRDA:472,6,1,1
+FN:484,System.Int32 Hydrix.Mapper.HydrixMapper/TypePair::GetHashCode()
+FNDA:450,System.Int32 Hydrix.Mapper.HydrixMapper/TypePair::GetHashCode()
+DA:485,450
+FN:440,System.Void Hydrix.Mapper.HydrixMapper/TypePair::.ctor(System.Type,System.Type)
+FNDA:264,System.Void Hydrix.Mapper.HydrixMapper/TypePair::.ctor(System.Type,System.Type)
+DA:441,264
+DA:442,264
+DA:443,264
+LF:127
+LH:127
+BRF:46
+BRH:46
+FNF:15
+FNH:15
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Plans\MapPlan.cs
+FN:41,System.Void Hydrix.Mapper.Plans.MapPlan::.ctor(System.Func`2<System.Object,System.Object>,System.Delegate)
+FNDA:155,System.Void Hydrix.Mapper.Plans.MapPlan::.ctor(System.Func`2<System.Object,System.Object>,System.Delegate)
+DA:42,155
+DA:43,155
+DA:44,155
+DA:46,155
+DA:47,155
+DA:48,155
+LF:6
+LH:6
+BRF:0
+BRH:0
+FNF:1
+FNH:1
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Internals\NestedCollectionHelper.cs
+FN:32,System.Collections.Generic.List`1<TDest> Hydrix.Mapper.Internals.NestedCollectionHelper::MapList(System.Collections.Generic.IEnumerable`1<TSrc>,System.Func`2<TSrc,TDest>)
+FNDA:2,System.Collections.Generic.List`1<TDest> Hydrix.Mapper.Internals.NestedCollectionHelper::MapList(System.Collections.Generic.IEnumerable`1<TSrc>,System.Func`2<TSrc,TDest>)
+DA:33,2
+DA:34,0
+DA:36,2
+DA:37,2
+DA:38,2
+DA:40,14
+DA:42,5
+DA:43,4
+DA:46,2
+BRDA:33,1,0,0
+BRDA:33,1,1,2
+BRDA:36,13,0,1
+BRDA:36,13,1,1
+BRDA:40,77,1,5
+BRDA:42,56,0,4
+BRDA:42,56,1,7
+BRDA:40,77,0,2
+LF:9
+LH:8
+BRF:8
+BRH:7
+FNF:1
+FNH:1
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Extensions\MapperExtensions.cs
+FN:27,TTarget Hydrix.Mapper.Extensions.MapperExtensions::ToDto(System.Object)
+FNDA:7,TTarget Hydrix.Mapper.Extensions.MapperExtensions::ToDto(System.Object)
+DA:28,7
+DA:29,7
+DA:35,6
+DA:36,6
+FN:57,TTarget Hydrix.Mapper.Extensions.MapperExtensions::ToDto(TSource)
+FNDA:2,TTarget Hydrix.Mapper.Extensions.MapperExtensions::ToDto(TSource)
+DA:58,2
+DA:59,1
+DA:60,1
+DA:62,1
+DA:63,1
+BRDA:58,6,0,1
+BRDA:58,6,1,1
+FN:80,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.Extensions.MapperExtensions::ToDtoList(System.Collections.Generic.IEnumerable`1<System.Object>)
+FNDA:2,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.Extensions.MapperExtensions::ToDtoList(System.Collections.Generic.IEnumerable`1<System.Object>)
+DA:81,2
+DA:82,2
+FN:101,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.Extensions.MapperExtensions::ToDtoList(System.Collections.Generic.IEnumerable`1<TSource>)
+FNDA:2,System.Collections.Generic.IReadOnlyList`1<TTarget> Hydrix.Mapper.Extensions.MapperExtensions::ToDtoList(System.Collections.Generic.IEnumerable`1<TSource>)
+DA:102,2
+DA:103,2
+LF:13
+LH:13
+BRF:2
+BRH:2
+FNF:4
+FNH:4
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\DependencyInjection\HydrixMapperServiceCollectionExtensions.cs
+FN:30,Microsoft.Extensions.DependencyInjection.IServiceCollection Hydrix.Mapper.DependencyInjection.HydrixMapperServiceCollectionExtensions::AddHydrixMapper(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action`1<Hydrix.Mapper.Configuration.HydrixMapperOptions>)
+FNDA:8,Microsoft.Extensions.DependencyInjection.IServiceCollection Hydrix.Mapper.DependencyInjection.HydrixMapperServiceCollectionExtensions::AddHydrixMapper(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action`1<Hydrix.Mapper.Configuration.HydrixMapperOptions>)
+DA:31,8
+DA:32,8
+DA:38,7
+DA:39,7
+DA:40,7
+DA:42,7
+DA:43,7
+DA:45,7
+DA:46,7
+DA:47,7
+DA:48,7
+DA:50,7
+BRDA:39,18,0,5
+BRDA:39,18,1,7
+LF:12
+LH:12
+BRF:2
+BRH:2
+FNF:1
+FNH:1
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Converters\ConverterFactory.cs
+FN:224,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildConversionExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:530,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildConversionExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:225,530
+DA:226,530
+DA:227,530
+DA:228,530
+DA:229,530
+DA:230,530
+DA:231,530
+DA:233,530
+DA:234,530
+DA:235,530
+DA:236,530
+DA:237,530
+DA:239,530
+DA:240,530
+DA:241,530
+DA:242,530
+DA:243,530
+DA:244,530
+DA:245,490
+DA:246,490
+DA:247,490
+DA:248,490
+DA:249,490
+DA:251,490
+DA:253,16
+DA:254,16
+DA:255,16
+DA:256,16
+DA:257,16
+DA:258,16
+DA:259,16
+DA:260,16
+DA:261,16
+DA:264,474
+DA:268,184
+DA:269,184
+DA:270,184
+DA:271,140
+DA:273,44
+DA:274,44
+DA:275,44
+DA:276,44
+DA:277,44
+DA:278,44
+DA:279,44
+DA:280,44
+DA:281,44
+DA:282,44
+DA:283,44
+DA:286,290
+BRDA:225,7,0,514
+BRDA:225,7,1,530
+BRDA:227,19,0,526
+BRDA:227,19,1,530
+BRDA:233,50,0,514
+BRDA:233,50,1,16
+BRDA:245,83,0,486
+BRDA:245,83,1,4
+BRDA:251,99,0,16
+BRDA:251,99,1,474
+BRDA:264,131,0,184
+BRDA:268,137,0,140
+BRDA:268,137,1,44
+BRDA:264,131,1,290
+FN:304,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildCoreConversion(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:530,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildCoreConversion(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:305,530
+DA:306,346
+DA:307,346
+DA:308,346
+DA:309,346
+DA:310,346
+DA:311,346
+DA:312,346
+DA:314,184
+DA:315,84
+DA:316,84
+DA:317,84
+DA:318,84
+DA:319,84
+DA:321,100
+DA:322,2
+DA:323,2
+DA:324,2
+DA:326,98
+DA:327,2
+DA:328,2
+DA:329,2
+DA:331,96
+DA:332,54
+DA:333,54
+DA:334,54
+DA:335,54
+DA:336,54
+DA:337,54
+DA:339,42
+DA:340,2
+DA:341,2
+DA:342,2
+DA:343,2
+DA:344,2
+DA:345,2
+DA:347,40
+DA:348,40
+DA:349,40
+BRDA:305,7,0,346
+BRDA:306,25,0,162
+BRDA:306,25,1,184
+BRDA:305,7,1,184
+BRDA:314,60,0,84
+BRDA:314,60,1,100
+BRDA:321,79,0,2
+BRDA:321,87,0,2
+BRDA:321,79,1,98
+BRDA:321,87,1,98
+BRDA:326,103,0,2
+BRDA:326,111,0,2
+BRDA:326,103,1,96
+BRDA:326,111,1,96
+BRDA:331,127,0,54
+BRDA:331,135,0,54
+BRDA:331,127,1,42
+BRDA:331,135,1,42
+BRDA:339,155,0,2
+BRDA:339,163,0,2
+BRDA:339,155,1,40
+BRDA:339,163,1,40
+FN:365,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildToStringConversion(System.Linq.Expressions.Expression,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:85,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildToStringConversion(System.Linq.Expressions.Expression,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:366,85
+DA:367,22
+DA:368,22
+DA:369,22
+DA:370,22
+DA:371,22
+DA:372,22
+DA:373,22
+DA:374,22
+DA:376,63
+DA:377,24
+DA:378,24
+DA:379,24
+DA:380,24
+DA:382,39
+DA:383,8
+DA:384,8
+DA:385,8
+DA:386,8
+DA:389,31
+DA:390,4
+DA:391,4
+DA:392,4
+DA:393,4
+DA:396,27
+DA:397,24
+DA:398,24
+DA:399,24
+DA:400,24
+DA:402,3
+DA:403,2
+DA:404,2
+DA:405,2
+DA:406,2
+DA:407,2
+DA:409,1
+DA:410,1
+DA:411,1
+BRDA:366,16,0,22
+BRDA:366,16,1,63
+BRDA:376,55,0,24
+BRDA:376,55,1,39
+BRDA:382,82,0,8
+BRDA:382,82,1,31
+BRDA:389,109,0,4
+BRDA:389,109,1,27
+BRDA:396,136,0,24
+BRDA:396,136,1,3
+BRDA:402,153,0,2
+BRDA:402,153,1,1
+FN:423,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildStringTransform(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.StringTransforms)
+FNDA:184,System.Linq.Expressions.Expression Hydrix.Mapper.Converters.ConverterFactory::BuildStringTransform(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.StringTransforms)
+DA:424,184
+DA:425,140
+DA:427,44
+DA:429,44
+DA:431,14
+DA:432,14
+DA:433,14
+DA:435,30
+DA:437,4
+DA:438,4
+DA:439,4
+DA:441,26
+DA:443,4
+DA:444,4
+DA:445,4
+DA:448,44
+DA:450,18
+DA:451,18
+DA:452,18
+DA:454,26
+DA:456,14
+DA:457,14
+DA:458,14
+DA:461,44
+BRDA:424,1,0,140
+BRDA:424,1,1,44
+BRDA:429,10,0,14
+BRDA:429,10,1,30
+BRDA:435,29,0,4
+BRDA:435,29,1,26
+BRDA:441,48,0,4
+BRDA:441,48,1,44
+BRDA:448,65,0,18
+BRDA:448,65,1,26
+BRDA:454,85,0,14
+BRDA:454,85,1,44
+FN:475,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildGuidToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.GuidFormat,Hydrix.Mapper.Primitives.GuidCase)
+FNDA:22,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildGuidToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.GuidFormat,Hydrix.Mapper.Primitives.GuidCase)
+DA:476,22
+DA:477,22
+DA:478,4
+DA:479,4
+DA:480,4
+DA:481,10
+DA:482,22
+DA:484,22
+DA:485,22
+DA:486,22
+DA:487,22
+DA:488,22
+DA:490,22
+DA:491,22
+DA:492,22
+DA:493,22
+DA:494,22
+BRDA:476,3,1,4
+BRDA:476,3,2,4
+BRDA:476,3,3,4
+BRDA:476,3,0,10
+BRDA:490,83,0,18
+BRDA:490,83,1,4
+FN:508,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateTimeToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:24,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateTimeToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:509,24
+DA:510,24
+DA:511,24
+DA:512,24
+DA:514,24
+DA:516,4
+DA:517,4
+DA:518,4
+DA:520,20
+DA:522,2
+DA:523,2
+DA:524,2
+DA:527,24
+DA:528,24
+DA:529,24
+DA:530,24
+DA:531,24
+DA:532,24
+DA:533,24
+DA:534,24
+DA:535,24
+BRDA:514,31,0,4
+BRDA:514,31,1,20
+BRDA:520,49,0,2
+BRDA:520,49,1,24
+FN:549,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateTimeOffsetToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:8,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateTimeOffsetToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:550,8
+DA:551,8
+DA:552,8
+DA:553,8
+DA:555,8
+DA:557,2
+DA:558,2
+DA:559,2
+DA:561,6
+DA:563,2
+DA:564,2
+DA:565,2
+DA:568,8
+DA:569,8
+DA:570,8
+DA:571,8
+DA:572,8
+DA:573,8
+DA:574,8
+DA:575,8
+DA:576,8
+BRDA:555,31,0,2
+BRDA:555,31,1,6
+BRDA:561,49,0,2
+BRDA:561,49,1,8
+FN:592,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateOnlyToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:6,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDateOnlyToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:593,6
+DA:594,6
+DA:595,6
+DA:597,6
+DA:598,6
+DA:599,6
+DA:600,6
+DA:601,6
+DA:602,6
+DA:603,6
+DA:604,6
+DA:605,6
+FN:625,System.Linq.Expressions.ConditionalExpression Hydrix.Mapper.Converters.ConverterFactory::BuildBoolToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:24,System.Linq.Expressions.ConditionalExpression Hydrix.Mapper.Converters.ConverterFactory::BuildBoolToString(System.Linq.Expressions.Expression,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:626,24
+DA:628,8
+DA:629,8
+DA:630,8
+DA:634,16
+DA:635,16
+DA:636,16
+DA:639,24
+DA:640,24
+DA:641,24
+DA:642,24
+DA:643,24
+DA:644,24
+DA:645,24
+DA:646,24
+DA:647,24
+DA:648,24
+BRDA:626,1,0,8
+BRDA:626,9,0,8
+BRDA:626,1,1,16
+BRDA:626,9,1,16
+FN:662,System.ValueTuple`2<System.String,System.String> Hydrix.Mapper.Converters.ConverterFactory::ResolveBoolStrings(Hydrix.Mapper.Primitives.BoolStringFormat,System.String,System.String)
+FNDA:24,System.ValueTuple`2<System.String,System.String> Hydrix.Mapper.Converters.ConverterFactory::ResolveBoolStrings(Hydrix.Mapper.Primitives.BoolStringFormat,System.String,System.String)
+DA:663,24
+DA:664,24
+DA:665,4
+DA:666,2
+DA:667,4
+DA:668,4
+DA:669,2
+DA:670,6
+DA:671,2
+DA:672,24
+BRDA:663,3,1,4
+BRDA:663,3,2,2
+BRDA:663,3,3,4
+BRDA:663,3,4,4
+BRDA:663,3,5,2
+BRDA:663,3,6,6
+BRDA:670,126,0,2
+BRDA:670,126,1,6
+BRDA:670,136,0,2
+BRDA:670,136,1,6
+BRDA:663,3,0,2
+FN:690,System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDecimalToInteger(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:54,System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildDecimalToInteger(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:691,54
+DA:692,54
+DA:693,54
+DA:694,54
+DA:695,54
+DA:696,54
+DA:698,54
+DA:700,34
+DA:701,34
+DA:702,34
+DA:704,34
+DA:706,2
+DA:707,2
+DA:708,2
+DA:711,32
+DA:712,32
+DA:713,32
+DA:714,32
+DA:715,32
+DA:716,32
+DA:717,32
+DA:720,20
+DA:721,20
+DA:722,20
+DA:723,20
+DA:724,20
+DA:725,20
+DA:726,20
+DA:727,20
+DA:729,20
+DA:731,8
+DA:732,8
+DA:733,8
+DA:736,12
+DA:737,12
+DA:738,12
+DA:739,12
+DA:740,12
+DA:741,12
+DA:742,12
+BRDA:698,34,0,34
+BRDA:704,46,0,2
+BRDA:704,46,1,32
+BRDA:698,34,1,20
+BRDA:720,96,0,2
+BRDA:720,96,1,18
+BRDA:729,126,0,8
+BRDA:729,126,1,12
+FN:754,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::ApplyDecimalRounding(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.NumericRounding)
+FNDA:34,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::ApplyDecimalRounding(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.NumericRounding)
+DA:755,34
+DA:756,34
+DA:757,6
+DA:758,6
+DA:759,6
+DA:760,4
+DA:761,4
+DA:762,4
+DA:763,6
+DA:764,6
+DA:765,6
+DA:766,6
+DA:767,6
+DA:768,4
+DA:769,4
+DA:770,4
+DA:771,4
+DA:772,4
+DA:773,14
+DA:774,14
+DA:775,14
+DA:776,34
+BRDA:755,3,1,6
+BRDA:755,3,2,4
+BRDA:755,3,3,6
+BRDA:755,3,4,4
+BRDA:755,3,0,14
+FN:788,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::ApplyDoubleRounding(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.NumericRounding)
+FNDA:20,System.Linq.Expressions.MethodCallExpression Hydrix.Mapper.Converters.ConverterFactory::ApplyDoubleRounding(System.Linq.Expressions.Expression,Hydrix.Mapper.Primitives.NumericRounding)
+DA:789,20
+DA:790,20
+DA:791,2
+DA:792,2
+DA:793,2
+DA:794,2
+DA:795,2
+DA:796,2
+DA:797,2
+DA:798,2
+DA:799,2
+DA:800,2
+DA:801,2
+DA:802,2
+DA:803,2
+DA:804,2
+DA:805,2
+DA:806,2
+DA:807,12
+DA:808,12
+DA:809,12
+DA:810,20
+BRDA:789,3,1,2
+BRDA:789,3,2,2
+BRDA:789,3,3,2
+BRDA:789,3,4,2
+BRDA:789,3,0,12
+FN:827,System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildNumericCast(System.Linq.Expressions.Expression,System.Type,Hydrix.Mapper.Primitives.NumericOverflow)
+FNDA:6,System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildNumericCast(System.Linq.Expressions.Expression,System.Type,Hydrix.Mapper.Primitives.NumericOverflow)
+DA:828,6
+DA:829,6
+DA:830,6
+DA:833,2
+DA:834,2
+DA:835,2
+DA:838,40
+DA:839,40
+DA:840,40
+BRDA:828,1,0,42
+BRDA:828,1,1,6
+BRDA:828,5,1,2
+BRDA:828,5,0,40
+FN:853,System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildClampedCast(System.Linq.Expressions.Expression,System.Type)
+FNDA:15,System.Linq.Expressions.UnaryExpression Hydrix.Mapper.Converters.ConverterFactory::BuildClampedCast(System.Linq.Expressions.Expression,System.Type)
+DA:854,15
+DA:855,15
+DA:856,15
+DA:857,15
+DA:859,15
+DA:861,2
+DA:862,2
+DA:863,2
+DA:864,2
+DA:865,2
+DA:866,2
+DA:867,2
+DA:868,2
+DA:869,2
+DA:870,2
+DA:871,2
+DA:872,2
+DA:875,13
+DA:877,2
+DA:878,2
+DA:879,2
+DA:880,2
+DA:881,2
+DA:882,2
+DA:883,2
+DA:884,2
+DA:885,2
+DA:886,2
+DA:889,11
+DA:890,11
+DA:891,11
+DA:892,11
+DA:893,11
+DA:894,11
+DA:895,11
+DA:896,11
+DA:897,11
+DA:898,11
+DA:899,11
+DA:900,11
+DA:901,11
+DA:902,11
+BRDA:859,35,0,2
+BRDA:859,35,1,13
+BRDA:875,108,0,2
+BRDA:875,108,1,11
+BRDA:889,176,0,1
+BRDA:889,176,1,10
+FN:916,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::ClampDecimalToLong(System.Decimal,System.Int64,System.Int64)
+FNDA:3,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::ClampDecimalToLong(System.Decimal,System.Int64,System.Int64)
+DA:917,3
+DA:918,1
+DA:920,2
+DA:921,1
+DA:923,1
+BRDA:917,12,0,1
+BRDA:917,12,1,2
+BRDA:920,28,0,1
+BRDA:920,28,1,1
+FN:937,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::ClampDoubleToLong(System.Double,System.Int64,System.Int64)
+FNDA:8,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::ClampDoubleToLong(System.Double,System.Int64,System.Int64)
+DA:938,8
+DA:939,1
+DA:941,7
+DA:942,4
+DA:944,3
+DA:945,2
+DA:947,1
+BRDA:938,6,0,1
+BRDA:938,6,1,7
+BRDA:941,14,0,4
+BRDA:941,14,1,3
+BRDA:944,21,0,2
+BRDA:944,21,1,1
+FN:959,Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Converters.ConverterFactory::ResolveStringTransform(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:185,Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Converters.ConverterFactory::ResolveStringTransform(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:960,185
+DA:961,18
+DA:963,167
+BRDA:960,1,0,19
+BRDA:960,9,0,1
+BRDA:960,9,1,18
+BRDA:960,17,0,18
+BRDA:960,1,1,167
+BRDA:960,17,1,167
+FN:975,Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Converters.ConverterFactory::ResolveGuidFormat(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:22,Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Converters.ConverterFactory::ResolveGuidFormat(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:976,22
+DA:977,10
+DA:979,12
+BRDA:976,1,0,10
+BRDA:976,9,0,10
+BRDA:976,1,1,12
+BRDA:976,9,1,12
+FN:991,Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Converters.ConverterFactory::ResolveGuidCase(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:22,Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Converters.ConverterFactory::ResolveGuidCase(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:992,22
+DA:993,10
+DA:995,12
+BRDA:992,1,0,10
+BRDA:992,9,0,10
+BRDA:992,1,1,12
+BRDA:992,9,1,12
+FN:1007,Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Converters.ConverterFactory::ResolveRounding(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:54,Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Converters.ConverterFactory::ResolveRounding(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:1008,54
+DA:1009,20
+DA:1011,34
+BRDA:1008,1,0,20
+BRDA:1008,9,0,20
+BRDA:1008,1,1,34
+BRDA:1008,9,1,34
+FN:1023,Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Converters.ConverterFactory::ResolveOverflow(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:56,Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Converters.ConverterFactory::ResolveOverflow(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:1024,56
+DA:1025,20
+DA:1027,36
+BRDA:1024,1,0,20
+BRDA:1024,9,0,20
+BRDA:1024,1,1,36
+BRDA:1024,9,1,36
+FN:1039,System.ValueTuple`3<System.String,Hydrix.Mapper.Primitives.DateTimeZone,System.String> Hydrix.Mapper.Converters.ConverterFactory::ResolveDateTimeParams(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:39,System.ValueTuple`3<System.String,Hydrix.Mapper.Primitives.DateTimeZone,System.String> Hydrix.Mapper.Converters.ConverterFactory::ResolveDateTimeParams(Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:1040,39
+DA:1042,12
+DA:1043,12
+DA:1044,12
+DA:1045,12
+DA:1048,27
+DA:1049,27
+DA:1050,27
+DA:1051,27
+BRDA:1040,1,0,13
+BRDA:1040,9,0,12
+BRDA:1042,18,0,4
+BRDA:1042,33,0,1
+BRDA:1042,18,1,12
+BRDA:1042,33,1,12
+BRDA:1042,54,0,8
+BRDA:1042,69,0,1
+BRDA:1042,54,1,12
+BRDA:1042,69,1,12
+BRDA:1040,1,1,27
+BRDA:1040,9,1,27
+BRDA:1048,95,0,2
+BRDA:1048,95,1,27
+BRDA:1048,126,0,2
+BRDA:1048,126,1,27
+FN:1061,System.Globalization.CultureInfo Hydrix.Mapper.Converters.ConverterFactory::ResolveCulture(System.String)
+FNDA:38,System.Globalization.CultureInfo Hydrix.Mapper.Converters.ConverterFactory::ResolveCulture(System.String)
+DA:1062,38
+DA:1063,30
+DA:1065,8
+DA:1066,8
+BRDA:1062,6,0,30
+BRDA:1062,6,1,8
+FN:1075,System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsIntegerType(System.Type)
+FNDA:102,System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsIntegerType(System.Type)
+DA:1076,102
+DA:1077,102
+DA:1078,102
+DA:1079,102
+DA:1080,102
+DA:1081,102
+DA:1082,102
+DA:1083,102
+BRDA:1076,16,0,54
+BRDA:1076,34,0,52
+BRDA:1076,52,0,52
+BRDA:1076,70,0,50
+BRDA:1076,88,0,48
+BRDA:1076,106,0,46
+BRDA:1076,124,0,44
+BRDA:1076,16,1,58
+BRDA:1076,34,1,58
+BRDA:1076,52,1,58
+BRDA:1076,70,1,58
+BRDA:1076,88,1,58
+BRDA:1076,106,1,58
+BRDA:1076,124,1,58
+FN:1091,System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsDecimalFloatType(System.Type)
+FNDA:138,System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsDecimalFloatType(System.Type)
+DA:1092,138
+DA:1093,138
+DA:1094,138
+BRDA:1092,16,0,102
+BRDA:1092,34,0,84
+BRDA:1092,16,1,54
+BRDA:1092,34,1,54
+FN:1102,System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsNumericType(System.Type)
+FNDA:44,System.Boolean Hydrix.Mapper.Converters.ConverterFactory::IsNumericType(System.Type)
+DA:1103,44
+DA:1104,44
+DA:1105,44
+BRDA:1103,6,0,42
+BRDA:1103,6,1,2
+FN:1114,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::GetMinLong(System.Type)
+FNDA:15,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::GetMinLong(System.Type)
+DA:1115,15
+DA:1116,3
+DA:1117,12
+DA:1118,1
+DA:1119,11
+DA:1120,2
+DA:1121,9
+DA:1122,2
+DA:1123,7
+DA:1124,2
+DA:1125,5
+DA:1126,2
+DA:1127,3
+DA:1128,2
+DA:1130,1
+BRDA:1115,16,0,3
+BRDA:1115,16,1,12
+BRDA:1117,41,0,1
+BRDA:1117,41,1,11
+BRDA:1119,66,0,2
+BRDA:1119,66,1,9
+BRDA:1121,87,0,2
+BRDA:1121,87,1,7
+BRDA:1123,109,0,2
+BRDA:1123,109,1,5
+BRDA:1125,130,0,2
+BRDA:1125,130,1,3
+BRDA:1127,151,0,2
+BRDA:1127,151,1,1
+FN:1140,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::GetMaxLong(System.Type)
+FNDA:15,System.Int64 Hydrix.Mapper.Converters.ConverterFactory::GetMaxLong(System.Type)
+DA:1141,15
+DA:1142,3
+DA:1143,12
+DA:1144,1
+DA:1145,11
+DA:1146,2
+DA:1147,9
+DA:1148,2
+DA:1149,7
+DA:1150,2
+DA:1151,5
+DA:1152,2
+DA:1153,3
+DA:1154,3
+BRDA:1141,16,0,3
+BRDA:1141,16,1,12
+BRDA:1143,41,0,1
+BRDA:1143,41,1,11
+BRDA:1145,66,0,2
+BRDA:1145,66,1,9
+BRDA:1147,91,0,2
+BRDA:1147,91,1,7
+BRDA:1149,113,0,2
+BRDA:1149,113,1,5
+BRDA:1151,138,0,2
+BRDA:1151,138,1,3
+FN:27,System.Void Hydrix.Mapper.Converters.ConverterFactory::.cctor()
+FNDA:1,System.Void Hydrix.Mapper.Converters.ConverterFactory::.cctor()
+DA:28,1
+DA:29,1
+DA:30,1
+DA:35,1
+DA:36,1
+DA:37,1
+DA:42,1
+DA:43,1
+DA:44,1
+DA:49,1
+DA:50,1
+DA:51,1
+DA:56,1
+DA:57,1
+DA:58,1
+DA:63,1
+DA:64,1
+DA:65,1
+DA:70,1
+DA:71,1
+DA:72,1
+DA:77,1
+DA:78,1
+DA:79,1
+DA:84,1
+DA:85,1
+DA:86,1
+DA:91,1
+DA:92,1
+DA:93,1
+DA:98,1
+DA:99,1
+DA:100,1
+DA:105,1
+DA:106,1
+DA:107,1
+DA:112,1
+DA:113,1
+DA:114,1
+DA:119,1
+DA:120,1
+DA:121,1
+DA:126,1
+DA:127,1
+DA:128,1
+DA:133,1
+DA:134,1
+DA:135,1
+DA:140,1
+DA:141,1
+DA:142,1
+DA:147,1
+DA:148,1
+DA:149,1
+DA:154,1
+DA:155,1
+DA:156,1
+DA:161,1
+DA:162,1
+DA:163,1
+DA:168,1
+DA:169,1
+DA:170,1
+DA:175,1
+DA:176,1
+DA:177,1
+DA:182,1
+DA:183,1
+DA:188,1
+DA:189,1
+DA:194,1
+DA:195,1
+DA:196,1
+DA:203,1
+DA:204,1
+DA:205,1
+LF:543
+LH:543
+BRF:213
+BRH:213
+FNF:30
+FNH:30
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Configuration\BoolOptions.cs
+FN:21,Hydrix.Mapper.Primitives.BoolStringFormat Hydrix.Mapper.Configuration.BoolOptions::get_StringFormat()
+FNDA:823,Hydrix.Mapper.Primitives.BoolStringFormat Hydrix.Mapper.Configuration.BoolOptions::get_StringFormat()
+DA:22,823
+FN:27,System.String Hydrix.Mapper.Configuration.BoolOptions::get_TrueValue()
+FNDA:1419,System.String Hydrix.Mapper.Configuration.BoolOptions::get_TrueValue()
+DA:28,1419
+FN:33,System.String Hydrix.Mapper.Configuration.BoolOptions::get_FalseValue()
+FNDA:1419,System.String Hydrix.Mapper.Configuration.BoolOptions::get_FalseValue()
+DA:34,1419
+LF:3
+LH:3
+BRF:0
+BRH:0
+FNF:3
+FNH:3
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Configuration\DateTimeOptions.cs
+FN:17,System.String Hydrix.Mapper.Configuration.DateTimeOptions::get_StringFormat()
+FNDA:1447,System.String Hydrix.Mapper.Configuration.DateTimeOptions::get_StringFormat()
+DA:18,1447
+FN:22,Hydrix.Mapper.Primitives.DateTimeZone Hydrix.Mapper.Configuration.DateTimeOptions::get_TimeZone()
+FNDA:837,Hydrix.Mapper.Primitives.DateTimeZone Hydrix.Mapper.Configuration.DateTimeOptions::get_TimeZone()
+DA:23,837
+FN:31,System.String Hydrix.Mapper.Configuration.DateTimeOptions::get_Culture()
+FNDA:1451,System.String Hydrix.Mapper.Configuration.DateTimeOptions::get_Culture()
+DA:32,1451
+LF:3
+LH:3
+BRF:0
+BRH:0
+FNF:3
+FNH:3
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Configuration\GuidOptions.cs
+FN:12,Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Configuration.GuidOptions::get_Format()
+FNDA:825,Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Configuration.GuidOptions::get_Format()
+DA:13,825
+FN:17,Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Configuration.GuidOptions::get_Case()
+FNDA:825,Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Configuration.GuidOptions::get_Case()
+DA:18,825
+LF:2
+LH:2
+BRF:0
+BRH:0
+FNF:2
+FNH:2
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Configuration\HydrixMapperConfiguration.cs
+FN:35,Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Configuration.HydrixMapperConfiguration::get_Options()
+FNDA:12,Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Configuration.HydrixMapperConfiguration::get_Options()
+DA:36,12
+DA:37,12
+FN:49,System.Void Hydrix.Mapper.Configuration.HydrixMapperConfiguration::Configure(Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:39,System.Void Hydrix.Mapper.Configuration.HydrixMapperConfiguration::Configure(Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:50,39
+DA:51,39
+DA:57,38
+DA:58,38
+DA:59,38
+DA:61,38
+DA:63,38
+DA:64,38
+DA:65,38
+DA:66,38
+FN:75,Hydrix.Mapper.HydrixMapper Hydrix.Mapper.Configuration.HydrixMapperConfiguration::GetOrCreateDefaultMapper()
+FNDA:11,Hydrix.Mapper.HydrixMapper Hydrix.Mapper.Configuration.HydrixMapperConfiguration::GetOrCreateDefaultMapper()
+DA:76,11
+DA:77,11
+DA:79,11
+DA:80,1
+DA:82,10
+DA:83,10
+DA:85,10
+DA:86,10
+DA:87,10
+DA:88,10
+DA:90,10
+DA:91,10
+BRDA:79,12,0,1
+BRDA:79,12,1,10
+FN:20,System.Void Hydrix.Mapper.Configuration.HydrixMapperConfiguration::.cctor()
+FNDA:1,System.Void Hydrix.Mapper.Configuration.HydrixMapperConfiguration::.cctor()
+DA:21,1
+LF:25
+LH:25
+BRF:2
+BRH:2
+FNF:4
+FNH:4
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Configuration\HydrixMapperOptions.cs
+FN:24,Hydrix.Mapper.Configuration.StringOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_String()
+FNDA:1597,Hydrix.Mapper.Configuration.StringOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_String()
+DA:25,1597
+FN:29,Hydrix.Mapper.Configuration.GuidOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Guid()
+FNDA:2251,Hydrix.Mapper.Configuration.GuidOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Guid()
+DA:30,2251
+FN:34,Hydrix.Mapper.Configuration.NumericOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Numeric()
+FNDA:2329,Hydrix.Mapper.Configuration.NumericOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Numeric()
+DA:35,2329
+FN:39,Hydrix.Mapper.Configuration.DateTimeOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_DateTime()
+FNDA:3134,Hydrix.Mapper.Configuration.DateTimeOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_DateTime()
+DA:40,3134
+FN:44,Hydrix.Mapper.Configuration.BoolOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Bool()
+FNDA:3060,Hydrix.Mapper.Configuration.BoolOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::get_Bool()
+DA:45,3060
+FN:50,System.Boolean Hydrix.Mapper.Configuration.HydrixMapperOptions::get_StrictMode()
+FNDA:812,System.Boolean Hydrix.Mapper.Configuration.HydrixMapperOptions::get_StrictMode()
+DA:51,812
+FN:55,System.Collections.Generic.Dictionary`2<System.Type,System.Type> Hydrix.Mapper.Configuration.HydrixMapperOptions::get_NestedMappings()
+FNDA:251,System.Collections.Generic.Dictionary`2<System.Type,System.Type> Hydrix.Mapper.Configuration.HydrixMapperOptions::get_NestedMappings()
+DA:56,251
+FN:66,System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::MapNested()
+FNDA:13,System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::MapNested()
+DA:67,13
+DA:68,13
+FN:87,System.Boolean Hydrix.Mapper.Configuration.HydrixMapperOptions::TryGetNestedSourceType(System.Type,System.Type&)
+FNDA:64,System.Boolean Hydrix.Mapper.Configuration.HydrixMapperOptions::TryGetNestedSourceType(System.Type,System.Type&)
+DA:88,64
+DA:89,64
+DA:90,64
+DA:92,26
+DA:95,38
+DA:96,38
+DA:98,38
+DA:100,12
+DA:101,12
+DA:104,26
+DA:105,26
+BRDA:88,13,0,26
+BRDA:88,13,1,38
+BRDA:98,26,0,12
+BRDA:98,26,1,26
+FN:114,System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::ImportNestedMappings(System.Collections.Generic.Dictionary`2<System.Type,System.Type>)
+FNDA:458,System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::ImportNestedMappings(System.Collections.Generic.Dictionary`2<System.Type,System.Type>)
+DA:115,458
+DA:117,26
+DA:119,203
+BRDA:115,49,1,26
+BRDA:115,49,0,203
+FN:129,Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::Clone()
+FNDA:196,Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Configuration.HydrixMapperOptions::Clone()
+DA:130,196
+DA:131,196
+DA:132,196
+DA:133,196
+DA:135,196
+DA:136,196
+DA:137,196
+DA:138,196
+DA:139,196
+DA:140,196
+DA:141,196
+DA:142,196
+DA:143,196
+DA:144,196
+DA:145,196
+DA:146,196
+DA:148,196
+FN:19,System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::.ctor()
+FNDA:601,System.Void Hydrix.Mapper.Configuration.HydrixMapperOptions::.ctor()
+DA:20,601
+LF:41
+LH:41
+BRF:6
+BRH:6
+FNF:12
+FNH:12
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Configuration\NumericOptions.cs
+FN:14,Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Configuration.NumericOptions::get_DecimalToIntRounding()
+FNDA:863,Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Configuration.NumericOptions::get_DecimalToIntRounding()
+DA:15,863
+FN:19,Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Configuration.NumericOptions::get_Overflow()
+FNDA:1466,Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Configuration.NumericOptions::get_Overflow()
+DA:20,1466
+LF:2
+LH:2
+BRF:0
+BRH:0
+FNF:2
+FNH:2
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Configuration\StringOptions.cs
+FN:12,Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Configuration.StringOptions::get_Transform()
+FNDA:996,Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Configuration.StringOptions::get_Transform()
+DA:13,996
+LF:1
+LH:1
+BRF:0
+BRH:0
+FNF:1
+FNH:1
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Caching\MapPlanCache.cs
+FN:45,Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.Caching.MapPlanCache::GetOrAdd(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:236,Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.Caching.MapPlanCache::GetOrAdd(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:46,236
+DA:47,236
+DA:48,236
+DA:49,236
+DA:50,236
+DA:51,236
+DA:53,236
+DA:54,236
+DA:55,236
+DA:57,72
+DA:60,164
+DA:61,164
+DA:62,164
+DA:63,327
+DA:64,327
+DA:65,327
+DA:66,327
+BRDA:53,36,0,72
+BRDA:53,36,1,164
+FN:86,System.Boolean Hydrix.Mapper.Caching.MapPlanCache::IsCached(System.Type,System.Type)
+FNDA:17,System.Boolean Hydrix.Mapper.Caching.MapPlanCache::IsCached(System.Type,System.Type)
+DA:87,17
+DA:89,5
+DA:90,3
+DA:93,2
+DA:94,3
+BRDA:87,63,1,5
+BRDA:89,37,0,4
+BRDA:89,51,0,3
+BRDA:89,37,1,7
+BRDA:89,51,1,7
+BRDA:87,63,0,2
+FN:115,System.Boolean Hydrix.Mapper.Caching.MapPlanCache::IsCached(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:2,System.Boolean Hydrix.Mapper.Caching.MapPlanCache::IsCached(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:116,2
+DA:117,2
+DA:118,2
+DA:119,2
+DA:120,2
+DA:121,2
+FN:126,System.Void Hydrix.Mapper.Caching.MapPlanCache::Clear()
+FNDA:48,System.Void Hydrix.Mapper.Caching.MapPlanCache::Clear()
+DA:127,48
+FN:21,System.Void Hydrix.Mapper.Caching.MapPlanCache::.cctor()
+FNDA:1,System.Void Hydrix.Mapper.Caching.MapPlanCache::.cctor()
+DA:22,1
+DA:23,1
+FN:203,System.Boolean Hydrix.Mapper.Caching.MapPlanKey::Equals(Hydrix.Mapper.Caching.MapPlanKey)
+FNDA:97,System.Boolean Hydrix.Mapper.Caching.MapPlanKey::Equals(Hydrix.Mapper.Caching.MapPlanKey)
+DA:204,97
+DA:205,97
+DA:206,97
+DA:207,97
+BRDA:204,17,0,96
+BRDA:204,36,0,95
+BRDA:204,17,1,2
+BRDA:204,36,1,2
+FN:220,System.Boolean Hydrix.Mapper.Caching.MapPlanKey::Equals(System.Object)
+FNDA:2,System.Boolean Hydrix.Mapper.Caching.MapPlanKey::Equals(System.Object)
+DA:221,2
+DA:222,2
+BRDA:221,6,0,1
+BRDA:221,6,1,1
+FN:233,System.Int32 Hydrix.Mapper.Caching.MapPlanKey::GetHashCode()
+FNDA:406,System.Int32 Hydrix.Mapper.Caching.MapPlanKey::GetHashCode()
+DA:234,406
+DA:235,406
+FN:163,System.Void Hydrix.Mapper.Caching.MapPlanKey::.ctor(System.Type,System.Type)
+FNDA:8,System.Void Hydrix.Mapper.Caching.MapPlanKey::.ctor(System.Type,System.Type)
+DA:164,8
+DA:165,8
+DA:166,8
+DA:167,8
+DA:168,8
+FN:186,System.Void Hydrix.Mapper.Caching.MapPlanKey::.ctor(System.Type,System.Type,Hydrix.Mapper.Caching.MapPlanOptionsKey)
+FNDA:248,System.Void Hydrix.Mapper.Caching.MapPlanKey::.ctor(System.Type,System.Type,Hydrix.Mapper.Caching.MapPlanOptionsKey)
+DA:187,248
+DA:188,248
+DA:189,248
+DA:190,248
+FN:403,Hydrix.Mapper.Caching.MapPlanOptionsKey Hydrix.Mapper.Caching.MapPlanOptionsKey::Create(Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:244,Hydrix.Mapper.Caching.MapPlanOptionsKey Hydrix.Mapper.Caching.MapPlanOptionsKey::Create(Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:404,244
+DA:405,244
+DA:406,244
+DA:407,244
+DA:408,244
+DA:409,244
+DA:410,244
+DA:411,244
+DA:412,244
+DA:413,244
+DA:414,244
+DA:415,244
+DA:416,244
+DA:417,244
+DA:418,244
+DA:419,244
+BRDA:404,139,0,237
+BRDA:404,139,1,7
+FN:428,Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Caching.MapPlanOptionsKey::ToOptions()
+FNDA:164,Hydrix.Mapper.Configuration.HydrixMapperOptions Hydrix.Mapper.Caching.MapPlanOptionsKey::ToOptions()
+DA:429,164
+DA:430,164
+DA:431,164
+DA:432,164
+DA:434,164
+DA:435,164
+DA:436,164
+DA:437,164
+DA:438,164
+DA:439,164
+DA:440,164
+DA:441,164
+DA:442,164
+DA:443,164
+DA:444,164
+DA:446,164
+DA:447,164
+DA:449,7
+DA:450,7
+DA:453,164
+BRDA:446,218,0,7
+BRDA:446,227,0,7
+BRDA:446,218,1,164
+BRDA:446,227,1,164
+FN:467,System.Boolean Hydrix.Mapper.Caching.MapPlanOptionsKey::Equals(Hydrix.Mapper.Caching.MapPlanOptionsKey)
+FNDA:96,System.Boolean Hydrix.Mapper.Caching.MapPlanOptionsKey::Equals(Hydrix.Mapper.Caching.MapPlanOptionsKey)
+DA:468,96
+DA:469,96
+DA:470,96
+DA:471,96
+DA:472,96
+DA:473,96
+DA:474,96
+DA:475,96
+DA:476,96
+DA:477,96
+DA:478,96
+DA:479,96
+DA:480,96
+DA:481,96
+DA:482,96
+DA:483,96
+DA:484,96
+DA:485,96
+DA:486,96
+DA:487,96
+DA:488,96
+DA:489,96
+DA:490,96
+DA:491,96
+DA:492,96
+DA:493,96
+DA:494,96
+DA:495,96
+BRDA:468,12,0,95
+BRDA:468,29,0,95
+BRDA:468,46,0,95
+BRDA:468,63,0,95
+BRDA:468,80,0,95
+BRDA:468,103,0,95
+BRDA:468,120,0,95
+BRDA:468,140,0,95
+BRDA:468,154,0,95
+BRDA:468,174,0,95
+BRDA:468,194,0,95
+BRDA:468,208,0,95
+BRDA:468,216,0,95
+BRDA:468,216,1,0
+BRDA:468,224,0,0
+BRDA:468,224,1,95
+BRDA:468,12,1,1
+BRDA:468,29,1,1
+BRDA:468,46,1,1
+BRDA:468,63,1,1
+BRDA:468,80,1,1
+BRDA:468,103,1,1
+BRDA:468,120,1,1
+BRDA:468,140,1,1
+BRDA:468,154,1,1
+BRDA:468,174,1,1
+BRDA:468,194,1,1
+BRDA:468,208,1,1
+FN:508,System.Boolean Hydrix.Mapper.Caching.MapPlanOptionsKey::Equals(System.Object)
+FNDA:2,System.Boolean Hydrix.Mapper.Caching.MapPlanOptionsKey::Equals(System.Object)
+DA:509,2
+DA:510,2
+BRDA:509,6,0,1
+BRDA:509,6,1,1
+FN:521,System.Int32 Hydrix.Mapper.Caching.MapPlanOptionsKey::GetHashCode()
+FNDA:406,System.Int32 Hydrix.Mapper.Caching.MapPlanOptionsKey::GetHashCode()
+DA:522,406
+DA:523,406
+DA:524,406
+DA:525,406
+DA:526,406
+DA:527,406
+DA:528,406
+DA:529,406
+DA:530,406
+DA:531,406
+DA:532,406
+DA:533,406
+DA:534,406
+DA:535,406
+DA:536,406
+DA:537,406
+DA:538,406
+DA:539,406
+DA:540,406
+DA:541,406
+DA:542,406
+BRDA:538,186,0,14
+BRDA:538,186,1,392
+FN:556,System.Int32 Hydrix.Mapper.Caching.MapPlanOptionsKey::GetStringHashCode(System.String)
+FNDA:1624,System.Int32 Hydrix.Mapper.Caching.MapPlanOptionsKey::GetStringHashCode(System.String)
+DA:557,1624
+DA:558,1624
+DA:559,1624
+DA:560,1624
+BRDA:557,1,0,1616
+BRDA:557,1,1,8
+FN:377,System.Void Hydrix.Mapper.Caching.MapPlanOptionsKey::.ctor(Hydrix.Mapper.Primitives.StringTransforms,Hydrix.Mapper.Primitives.GuidFormat,Hydrix.Mapper.Primitives.GuidCase,Hydrix.Mapper.Primitives.NumericRounding,Hydrix.Mapper.Primitives.NumericOverflow,System.String,Hydrix.Mapper.Primitives.DateTimeZone,System.String,Hydrix.Mapper.Primitives.BoolStringFormat,System.String,System.String,System.Boolean,System.Collections.Generic.Dictionary`2<System.Type,System.Type>)
+FNDA:244,System.Void Hydrix.Mapper.Caching.MapPlanOptionsKey::.ctor(Hydrix.Mapper.Primitives.StringTransforms,Hydrix.Mapper.Primitives.GuidFormat,Hydrix.Mapper.Primitives.GuidCase,Hydrix.Mapper.Primitives.NumericRounding,Hydrix.Mapper.Primitives.NumericOverflow,System.String,Hydrix.Mapper.Primitives.DateTimeZone,System.String,Hydrix.Mapper.Primitives.BoolStringFormat,System.String,System.String,System.Boolean,System.Collections.Generic.Dictionary`2<System.Type,System.Type>)
+DA:378,244
+DA:379,244
+DA:380,244
+DA:381,244
+DA:382,244
+DA:383,244
+DA:384,244
+DA:385,244
+DA:386,244
+DA:387,244
+DA:388,244
+DA:389,244
+DA:390,244
+DA:391,244
+FN:248,System.Void Hydrix.Mapper.Caching.MapPlanOptionsKey::.cctor()
+FNDA:1,System.Void Hydrix.Mapper.Caching.MapPlanOptionsKey::.cctor()
+DA:249,1
+DA:250,1
+LF:155
+LH:155
+BRF:54
+BRH:52
+FNF:18
+FNH:18
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Builders\MapPlanBuilder.cs
+FN:57,Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.Builders.MapPlanBuilder::Build(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:163,Hydrix.Mapper.Plans.MapPlan Hydrix.Mapper.Builders.MapPlanBuilder::Build(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:58,163
+DA:60,163
+DA:61,163
+DA:62,0
+DA:63,0
+DA:64,0
+DA:65,0
+DA:69,163
+DA:71,2
+DA:72,2
+DA:75,161
+DA:76,161
+DA:78,158
+DA:79,158
+DA:80,158
+DA:81,158
+DA:85,158
+DA:86,158
+DA:87,158
+DA:88,158
+DA:89,158
+DA:90,158
+DA:92,157
+DA:93,157
+DA:94,157
+DA:95,157
+DA:96,157
+DA:97,157
+DA:99,155
+DA:100,155
+DA:101,155
+DA:102,155
+DA:103,155
+DA:104,155
+DA:106,155
+DA:107,155
+DA:108,155
+DA:112,163
+DA:113,163
+DA:114,163
+DA:115,155
+BRDA:58,5,0,22
+BRDA:58,5,1,163
+BRDA:60,34,0,0
+BRDA:60,34,1,163
+BRDA:69,150,0,2
+BRDA:69,150,1,161
+FN:147,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>> Hydrix.Mapper.Builders.MapPlanBuilder::ResolvePropertyPairs(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Collections.Generic.Dictionary`2<System.String,System.Reflection.PropertyInfo>,System.Reflection.PropertyInfo[])
+FNDA:199,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>> Hydrix.Mapper.Builders.MapPlanBuilder::ResolvePropertyPairs(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Collections.Generic.Dictionary`2<System.String,System.Reflection.PropertyInfo>,System.Reflection.PropertyInfo[])
+DA:148,199
+DA:149,199
+DA:150,199
+DA:152,1067
+DA:154,335
+DA:157,333
+DA:160,331
+DA:163,330
+DA:164,330
+DA:165,330
+DA:170,329
+DA:171,329
+DA:172,329
+DA:174,10
+DA:176,1
+DA:177,1
+DA:178,1
+DA:179,1
+DA:185,319
+DA:186,319
+DA:188,319
+DA:189,319
+DA:192,198
+BRDA:152,285,1,335
+BRDA:154,30,0,333
+BRDA:157,46,0,331
+BRDA:160,58,0,330
+BRDA:163,80,0,329
+BRDA:170,99,0,10
+BRDA:174,110,0,1
+BRDA:170,99,1,319
+BRDA:154,30,1,334
+BRDA:157,46,1,334
+BRDA:160,58,1,334
+BRDA:163,80,1,334
+BRDA:174,110,1,334
+BRDA:152,285,0,198
+FN:228,System.Delegate Hydrix.Mapper.Builders.MapPlanBuilder::BuildTypedDelegate(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Reflection.ConstructorInfo,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>>)
+FNDA:157,System.Delegate Hydrix.Mapper.Builders.MapPlanBuilder::BuildTypedDelegate(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Reflection.ConstructorInfo,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>>)
+DA:229,157
+DA:230,157
+DA:231,157
+DA:233,157
+DA:234,157
+DA:235,157
+DA:238,157
+DA:239,157
+DA:242,157
+DA:243,157
+DA:244,157
+DA:245,157
+DA:246,157
+DA:248,742
+DA:250,215
+DA:251,215
+DA:252,215
+DA:253,215
+DA:254,215
+DA:255,215
+DA:256,215
+DA:257,215
+DA:258,215
+DA:259,215
+DA:263,155
+DA:264,155
+DA:266,155
+DA:267,155
+DA:268,155
+DA:270,155
+DA:271,155
+DA:272,155
+DA:274,155
+DA:275,155
+DA:276,155
+DA:277,155
+DA:278,155
+BRDA:248,127,1,215
+BRDA:248,127,0,155
+FN:315,System.Func`2<System.Object,System.Object> Hydrix.Mapper.Builders.MapPlanBuilder::BuildObjectExecute(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Reflection.ConstructorInfo,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>>)
+FNDA:155,System.Func`2<System.Object,System.Object> Hydrix.Mapper.Builders.MapPlanBuilder::BuildObjectExecute(System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions,System.Reflection.ConstructorInfo,System.Collections.Generic.List`1<System.ValueTuple`3<System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Attributes.MapConversionAttribute>>)
+DA:316,155
+DA:317,155
+DA:318,155
+DA:321,155
+DA:322,155
+DA:323,155
+DA:324,155
+DA:325,155
+DA:326,155
+DA:329,155
+DA:330,155
+DA:333,155
+DA:334,155
+DA:335,155
+DA:336,155
+DA:337,155
+DA:338,155
+DA:341,155
+DA:342,155
+DA:343,155
+DA:344,155
+DA:345,155
+DA:347,736
+DA:349,213
+DA:350,213
+DA:351,213
+DA:352,213
+DA:353,213
+DA:354,213
+DA:355,213
+DA:356,213
+DA:357,213
+DA:358,213
+DA:362,155
+DA:363,155
+DA:364,155
+DA:365,155
+DA:367,155
+DA:368,155
+DA:369,155
+DA:371,155
+DA:372,155
+DA:373,155
+BRDA:347,167,1,213
+BRDA:347,167,0,155
+FN:387,System.Collections.Generic.Dictionary`2<System.String,System.Reflection.PropertyInfo> Hydrix.Mapper.Builders.MapPlanBuilder::BuildPropertyLookup(System.Type)
+FNDA:199,System.Collections.Generic.Dictionary`2<System.String,System.Reflection.PropertyInfo> Hydrix.Mapper.Builders.MapPlanBuilder::BuildPropertyLookup(System.Type)
+DA:388,199
+DA:389,199
+DA:390,199
+DA:391,199
+DA:392,199
+DA:394,1082
+DA:396,342
+DA:399,340
+DA:402,338
+DA:405,337
+DA:408,199
+BRDA:394,82,1,342
+BRDA:396,37,0,340
+BRDA:399,50,0,338
+BRDA:402,59,0,337
+BRDA:396,37,1,342
+BRDA:399,50,1,342
+BRDA:402,59,1,342
+BRDA:394,82,0,199
+FN:455,System.Linq.Expressions.BinaryExpression Hydrix.Mapper.Builders.MapPlanBuilder::BuildPropertyAssignment(System.Type,System.Type,System.Linq.Expressions.Expression,System.Linq.Expressions.Expression,System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+FNDA:530,System.Linq.Expressions.BinaryExpression Hydrix.Mapper.Builders.MapPlanBuilder::BuildPropertyAssignment(System.Type,System.Type,System.Linq.Expressions.Expression,System.Linq.Expressions.Expression,System.Reflection.PropertyInfo,System.Reflection.PropertyInfo,Hydrix.Mapper.Configuration.HydrixMapperOptions,Hydrix.Mapper.Attributes.MapConversionAttribute)
+DA:456,530
+DA:457,530
+DA:458,530
+DA:463,530
+DA:464,530
+DA:465,530
+DA:466,530
+DA:467,530
+DA:468,530
+DA:469,490
+DA:470,40
+DA:472,40
+DA:473,40
+DA:474,40
+DA:475,40
+DA:476,40
+DA:478,40
+DA:479,40
+DA:480,40
+DA:481,40
+DA:482,40
+DA:483,40
+DA:484,38
+DA:486,528
+DA:487,528
+DA:488,528
+DA:489,528
+DA:490,528
+DA:491,528
+BRDA:478,63,0,2
+BRDA:478,63,1,38
+FN:512,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::TryBuildNestedExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:40,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::TryBuildNestedExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:513,40
+DA:514,40
+DA:515,40
+DA:516,40
+DA:518,14
+DA:519,14
+DA:520,14
+DA:521,14
+DA:522,14
+DA:526,26
+DA:527,26
+DA:528,26
+DA:529,26
+DA:530,26
+DA:531,26
+DA:532,26
+DA:533,26
+DA:534,26
+DA:535,26
+DA:537,24
+DA:538,24
+DA:539,24
+DA:540,24
+DA:541,24
+DA:542,24
+DA:545,2
+BRDA:513,9,0,14
+BRDA:513,18,0,14
+BRDA:513,9,1,26
+BRDA:513,18,1,26
+BRDA:526,38,0,25
+BRDA:526,48,0,24
+BRDA:526,59,0,24
+BRDA:526,68,0,24
+BRDA:526,38,1,2
+BRDA:526,48,1,2
+BRDA:526,59,1,2
+BRDA:526,68,1,2
+FN:567,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildNestedObjectExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:15,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildNestedObjectExpression(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:568,15
+DA:571,15
+DA:572,15
+DA:573,15
+DA:574,15
+DA:575,15
+DA:578,15
+DA:580,1
+DA:581,1
+DA:582,1
+DA:583,1
+DA:584,1
+DA:585,1
+DA:589,14
+DA:590,14
+DA:591,14
+DA:592,14
+DA:593,14
+DA:594,14
+DA:595,14
+DA:596,14
+DA:597,14
+DA:598,14
+DA:599,14
+DA:600,14
+DA:601,14
+DA:602,14
+BRDA:578,28,0,1
+BRDA:578,28,1,14
+FN:634,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildInlineNestedBodyBlock(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:41,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildInlineNestedBodyBlock(System.Linq.Expressions.Expression,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:635,41
+DA:636,41
+DA:637,41
+DA:638,41
+DA:639,41
+DA:640,41
+DA:641,41
+DA:642,41
+DA:643,41
+DA:644,41
+DA:646,41
+DA:647,41
+DA:649,41
+DA:650,41
+DA:651,41
+DA:652,41
+DA:654,286
+DA:656,102
+DA:657,102
+DA:658,102
+DA:659,102
+DA:660,102
+DA:661,102
+DA:662,102
+DA:663,102
+DA:664,102
+DA:665,102
+DA:668,41
+DA:670,41
+DA:671,41
+DA:672,41
+BRDA:654,148,1,102
+BRDA:654,148,0,41
+FN:687,System.Reflection.ConstructorInfo Hydrix.Mapper.Builders.MapPlanBuilder::ResolveConstructorOrThrow(System.Type)
+FNDA:202,System.Reflection.ConstructorInfo Hydrix.Mapper.Builders.MapPlanBuilder::ResolveConstructorOrThrow(System.Type)
+DA:688,202
+DA:689,202
+DA:690,202
+DA:691,202
+DA:692,202
+DA:693,202
+DA:694,202
+BRDA:688,16,0,3
+BRDA:688,16,1,199
+FN:718,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildNestedCollectionExpression(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:26,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildNestedCollectionExpression(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:719,26
+DA:720,26
+DA:721,26
+DA:722,26
+DA:723,26
+DA:724,26
+DA:726,26
+DA:729,26
+DA:730,26
+DA:732,26
+DA:733,26
+DA:734,26
+DA:735,26
+DA:737,26
+DA:738,26
+DA:739,26
+DA:740,26
+DA:741,26
+DA:742,26
+DA:743,26
+DA:744,26
+DA:745,26
+DA:749,0
+DA:750,0
+DA:751,0
+DA:752,0
+DA:753,0
+DA:754,0
+DA:755,0
+DA:756,0
+BRDA:729,92,0,0
+BRDA:729,92,1,26
+BRDA:729,101,0,26
+BRDA:732,110,0,0
+BRDA:732,110,1,26
+BRDA:729,101,1,0
+FN:812,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildIndexedCollectionLoop(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:26,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildIndexedCollectionLoop(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:813,26
+DA:814,26
+DA:815,26
+DA:816,26
+DA:818,26
+DA:819,26
+DA:820,26
+DA:821,26
+DA:822,26
+DA:825,26
+DA:826,26
+DA:827,26
+DA:828,26
+DA:829,26
+DA:831,26
+DA:832,26
+DA:833,26
+DA:834,26
+DA:835,26
+DA:836,26
+DA:837,26
+DA:838,26
+DA:839,26
+DA:840,26
+DA:841,26
+DA:842,26
+DA:843,26
+DA:844,26
+DA:845,26
+DA:846,26
+DA:847,26
+DA:848,26
+DA:849,26
+DA:850,26
+DA:851,26
+DA:852,26
+DA:853,26
+DA:854,26
+DA:855,26
+DA:856,26
+DA:857,26
+DA:858,26
+DA:859,26
+DA:860,26
+DA:861,26
+DA:863,26
+DA:864,26
+DA:865,26
+DA:866,26
+DA:867,26
+DA:868,26
+DA:869,26
+DA:870,26
+DA:871,26
+DA:872,26
+DA:873,26
+DA:874,26
+DA:875,26
+DA:876,26
+DA:877,26
+DA:878,26
+DA:879,26
+DA:882,26
+DA:883,26
+DA:884,26
+DA:885,26
+DA:886,26
+DA:887,26
+DA:888,26
+DA:889,26
+DA:890,26
+DA:891,26
+DA:892,26
+DA:893,26
+DA:894,26
+DA:895,26
+DA:896,26
+DA:897,26
+DA:898,26
+DA:899,26
+DA:900,26
+DA:901,26
+DA:902,26
+DA:903,26
+DA:904,26
+DA:905,26
+DA:906,26
+DA:907,26
+DA:908,26
+DA:909,26
+DA:910,26
+DA:911,26
+DA:912,26
+DA:913,26
+DA:914,26
+BRDA:831,179,0,24
+BRDA:831,179,1,2
+BRDA:882,456,0,0
+BRDA:882,456,1,26
+BRDA:882,562,0,3
+BRDA:882,562,1,23
+FN:943,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildEnumerableFallback(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+FNDA:0,System.Linq.Expressions.Expression Hydrix.Mapper.Builders.MapPlanBuilder::BuildEnumerableFallback(System.Linq.Expressions.Expression,System.Type,System.Type,System.Type,System.Type,System.Type,Hydrix.Mapper.Configuration.HydrixMapperOptions)
+DA:944,0
+DA:945,0
+DA:946,0
+DA:948,0
+DA:949,0
+DA:950,0
+DA:951,0
+DA:952,0
+DA:954,0
+DA:955,0
+DA:956,0
+DA:958,0
+DA:959,0
+DA:960,0
+DA:961,0
+DA:962,0
+DA:963,0
+DA:965,0
+DA:966,0
+DA:967,0
+DA:968,0
+DA:969,0
+DA:970,0
+DA:972,0
+DA:973,0
+DA:974,0
+DA:976,0
+DA:977,0
+DA:979,0
+DA:980,0
+DA:981,0
+DA:982,0
+DA:983,0
+DA:985,0
+DA:986,0
+DA:987,0
+DA:988,0
+DA:989,0
+DA:990,0
+DA:991,0
+DA:993,0
+DA:994,0
+DA:995,0
+DA:996,0
+DA:997,0
+BRDA:965,99,0,0
+BRDA:965,99,1,0
+BRDA:979,169,0,0
+BRDA:979,169,1,0
+BRDA:993,212,0,0
+BRDA:993,212,1,0
+FN:1015,System.Boolean Hydrix.Mapper.Builders.MapPlanBuilder::TryGetEnumerableElementType(System.Type,System.Type&)
+FNDA:27,System.Boolean Hydrix.Mapper.Builders.MapPlanBuilder::TryGetEnumerableElementType(System.Type,System.Type&)
+DA:1016,27
+DA:1017,27
+DA:1019,1
+DA:1020,1
+DA:1023,179
+DA:1025,76
+DA:1026,76
+DA:1028,25
+DA:1029,25
+DA:1033,1
+DA:1034,1
+BRDA:1016,6,0,25
+BRDA:1016,29,0,1
+BRDA:1016,6,1,26
+BRDA:1016,29,1,26
+BRDA:1023,109,1,76
+BRDA:1025,64,0,73
+BRDA:1025,87,0,25
+BRDA:1025,64,1,51
+BRDA:1025,87,1,51
+BRDA:1023,109,0,1
+FN:1054,System.Boolean Hydrix.Mapper.Builders.MapPlanBuilder::TryGetCollectionDestElementType(System.Type,System.Type&)
+FNDA:27,System.Boolean Hydrix.Mapper.Builders.MapPlanBuilder::TryGetCollectionDestElementType(System.Type,System.Type&)
+DA:1055,27
+DA:1057,1
+DA:1058,1
+DA:1061,26
+DA:1062,26
+DA:1063,26
+DA:1064,26
+DA:1065,26
+DA:1067,25
+DA:1068,25
+DA:1071,1
+DA:1072,1
+BRDA:1055,6,0,1
+BRDA:1055,6,1,26
+BRDA:1062,36,0,4
+BRDA:1062,54,0,4
+BRDA:1062,72,0,2
+BRDA:1062,36,1,25
+BRDA:1062,54,1,25
+BRDA:1062,72,1,25
+BRDA:1062,90,0,25
+BRDA:1062,90,1,1
+LF:468
+LH:411
+BRF:90
+BRH:79
+FNF:15
+FNH:14
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Attributes\MapConversionAttribute.cs
+FN:18,Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Attributes.MapConversionAttribute::get_StringTransform()
+FNDA:27,Hydrix.Mapper.Primitives.StringTransforms Hydrix.Mapper.Attributes.MapConversionAttribute::get_StringTransform()
+DA:19,27
+FN:24,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideStringTransform()
+FNDA:28,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideStringTransform()
+DA:25,28
+FN:29,Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Attributes.MapConversionAttribute::get_GuidFormat()
+FNDA:15,Hydrix.Mapper.Primitives.GuidFormat Hydrix.Mapper.Attributes.MapConversionAttribute::get_GuidFormat()
+DA:30,15
+FN:34,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideGuid()
+FNDA:25,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideGuid()
+DA:35,25
+FN:39,Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Attributes.MapConversionAttribute::get_GuidCase()
+FNDA:12,Hydrix.Mapper.Primitives.GuidCase Hydrix.Mapper.Attributes.MapConversionAttribute::get_GuidCase()
+DA:40,12
+FN:45,Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Attributes.MapConversionAttribute::get_NumericRounding()
+FNDA:26,Hydrix.Mapper.Primitives.NumericRounding Hydrix.Mapper.Attributes.MapConversionAttribute::get_NumericRounding()
+DA:46,26
+FN:50,Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Attributes.MapConversionAttribute::get_NumericOverflow()
+FNDA:63,Hydrix.Mapper.Primitives.NumericOverflow Hydrix.Mapper.Attributes.MapConversionAttribute::get_NumericOverflow()
+DA:51,63
+FN:55,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideNumeric()
+FNDA:50,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideNumeric()
+DA:56,50
+FN:60,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_DateFormat()
+FNDA:16,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_DateFormat()
+DA:61,16
+FN:65,Hydrix.Mapper.Primitives.DateTimeZone Hydrix.Mapper.Attributes.MapConversionAttribute::get_DateTimeZone()
+FNDA:14,Hydrix.Mapper.Primitives.DateTimeZone Hydrix.Mapper.Attributes.MapConversionAttribute::get_DateTimeZone()
+DA:66,14
+FN:70,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_Culture()
+FNDA:14,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_Culture()
+DA:71,14
+FN:75,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideDateTime()
+FNDA:20,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideDateTime()
+DA:76,20
+FN:80,Hydrix.Mapper.Primitives.BoolStringFormat Hydrix.Mapper.Attributes.MapConversionAttribute::get_BoolFormat()
+FNDA:12,Hydrix.Mapper.Primitives.BoolStringFormat Hydrix.Mapper.Attributes.MapConversionAttribute::get_BoolFormat()
+DA:81,12
+FN:86,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_TrueValue()
+FNDA:9,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_TrueValue()
+DA:87,9
+FN:92,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_FalseValue()
+FNDA:9,System.String Hydrix.Mapper.Attributes.MapConversionAttribute::get_FalseValue()
+DA:93,9
+FN:97,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideBool()
+FNDA:12,System.Boolean Hydrix.Mapper.Attributes.MapConversionAttribute::get_OverrideBool()
+DA:98,12
+LF:16
+LH:16
+BRF:0
+BRH:0
+FNF:16
+FNH:16
+end_of_record
+SF:C:\VSO\hydrix\src\Hydrix.Mapper\Attributes\MapFromAttribute.cs
+FN:20,System.Type Hydrix.Mapper.Attributes.MapFromAttribute::get_SourceType()
+FNDA:14,System.Type Hydrix.Mapper.Attributes.MapFromAttribute::get_SourceType()
+DA:21,14
+FN:27,System.Void Hydrix.Mapper.Attributes.MapFromAttribute::.ctor(System.Type)
+FNDA:15,System.Void Hydrix.Mapper.Attributes.MapFromAttribute::.ctor(System.Type)
+DA:28,15
+DA:30,15
+DA:31,15
+DA:32,14
+BRDA:30,9,0,1
+BRDA:30,9,1,14
+LF:5
+LH:5
+BRF:2
+BRH:2
+FNF:2
+FNH:2
+end_of_record
