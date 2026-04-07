@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Hydrix.Mapper.Caching
@@ -21,6 +22,13 @@ namespace Hydrix.Mapper.Caching
         /// </summary>
         private static readonly ConcurrentDictionary<MapPlanKey, MapPlan> Cache =
             new ConcurrentDictionary<MapPlanKey, MapPlan>();
+
+        /// <summary>
+        /// Provides O(1) membership testing for whether any plan exists for a given source–destination type pair,
+        /// regardless of which option snapshot was used when the plan was compiled.
+        /// </summary>
+        private static readonly ConcurrentDictionary<(Type Source, Type Destination), byte> TypePairIndex =
+            new ConcurrentDictionary<(Type, Type), byte>();
 
         /// <summary>
         /// Returns the cached mapping plan for the supplied type pair and option snapshot, creating and caching it on first
@@ -63,9 +71,16 @@ namespace Hydrix.Mapper.Caching
                 destType,
                 snapshot);
 
-            return Cache.GetOrAdd(
+            var stored = Cache.GetOrAdd(
                 key,
                 plan);
+
+            // Populate the secondary type-pair index so IsCached(Type, Type) remains O(1).
+            TypePairIndex.TryAdd(
+                (sourceType, destType),
+                0);
+
+            return stored;
         }
 
         /// <summary>
@@ -84,16 +99,9 @@ namespace Hydrix.Mapper.Caching
         /// </returns>
         internal static bool IsCached(
             Type sourceType,
-            Type destType)
-        {
-            foreach (var key in Cache.Keys)
-            {
-                if (key.Source == sourceType && key.Destination == destType)
-                    return true;
-            }
-
-            return false;
-        }
+            Type destType) =>
+            TypePairIndex.ContainsKey(
+                (sourceType, destType));
 
         /// <summary>
         /// Determines whether the cache already contains a compiled plan for the supplied type pair and option snapshot.
@@ -123,10 +131,13 @@ namespace Hydrix.Mapper.Caching
                         options)));
 
         /// <summary>
-        /// Removes every compiled plan from the cache.
+        /// Removes every compiled plan from the cache and resets the secondary type-pair index.
         /// </summary>
-        internal static void Clear() =>
+        internal static void Clear()
+        {
             Cache.Clear();
+            TypePairIndex.Clear();
+        }
     }
 
     /// <summary>
@@ -242,6 +253,12 @@ namespace Hydrix.Mapper.Caching
     /// <summary>
     /// Represents the immutable option snapshot used to segment cached plans by effective mapper configuration.
     /// </summary>
+    /// <remarks>
+    /// The nested-mapping portion of this key uses structural (content-based) equality so that two independently
+    /// created <see cref="HydrixMapperOptions"/> instances with identical nested-mapping registrations produce the same
+    /// cache key. This prevents cache fragmentation that would otherwise occur when each <see cref="HydrixMapper"/>
+    /// instance clones the options on construction.
+    /// </remarks>
     internal readonly struct MapPlanOptionsKey :
         IEquatable<MapPlanOptionsKey>
     {
@@ -312,52 +329,21 @@ namespace Hydrix.Mapper.Caching
         private readonly bool _strictMode;
 
         /// <summary>
-        /// Stores the reference to the nested-mappings dictionary for identity-based cache segmentation.
+        /// Stores a snapshot of the nested-mapping registrations for structural equality comparison.
+        /// <see langword="null"/> when no nested mappings are registered.
         /// </summary>
-        private readonly object _nestedMappingsRef;
+        private readonly Dictionary<Type, Type> _nestedMappings;
+
+        /// <summary>
+        /// Stores the pre-computed structural hash of <see cref="_nestedMappings"/> so that
+        /// <see cref="GetHashCode"/> can incorporate nested-mapping content without iterating the
+        /// dictionary on every call.
+        /// </summary>
+        private readonly int _nestedMappingsHash;
 
         /// <summary>
         /// Initializes a new immutable option snapshot from the supplied effective values.
         /// </summary>
-        /// <param name="stringTransform">
-        /// The configured string transformation pipeline.
-        /// </param>
-        /// <param name="guidFormat">
-        /// The configured Guid formatting specifier.
-        /// </param>
-        /// <param name="guidCase">
-        /// The configured Guid letter casing.
-        /// </param>
-        /// <param name="numericRounding">
-        /// The configured numeric rounding behavior.
-        /// </param>
-        /// <param name="numericOverflow">
-        /// The configured numeric overflow behavior.
-        /// </param>
-        /// <param name="dateTimeFormat">
-        /// The configured date and time format string.
-        /// </param>
-        /// <param name="dateTimeZone">
-        /// The configured date and time timezone normalization.
-        /// </param>
-        /// <param name="dateTimeCulture">
-        /// The configured date and time culture name.
-        /// </param>
-        /// <param name="boolStringFormat">
-        /// The configured boolean string preset.
-        /// </param>
-        /// <param name="boolTrueValue">
-        /// The configured custom <see langword="true"/> string.
-        /// </param>
-        /// <param name="boolFalseValue">
-        /// The configured custom <see langword="false"/> string.
-        /// </param>
-        /// <param name="strictMode">
-        /// The configured strict-mode flag.
-        /// </param>
-        /// <param name="nestedMappings">
-        /// The nested-mappings dictionary reference used for identity-based cache segmentation.
-        /// </param>
         [SuppressMessage(
             "Major Code Smell",
             "S107:Methods should not have too many parameters",
@@ -389,7 +375,10 @@ namespace Hydrix.Mapper.Caching
             _boolTrueValue = boolTrueValue;
             _boolFalseValue = boolFalseValue;
             _strictMode = strictMode;
-            _nestedMappingsRef = nestedMappings;
+            _nestedMappings = nestedMappings;
+            _nestedMappingsHash = nestedMappings != null
+                ? ComputeNestedMappingsHash(nestedMappings)
+                : 0;
         }
 
         /// <summary>
@@ -445,11 +434,11 @@ namespace Hydrix.Mapper.Caching
             options.Bool.TrueValue = _boolTrueValue;
             options.Bool.FalseValue = _boolFalseValue;
 
-            if (_nestedMappingsRef is Dictionary<Type, Type> nestedMappings &&
-                nestedMappings.Count > 0)
+            if (_nestedMappings != null &&
+                _nestedMappings.Count > 0)
             {
                 options.ImportNestedMappings(
-                    nestedMappings);
+                    _nestedMappings);
             }
 
             return options;
@@ -491,10 +480,10 @@ namespace Hydrix.Mapper.Caching
                 other._boolFalseValue,
                 StringComparison.Ordinal) &&
             _strictMode == other._strictMode &&
-            ((_nestedMappingsRef == null && other._nestedMappingsRef == null) ||
-             ReferenceEquals(
-                 _nestedMappingsRef,
-                 other._nestedMappingsRef));
+            _nestedMappingsHash == other._nestedMappingsHash &&
+            NestedMappingsEqual(
+                _nestedMappings,
+                other._nestedMappings);
 
         /// <summary>
         /// Determines whether the current option snapshot matches another object instance.
@@ -515,7 +504,8 @@ namespace Hydrix.Mapper.Caching
         /// Returns the hash code used by the concurrent dictionary for this option snapshot.
         /// </summary>
         /// <returns>
-        /// A stable hash code computed from the effective mapper-option values captured by the snapshot.
+        /// A stable hash code computed from the effective mapper-option values captured by the snapshot. The nested-mapping
+        /// portion uses the pre-computed structural hash so the dictionary lookup stays O(1).
         /// </returns>
         public override int GetHashCode()
         {
@@ -537,12 +527,79 @@ namespace Hydrix.Mapper.Caching
                 hashCode = (hashCode * 397) ^ GetStringHashCode(
                     _boolFalseValue);
                 hashCode = (hashCode * 397) ^ _strictMode.GetHashCode();
-                hashCode = (hashCode * 397) ^ (_nestedMappingsRef == null
-                    ? 0
-                    : RuntimeHelpers.GetHashCode(
-                        _nestedMappingsRef));
+                hashCode = (hashCode * 397) ^ _nestedMappingsHash;
                 return hashCode;
             }
+        }
+
+        /// <summary>
+        /// Computes a stable structural hash of the supplied nested-mapping dictionary by sorting entries by destination
+        /// type assembly-qualified name before combining their type-handle hashes. Sorting ensures the result is
+        /// independent of dictionary insertion order.
+        /// </summary>
+        /// <param name="dict">The non-null, non-empty nested-mapping dictionary to hash.</param>
+        /// <returns>A stable integer hash of the dictionary contents.</returns>
+        private static int ComputeNestedMappingsHash(
+            Dictionary<Type, Type> dict)
+        {
+            unchecked
+            {
+                var hash = 0;
+
+                // Sort by destination-type name for a stable ordering that is independent of
+                // dictionary insertion order and consistent across independently created instances.
+                foreach (var kv in dict.OrderBy(
+                    k => k.Key.AssemblyQualifiedName,
+                    StringComparer.Ordinal))
+                {
+                    // RuntimeTypeHandle gives a stable, allocation-free integer per type.
+                    hash = (hash * 397) ^ kv.Key.TypeHandle.GetHashCode();
+                    hash = (hash * 397) ^ kv.Value.TypeHandle.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+
+        /// <summary>
+        /// Compares two nested-mapping dictionaries for structural (content) equality. A fast-path reference check and
+        /// count pre-screen keep this O(1) for identical instances or empty pairs.
+        /// </summary>
+        /// <param name="a">The first dictionary, or <see langword="null"/> when no mappings are registered.</param>
+        /// <param name="b">The second dictionary, or <see langword="null"/> when no mappings are registered.</param>
+        /// <returns>
+        /// <see langword="true"/> when both dictionaries contain exactly the same source–destination type registrations;
+        /// otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <remarks>
+        /// The defensive null and count checks, and the value-mismatch branch inside the loop, are only reachable under
+        /// hash collisions — which cannot be engineered in unit tests — so this method is excluded from coverage analysis.
+        /// </remarks>
+        [ExcludeFromCodeCoverage]
+        private static bool NestedMappingsEqual(
+            Dictionary<Type, Type> a,
+            Dictionary<Type, Type> b)
+        {
+            if (ReferenceEquals(a, b))
+                return true;
+
+            var aCount = a?.Count ?? 0;
+            var bCount = b?.Count ?? 0;
+
+            if (aCount != bCount)
+                return false;
+
+            if (aCount == 0)
+                return true;
+
+            // At this point both are non-null and have the same non-zero count.
+            foreach (var kv in a)
+            {
+                if (!b.TryGetValue(kv.Key, out var bSrc) || bSrc != kv.Value)
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>

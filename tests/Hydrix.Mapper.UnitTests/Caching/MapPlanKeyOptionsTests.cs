@@ -139,5 +139,30 @@ namespace Hydrix.Mapper.UnitTests.Caching
 
             Assert.False(key1.Equals(key2));
         }
+
+        /// <summary>
+        /// Verifies that two <see cref="MapPlanOptionsKey"/> instances created from independently constructed
+        /// <see cref="HydrixMapperOptions"/> objects with identical <c>MapNested</c> registrations compare as
+        /// equal and produce the same hash code. This exercises structural (content-based) equality of the
+        /// nested-mappings dictionary rather than reference equality, which is critical because
+        /// <c>HydrixMapper</c> clones its options instance during construction.
+        /// </summary>
+        [Fact]
+        public void Equals_ReturnsTrue_WhenNestedMappingsHaveSameContentDifferentInstances()
+        {
+            var options1 = new HydrixMapperOptions();
+            options1.MapNested<ArgumentException, InvalidOperationException>();
+            options1.MapNested<ArgumentNullException, NotSupportedException>();
+
+            var options2 = new HydrixMapperOptions();
+            options2.MapNested<ArgumentException, InvalidOperationException>();
+            options2.MapNested<ArgumentNullException, NotSupportedException>();
+
+            var key1 = MapPlanOptionsKey.Create(options1);
+            var key2 = MapPlanOptionsKey.Create(options2);
+
+            Assert.True(key1.Equals(key2));
+            Assert.Equal(key1.GetHashCode(), key2.GetHashCode());
+        }
     }
 }

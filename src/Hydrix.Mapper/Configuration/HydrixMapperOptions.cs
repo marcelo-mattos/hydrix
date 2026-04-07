@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -18,6 +19,21 @@ namespace Hydrix.Mapper.Configuration
         /// Stores the registered nested mapping relationships keyed by destination type.
         /// </summary>
         private readonly Dictionary<Type, Type> _nestedMappings = new Dictionary<Type, Type>();
+
+        /// <summary>
+        /// Caches the result of <c>GetCustomAttribute&lt;MapFromAttribute&gt;</c> per destination type so the reflection
+        /// call is paid at most once per type across the entire process lifetime. The sentinel
+        /// <see cref="NoMapFromAttribute"/> is stored when the type carries no attribute.
+        /// </summary>
+        private static readonly ConcurrentDictionary<Type, Type> MapFromAttributeCache =
+            new ConcurrentDictionary<Type, Type>();
+
+        /// <summary>
+        /// Sentinel stored in <see cref="MapFromAttributeCache"/> when a destination type has no
+        /// <see cref="Attributes.MapFromAttribute"/>. Using <c>typeof(void)</c> avoids a separate nullable wrapper
+        /// and keeps the dictionary value type uniform.
+        /// </summary>
+        private static readonly Type NoMapFromAttribute = typeof(void);
 
         /// <summary>
         /// Gets the default rules used for string-to-string transformations.
@@ -85,6 +101,7 @@ namespace Hydrix.Mapper.Configuration
             Type destType,
             out Type sourceType)
         {
+            // Explicit registration always takes precedence and is already O(1).
             if (_nestedMappings.TryGetValue(
                     destType,
                     out sourceType))
@@ -92,15 +109,33 @@ namespace Hydrix.Mapper.Configuration
                 return true;
             }
 
+            // Fast path: cache hit — avoids GetCustomAttribute reflection on repeated calls.
+            if (MapFromAttributeCache.TryGetValue(
+                    destType,
+                    out var cached))
+            {
+                if (cached == NoMapFromAttribute)
+                {
+                    sourceType = null;
+                    return false;
+                }
+
+                sourceType = cached;
+                return true;
+            }
+
+            // Cold path: reflect once and populate the process-wide cache.
             var attribute = destType.GetCustomAttribute<Attributes.MapFromAttribute>(
                 inherit: false);
 
             if (attribute != null)
             {
+                MapFromAttributeCache.TryAdd(destType, attribute.SourceType);
                 sourceType = attribute.SourceType;
                 return true;
             }
 
+            MapFromAttributeCache.TryAdd(destType, NoMapFromAttribute);
             sourceType = null;
             return false;
         }

@@ -14,7 +14,8 @@
       "Bash(ls tests/Hydrix.Mapper.UnitTests/*.xml)",
       "Bash(ls tests/Hydrix.Mapper.UnitTests/coverage*)",
       "Bash(grep -n \"DA:[0-9]*,0\\\\|BRDA.*,0$\" tests/Hydrix.Mapper.UnitTests/coverage_debug.net10.0.info)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(python3 -c \":*)"
     ]
   }
 }

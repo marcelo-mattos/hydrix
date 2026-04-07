@@ -527,6 +527,69 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         // Circular mapping detection
         // -----------------------------------------------------------------------------------------
 
+        // -----------------------------------------------------------------------------------------
+        // Indirect circular mapping detection (A → B → C → B)
+        // -----------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// First leg of the indirect cycle: entity A contains entity B.
+        /// </summary>
+        private sealed class IndirectCycleEntityA
+        {
+            /// <summary>Gets or sets the nested B entity.</summary>
+            public IndirectCycleEntityB B { get; set; }
+        }
+
+        /// <summary>
+        /// Second leg of the indirect cycle: entity B contains entity C.
+        /// </summary>
+        private sealed class IndirectCycleEntityB
+        {
+            /// <summary>Gets or sets the nested C entity.</summary>
+            public IndirectCycleEntityC C { get; set; }
+        }
+
+        /// <summary>
+        /// Third leg of the indirect cycle: entity C contains entity B, closing the cycle B → C → B.
+        /// </summary>
+        private sealed class IndirectCycleEntityC
+        {
+            /// <summary>Gets or sets the back-reference to entity B, which closes the cycle.</summary>
+            public IndirectCycleEntityB Back { get; set; }
+        }
+
+        /// <summary>
+        /// Destination DTO for <see cref="IndirectCycleEntityA"/>.
+        /// </summary>
+        [MapFrom(typeof(IndirectCycleEntityA))]
+        private sealed class IndirectCycleDtoA
+        {
+            /// <summary>Gets or sets the nested B DTO.</summary>
+            public IndirectCycleDtoB B { get; set; }
+        }
+
+        /// <summary>
+        /// Destination DTO for <see cref="IndirectCycleEntityB"/>.
+        /// </summary>
+        [MapFrom(typeof(IndirectCycleEntityB))]
+        private sealed class IndirectCycleDtoB
+        {
+            /// <summary>Gets or sets the nested C DTO.</summary>
+            public IndirectCycleDtoC C { get; set; }
+        }
+
+        /// <summary>
+        /// Destination DTO for <see cref="IndirectCycleEntityC"/>. Its <c>Back</c> property references
+        /// <see cref="IndirectCycleDtoB"/>, which is already being compiled when C's body is built, closing
+        /// the indirect cycle B → C → B.
+        /// </summary>
+        [MapFrom(typeof(IndirectCycleEntityC))]
+        private sealed class IndirectCycleDtoC
+        {
+            /// <summary>Gets or sets the back-reference DTO that closes the cycle.</summary>
+            public IndirectCycleDtoB Back { get; set; }
+        }
+
         /// <summary>
         /// Represents a self-referential source entity used to trigger circular mapping detection.
         /// </summary>
@@ -589,6 +652,33 @@ namespace Hydrix.Mapper.UnitTests.Mapping
 
             var ex = Assert.Throws<InvalidOperationException>(
                 () => mapper.Map<CircularDto>(entity));
+
+            Assert.Contains(
+                "circular",
+                ex.Message,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Verifies that an indirect cycle (A → B → C → B) is detected during plan compilation and throws
+        /// <see cref="InvalidOperationException"/> with a descriptive message. This exercises the
+        /// <c>WithCompilingPair</c> guard applied to <c>BuildInlineNestedBodyBlock</c>, which must detect
+        /// cycles that do not re-enter <c>Build()</c> directly.
+        /// </summary>
+        [Fact]
+        public void MapNested_IndirectCycleDetection_ThrowsInvalidOperationException()
+        {
+            var mapper = new HydrixMapper(new HydrixMapperOptions());
+            var entity = new IndirectCycleEntityA
+            {
+                B = new IndirectCycleEntityB
+                {
+                    C = new IndirectCycleEntityC(),
+                },
+            };
+
+            var ex = Assert.Throws<InvalidOperationException>(
+                () => mapper.Map<IndirectCycleDtoA>(entity));
 
             Assert.Contains(
                 "circular",

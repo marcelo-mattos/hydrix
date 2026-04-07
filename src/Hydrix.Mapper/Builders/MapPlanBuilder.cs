@@ -1,9 +1,11 @@
 using Hydrix.Mapper.Attributes;
+using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
 using Hydrix.Mapper.Converters;
 using Hydrix.Mapper.Internals;
 using Hydrix.Mapper.Plans;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -28,6 +30,10 @@ namespace Hydrix.Mapper.Builders
     /// </remarks>
     internal static class MapPlanBuilder
     {
+        // -----------------------------------------------------------------------------------------
+        // Static resolve-once fields
+        // -----------------------------------------------------------------------------------------
+
         /// <summary>
         /// Caches the open-generic <c>NestedCollectionHelper.MapList</c> method resolved once at class load.
         /// Resolving at class load ensures a fast fail during startup rather than inside a compiled expression tree,
@@ -38,12 +44,43 @@ namespace Hydrix.Mapper.Builders
                 nameof(NestedCollectionHelper.MapList),
                 BindingFlags.Public | BindingFlags.Static);
 
+        // -----------------------------------------------------------------------------------------
+        // Cold-path build caches
+        // -----------------------------------------------------------------------------------------
+
         /// <summary>
-        /// Tracks the source–destination type pairs currently being compiled on the current thread to detect circular
-        /// nested mapping references and fail fast with a clear error.
+        /// Caches resolved constructor and property-pair metadata per <c>(srcType, destType, strictMode)</c> triplet.
+        /// Avoids redundant reflection and attribute scanning when the same nested type pair appears across multiple
+        /// outer mapping plans. Thread-safe; populated lazily on first inline body build.
+        /// </summary>
+        private static readonly ConcurrentDictionary<(Type, Type, bool), ResolvedTypeMetadata> MetadataCache =
+            new ConcurrentDictionary<(Type, Type, bool), ResolvedTypeMetadata>();
+
+        /// <summary>
+        /// Caches the compiled element-mapping delegate per
+        /// <c>(srcElementType, destElementType, optionsKey)</c> triplet.
+        /// Avoids re-compiling the same element delegate when the same nested collection element pair appears in multiple
+        /// outer plans compiled under identical options. Thread-safe; populated lazily in the enumerable-fallback path.
+        /// </summary>
+        private static readonly ConcurrentDictionary<ElementDelegateKey, Delegate> ElementDelegateCache =
+            new ConcurrentDictionary<ElementDelegateKey, Delegate>();
+
+        // -----------------------------------------------------------------------------------------
+        // ThreadStatic cycle-detection state
+        // -----------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Tracks every source–destination type pair currently being compiled on the current thread (both at the root
+        /// <see cref="Build"/> level and inside inline nested-body builds). The set is used by
+        /// <see cref="WithCompilingPair{T}"/> to detect direct and indirect circular mapping references early — before
+        /// an infinite recursion can cause a stack overflow.
         /// </summary>
         [ThreadStatic]
         private static HashSet<(Type, Type)> _compilingPairs;
+
+        // -----------------------------------------------------------------------------------------
+        // Public entry point
+        // -----------------------------------------------------------------------------------------
 
         /// <summary>
         /// Builds the complete mapping plan for the supplied source and destination types.
@@ -63,17 +100,14 @@ namespace Hydrix.Mapper.Builders
         internal static MapPlan Build(
             Type sourceType,
             Type targetType,
-            HydrixMapperOptions options)
-        {
-            _compilingPairs ??= new HashSet<(Type, Type)>();
-            _compilingPairs.Add((sourceType, targetType));
-
-            try
+            HydrixMapperOptions options) =>
+            WithCompilingPair(sourceType, targetType, () =>
             {
                 if (targetType.IsValueType)
                 {
                     throw new InvalidOperationException(
-                        $"Hydrix.Mapper: destination type '{targetType.FullName}' cannot be a value type. Map to a reference type instead.");
+                        $"Hydrix.Mapper: destination type '{targetType.FullName}' cannot be a value type. " +
+                        "Map to a reference type instead.");
                 }
 
                 var constructor = ResolveConstructorOrThrow(
@@ -110,13 +144,62 @@ namespace Hydrix.Mapper.Builders
                 return new MapPlan(
                     objectExecute,
                     typedDelegate);
+            });
+
+        // -----------------------------------------------------------------------------------------
+        // Cycle-detection helper
+        // -----------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Adds <paramref name="src"/>/<paramref name="dest"/> to the thread-local compiling-pairs set, invokes
+        /// <paramref name="build"/>, and removes the pair in a <c>finally</c> block so the set is always consistent
+        /// even when <paramref name="build"/> throws.
+        /// </summary>
+        /// <remarks>
+        /// This helper is the single, authoritative place where circular-mapping detection happens. Applying it to both
+        /// the root <see cref="Build"/> call and every <see cref="BuildInlineNestedBodyBlock"/> call guarantees that
+        /// both direct cycles (<c>A → A</c>) and indirect cycles (<c>A → B → C → B</c>) are caught before a stack
+        /// overflow can occur.
+        /// </remarks>
+        /// <typeparam name="T">The return type of the build callback.</typeparam>
+        /// <param name="src">The source type being compiled.</param>
+        /// <param name="dest">The destination type being compiled.</param>
+        /// <param name="build">The factory that performs the actual compilation work.</param>
+        /// <returns>The value returned by <paramref name="build"/>.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when <paramref name="src"/>/<paramref name="dest"/> is already present in the set, indicating a
+        /// circular nested mapping registration.
+        /// </exception>
+        private static T WithCompilingPair<T>(
+            Type src,
+            Type dest,
+            Func<T> build)
+        {
+            _compilingPairs ??= new HashSet<(Type, Type)>();
+
+            if (!_compilingPairs.Add(
+                (src, dest)))
+            {
+                throw new InvalidOperationException(
+                    $"Hydrix.Mapper: circular nested mapping detected: '{src.Name}' → '{dest.Name}' is already " +
+                    "being compiled. Circular object references are not supported. " +
+                    "Use [NotMapped] or remove the circular registration.");
+            }
+
+            try
+            {
+                return build();
             }
             finally
             {
                 _compilingPairs.Remove(
-                    (sourceType, targetType));
+                    (src, dest));
             }
         }
+
+        // -----------------------------------------------------------------------------------------
+        // Plan-building internals
+        // -----------------------------------------------------------------------------------------
 
         /// <summary>
         /// Filters the destination properties to the valid, mappable set, resolves each matching source property and
@@ -520,15 +603,6 @@ namespace Hydrix.Mapper.Builders
                     out var nestedSrcType)
                 && nestedSrcType == srcPropType)
             {
-                // Guard against circular inline-body recursion: if this pair is already being compiled on
-                // the current thread the inline build path would recur forever without going through Build(),
-                // so detecting it here prevents the infinite recursion.
-                if (_compilingPairs.Contains((srcPropType, destPropType)))
-                    throw new InvalidOperationException(
-                        $"Hydrix.Mapper: circular nested mapping detected: '{srcPropType.Name}' → " +
-                        $"'{destPropType.Name}' is already being compiled. Circular object references are not " +
-                        "supported. Use [NotMapped] or remove the circular registration.");
-
                 return BuildNestedObjectExpression(
                     srcPropAccess,
                     srcPropType,
@@ -572,7 +646,11 @@ namespace Hydrix.Mapper.Builders
         /// An <see cref="Expression"/> that produces the mapped destination instance, guarded by a null check for
         /// reference-type sources.
         /// </returns>
-        private static Expression BuildNestedObjectExpression(
+        [SuppressMessage(
+            "Major Code Smell",
+            "S3220:Method overloads should not be ambiguous",
+            Justification = "Overloads are intentionally designed for performance and API ergonomics, avoiding additional abstractions or wrappers that would introduce allocations or prevent JIT optimizations.")]
+        private static BlockExpression BuildNestedObjectExpression(
             Expression srcPropAccess,
             Type srcPropType,
             Type destPropType,
@@ -627,8 +705,17 @@ namespace Hydrix.Mapper.Builders
         /// supplied typed source expression. The block's value is the populated destination instance.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// This method is called during plan compilation to inline the nested mapping body directly into the outer
         /// compiled delegate, eliminating the delegate-boundary overhead of a separate nested plan invocation.
+        /// </para>
+        /// <para>
+        /// Cycle detection is performed here via <see cref="WithCompilingPair{T}"/> so that both direct cycles
+        /// (<c>A → A</c>) and indirect multi-hop cycles (<c>A → B → C → B</c>) are caught regardless of how deep
+        /// the nesting goes. Reflection metadata is retrieved from <see cref="MetadataCache"/> to avoid repeated
+        /// <c>GetProperties</c>, constructor, and attribute scans across multiple outer plans that share the same
+        /// nested pair.
+        /// </para>
         /// </remarks>
         /// <param name="srcExpr">
         /// The typed expression that provides the source object for the nested body — typically a captured local variable.
@@ -646,62 +733,51 @@ namespace Hydrix.Mapper.Builders
         /// A <see cref="BlockExpression"/> that declares a local destination variable, assigns all mapped property values
         /// to it, and yields the populated destination instance as the block's result.
         /// </returns>
-        private static Expression BuildInlineNestedBodyBlock(
+        private static BlockExpression BuildInlineNestedBodyBlock(
             Expression srcExpr,
             Type srcType,
             Type destType,
-            HydrixMapperOptions options)
-        {
-            var nestedConstructor = ResolveConstructorOrThrow(
-                destType);
-
-            var nestedSourceProperties = BuildPropertyLookup(
-                srcType);
-
-            var nestedDestProperties = destType.GetProperties(
-                BindingFlags.Instance |
-                BindingFlags.Public);
-
-            var nestedPairs = ResolvePropertyPairs(
-                srcType,
-                destType,
-                options,
-                nestedSourceProperties,
-                nestedDestProperties);
-
-            var nestedDestVar = Expression.Variable(
-                destType,
-                "nd");
-
-            var bodyExprs = new List<Expression>(
-                nestedPairs.Count + 2);
-
-            bodyExprs.Add(
-                Expression.Assign(
-                    nestedDestVar,
-                    Expression.New(
-                        nestedConstructor)));
-
-            foreach (var (srcProp, dstProp, attr) in nestedPairs)
+            HydrixMapperOptions options) =>
+            WithCompilingPair(srcType, destType, () =>
             {
+                var meta = GetOrBuildMetadata(
+                    srcType,
+                    destType,
+                    options);
+
+                var nestedDestVar = Expression.Variable(
+                    destType,
+                    "nd");
+
+                var bodyExprs = new List<Expression>(
+                    meta.PropertyPairs.Count + 2);
+
                 bodyExprs.Add(
-                    BuildPropertyAssignment(
-                        srcType,
-                        destType,
-                        srcExpr,
+                    Expression.Assign(
                         nestedDestVar,
-                        srcProp,
-                        dstProp,
-                        options,
-                        attr));
-            }
+                        Expression.New(
+                            meta.Constructor)));
 
-            bodyExprs.Add(nestedDestVar);
+                foreach (var (srcProp, dstProp, attr) in meta.PropertyPairs)
+                {
+                    bodyExprs.Add(
+                        BuildPropertyAssignment(
+                            srcType,
+                            destType,
+                            srcExpr,
+                            nestedDestVar,
+                            srcProp,
+                            dstProp,
+                            options,
+                            attr));
+                }
 
-            return Expression.Block(
-                new[] { nestedDestVar },
-                bodyExprs);
-        }
+                bodyExprs.Add(nestedDestVar);
+
+                return Expression.Block(
+                    new[] { nestedDestVar },
+                    bodyExprs);
+            });
 
         /// <summary>
         /// Returns the public parameterless constructor of the specified type, or throws if one does not exist.
@@ -724,6 +800,84 @@ namespace Hydrix.Mapper.Builders
                 modifiers: null) ??
             throw new InvalidOperationException(
                 $"Hydrix.Mapper: destination type '{type.FullName}' must have a public parameterless constructor.");
+
+        // -----------------------------------------------------------------------------------------
+        // Metadata cache helpers
+        // -----------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Returns the reflection metadata for the supplied type pair, constructing and caching it on first use.
+        /// </summary>
+        /// <remarks>
+        /// Only <see cref="HydrixMapperOptions.StrictMode"/> influences which destination properties appear in the pairs
+        /// list; all other option values affect expression generation, not property discovery. The cache key therefore
+        /// uses <c>(srcType, destType, strictMode)</c>, which is the minimal discriminant needed for correctness.
+        /// </remarks>
+        /// <param name="srcType">The source type.</param>
+        /// <param name="destType">The destination type.</param>
+        /// <param name="options">The option snapshot whose <see cref="HydrixMapperOptions.StrictMode"/> is captured.</param>
+        /// <returns>The cached or newly created <see cref="ResolvedTypeMetadata"/> for the pair.</returns>
+        private static ResolvedTypeMetadata GetOrBuildMetadata(
+            Type srcType,
+            Type destType,
+            HydrixMapperOptions options)
+        {
+            var key = (srcType, destType, options.StrictMode);
+
+            if (MetadataCache.TryGetValue(key, out var cached))
+                return cached;
+
+            var ctor = ResolveConstructorOrThrow(destType);
+            var srcProps = BuildPropertyLookup(srcType);
+            var destProps = destType.GetProperties(
+                BindingFlags.Instance | BindingFlags.Public);
+            var pairs = ResolvePropertyPairs(
+                srcType,
+                destType,
+                options,
+                srcProps,
+                destProps);
+
+            var meta = new ResolvedTypeMetadata(ctor, pairs);
+
+            // GetOrAdd: if another thread raced and won, we use their instance (equivalent result).
+            return MetadataCache.GetOrAdd(key, meta);
+        }
+
+        /// <summary>
+        /// Holds the pre-computed reflection metadata for a source–destination type pair.
+        /// Instances are immutable after construction and safe to share across threads.
+        /// </summary>
+        private sealed class ResolvedTypeMetadata
+        {
+            /// <summary>
+            /// Stores the public parameterless constructor of the destination type used to instantiate each mapped object.
+            /// </summary>
+            internal readonly ConstructorInfo Constructor;
+
+            /// <summary>
+            /// Stores the validated, ordered list of source–destination property pairs with any per-property conversion
+            /// attribute. Read-only after construction; safe to iterate concurrently.
+            /// </summary>
+            internal readonly List<(PropertyInfo Source, PropertyInfo Target, MapConversionAttribute Attr)> PropertyPairs;
+
+            /// <summary>
+            /// Initializes a new <see cref="ResolvedTypeMetadata"/> with the supplied constructor and property pairs.
+            /// </summary>
+            /// <param name="constructor">The pre-resolved parameterless constructor of the destination type.</param>
+            /// <param name="propertyPairs">The validated list of mapped property pairs.</param>
+            internal ResolvedTypeMetadata(
+                ConstructorInfo constructor,
+                List<(PropertyInfo, PropertyInfo, MapConversionAttribute)> propertyPairs)
+            {
+                Constructor = constructor;
+                PropertyPairs = propertyPairs;
+            }
+        }
+
+        // -----------------------------------------------------------------------------------------
+        // Collection mapping
+        // -----------------------------------------------------------------------------------------
 
         /// <summary>
         /// Builds an expression that maps a source collection property to a destination collection property, applying an
@@ -809,7 +963,11 @@ namespace Hydrix.Mapper.Builders
             "Major Code Smell",
             "S107:Methods should not have too many parameters",
             Justification = "Performance-critical internal method. Parameters are passed explicitly to avoid additional allocations, indirection, or context objects, ensuring optimal JIT inlining and minimal overhead during expression tree construction.")]
-        private static Expression BuildIndexedCollectionLoop(
+        [SuppressMessage(
+            "Major Code Smell",
+            "S3220:Method overloads should not be ambiguous",
+            Justification = "Overloads are intentionally designed for performance and API ergonomics, avoiding additional abstractions or wrappers that would introduce allocations or prevent JIT optimizations.")]
+        private static BlockExpression BuildIndexedCollectionLoop(
             Expression srcPropAccess,
             Type srcPropType,
             Type indexedType,
@@ -970,22 +1128,21 @@ namespace Hydrix.Mapper.Builders
         }
 
         /// <summary>
-        /// Builds an expression that maps a source enumerable property to a destination collection property using a
+        /// Builds an expression that maps an enumerable source property to a destination enumerable property using a
         /// fallback mapping strategy.
         /// </summary>
-        /// <remarks>This method is used as a fallback when a direct mapping between collection types is
-        /// not available. It dynamically constructs a mapping delegate for element conversion and invokes a helper
-        /// method to perform the collection mapping.</remarks>
-        /// <param name="srcPropAccess">An expression representing access to the source property to be mapped.</param>
+        /// <remarks>This method is used when a direct mapping between enumerable types is not available
+        /// and a fallback mapping must be constructed. It ensures that element mapping delegates are cached per mapping
+        /// options to avoid redundant compilation.</remarks>
+        /// <param name="srcPropAccess">The expression representing access to the source property value to be mapped.</param>
         /// <param name="srcPropType">The type of the source property, expected to be an enumerable type.</param>
         /// <param name="srcElementType">The type of elements contained in the source enumerable.</param>
-        /// <param name="destElementType">The type of elements expected in the destination collection.</param>
-        /// <param name="listDestType">The concrete collection type to use for the destination property if applicable.</param>
-        /// <param name="destPropType">The type of the destination property, which may differ from the concrete collection type.</param>
-        /// <param name="options">The mapping options to use when constructing the mapping expression.</param>
-        /// <returns>An expression that, when executed, maps the source enumerable to the destination collection type, converting
-        /// each element as needed.</returns>
-        /// <exception cref="InvalidOperationException">Thrown if the required mapping method cannot be found on the helper type.</exception>
+        /// <param name="destElementType">The type of elements to be produced in the destination enumerable.</param>
+        /// <param name="listDestType">The concrete list type to use for the destination property if applicable.</param>
+        /// <param name="destPropType">The type of the destination property, which may be an interface or concrete collection type.</param>
+        /// <param name="options">The mapping options that control conversion behavior and delegate caching.</param>
+        /// <returns>An expression that, when executed, produces a destination enumerable with elements mapped from the source
+        /// enumerable.</returns>
         private static Expression BuildEnumerableFallback(
             Expression srcPropAccess,
             Type srcPropType,
@@ -995,27 +1152,44 @@ namespace Hydrix.Mapper.Builders
             Type destPropType,
             HydrixMapperOptions options)
         {
-            // Compile the inline body as a typed delegate to pass to the helper.
-            var elemParam = Expression.Parameter(
-                srcElementType,
-                "elem");
-
-            var inlineBody = BuildInlineNestedBodyBlock(
-                elemParam,
-                srcElementType,
-                destElementType,
-                options);
-
             var funcType = typeof(Func<,>).MakeGenericType(
                 srcElementType,
                 destElementType);
 
-            var inlineDelegate = Expression
-                .Lambda(
-                    funcType,
-                    inlineBody,
-                    elemParam)
-                .Compile();
+            // Retrieve or compile the element-mapping delegate. Keying by options prevents reuse
+            // of a delegate that was compiled under different conversion settings.
+            var optionsKey = MapPlanOptionsKey.Create(options);
+            var delegateKey = new ElementDelegateKey(
+                srcElementType,
+                destElementType,
+                optionsKey);
+
+            if (!ElementDelegateCache.TryGetValue(
+                delegateKey,
+                out Delegate inlineDelegate))
+            {
+                var elemParam = Expression.Parameter(
+                    srcElementType,
+                    "elem");
+
+                var inlineBody = BuildInlineNestedBodyBlock(
+                    elemParam,
+                    srcElementType,
+                    destElementType,
+                    options);
+
+                var compiled = Expression
+                    .Lambda(
+                        funcType,
+                        inlineBody,
+                        elemParam)
+                    .Compile();
+
+                // GetOrAdd(key, value): if a concurrent thread already stored a delegate for this key,
+                // use theirs (both are functionally equivalent). This avoids a factory overload that
+                // could call Compile() multiple times under contention.
+                inlineDelegate = ElementDelegateCache.GetOrAdd(delegateKey, compiled);
+            }
 
             var genericMethod = MapListOpenMethod.MakeGenericMethod(
                 srcElementType,
@@ -1044,6 +1218,103 @@ namespace Hydrix.Mapper.Builders
                     callExpr,
                     destPropType);
         }
+
+        // -----------------------------------------------------------------------------------------
+        // Element-delegate cache key
+        // -----------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Identifies a cached element-mapping delegate by its source element type, destination element type, and
+        /// full option snapshot. All three components must match for the cached delegate to be reused.
+        /// </summary>
+        private readonly struct ElementDelegateKey :
+            IEquatable<ElementDelegateKey>
+        {
+            /// <summary>Stores the source element type.</summary>
+            private readonly Type _srcElement;
+
+            /// <summary>Stores the destination element type.</summary>
+            private readonly Type _destElement;
+
+            /// <summary>Stores the full option snapshot that governs element-level conversions.</summary>
+            private readonly MapPlanOptionsKey _optionsKey;
+
+            /// <summary>
+            /// Initializes a new <see cref="ElementDelegateKey"/>.
+            /// </summary>
+            /// <param name="srcElement">The source element type.</param>
+            /// <param name="destElement">The destination element type.</param>
+            /// <param name="optionsKey">The option snapshot that governs element-level conversions.</param>
+            internal ElementDelegateKey(
+                Type srcElement,
+                Type destElement,
+                MapPlanOptionsKey optionsKey)
+            {
+                _srcElement = srcElement;
+                _destElement = destElement;
+                _optionsKey = optionsKey;
+            }
+
+            /// <summary>
+            /// Determines whether this key equals another <see cref="ElementDelegateKey"/>.
+            /// </summary>
+            /// <remarks>
+            /// The short-circuit false branches of the conjunctive expression are only reachable via dictionary-bucket
+            /// hash collisions between keys with differing element types, which cannot be engineered in unit tests, so
+            /// this method is excluded from coverage analysis.
+            /// </remarks>
+            [ExcludeFromCodeCoverage]
+            public bool Equals(
+                ElementDelegateKey other) =>
+                _srcElement == other._srcElement &&
+                _destElement == other._destElement &&
+                _optionsKey.Equals(
+                    other._optionsKey);
+
+            /// <summary>
+            /// Determines whether this key equals another object.
+            /// </summary>
+            /// <remarks>
+            /// <see cref="ConcurrentDictionary{TKey,TValue}"/> always uses the typed <see cref="Equals(ElementDelegateKey)"/>
+            /// overload via <see cref="IEquatable{T}"/>; this object-based override is required by the BCL contract but is
+            /// never invoked on the hot path, so it is excluded from coverage analysis.
+            /// </remarks>
+            [ExcludeFromCodeCoverage]
+            public override bool Equals(
+                object obj) =>
+                obj is ElementDelegateKey key && Equals(
+                    key);
+
+            /// <summary>
+            /// Serves as the default hash function for the object.
+            /// </summary>
+            /// <remarks>The hash code is computed based on the values of the source element,
+            /// destination element, and options key. This method is suitable for use in hashing algorithms and data
+            /// structures such as a hash table.</remarks>
+            /// <returns>A 32-bit signed integer hash code representing the current object.</returns>
+            [SuppressMessage(
+                "Style",
+                "IDE0079:Remove unnecessary suppression",
+                Justification = "Suppressions are intentionally preserved for consistency across builds and analyzers, ensuring stable behavior in performance-critical code paths.")]
+            [SuppressMessage(
+                "Style",
+                "IDE0070:Use 'HashCode.Combine'",
+                Justification = "Manual hash computation avoids struct overhead and enables better JIT inlining, which is critical for performance-sensitive cache key scenarios.")]
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hash = _srcElement.GetHashCode();
+                    hash = (hash * 397) ^ _destElement.GetHashCode();
+                    hash = (hash * 397) ^ _optionsKey.GetHashCode();
+                    return hash;
+                }
+            }
+        }
+
+        // -----------------------------------------------------------------------------------------
+        // Type-inspection helpers
+        // -----------------------------------------------------------------------------------------
 
         /// <summary>
         /// Returns the element type when the supplied type is or implements <see cref="IEnumerable{T}"/>.
