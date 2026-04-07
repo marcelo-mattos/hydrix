@@ -1,6 +1,6 @@
-﻿using Hydrix.Mapper.Attributes;
+using Hydrix.Mapper.Attributes;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using System;
 using Xunit;
 
@@ -105,7 +105,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the Guid string forced to format <c>N</c> by the destination attribute.
             /// </summary>
-            [MapConversion(GuidFormat = GuidFormat.N, OverrideGuid = true)]
+            [MapConversion(GuidFormat = GuidFormat.DigitsOnly, OverrideGuid = true)]
             public string Id { get; set; }
         }
 
@@ -117,7 +117,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the Guid string forced to format <c>B</c> by the destination attribute.
             /// </summary>
-            [MapConversion(GuidFormat = GuidFormat.B, OverrideGuid = true)]
+            [MapConversion(GuidFormat = GuidFormat.Braces, OverrideGuid = true)]
             public string Id { get; set; }
         }
 
@@ -129,7 +129,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the Guid string forced to format <c>P</c> by the destination attribute.
             /// </summary>
-            [MapConversion(GuidFormat = GuidFormat.P, OverrideGuid = true)]
+            [MapConversion(GuidFormat = GuidFormat.Parentheses, OverrideGuid = true)]
             public string Id { get; set; }
         }
 
@@ -141,7 +141,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the uppercase Guid string produced by the mapper.
             /// </summary>
-            [MapConversion(GuidFormat = GuidFormat.D, GuidCase = GuidCase.Upper, OverrideGuid = true)]
+            [MapConversion(GuidFormat = GuidFormat.Hyphenated, GuidCase = GuidCase.Upper, OverrideGuid = true)]
             public string Id { get; set; }
         }
 
@@ -153,7 +153,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the lowercase Guid string produced by the mapper.
             /// </summary>
-            [MapConversion(GuidFormat = GuidFormat.D, GuidCase = GuidCase.Lower, OverrideGuid = true)]
+            [MapConversion(GuidFormat = GuidFormat.Hyphenated, GuidCase = GuidCase.Lower, OverrideGuid = true)]
             public string Id { get; set; }
         }
 
@@ -193,7 +193,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_DefaultFormat_ProducesHyphenatedLowercase()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoGlobalDLower>(
+                GuidFormat.Hyphenated).Map<DtoGlobalDLower>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -211,7 +211,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_FormatD_Uppercase_ProducesUppercase()
         {
             var dto = CreateMapper(
-                GuidFormat.D,
+                GuidFormat.Hyphenated,
                 GuidCase.Upper).Map<DtoGlobalDUpper>(
                 new GuidSource
                 {
@@ -230,7 +230,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_FormatN_ProducesNoHyphens()
         {
             var dto = CreateMapper(
-                GuidFormat.N).Map<DtoGlobalNLower>(
+                GuidFormat.DigitsOnly).Map<DtoGlobalNLower>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -251,7 +251,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_AttributeFormatN_OverridesGlobal()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoAttrN>(
+                GuidFormat.Hyphenated).Map<DtoAttrN>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -269,7 +269,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_FormatB_ProducesBraces()
         {
             var dto = CreateMapper(
-                GuidFormat.B).Map<DtoGlobalBLower>(
+                GuidFormat.Braces).Map<DtoGlobalBLower>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -290,7 +290,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_AttributeFormatB_ProducesBraces()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoAttrB>(
+                GuidFormat.Hyphenated).Map<DtoAttrB>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -308,7 +308,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_FormatP_ProducesParentheses()
         {
             var dto = CreateMapper(
-                GuidFormat.P).Map<DtoGlobalPLower>(
+                GuidFormat.Parentheses).Map<DtoGlobalPLower>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -329,7 +329,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_AttributeFormatP_ProducesParentheses()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoAttrP>(
+                GuidFormat.Hyphenated).Map<DtoAttrP>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -347,7 +347,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_AttributeUpperCase_ProducesUppercase()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoAttrDU>(
+                GuidFormat.Hyphenated).Map<DtoAttrDU>(
                 new GuidSource
                 {
                     Id = SampleGuid,
@@ -365,7 +365,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Guid_AttributeLowerCase_ProducesLowercase()
         {
             var dto = CreateMapper(
-                GuidFormat.D,
+                GuidFormat.Hyphenated,
                 GuidCase.Upper).Map<DtoAttrDL>(
                 new GuidSource
                 {
@@ -384,7 +384,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_NullableGuid_WhenNull_ProducesNull()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoNullableD>(
+                GuidFormat.Hyphenated).Map<DtoNullableD>(
                 new NullableGuidSource
                 {
                     Id = null,
@@ -401,7 +401,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_NullableGuid_WhenHasValue_ProducesString()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoNullableD>(
+                GuidFormat.Hyphenated).Map<DtoNullableD>(
                 new NullableGuidSource
                 {
                     Id = SampleGuid,
@@ -419,7 +419,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_EmptyGuid_ProducesExpectedString()
         {
             var dto = CreateMapper(
-                GuidFormat.D).Map<DtoGlobalDLower>(
+                GuidFormat.Hyphenated).Map<DtoGlobalDLower>(
                 new GuidSource
                 {
                     Id = Guid.Empty,

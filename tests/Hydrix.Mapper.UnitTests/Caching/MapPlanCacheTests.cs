@@ -1,7 +1,5 @@
 ﻿using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;

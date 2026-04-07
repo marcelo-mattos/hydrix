@@ -1,6 +1,6 @@
-﻿using Hydrix.Mapper;
 using Hydrix.Mapper.Configuration;
 using Hydrix.Mapper.Extensions;
+using Hydrix.Mapper.Primitives;
 using System;
 using Xunit;
 
@@ -60,7 +60,7 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         public void ToDto_UsesUpdatedGlobalConfiguration_AfterReconfigure()
         {
             var uppercase = new HydrixMapperOptions();
-            uppercase.String.Transform = StringTransform.Uppercase;
+            uppercase.String.Transform = StringTransforms.Uppercase;
             HydrixMapperConfiguration.Configure(
                 uppercase);
 
@@ -70,7 +70,7 @@ namespace Hydrix.Mapper.UnitTests.Extensions
             }.ToDto<DestinationModel>();
 
             var lowercase = new HydrixMapperOptions();
-            lowercase.String.Transform = StringTransform.Lowercase;
+            lowercase.String.Transform = StringTransforms.Lowercase;
             HydrixMapperConfiguration.Configure(
                 lowercase);
 
@@ -103,4 +103,3 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         }
     }
 }
-

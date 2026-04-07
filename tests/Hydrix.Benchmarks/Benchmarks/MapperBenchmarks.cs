@@ -1,10 +1,11 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Order;
 using Hydrix.Mapper;
 using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,7 +22,8 @@ namespace Hydrix.Benchmarks.Benchmarks
     /// </remarks>
     [MemoryDiagnoser]
     [RankColumn]
-    [Orderer(SummaryOrderPolicy.FastestToSlowest)]
+    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+    [Orderer(SummaryOrderPolicy.FastestToSlowest, MethodOrderPolicy.Declared)]
     public class MapperBenchmarks
     {
         /// <summary>
@@ -30,9 +32,16 @@ namespace Hydrix.Benchmarks.Benchmarks
         private IMapper _autoMapper = null!;
 
         /// <summary>
-        /// Stores the Hydrix mapper instance used by the benchmark methods.
+        /// Stores the Hydrix mapper instance configured with default options, used by the flat and list benchmark methods
+        /// that do not require conversions.
         /// </summary>
         private HydrixMapper _hydrixMapper = null!;
+
+        /// <summary>
+        /// Stores the Hydrix mapper instance configured with conversion options, used exclusively by the conversion
+        /// benchmark method.
+        /// </summary>
+        private HydrixMapper _hydrixConversionMapper = null!;
 
         /// <summary>
         /// Stores the reusable small flat source instance.
@@ -121,15 +130,18 @@ namespace Hydrix.Benchmarks.Benchmarks
                 });
             _autoMapper = autoMapperConfiguration.CreateMapper();
 
-            var hydrixOptions = new HydrixMapperOptions();
-            hydrixOptions.String.Transform = StringTransform.Trim;
-            hydrixOptions.Guid.Format = GuidFormat.D;
-            hydrixOptions.Guid.Case = GuidCase.Lower;
-            hydrixOptions.DateTime.StringFormat = "O";
-            hydrixOptions.DateTime.TimeZone = DateTimeZone.None;
-            hydrixOptions.Numeric.DecimalToIntRounding = NumericRounding.Truncate;
             _hydrixMapper = new HydrixMapper(
-                hydrixOptions);
+                new HydrixMapperOptions());
+
+            var conversionOptions = new HydrixMapperOptions();
+            conversionOptions.String.Transform = StringTransforms.Trim;
+            conversionOptions.Guid.Format = GuidFormat.Hyphenated;
+            conversionOptions.Guid.Case = GuidCase.Lower;
+            conversionOptions.DateTime.StringFormat = "O";
+            conversionOptions.DateTime.TimeZone = DateTimeZone.None;
+            conversionOptions.Numeric.DecimalToIntRounding = NumericRounding.Truncate;
+            _hydrixConversionMapper = new HydrixMapper(
+                conversionOptions);
 
             _smallSrc = BuildSmall();
             _mediumSrc = BuildMedium();
@@ -173,7 +185,7 @@ namespace Hydrix.Benchmarks.Benchmarks
                 _mediumSrc);
             _hydrixMapper.Map<FlatLargeDto>(
                 _largeSrc);
-            _hydrixMapper.Map<ConversionDto>(
+            _hydrixConversionMapper.Map<ConversionDto>(
                 _conversionSrc);
         }
 
@@ -183,6 +195,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by AutoMapper for the reusable small flat source instance.
         /// </returns>
+        [BenchmarkCategory("flat small")]
         [Benchmark(Description = "AutoMapper - flat small")]
         public FlatSmallDto AutoMapper_FlatSmall() =>
             _autoMapper.Map<FlatSmallDto>(
@@ -194,6 +207,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by Hydrix for the reusable small flat source instance.
         /// </returns>
+        [BenchmarkCategory("flat small")]
         [Benchmark(Description = "Hydrix.Mapper - flat small")]
         public FlatSmallDto HydrixMapper_FlatSmall() =>
             _hydrixMapper.Map<FlatSmallDto>(
@@ -205,6 +219,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by AutoMapper for the reusable medium flat source instance.
         /// </returns>
+        [BenchmarkCategory("flat medium")]
         [Benchmark(Description = "AutoMapper - flat medium")]
         public FlatMediumDto AutoMapper_FlatMedium() =>
             _autoMapper.Map<FlatMediumDto>(
@@ -216,6 +231,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by Hydrix for the reusable medium flat source instance.
         /// </returns>
+        [BenchmarkCategory("flat medium")]
         [Benchmark(Description = "Hydrix.Mapper - flat medium")]
         public FlatMediumDto HydrixMapper_FlatMedium() =>
             _hydrixMapper.Map<FlatMediumDto>(
@@ -227,6 +243,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by AutoMapper for the reusable wide flat source instance.
         /// </returns>
+        [BenchmarkCategory("flat large")]
         [Benchmark(Description = "AutoMapper - flat large")]
         public FlatLargeDto AutoMapper_FlatLarge() =>
             _autoMapper.Map<FlatLargeDto>(
@@ -238,6 +255,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by Hydrix for the reusable wide flat source instance.
         /// </returns>
+        [BenchmarkCategory("flat large")]
         [Benchmark(Description = "Hydrix.Mapper - flat large")]
         public FlatLargeDto HydrixMapper_FlatLarge() =>
             _hydrixMapper.Map<FlatLargeDto>(
@@ -249,6 +267,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by AutoMapper after applying trimming, formatting, and numeric conversion.
         /// </returns>
+        [BenchmarkCategory("with conversions")]
         [Benchmark(Description = "AutoMapper - with conversions")]
         public ConversionDto AutoMapper_WithConversions() =>
             _autoMapper.Map<ConversionDto>(
@@ -260,9 +279,10 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by Hydrix after applying trimming, formatting, and numeric conversion.
         /// </returns>
+        [BenchmarkCategory("with conversions")]
         [Benchmark(Description = "Hydrix.Mapper - with conversions")]
         public ConversionDto HydrixMapper_WithConversions() =>
-            _hydrixMapper.Map<ConversionDto>(
+            _hydrixConversionMapper.Map<ConversionDto>(
                 _conversionSrc);
 
         /// <summary>
@@ -271,6 +291,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A list containing the small destination objects produced by AutoMapper.
         /// </returns>
+        [BenchmarkCategory("list small x100")]
         [Benchmark(Description = "AutoMapper - list small x100")]
         public List<FlatSmallDto> AutoMapper_ListSmall100() =>
             _autoMapper.Map<List<FlatSmallDto>>(
@@ -282,6 +303,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A read-only list containing the small destination objects produced by Hydrix.
         /// </returns>
+        [BenchmarkCategory("list small x100")]
         [Benchmark(Description = "Hydrix.Mapper - list small x100")]
         public IReadOnlyList<FlatSmallDto> HydrixMapper_ListSmall100() =>
             _hydrixMapper.MapList<FlatSmallSrc, FlatSmallDto>(
@@ -293,6 +315,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A list containing the small destination objects produced by AutoMapper.
         /// </returns>
+        [BenchmarkCategory("list small x1000")]
         [Benchmark(Description = "AutoMapper - list small x1000")]
         public List<FlatSmallDto> AutoMapper_ListSmall1000() =>
             _autoMapper.Map<List<FlatSmallDto>>(
@@ -304,6 +327,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A read-only list containing the small destination objects produced by Hydrix.
         /// </returns>
+        [BenchmarkCategory("list small x1000")]
         [Benchmark(Description = "Hydrix.Mapper - list small x1000")]
         public IReadOnlyList<FlatSmallDto> HydrixMapper_ListSmall1000() =>
             _hydrixMapper.MapList<FlatSmallSrc, FlatSmallDto>(
@@ -315,6 +339,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A list containing the medium destination objects produced by AutoMapper.
         /// </returns>
+        [BenchmarkCategory("list medium x100")]
         [Benchmark(Description = "AutoMapper - list medium x100")]
         public List<FlatMediumDto> AutoMapper_ListMedium100() =>
             _autoMapper.Map<List<FlatMediumDto>>(
@@ -326,6 +351,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A read-only list containing the medium destination objects produced by Hydrix.
         /// </returns>
+        [BenchmarkCategory("list medium x100")]
         [Benchmark(Description = "Hydrix.Mapper - list medium x100")]
         public IReadOnlyList<FlatMediumDto> HydrixMapper_ListMedium100() =>
             _hydrixMapper.MapList<FlatMediumSrc, FlatMediumDto>(
@@ -337,6 +363,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A list containing the medium destination objects produced by AutoMapper.
         /// </returns>
+        [BenchmarkCategory("list medium x1000")]
         [Benchmark(Description = "AutoMapper - list medium x1000")]
         public List<FlatMediumDto> AutoMapper_ListMedium1000() =>
             _autoMapper.Map<List<FlatMediumDto>>(
@@ -348,6 +375,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A read-only list containing the medium destination objects produced by Hydrix.
         /// </returns>
+        [BenchmarkCategory("list medium x1000")]
         [Benchmark(Description = "Hydrix.Mapper - list medium x1000")]
         public IReadOnlyList<FlatMediumDto> HydrixMapper_ListMedium1000() =>
             _hydrixMapper.MapList<FlatMediumSrc, FlatMediumDto>(
@@ -359,6 +387,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A list containing the wide destination objects produced by AutoMapper.
         /// </returns>
+        [BenchmarkCategory("list large x100")]
         [Benchmark(Description = "AutoMapper - list large x100")]
         public List<FlatLargeDto> AutoMapper_ListLarge100() =>
             _autoMapper.Map<List<FlatLargeDto>>(
@@ -370,6 +399,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A read-only list containing the wide destination objects produced by Hydrix.
         /// </returns>
+        [BenchmarkCategory("list large x100")]
         [Benchmark(Description = "Hydrix.Mapper - list large x100")]
         public IReadOnlyList<FlatLargeDto> HydrixMapper_ListLarge100() =>
             _hydrixMapper.MapList<FlatLargeSrc, FlatLargeDto>(
@@ -381,6 +411,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A list containing the wide destination objects produced by AutoMapper.
         /// </returns>
+        [BenchmarkCategory("list large x1000")]
         [Benchmark(Description = "AutoMapper - list large x1000")]
         public List<FlatLargeDto> AutoMapper_ListLarge1000() =>
             _autoMapper.Map<List<FlatLargeDto>>(
@@ -392,6 +423,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// A read-only list containing the wide destination objects produced by Hydrix.
         /// </returns>
+        [BenchmarkCategory("list large x1000")]
         [Benchmark(Description = "Hydrix.Mapper - list large x1000")]
         public IReadOnlyList<FlatLargeDto> HydrixMapper_ListLarge1000() =>
             _hydrixMapper.MapList<FlatLargeSrc, FlatLargeDto>(
@@ -403,6 +435,7 @@ namespace Hydrix.Benchmarks.Benchmarks
         /// <returns>
         /// The destination object produced by Hydrix after rebuilding the plan for the medium flat source instance.
         /// </returns>
+        [BenchmarkCategory("cold path")]
         [Benchmark(Description = "Hydrix.Mapper - first hit (cold path)")]
         public FlatMediumDto HydrixMapper_FirstHit_ColdPath()
         {

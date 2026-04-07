@@ -1,3 +1,4 @@
+using Hydrix.Mapper.Primitives;
 using System;
 
 namespace Hydrix.Mapper.Attributes
@@ -15,18 +16,18 @@ namespace Hydrix.Mapper.Attributes
         /// <summary>
         /// Gets or sets the string transformation pipeline applied when both the source and destination members are strings.
         /// </summary>
-        public StringTransform StringTransform { get; set; } = StringTransform.None;
+        public StringTransforms StringTransform { get; set; } = StringTransforms.None;
 
         /// <summary>
-        /// Gets or sets a value indicating whether <see cref="StringTransform"/> must override the global string settings
-        /// even when the selected transform is <see cref="StringTransform.None"/>.
+        /// Gets or sets a value indicating whether <see cref="StringTransforms"/> must override the global string settings
+        /// even when the selected transform is <see cref="StringTransforms.None"/>.
         /// </summary>
         public bool OverrideStringTransform { get; set; }
 
         /// <summary>
         /// Gets or sets the Guid format applied when a Guid source member is converted to a string destination member.
         /// </summary>
-        public GuidFormat GuidFormat { get; set; } = GuidFormat.D;
+        public GuidFormat GuidFormat { get; set; } = GuidFormat.Hyphenated;
 
         /// <summary>
         /// Gets or sets a value indicating whether the Guid-related attribute values should override the global settings.
@@ -77,7 +78,7 @@ namespace Hydrix.Mapper.Attributes
         /// <summary>
         /// Gets or sets the bool-to-string format preset applied to the decorated destination property.
         /// </summary>
-        public BoolStringFormat BoolFormat { get; set; } = BoolStringFormat.TrueFalse;
+        public BoolStringFormat BoolFormat { get; set; } = BoolStringFormat.TrueOrFalse;
 
         /// <summary>
         /// Gets or sets the custom text emitted for a <see langword="true"/> value when <see cref="BoolFormat"/> is

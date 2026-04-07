@@ -1,6 +1,6 @@
 using Hydrix.Mapper.Attributes;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using System;
 using System.Globalization;
 using System.Linq.Expressions;
@@ -34,11 +34,13 @@ namespace Hydrix.Mapper.UnitTests.Converters
             "BuildNumericCast");
 
 #if NET6_0_OR_GREATER
+
         /// <summary>
         /// Stores the private BuildDateOnlyToString method used by DateOnly formatting.
         /// </summary>
         private static readonly MethodInfo BuildDateOnlyToStringMethod = GetRequiredPrivateStaticMethod(
             "BuildDateOnlyToString");
+
 #endif
 
         /// <summary>
@@ -131,6 +133,7 @@ namespace Hydrix.Mapper.UnitTests.Converters
         }
 
 #if NET6_0_OR_GREATER
+
         /// <summary>
         /// Verifies that a passive DateOnly attribute keeps using the global format and culture settings.
         /// </summary>
@@ -182,6 +185,7 @@ namespace Hydrix.Mapper.UnitTests.Converters
                 Execute<string>(
                     expression));
         }
+
 #endif
 
         /// <summary>
@@ -220,9 +224,9 @@ namespace Hydrix.Mapper.UnitTests.Converters
         public void ResolveStringTransform_WithPassiveAttribute_UsesGlobalTransform()
         {
             var options = new HydrixMapperOptions();
-            options.String.Transform = StringTransform.Uppercase;
+            options.String.Transform = StringTransforms.Uppercase;
 
-            var transform = (StringTransform)ResolveStringTransformMethod.Invoke(
+            var transform = (StringTransforms)ResolveStringTransformMethod.Invoke(
                 null,
                 new object[]
                 {
@@ -231,7 +235,7 @@ namespace Hydrix.Mapper.UnitTests.Converters
                 });
 
             Assert.Equal(
-                StringTransform.Uppercase,
+                StringTransforms.Uppercase,
                 transform);
         }
 

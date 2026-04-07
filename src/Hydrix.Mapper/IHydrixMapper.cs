@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Hydrix.Mapper.Mapping
+namespace Hydrix.Mapper
 {
     /// <summary>
     /// Defines the contract for object-to-object mapping based on cached, compiled mapping plans.

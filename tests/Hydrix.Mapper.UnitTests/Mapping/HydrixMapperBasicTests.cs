@@ -1,5 +1,4 @@
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -715,4 +714,3 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
     }
 }
-

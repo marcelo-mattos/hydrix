@@ -23,7 +23,7 @@ namespace Hydrix.Mapper.Configuration
         /// <summary>
         /// Stores the lazily created default mapper instance shared by the extension methods.
         /// </summary>
-        private static Mapping.HydrixMapper _defaultMapper;
+        private static HydrixMapper _defaultMapper;
 
         /// <summary>
         /// Gets the currently active mapper options snapshot.
@@ -57,7 +57,9 @@ namespace Hydrix.Mapper.Configuration
             Volatile.Write(
                 ref _options,
                 options);
+
             MapPlanCache.Clear();
+
             Volatile.Write(
                 ref _defaultMapper,
                 null);
@@ -67,21 +69,24 @@ namespace Hydrix.Mapper.Configuration
         /// Returns the shared default mapper instance, creating it lazily when accessed for the first time.
         /// </summary>
         /// <returns>
-        /// A process-wide <see cref="Mapping.HydrixMapper"/> configured with the current <see cref="Options"/>.
+        /// A process-wide <see cref="Mapper.HydrixMapper"/> configured with the current <see cref="Options"/>.
         /// </returns>
-        internal static Mapping.HydrixMapper GetOrCreateDefaultMapper()
+        internal static HydrixMapper GetOrCreateDefaultMapper()
         {
             var current = Volatile.Read(
                 ref _defaultMapper);
+
             if (current != null)
                 return current;
 
-            var created = new Mapping.HydrixMapper(
+            var created = new HydrixMapper(
                 Options);
+
             Interlocked.CompareExchange(
                 ref _defaultMapper,
                 created,
                 null);
+
             return Volatile.Read(
                 ref _defaultMapper);
         }

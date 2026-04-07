@@ -1,5 +1,4 @@
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
 using System;
 using System.Collections.Generic;
 using Xunit;

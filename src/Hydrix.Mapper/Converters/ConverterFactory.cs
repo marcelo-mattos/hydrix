@@ -1,5 +1,6 @@
 using Hydrix.Mapper.Attributes;
 using Hydrix.Mapper.Configuration;
+using Hydrix.Mapper.Primitives;
 using System;
 using System.Globalization;
 using System.Linq.Expressions;
@@ -195,12 +196,14 @@ namespace Hydrix.Mapper.Converters
             Type.EmptyTypes);
 
 #if NET6_0_OR_GREATER
+
         /// <summary>
         /// Caches the reflection metadata for <see cref="DateOnly.ToString(string,IFormatProvider)"/>.
         /// </summary>
         private static readonly MethodInfo DateOnlyToStringFormat = typeof(DateOnly).GetMethod(
             ToStringMethodName,
             new[] { typeof(string), typeof(IFormatProvider) });
+
 #endif
 
         /// <summary>
@@ -260,6 +263,13 @@ namespace Hydrix.Mapper.Converters
 
             if (srcIsReferenceType)
             {
+                // When no conversion was applied the core expression is the same object as sourceValue.
+                // Direct assignment handles null naturally, so the explicit null check can be skipped.
+                if (ReferenceEquals(
+                        coreExpression,
+                        sourceValue))
+                    return srcPropAccess;
+
                 var isNull = Expression.Equal(
                     srcPropAccess,
                     Expression.Constant(
@@ -409,39 +419,39 @@ namespace Hydrix.Mapper.Converters
         /// <returns>The expression that yields the transformed string.</returns>
         private static Expression BuildStringTransform(
             Expression src,
-            StringTransform transform)
+            StringTransforms transform)
         {
-            if (transform == StringTransform.None)
+            if (transform == StringTransforms.None)
                 return src;
 
             var current = src;
 
-            if ((transform & StringTransform.Trim) != 0)
+            if ((transform & StringTransforms.Trim) != 0)
             {
                 current = Expression.Call(
                     current,
                     StringTrim);
             }
-            else if ((transform & StringTransform.TrimStart) != 0)
+            else if ((transform & StringTransforms.TrimStart) != 0)
             {
                 current = Expression.Call(
                     current,
                     StringTrimStart);
             }
-            else if ((transform & StringTransform.TrimEnd) != 0)
+            else if ((transform & StringTransforms.TrimEnd) != 0)
             {
                 current = Expression.Call(
                     current,
                     StringTrimEnd);
             }
 
-            if ((transform & StringTransform.Uppercase) != 0)
+            if ((transform & StringTransforms.Uppercase) != 0)
             {
                 current = Expression.Call(
                     current,
                     StringToUpper);
             }
-            else if ((transform & StringTransform.Lowercase) != 0)
+            else if ((transform & StringTransforms.Lowercase) != 0)
             {
                 current = Expression.Call(
                     current,
@@ -458,16 +468,16 @@ namespace Hydrix.Mapper.Converters
         /// <param name="format">The configured Guid format.</param>
         /// <param name="casing">The configured Guid casing.</param>
         /// <returns>The expression that yields the formatted Guid string.</returns>
-        private static Expression BuildGuidToString(
+        private static MethodCallExpression BuildGuidToString(
             Expression src,
             GuidFormat format,
             GuidCase casing)
         {
             var formatString = format switch
             {
-                GuidFormat.N => "N",
-                GuidFormat.B => "B",
-                GuidFormat.P => "P",
+                GuidFormat.DigitsOnly => "N",
+                GuidFormat.Braces => "B",
+                GuidFormat.Parentheses => "P",
                 _ => "D",
             };
 
@@ -481,7 +491,7 @@ namespace Hydrix.Mapper.Converters
                 ? Expression.Call(
                     call,
                     StringToUpper)
-                : (Expression)call;
+                : call;
         }
 
         /// <summary>
@@ -491,7 +501,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
         /// <returns>The expression that yields the formatted date or time string.</returns>
-        private static Expression BuildDateTimeToString(
+        private static MethodCallExpression BuildDateTimeToString(
             Expression src,
             HydrixMapperOptions options,
             MapConversionAttribute attr)
@@ -532,7 +542,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
         /// <returns>The expression that yields the formatted offset string.</returns>
-        private static Expression BuildDateTimeOffsetToString(
+        private static MethodCallExpression BuildDateTimeOffsetToString(
             Expression src,
             HydrixMapperOptions options,
             MapConversionAttribute attr)
@@ -567,6 +577,7 @@ namespace Hydrix.Mapper.Converters
         }
 
 #if NET6_0_OR_GREATER
+
         /// <summary>
         /// Builds the expression that formats a <see cref="DateOnly"/> value.
         /// </summary>
@@ -574,12 +585,12 @@ namespace Hydrix.Mapper.Converters
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
         /// <returns>The expression that yields the formatted date string.</returns>
-        private static Expression BuildDateOnlyToString(
+        private static MethodCallExpression BuildDateOnlyToString(
             Expression src,
             HydrixMapperOptions options,
             MapConversionAttribute attr)
         {
-            var dateTimeParams = ResolveDateTimeParams(
+            var (format, _, culture) = ResolveDateTimeParams(
                 options,
                 attr);
 
@@ -587,12 +598,13 @@ namespace Hydrix.Mapper.Converters
                 src,
                 DateOnlyToStringFormat,
                 Expression.Constant(
-                    dateTimeParams.format),
+                    format),
                 Expression.Constant(
                     ResolveCulture(
-                        dateTimeParams.culture),
+                        culture),
                     typeof(IFormatProvider)));
         }
+
 #endif
 
         /// <summary>
@@ -602,7 +614,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
         /// <returns>The expression that yields the configured true or false text.</returns>
-        private static Expression BuildBoolToString(
+        private static ConditionalExpression BuildBoolToString(
             Expression src,
             HydrixMapperOptions options,
             MapConversionAttribute attr)
@@ -650,17 +662,16 @@ namespace Hydrix.Mapper.Converters
         {
             return format switch
             {
-                BoolStringFormat.LowerCase => ("true", "false"),
-                BoolStringFormat.YesNo => ("Yes", "No"),
-                BoolStringFormat.YN => ("Y", "N"),
-                BoolStringFormat.OneZero => ("1", "0"),
-                BoolStringFormat.SN => ("S", "N"),
-                BoolStringFormat.SimNao => ("Sim", "Nao"),
-                BoolStringFormat.TF => ("T", "F"),
+                BoolStringFormat.LowercaseTrueOrFalse => ("true", "false"),
+                BoolStringFormat.YesOrNo => ("Yes", "No"),
+                BoolStringFormat.YOrN => ("Y", "N"),
+                BoolStringFormat.OneOrZero => ("1", "0"),
+                BoolStringFormat.TOrF => ("T", "F"),
                 BoolStringFormat.Custom => (customTrue ?? "true", customFalse ?? "false"),
                 _ => ("True", "False"),
             };
         }
+
         /// <summary>
         /// Builds the conversion expression used when a decimal, double, or float source maps to an integral type.
         /// </summary>
@@ -670,7 +681,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
         /// <returns>The expression that rounds, clamps, and converts the source value when required.</returns>
-        private static Expression BuildDecimalToInteger(
+        private static UnaryExpression BuildDecimalToInteger(
             Expression srcValue,
             Type srcType,
             Type dstType,
@@ -737,7 +748,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="src">The decimal source expression.</param>
         /// <param name="rounding">The rounding strategy to apply.</param>
         /// <returns>The expression that yields the rounded decimal value.</returns>
-        private static Expression ApplyDecimalRounding(
+        private static MethodCallExpression ApplyDecimalRounding(
             Expression src,
             NumericRounding rounding)
         {
@@ -771,7 +782,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="src">The double source expression.</param>
         /// <param name="rounding">The rounding strategy to apply.</param>
         /// <returns>The expression that yields the rounded double value.</returns>
-        private static Expression ApplyDoubleRounding(
+        private static MethodCallExpression ApplyDoubleRounding(
             Expression src,
             NumericRounding rounding)
         {
@@ -806,7 +817,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="dstType">The numeric destination type.</param>
         /// <param name="overflow">The configured overflow behavior.</param>
         /// <returns>The expression that performs the appropriate checked, clamped, or unchecked conversion.</returns>
-        private static Expression BuildNumericCast(
+        private static UnaryExpression BuildNumericCast(
             Expression src,
             Type dstType,
             NumericOverflow overflow)
@@ -817,10 +828,12 @@ namespace Hydrix.Mapper.Converters
                     return Expression.ConvertChecked(
                         src,
                         dstType);
+
                 case NumericOverflow.Clamp:
                     return BuildClampedCast(
                         src,
                         dstType);
+
                 default:
                     return Expression.Convert(
                         src,
@@ -834,7 +847,7 @@ namespace Hydrix.Mapper.Converters
         /// <param name="src">The intermediate numeric expression.</param>
         /// <param name="dstType">The integral destination type whose range should be enforced.</param>
         /// <returns>The expression that yields the clamped destination value.</returns>
-        private static Expression BuildClampedCast(
+        private static UnaryExpression BuildClampedCast(
             Expression src,
             Type dstType)
         {
@@ -940,11 +953,11 @@ namespace Hydrix.Mapper.Converters
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
         /// <returns>The effective string transformation.</returns>
-        private static StringTransform ResolveStringTransform(
+        private static StringTransforms ResolveStringTransform(
             HydrixMapperOptions options,
             MapConversionAttribute attr)
         {
-            if (attr != null && (attr.OverrideStringTransform || attr.StringTransform != StringTransform.None))
+            if (attr != null && (attr.OverrideStringTransform || attr.StringTransform != StringTransforms.None))
                 return attr.StringTransform;
 
             return options.String.Transform;
@@ -1013,6 +1026,7 @@ namespace Hydrix.Mapper.Converters
 
             return options.Numeric.Overflow;
         }
+
         /// <summary>
         /// Resolves the effective date and time formatting tuple for the current property.
         /// </summary>
@@ -1042,7 +1056,7 @@ namespace Hydrix.Mapper.Converters
         /// </summary>
         /// <param name="cultureName">The configured culture name.</param>
         /// <returns>The format provider that should be used for string formatting.</returns>
-        private static IFormatProvider ResolveCulture(
+        private static CultureInfo ResolveCulture(
             string cultureName)
         {
             if (string.IsNullOrEmpty(cultureName))

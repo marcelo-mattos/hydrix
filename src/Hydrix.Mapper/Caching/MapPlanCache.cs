@@ -1,8 +1,10 @@
+using Hydrix.Mapper.Builders;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping.Internal;
 using Hydrix.Mapper.Plans;
+using Hydrix.Mapper.Primitives;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hydrix.Mapper.Caching
 {
@@ -126,7 +128,8 @@ namespace Hydrix.Mapper.Caching
     /// <summary>
     /// Represents the immutable value-type key used to identify a cached mapping plan.
     /// </summary>
-    internal readonly struct MapPlanKey : IEquatable<MapPlanKey>
+    internal readonly struct MapPlanKey :
+        IEquatable<MapPlanKey>
     {
         /// <summary>
         /// Stores the source type portion of the cache key.
@@ -160,8 +163,7 @@ namespace Hydrix.Mapper.Caching
                 source,
                 destination,
                 MapPlanOptionsKey.Default)
-        {
-        }
+        { }
 
         /// <summary>
         /// Initializes a new cache key for the supplied source type, destination type, and option snapshot.
@@ -236,7 +238,8 @@ namespace Hydrix.Mapper.Caching
     /// <summary>
     /// Represents the immutable option snapshot used to segment cached plans by effective mapper configuration.
     /// </summary>
-    internal readonly struct MapPlanOptionsKey : IEquatable<MapPlanOptionsKey>
+    internal readonly struct MapPlanOptionsKey :
+        IEquatable<MapPlanOptionsKey>
     {
         /// <summary>
         /// Stores the default mapper-option snapshot used by convenience overloads and tests.
@@ -247,7 +250,7 @@ namespace Hydrix.Mapper.Caching
         /// <summary>
         /// Stores the configured string transformation pipeline.
         /// </summary>
-        private readonly StringTransform _stringTransform;
+        private readonly StringTransforms _stringTransform;
 
         /// <summary>
         /// Stores the configured Guid formatting specifier.
@@ -343,8 +346,12 @@ namespace Hydrix.Mapper.Caching
         /// <param name="strictMode">
         /// The configured strict-mode flag.
         /// </param>
+        [SuppressMessage(
+            "Major Code Smell",
+            "S107:Methods should not have too many parameters",
+            Justification = "Performance-critical internal method. Parameters are passed explicitly to avoid additional allocations, indirection, or context objects, ensuring optimal JIT inlining and minimal overhead during expression tree construction.")]
         private MapPlanOptionsKey(
-            StringTransform stringTransform,
+            StringTransforms stringTransform,
             GuidFormat guidFormat,
             GuidCase guidCase,
             NumericRounding numericRounding,

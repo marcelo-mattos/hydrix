@@ -1,6 +1,7 @@
 using Hydrix.Mapper.Configuration;
 using Hydrix.Mapper.DependencyInjection;
 using Hydrix.Mapper.Extensions;
+using Hydrix.Mapper.Primitives;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -214,7 +215,7 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         {
             var services = new ServiceCollection();
             services.AddHydrixMapper(
-                options => options.String.Transform = StringTransform.Uppercase);
+                options => options.String.Transform = StringTransforms.Uppercase);
             services.BuildServiceProvider();
 
             var entity = new EntityUpper
@@ -237,7 +238,7 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         {
             var services = new ServiceCollection();
             services.AddHydrixMapper(
-                options => options.String.Transform = StringTransform.Uppercase);
+                options => options.String.Transform = StringTransforms.Uppercase);
             services.BuildServiceProvider();
 
             var first = new EntityUpper

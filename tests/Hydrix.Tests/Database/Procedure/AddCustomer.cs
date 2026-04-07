@@ -2,7 +2,15 @@
 using Hydrix.Attributes.Schemas;
 using Hydrix.Schemas;
 using Hydrix.Schemas.Contract;
+
+#if SQLSERVER_ENV_ENABLED
 using Microsoft.Data.SqlClient;
+#else
+
+using Npgsql;
+
+#endif
+
 using System;
 using System.Data;
 
@@ -11,9 +19,16 @@ namespace Hydrix.Tests.Database.Procedure
     /// <summary>
     /// GetCustomer Procedure
     /// </summary>
+#if SQLSERVER_ENV_ENABLED
     [Procedure("[AddCustomer]", Schema = "[dbo]")]
     public class AddCustomer :
         DatabaseEntity, IProcedure<SqlParameter>
+#else
+
+    [Procedure("add_customer()", Schema = "public")]
+    public class AddCustomer :
+        DatabaseEntity, IProcedure<NpgsqlParameter>
+#endif
     {
         /// <summary>
         /// Id parameter
@@ -48,7 +63,14 @@ namespace Hydrix.Tests.Database.Procedure
         /// <summary>
         /// IsActive parameter
         /// </summary>
+#if SQLSERVER_ENV_ENABLED
         [Parameter("p_IsActive", DbType.Boolean)]
         public Boolean? IsActive { get; set; }
+#else
+
+        [Parameter("p_is_active", DbType.Boolean)]
+        public Boolean? IsActive { get; set; }
+
+#endif
     }
 }

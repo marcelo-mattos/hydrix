@@ -1,26 +1,37 @@
 using Hydrix.Builders.Query.Conditions;
+using Hydrix.Mapper.Extensions;
+using Hydrix.Tests.Database.Dto;
 using Hydrix.Tests.Database.Entity;
 using Hydrix.Tests.Database.Procedure;
 using Hydrix.Tests.Resources;
 using Hydrix.Tests.Validators;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Hydrix.Tests
 {
     internal class App
     {
+        private static readonly JsonSerializerOptions JsonOptions =
+            new JsonSerializerOptions()
+            {
+                IgnoreNullValues = false,
+                WriteIndented = true
+            };
+
         private readonly ILogger<App> _logger;
 
         public App(ILogger<App> logger)
@@ -28,6 +39,10 @@ namespace Hydrix.Tests
             _logger = logger;
         }
 
+        [SuppressMessage(
+                "Security",
+                "S2068:Credentials should not be hard-coded",
+                Justification = "Connection string is used only for local development/testing environment. No sensitive production credentials are exposed.")]
         public async Task RunAsync()
         {
             var factory = new ResourceManagerStringLocalizerFactory(
@@ -40,7 +55,19 @@ namespace Hydrix.Tests
             var assemblyName = new AssemblyName(typeof(Shared).GetTypeInfo().Assembly.FullName);
             var localizer = factory.Create(nameof(Shared), assemblyName.Name);
 
-            await using var connection = new SqlConnection("Data Source=localhost;Database=HydrixTest;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
+#if SQLSERVER_ENV_ENABLED
+            await using var connection = new SqlConnection(
+                "Data Source=localhost;Database=HydrixTest;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
+
+            const string IsActiveColumn = nameof(Customer.IsActive);
+            const string CustomerIdColumn = nameof(Product.CustomerId);
+#else
+            using var connection = new NpgsqlConnection(
+                "Host=localhost;Port=5432;Database=hydrix_test;Username=user_hydrix_test;Password=f77624cd-84c0-4ebd-b9de-3fe08f3401b2");
+
+            const string IsActiveColumn = "is_active";
+            const string CustomerIdColumn = "customer_id";
+#endif
             await connection.OpenAsync();
             // ----------------- INSERT DATA -----------------
 
@@ -87,14 +114,14 @@ namespace Hydrix.Tests
                     continue;
                 }
 
-                await connection.ExecuteAsync(@"
+                var sqlQuery = @$"
                     INSERT INTO Customer (
                         Id,
                         Name,
                         BirthDate,
                         Level,
                         Salary,
-                        IsActive
+                        {IsActiveColumn}
                     ) VALUES (
                         @Id,
                         @Name,
@@ -102,7 +129,10 @@ namespace Hydrix.Tests
                         @Level,
                         @Salary,
                         @IsActive
-                    );",
+                    );";
+
+                await connection.ExecuteAsync(
+                    sqlQuery,
                     new
                     {
                         Id = customerId,
@@ -113,10 +143,10 @@ namespace Hydrix.Tests
                         IsActive = Faker.BooleanFaker.Boolean()
                     });
 
-                await connection.ExecuteAsync(@"
+                sqlQuery = @$"
                     INSERT INTO Product (
                         Id,
-                        CustomerId,
+                        {CustomerIdColumn},
                         Name,
                         Ean,
                         Quantity,
@@ -132,7 +162,10 @@ namespace Hydrix.Tests
                         @Price,
                         @Type,
                         @Token
-                    );",
+                    );";
+
+                await connection.ExecuteAsync(
+                    sqlQuery,
                     new
                     {
                         product.Id,
@@ -157,7 +190,7 @@ namespace Hydrix.Tests
 
             var builder = WhereBuilder.Create();
             var where = builder
-                .AndIf(isActive.HasValue, "c.IsActive = @IsActive")
+                .AndIf(isActive.HasValue, $"c.{IsActiveColumn} = @IsActive")
                 .AndIf(startDate.HasValue, "c.BirthDate >= @StartDate")
                 .AndIf(endDate.HasValue, "c.BirthDate <= @EndDate")
                 .AndIf(levels != null && levels.Length > 0, "c.Level IN (@Levels)")
@@ -175,7 +208,7 @@ namespace Hydrix.Tests
                             levels != null,
                             levels.Length > 0
                         },
-                        "(c.IsActive IS NULL OR c.IsActive = @IsActive)",
+                        $"(c.{IsActiveColumn} IS NULL OR c.{IsActiveColumn} = @IsActive)",
                         "c.Level IN (@Levels)")
                     .OrAndGroupIf(
                         new[]
@@ -194,7 +227,7 @@ namespace Hydrix.Tests
                     c.BirthDate,
                     c.Level,
                     c.Salary,
-                    c.IsActive
+                    c.{IsActiveColumn}
                 FROM Customer c
                 {where}
                 ORDER BY
@@ -226,7 +259,7 @@ namespace Hydrix.Tests
             sql = $@"
                 SELECT
                     p.Id,
-                    p.CustomerId,
+                    p.{CustomerIdColumn},
                     p.Name,
                     p.Ean,
                     p.Quantity,
@@ -238,11 +271,11 @@ namespace Hydrix.Tests
                     c.BirthDate as ""Customer.BirthDate"",
                     c.Level     as ""Customer.Level"",
                     c.Salary    as ""Customer.Salary"",
-                    c.IsActive  as ""Customer.IsActive""
+                    c.{IsActiveColumn} as ""Customer.{IsActiveColumn}""
                 FROM Product p
-                LEFT JOIN Customer c ON p.CustomerId = c.Id
+                LEFT JOIN Customer c ON p.{CustomerIdColumn} = c.Id
                 ORDER BY
-                    p.CustomerId;";
+                    p.{CustomerIdColumn};";
 
             productResult = await connection.QueryAsync<Product>(
                 sql);
@@ -251,7 +284,7 @@ namespace Hydrix.Tests
             sql = $@"
                 SELECT
                     p.Id,
-                    p.CustomerId,
+                    p.{CustomerIdColumn},
                     p.Name,
                     p.Ean,
                     p.Quantity,
@@ -263,33 +296,46 @@ namespace Hydrix.Tests
                     c.BirthDate as ""Customer.BirthDate"",
                     c.Level     as ""Customer.Level"",
                     c.Salary    as ""Customer.Salary"",
-                    c.IsActive  as ""Customer.IsActive""
+                    c.{IsActiveColumn} as ""Customer.{IsActiveColumn}""
                 FROM Product p
-                LEFT JOIN Customer c ON p.CustomerId = c.Id
+                LEFT JOIN Customer c ON p.{CustomerIdColumn} = c.Id
                 WHERE
-                    c.IsActive = @IsActive
+                    c.{IsActiveColumn} = @IsActive
                 ORDER BY
-                    p.CustomerId;";
-
+                    p.{CustomerIdColumn};";
             productResult = await connection.QueryAsync<Product>(
                 sql,
+#if SQLSERVER_ENV_ENABLED
                 new List<SqlParameter>()
                 {
                     new SqlParameter()
+#else
+                new List<NpgsqlParameter>()
+                {
+                    new NpgsqlParameter()
+#endif
                     {
                         ParameterName = "@IsActive",
-                        SqlDbType = System.Data.SqlDbType.Bit,
+                        DbType = System.Data.DbType.Boolean,
                         Value = false
                     }
                 });
-            Console.WriteLine($"Product Count: {productResult.Count()}");
+
+            var productDto = productResult.ToDtoList<ProductDto>();
+            Console.WriteLine($"{JsonSerializer.Serialize(productDto, JsonOptions)}");
 
             // ----------------- DELETE DATA -----------------
 
-            await connection.ExecuteAsync(@"
+#if SQLSERVER_ENV_ENABLED
+            sql = @"
                 DELETE
-                FROM [dbo].[Product]
-            ");
+                FROM [dbo].[Product]";
+#else
+            sql = @"
+                DELETE
+                FROM public.product";
+#endif
+            await connection.ExecuteAsync(sql);
 
             // ----------------- INSERT DATA -----------------
 
@@ -319,12 +365,24 @@ namespace Hydrix.Tests
 
             // ----------------- SELECT DATA -----------------
 
-            var customers = await connection.QueryAsync<Customer, SqlParameter>(new GetCustomer());
+            var customers = await connection.QueryAsync<
+                Customer,
+#if SQLSERVER_ENV_ENABLED
+                SqlParameter>(new GetCustomer());
+#else
+                NpgsqlParameter>(new GetCustomer());
+#endif
             Console.WriteLine($"Customer Count: {customers.Count()}");
 
             await connection.ExecuteAsync(new DelCustomers());
 
-            customers = await connection.QueryAsync<Customer, SqlParameter>(new GetCustomer());
+            customers = await connection.QueryAsync<
+                Customer,
+#if SQLSERVER_ENV_ENABLED
+                SqlParameter>(new GetCustomer());
+#else
+                NpgsqlParameter>(new GetCustomer());
+#endif
             Console.WriteLine($"Customer Count: {customers.Count()}");
 
             // ----------------- DELETE DATA -----------------

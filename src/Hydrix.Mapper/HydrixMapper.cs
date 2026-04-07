@@ -5,11 +5,14 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+
 #if NET6_0_OR_GREATER
+
 using System.Runtime.InteropServices;
+
 #endif
 
-namespace Hydrix.Mapper.Mapping
+namespace Hydrix.Mapper
 {
     /// <summary>
     /// Provides the default mapper implementation that uses cached, precompiled mapping plans for high-throughput object
@@ -51,12 +54,12 @@ namespace Hydrix.Mapper.Mapping
 #if NET8_0_OR_GREATER
             ArgumentNullException.ThrowIfNull(
                 options);
-#else
-            if (options == null)
-                throw new ArgumentNullException(
-                    nameof(options));
-#endif
+
             _options = options;
+#else
+            _options = options ??
+                throw new ArgumentNullException(nameof(options));
+#endif
         }
 
         /// <summary>
@@ -111,10 +114,10 @@ namespace Hydrix.Mapper.Mapping
                 throw new ArgumentNullException(
                     nameof(source));
 
-            return (TTarget)GetPlan(
+            return ((Func<TSource, TTarget>)GetPlan(
                     typeof(TSource),
                     typeof(TTarget))
-                .Execute(
+                .TypedExecute)(
                     source);
         }
 
@@ -186,61 +189,39 @@ namespace Hydrix.Mapper.Mapping
             if (sources == null)
                 return Array.Empty<TTarget>();
 
-            var plan = GetPlan(
-                typeof(TSource),
-                typeof(TTarget));
+            var typedExecute = (Func<TSource, TTarget>)GetPlan(
+                    typeof(TSource),
+                    typeof(TTarget))
+                .TypedExecute;
 
 #if NET6_0_OR_GREATER
             if (sources is List<TSource> list)
             {
                 var span = CollectionsMarshal.AsSpan(
                     list);
+
                 if (span.IsEmpty)
                     return Array.Empty<TTarget>();
-                var spanResult = new List<TTarget>(
-                    span.Length);
-                for (var i = 0; i < span.Length; i++)
-                {
-                    if (span[i] is null)
-                        continue;
-                    spanResult.Add(
-                        (TTarget)plan.Execute(
-                            span[i]));
-                }
-                return spanResult;
+
+                return MapSpan(
+                    span,
+                    typedExecute);
             }
 #endif
 
             if (sources is IList<TSource> ilist)
             {
-                var count = ilist.Count;
-                if (count == 0)
+                if (ilist.Count == 0)
                     return Array.Empty<TTarget>();
-                var ilistResult = new List<TTarget>(
-                    count);
-                for (var i = 0; i < count; i++)
-                {
-                    var item = ilist[i];
-                    if (item is null)
-                        continue;
-                    ilistResult.Add(
-                        (TTarget)plan.Execute(
-                            item));
-                }
-                return ilistResult;
+
+                return MapIList(
+                    ilist,
+                    typedExecute);
             }
 
-            var result = CreateResultBuffer<TSource, TTarget>(
-                sources);
-            foreach (var source in sources)
-            {
-                if (source is null)
-                    continue;
-                result.Add(
-                    (TTarget)plan.Execute(
-                        source));
-            }
-            return result;
+            return MapEnumerable(
+                sources,
+                typedExecute);
         }
 
         /// <summary>
@@ -332,24 +313,95 @@ namespace Hydrix.Mapper.Mapping
             IEnumerable<TSource> sources)
         {
             if (sources is ICollection<TSource> collection)
-            {
                 return new List<TTarget>(
                     collection.Count);
-            }
 
             if (sources is IReadOnlyCollection<TSource> readOnlyCollection)
-            {
                 return new List<TTarget>(
                     readOnlyCollection.Count);
-            }
 
             if (sources is ICollection nonGenericCollection)
-            {
                 return new List<TTarget>(
                     nonGenericCollection.Count);
-            }
 
             return new List<TTarget>();
+        }
+
+#if NET6_0_OR_GREATER
+
+        /// <summary>
+        /// Maps each non-null element in the supplied span to a destination instance using the compiled delegate.
+        /// </summary>
+        private static List<TTarget> MapSpan<TSource, TTarget>(
+            Span<TSource> span,
+            Func<TSource, TTarget> execute)
+        {
+            var result = new List<TTarget>(
+                span.Length);
+
+            for (var i = 0; i < span.Length; i++)
+            {
+                if (span[i] is null)
+                    continue;
+
+                result.Add(
+                    execute(
+                        span[i]));
+            }
+
+            return result;
+        }
+
+#endif
+
+        /// <summary>
+        /// Maps each non-null element in the supplied index-addressable list to a destination instance using the compiled
+        /// delegate.
+        /// </summary>
+        private static List<TTarget> MapIList<TSource, TTarget>(
+            IList<TSource> ilist,
+            Func<TSource, TTarget> execute)
+        {
+            var count = ilist.Count;
+            var result = new List<TTarget>(
+                count);
+
+            for (var i = 0; i < count; i++)
+            {
+                var item = ilist[i];
+                if (item is null)
+                    continue;
+
+                result.Add(
+                    execute(
+                        item));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Maps each non-null element from an arbitrary enumerable sequence to a destination instance using the compiled
+        /// delegate.
+        /// </summary>
+        private static List<TTarget> MapEnumerable<TSource, TTarget>(
+            IEnumerable<TSource> sources,
+            Func<TSource, TTarget> execute)
+        {
+            var result = CreateResultBuffer<TSource, TTarget>(
+                sources);
+
+            foreach (var source in sources)
+            {
+                if (source is null)
+                    continue;
+
+                result.Add(
+                    execute(
+                        source));
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -367,7 +419,7 @@ namespace Hydrix.Mapper.Mapping
             /// <summary>
             /// Stores the destination type portion of the key.
             /// </summary>
-            private readonly Type _dest;
+            private readonly Type _target;
 
             /// <summary>
             /// Initializes a new <see cref="TypePair"/> key.
@@ -375,15 +427,15 @@ namespace Hydrix.Mapper.Mapping
             /// <param name="source">
             /// The source type component of the key.
             /// </param>
-            /// <param name="dest">
+            /// <param name="target">
             /// The destination type component of the key.
             /// </param>
             internal TypePair(
                 Type source,
-                Type dest)
+                Type target)
             {
                 _source = source;
-                _dest = dest;
+                _target = target;
             }
 
             /// <summary>
@@ -399,7 +451,7 @@ namespace Hydrix.Mapper.Mapping
             public bool Equals(
                 TypePair other) =>
                 _source == other._source &&
-                _dest == other._dest;
+                _target == other._target;
 
             /// <summary>
             /// Determines whether the current key matches another object instance.
@@ -426,7 +478,7 @@ namespace Hydrix.Mapper.Mapping
             {
                 unchecked
                 {
-                    return (_source.GetHashCode() * 397) ^ _dest.GetHashCode();
+                    return (_source.GetHashCode() * 397) ^ _target.GetHashCode();
                 }
             }
         }

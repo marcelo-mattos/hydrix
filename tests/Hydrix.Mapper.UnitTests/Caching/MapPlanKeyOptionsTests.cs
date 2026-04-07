@@ -1,7 +1,6 @@
-﻿using Hydrix.Mapper;
 using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
-using System;
+using Hydrix.Mapper.Primitives;
 using Xunit;
 
 namespace Hydrix.Mapper.UnitTests.Caching
@@ -33,7 +32,7 @@ namespace Hydrix.Mapper.UnitTests.Caching
         /// </param>
         /// <returns>A configured option snapshot.</returns>
         private static HydrixMapperOptions CreateOptions(
-            StringTransform transform)
+            StringTransforms transform)
         {
             var options = new HydrixMapperOptions();
             options.String.Transform = transform;
@@ -51,13 +50,13 @@ namespace Hydrix.Mapper.UnitTests.Caching
                 typeof(DestinationModel),
                 MapPlanOptionsKey.Create(
                     CreateOptions(
-                        StringTransform.Uppercase)));
+                        StringTransforms.Uppercase)));
             var lowerKey = new MapPlanKey(
                 typeof(SourceModel),
                 typeof(DestinationModel),
                 MapPlanOptionsKey.Create(
                     CreateOptions(
-                        StringTransform.Lowercase)));
+                        StringTransforms.Lowercase)));
 
             Assert.False(
                 upperKey.Equals(
@@ -76,10 +75,10 @@ namespace Hydrix.Mapper.UnitTests.Caching
         {
             var left = MapPlanOptionsKey.Create(
                 CreateOptions(
-                    StringTransform.Trim | StringTransform.Uppercase));
+                    StringTransforms.Trim | StringTransforms.Uppercase));
             object right = MapPlanOptionsKey.Create(
                 CreateOptions(
-                    StringTransform.Trim | StringTransform.Uppercase));
+                    StringTransforms.Trim | StringTransforms.Uppercase));
 
             Assert.True(
                 left.Equals(
@@ -94,7 +93,7 @@ namespace Hydrix.Mapper.UnitTests.Caching
         {
             var key = MapPlanOptionsKey.Create(
                 CreateOptions(
-                    StringTransform.Trim));
+                    StringTransforms.Trim));
 
             Assert.False(
                 key.Equals(
@@ -102,4 +101,3 @@ namespace Hydrix.Mapper.UnitTests.Caching
         }
     }
 }
-

@@ -4,7 +4,9 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet test:*)",
       "Bash(cd:*)",
-      "Bash(dotnet restore:*)"
+      "Bash(dotnet restore:*)",
+      "Bash(dir \"C:\\\\VSO\\\\hydrix\\\\src\\\\Hydrix.Mapper\" /b)",
+      "Bash(dir \"C:\\\\VSO\\\\hydrix\" /b)"
     ]
   }
 }

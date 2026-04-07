@@ -1,6 +1,6 @@
 ﻿using Hydrix.Mapper.Attributes;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using System;
 using Xunit;
 

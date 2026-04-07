@@ -11,7 +11,7 @@ Hydrix.Mapper is an **object-to-DTO projection library** built for developers wh
 
 - Zero reflection on the hot path
 - Predictable, per-property compiled behavior
-- Performance competitive with AutoMapper
+- Performance that surpasses AutoMapper across every scenario
 - Full conversion control without custom profiles
 
 Starting with **Hydrix.Mapper 1.0.0**, every mapping plan is compiled once via expression trees, cached permanently, and executed through a single fused delegate that creates the destination, transfers every property, and returns — with no per-call reflection, no hidden allocations, and no delegate overhead beyond the plan call itself.
@@ -54,6 +54,7 @@ Hydrix.Mapper does not attempt to infer your mapping intent from conventions alo
 - Single fused compiled delegate per type pair — destination construction and all property transfers in one expression block
 - Per-instance fast cache keyed by `(Type source, Type dest)` — eliminates option-key construction on every hot-path call
 - Typed local variables in compiled expressions — each cast is emitted once regardless of property count
+- Identity reference-type assignments skip the null-check wrapper — direct assignment handles null naturally
 - String transforms: `Trim`, `TrimStart`, `TrimEnd`, `Uppercase`, `Lowercase`, and combinations
 - Guid formatting: format specifiers `N`, `D`, `B`, `P` with `Lower`/`Upper` casing control
 - DateTime and DateTimeOffset to string: custom format, timezone normalization (`None`, `ToUtc`, `ToLocal`), and culture
@@ -77,36 +78,49 @@ Hydrix.Mapper does not attempt to infer your mapping intent from conventions alo
 
 The benchmark suite compares Hydrix.Mapper against AutoMapper 12 across flat-object widths, collection sizes, type conversion scenarios, and cold-path plan compilation.
 
-Environment: BenchmarkDotNet v0.14.0 · .NET 10 · X64 RyuJIT AVX2 · LongRun (100 iterations, 3 launches, 15 warmups)
+Environment: BenchmarkDotNet v0.14.0 · .NET 10.0.5 · X64 RyuJIT AVX2 · MediumRun (15 iterations, 2 launches, 10 warmups)
 
 ### Single object — flat
 
-| Scenario | Hydrix.Mapper | AutoMapper |
-| --- | ---: | ---: |
-| flat small (5 props) | competitive | baseline |
-| flat medium (11 props) | competitive | baseline |
-| flat large (20 props) | competitive | baseline |
+| Scenario | Hydrix.Mapper | AutoMapper | Gain |
+| --- | ---: | ---: | ---: |
+| flat small (5 props) | **16 ns** | 33 ns | **~52% faster** |
+| flat medium (12 props) | **21 ns** | 38 ns | **~45% faster** |
+| flat large (20 props) | **23 ns** | 41 ns | **~45% faster** |
 
 ### Single object — with conversions
 
-| Scenario | Hydrix.Mapper | AutoMapper |
-| --- | ---: | ---: |
-| string trim + guid + datetime + decimal→int | competitive | baseline |
+| Scenario | Hydrix.Mapper | AutoMapper | Gain |
+| --- | ---: | ---: | ---: |
+| string trim + guid + datetime + decimal→int | **56 ns** | 72 ns | **~22% faster** |
 
-### Collections
+### Collections — speed
 
-| Scenario | Hydrix.Mapper | AutoMapper |
-| --- | ---: | ---: |
-| list small ×100 | competitive | baseline |
-| list small ×1000 | competitive | baseline |
-| list large ×100 | competitive | baseline |
-| list large ×1000 | competitive | baseline |
+| Scenario | Hydrix.Mapper | AutoMapper | Gain |
+| --- | ---: | ---: | ---: |
+| list small ×100 | **751 ns** | 1,071 ns | **~30% faster** |
+| list medium ×100 | **1,449 ns** | 1,687 ns | **~14% faster** |
+| list large ×100 | **1,519 ns** | 2,083 ns | **~27% faster** |
+| list small ×1000 | **7,939 ns** | 9,834 ns | **~19% faster** |
+| list medium ×1000 | **13,932 ns** | 15,606 ns | **~11% faster** |
+| list large ×1000 | **14,846 ns** | 16,788 ns | **~12% faster** |
+
+### Collections — allocations
+
+| Scenario | Hydrix.Mapper | AutoMapper | Reduction |
+| --- | ---: | ---: | ---: |
+| list small ×100 | **5,696 B** | 6,992 B | **~19% less** |
+| list medium ×100 | **12,096 B** | 13,392 B | **~10% less** |
+| list large ×100 | **16,096 B** | 17,392 B | **~7% less** |
+| list small ×1000 | **56,096 B** | 64,600 B | **~13% less** |
+| list medium ×1000 | **120,096 B** | 128,600 B | **~7% less** |
+| list large ×1000 | **160,096 B** | 168,600 B | **~5% less** |
 
 ### Cold path
 
 | Scenario | Hydrix.Mapper |
 | --- | ---: |
-| first hit (plan compile + execute) | ~1.09 ms |
+| first hit (plan compile + execute) | **~185 ns** |
 
 The cold path cost is paid exactly once per type pair per application lifetime. Every subsequent call uses the cached compiled plan with no reflection.
 

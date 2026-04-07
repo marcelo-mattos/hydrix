@@ -1,3 +1,5 @@
+using Hydrix.Mapper.Primitives;
+
 namespace Hydrix.Mapper.Configuration
 {
     /// <summary>

@@ -1,6 +1,6 @@
 ﻿using Hydrix.Mapper.Attributes;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using System;
 using System.Globalization;
 using Xunit;
@@ -242,6 +242,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
 #if NET6_0_OR_GREATER
+
         /// <summary>
         /// Represents the DateOnly source model used by the .NET 6+ formatting scenarios.
         /// </summary>
@@ -275,6 +276,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             [MapConversion(DateFormat = "dd/MM/yyyy", Culture = "pt-BR", OverrideDateTime = true)]
             public string Value { get; set; }
         }
+
 #endif
 
         /// <summary>
@@ -737,6 +739,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
 #if NET6_0_OR_GREATER
+
         /// <summary>
         /// Verifies that DateOnly values honor the global format and culture settings.
         /// </summary>
@@ -790,6 +793,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
                         "pt-BR")),
                 dto.Value);
         }
+
 #endif
     }
 }

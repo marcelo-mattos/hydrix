@@ -1,3 +1,5 @@
+using Hydrix.Mapper.Primitives;
+
 namespace Hydrix.Mapper.Configuration
 {
     /// <summary>
@@ -8,7 +10,7 @@ namespace Hydrix.Mapper.Configuration
         /// <summary>
         /// Gets or sets the standard Guid format specifier used to generate the textual representation of the value.
         /// </summary>
-        public GuidFormat Format { get; set; } = GuidFormat.D;
+        public GuidFormat Format { get; set; } = GuidFormat.Hyphenated;
 
         /// <summary>
         /// Gets or sets the letter casing applied to hexadecimal Guid digits after formatting.

@@ -1,5 +1,4 @@
 ﻿using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -694,6 +693,89 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
         /// <summary>
+        /// Verifies that the strongly typed list API maps a non-empty array source, exercising the index-loop fast path
+        /// on all target frameworks.
+        /// </summary>
+        [Fact]
+        public void MapList_TypedOverload_MapsArraySource()
+        {
+            PersonEntity[] sources =
+            {
+                new PersonEntity
+                {
+                    Id = 10,
+                    Name = "X",
+                },
+                new PersonEntity
+                {
+                    Id = 11,
+                    Name = "Y",
+                },
+            };
+
+            var result = CreateMapper().MapList<PersonEntity, PersonDto>(
+                sources);
+
+            Assert.Equal(
+                2,
+                result.Count);
+            Assert.Equal(
+                10,
+                result[0].Id);
+            Assert.Equal(
+                "X",
+                result[0].Name);
+            Assert.Equal(
+                11,
+                result[1].Id);
+            Assert.Equal(
+                "Y",
+                result[1].Name);
+        }
+
+        /// <summary>
+        /// Verifies that the strongly typed list API skips null elements when the source is provided as a non-List
+        /// <see cref="IList{T}"/>, covering the null-skip branch inside the index-loop fast path.
+        /// </summary>
+        [Fact]
+        public void MapList_TypedOverload_ArraySource_SkipsNullElements()
+        {
+            IList<PersonEntity> sources = new PersonEntity[]
+            {
+                new PersonEntity
+                {
+                    Id = 1,
+                    Name = "A",
+                },
+                null,
+                new PersonEntity
+                {
+                    Id = 2,
+                    Name = "B",
+                },
+            };
+
+            var result = CreateMapper().MapList<PersonEntity, PersonDto>(
+                sources);
+
+            Assert.Equal(
+                2,
+                result.Count);
+            Assert.Equal(
+                1,
+                result[0].Id);
+            Assert.Equal(
+                "A",
+                result[0].Name);
+            Assert.Equal(
+                2,
+                result[1].Id);
+            Assert.Equal(
+                "B",
+                result[1].Name);
+        }
+
+        /// <summary>
         /// Verifies that destination properties without setters are ignored during plan compilation.
         /// </summary>
         [Fact]
@@ -905,4 +987,3 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
     }
 }
-

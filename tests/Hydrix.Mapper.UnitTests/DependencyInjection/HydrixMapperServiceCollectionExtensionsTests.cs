@@ -1,6 +1,6 @@
 using Hydrix.Mapper.Configuration;
 using Hydrix.Mapper.DependencyInjection;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using Xunit;
@@ -88,11 +88,11 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
             services.AddHydrixMapper(
                 options =>
                 {
-                    options.String.Transform = StringTransform.Uppercase;
+                    options.String.Transform = StringTransforms.Uppercase;
                 });
 
             Assert.Equal(
-                StringTransform.Uppercase,
+                StringTransforms.Uppercase,
                 HydrixMapperConfiguration.Options.String.Transform);
         }
 
@@ -104,12 +104,12 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
         {
             var services = new ServiceCollection();
             services.AddHydrixMapper(
-                options => options.String.Transform = StringTransform.Lowercase);
+                options => options.String.Transform = StringTransforms.Lowercase);
             services.AddHydrixMapper(
-                options => options.String.Transform = StringTransform.Uppercase);
+                options => options.String.Transform = StringTransforms.Uppercase);
 
             Assert.Equal(
-                StringTransform.Uppercase,
+                StringTransforms.Uppercase,
                 HydrixMapperConfiguration.Options.String.Transform);
         }
 

@@ -1,3 +1,5 @@
+using Hydrix.Mapper.Primitives;
+
 namespace Hydrix.Mapper.Configuration
 {
     /// <summary>
@@ -17,7 +19,7 @@ namespace Hydrix.Mapper.Configuration
         /// Use <see cref="BoolStringFormat.Custom"/> together with <see cref="TrueValue"/> and <see cref="FalseValue"/>
         /// when the built-in presets do not match the desired output contract.
         /// </remarks>
-        public BoolStringFormat StringFormat { get; set; } = BoolStringFormat.TrueFalse;
+        public BoolStringFormat StringFormat { get; set; } = BoolStringFormat.TrueOrFalse;
 
         /// <summary>
         /// Gets or sets the custom text emitted for a <see langword="true"/> value when

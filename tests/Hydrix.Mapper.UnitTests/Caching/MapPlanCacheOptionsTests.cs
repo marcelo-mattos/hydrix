@@ -1,6 +1,6 @@
-using Hydrix.Mapper;
 using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
+using Hydrix.Mapper.Primitives;
 using Xunit;
 
 namespace Hydrix.Mapper.UnitTests.Caching
@@ -42,7 +42,7 @@ namespace Hydrix.Mapper.UnitTests.Caching
         /// </param>
         /// <returns>A configured option snapshot.</returns>
         private static HydrixMapperOptions CreateOptions(
-            StringTransform transform)
+            StringTransforms transform)
         {
             var options = new HydrixMapperOptions();
             options.String.Transform = transform;
@@ -57,9 +57,9 @@ namespace Hydrix.Mapper.UnitTests.Caching
         {
             MapPlanCache.Clear();
             var uppercase = CreateOptions(
-                StringTransform.Uppercase);
+                StringTransforms.Uppercase);
             var lowercase = CreateOptions(
-                StringTransform.Lowercase);
+                StringTransforms.Lowercase);
 
             var uppercasePlan = MapPlanCache.GetOrAdd(
                 typeof(SourceModel),
@@ -94,9 +94,9 @@ namespace Hydrix.Mapper.UnitTests.Caching
         {
             MapPlanCache.Clear();
             var firstOptions = CreateOptions(
-                StringTransform.Trim | StringTransform.Uppercase);
+                StringTransforms.Trim | StringTransforms.Uppercase);
             var secondOptions = CreateOptions(
-                StringTransform.Trim | StringTransform.Uppercase);
+                StringTransforms.Trim | StringTransforms.Uppercase);
 
             var firstPlan = MapPlanCache.GetOrAdd(
                 typeof(SourceModel),

@@ -1,6 +1,6 @@
-﻿using Hydrix.Mapper.Attributes;
+using Hydrix.Mapper.Attributes;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using Xunit;
 
 namespace Hydrix.Mapper.UnitTests.Mapping
@@ -185,7 +185,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(BoolFormat = BoolStringFormat.YN, OverrideBool = true)]
+            [MapConversion(BoolFormat = BoolStringFormat.YOrN, OverrideBool = true)]
             public string Value { get; set; }
         }
 
@@ -197,7 +197,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(BoolFormat = BoolStringFormat.OneZero, OverrideBool = true)]
+            [MapConversion(BoolFormat = BoolStringFormat.OneOrZero, OverrideBool = true)]
             public string Value { get; set; }
         }
 
@@ -221,7 +221,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(BoolFormat = BoolStringFormat.LowerCase, OverrideBool = true)]
+            [MapConversion(BoolFormat = BoolStringFormat.LowercaseTrueOrFalse, OverrideBool = true)]
             public string Value { get; set; }
         }
 
@@ -324,7 +324,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Bool_GlobalLowerCase()
         {
             var mapper = CreateBoolMapper(
-                BoolStringFormat.LowerCase);
+                BoolStringFormat.LowercaseTrueOrFalse);
 
             Assert.Equal(
                 "true",
@@ -349,7 +349,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Bool_GlobalYesNo()
         {
             var mapper = CreateBoolMapper(
-                BoolStringFormat.YesNo);
+                BoolStringFormat.YesOrNo);
 
             Assert.Equal(
                 "Yes",
@@ -374,7 +374,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Bool_GlobalYN()
         {
             var mapper = CreateBoolMapper(
-                BoolStringFormat.YN);
+                BoolStringFormat.YOrN);
 
             Assert.Equal(
                 "Y",
@@ -399,7 +399,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_Bool_GlobalOneZero()
         {
             var mapper = CreateBoolMapper(
-                BoolStringFormat.OneZero);
+                BoolStringFormat.OneOrZero);
 
             Assert.Equal(
                 "1",
@@ -418,63 +418,13 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
         /// <summary>
-        /// Verifies that the S/N bool format produces the expected Portuguese abbreviations.
-        /// </summary>
-        [Fact]
-        public void Map_Bool_GlobalSN()
-        {
-            var mapper = CreateBoolMapper(
-                BoolStringFormat.SN);
-
-            Assert.Equal(
-                "S",
-                mapper.Map<BoolSnDto>(
-                    new BoolSource
-                    {
-                        Value = true,
-                    }).Value);
-            Assert.Equal(
-                "N",
-                mapper.Map<BoolSnDto>(
-                    new BoolSource
-                    {
-                        Value = false,
-                    }).Value);
-        }
-
-        /// <summary>
-        /// Verifies that the Sim/Nao bool format produces the expected full Portuguese labels.
-        /// </summary>
-        [Fact]
-        public void Map_Bool_GlobalSimNao()
-        {
-            var mapper = CreateBoolMapper(
-                BoolStringFormat.SimNao);
-
-            Assert.Equal(
-                "Sim",
-                mapper.Map<BoolSimNaoDto>(
-                    new BoolSource
-                    {
-                        Value = true,
-                    }).Value);
-            Assert.Equal(
-                "Nao",
-                mapper.Map<BoolSimNaoDto>(
-                    new BoolSource
-                    {
-                        Value = false,
-                    }).Value);
-        }
-
-        /// <summary>
         /// Verifies that the T/F bool format produces the expected labels.
         /// </summary>
         [Fact]
         public void Map_Bool_GlobalTF()
         {
             var mapper = CreateBoolMapper(
-                BoolStringFormat.TF);
+                BoolStringFormat.TOrF);
 
             Assert.Equal(
                 "T",

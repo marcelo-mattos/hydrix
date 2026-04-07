@@ -1,5 +1,4 @@
 using Hydrix.Mapper.Caching;
-using System;
 using Xunit;
 
 namespace Hydrix.Mapper.UnitTests.Caching

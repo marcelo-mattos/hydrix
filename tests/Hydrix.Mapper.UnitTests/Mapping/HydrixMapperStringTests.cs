@@ -1,6 +1,6 @@
-﻿using Hydrix.Mapper.Attributes;
+using Hydrix.Mapper.Attributes;
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
+using Hydrix.Mapper.Primitives;
 using Xunit;
 
 namespace Hydrix.Mapper.UnitTests.Mapping
@@ -121,7 +121,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.Trim, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.Trim, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
@@ -133,7 +133,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.TrimStart, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.TrimStart, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
@@ -145,7 +145,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.TrimEnd, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.TrimEnd, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
@@ -157,7 +157,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.Uppercase, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.Uppercase, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
@@ -169,7 +169,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.Lowercase, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.Lowercase, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
@@ -181,7 +181,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.Trim | StringTransform.Uppercase, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.Trim | StringTransforms.Uppercase, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
@@ -193,7 +193,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.Trim | StringTransform.Lowercase, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.Trim | StringTransforms.Lowercase, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
@@ -205,12 +205,12 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             /// <summary>
             /// Gets or sets the mapped string value.
             /// </summary>
-            [MapConversion(StringTransform = StringTransform.Lowercase, OverrideStringTransform = true)]
+            [MapConversion(StringTransform = StringTransforms.Lowercase, OverrideStringTransform = true)]
             public string Value { get; set; }
         }
 
         /// <summary>
-        /// Represents the destination model whose member clears the global transform by overriding it with <see cref="StringTransform.None"/>.
+        /// Represents the destination model whose member clears the global transform by overriding it with <see cref="StringTransforms.None"/>.
         /// </summary>
         private sealed class AttributeNoneOverrideGlobalDto
         {
@@ -227,7 +227,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         /// <param name="transform">The global string transform that should be applied by the mapper.</param>
         /// <returns>A mapper instance configured with the requested string transform.</returns>
         private static HydrixMapper CreateMapper(
-            StringTransform transform)
+            StringTransforms transform)
         {
             var options = new HydrixMapperOptions();
             options.String.Transform = transform;
@@ -301,7 +301,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalTrim_TrimsWhitespace()
         {
             var dto = CreateMapper(
-                StringTransform.Trim).Map<GlobalTrimDto>(
+                StringTransforms.Trim).Map<GlobalTrimDto>(
                 new StringSource
                 {
                     Value = "  hello  ",
@@ -319,7 +319,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalTrim_NullValue_RemainsNull()
         {
             var dto = CreateMapper(
-                StringTransform.Trim).Map<GlobalTrimDto>(
+                StringTransforms.Trim).Map<GlobalTrimDto>(
                 new StringSource
                 {
                     Value = null,
@@ -369,7 +369,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalTrimStart_TrimsLeading()
         {
             var dto = CreateMapper(
-                StringTransform.TrimStart).Map<GlobalTrimStartDto>(
+                StringTransforms.TrimStart).Map<GlobalTrimStartDto>(
                 new StringSource
                 {
                     Value = "  hello  ",
@@ -404,7 +404,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalTrimEnd_TrimsTrailing()
         {
             var dto = CreateMapper(
-                StringTransform.TrimEnd).Map<GlobalTrimEndDto>(
+                StringTransforms.TrimEnd).Map<GlobalTrimEndDto>(
                 new StringSource
                 {
                     Value = "  hello  ",
@@ -439,7 +439,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalUppercase_ConvertsToUpper()
         {
             var dto = CreateMapper(
-                StringTransform.Uppercase).Map<GlobalUppercaseDto>(
+                StringTransforms.Uppercase).Map<GlobalUppercaseDto>(
                 new StringSource
                 {
                     Value = "hello",
@@ -474,7 +474,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalLowercase_ConvertsToLower()
         {
             var dto = CreateMapper(
-                StringTransform.Lowercase).Map<GlobalLowercaseDto>(
+                StringTransforms.Lowercase).Map<GlobalLowercaseDto>(
                 new StringSource
                 {
                     Value = "HELLO",
@@ -543,7 +543,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalTrimUppercase_TrimsAndUppercases()
         {
             var dto = CreateMapper(
-                StringTransform.Trim | StringTransform.Uppercase).Map<GlobalTrimUppercaseDto>(
+                StringTransforms.Trim | StringTransforms.Uppercase).Map<GlobalTrimUppercaseDto>(
                 new StringSource
                 {
                     Value = "  hello  ",
@@ -561,7 +561,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_GlobalTrimLowercase_TrimsAndLowercases()
         {
             var dto = CreateMapper(
-                StringTransform.Trim | StringTransform.Lowercase).Map<GlobalTrimLowercaseDto>(
+                StringTransforms.Trim | StringTransforms.Lowercase).Map<GlobalTrimLowercaseDto>(
                 new StringSource
                 {
                     Value = "  HELLO  ",
@@ -579,7 +579,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_AttributeOverridesGlobal_UsesAttributeTransform()
         {
             var options = new HydrixMapperOptions();
-            options.String.Transform = StringTransform.Uppercase;
+            options.String.Transform = StringTransforms.Uppercase;
 
             var dto = new HydrixMapper(
                 options).Map<AttributeLowercaseOverrideGlobalDto>(
@@ -600,7 +600,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         public void Map_String_AttributeOverrideWithNone_DisablesGlobalTransform()
         {
             var options = new HydrixMapperOptions();
-            options.String.Transform = StringTransform.Uppercase;
+            options.String.Transform = StringTransforms.Uppercase;
 
             var dto = new HydrixMapper(
                 options).Map<AttributeNoneOverrideGlobalDto>(

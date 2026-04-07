@@ -1,3 +1,5 @@
+using Hydrix.Mapper.Primitives;
+
 namespace Hydrix.Mapper.Configuration
 {
     /// <summary>
@@ -8,6 +10,6 @@ namespace Hydrix.Mapper.Configuration
         /// <summary>
         /// Gets or sets the transformation pipeline applied when both the source and destination members are strings.
         /// </summary>
-        public StringTransform Transform { get; set; } = StringTransform.None;
+        public StringTransforms Transform { get; set; } = StringTransforms.None;
     }
 }

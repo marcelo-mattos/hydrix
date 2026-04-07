@@ -1,5 +1,4 @@
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.Mapping;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
