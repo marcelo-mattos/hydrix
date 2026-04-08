@@ -202,7 +202,7 @@ services.AddHydrixMapper(options =>
     options.DateTime.TimeZone             = DateTimeZone.None;
     options.Numeric.DecimalToIntRounding  = NumericRounding.Truncate;
     options.Numeric.Overflow              = NumericOverflow.Clamp;
-    options.Bool.StringFormat             = BoolStringFormat.LowerCase;
+    options.Bool.StringFormat             = BoolStringFormat.LowercaseTrueOrFalse;
 });
 ```
 
@@ -223,7 +223,7 @@ public class UserService(IHydrixMapper mapper)
 
 ```csharp
 options.String.Transform = StringTransforms.Trim;        // "  Alice  " → "Alice"
-options.String.Transform = StringTransform.Uppercase;   // "alice" → "ALICE"
+options.String.Transform = StringTransforms.Uppercase;  // "alice" → "ALICE"
 options.String.Transform = StringTransforms.Trim | StringTransforms.Lowercase; // "  Alice  " → "alice"
 ```
 
@@ -231,7 +231,7 @@ options.String.Transform = StringTransforms.Trim | StringTransforms.Lowercase; /
 
 ```csharp
 options.Guid.Format = GuidFormat.Hyphenated;    // 00000000-0000-0000-0000-000000000000
-options.Guid.Format = GuidFormat.HyphenatedigitsOnly;    // 00000000000000000000000000000000
+options.Guid.Format = GuidFormat.DigitsOnly;    // 00000000000000000000000000000000
 options.Guid.Format = GuidFormat.Braces;        // {00000000-0000-0000-0000-000000000000}
 options.Guid.Format = GuidFormat.Parentheses;   // (00000000-0000-0000-0000-000000000000)
 options.Guid.Case   = GuidCase.Upper;           // uppercase letters
@@ -274,7 +274,7 @@ public class UserDto
 {
     public string Name { get; set; }
 
-    [MapConversion(GuidFormat = GuidFormat.HyphenatedigitsOnly, GuidCase = GuidCase.Upper)]
+    [MapConversion(GuidFormat = GuidFormat.DigitsOnly, GuidCase = GuidCase.Upper)]
     public string ExternalId { get; set; }
 
     [MapConversion(DateFormat = "dd/MM/yyyy", DateTimeZone = DateTimeZone.ToLocal)]

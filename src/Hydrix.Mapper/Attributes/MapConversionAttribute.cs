@@ -19,7 +19,7 @@ namespace Hydrix.Mapper.Attributes
         public StringTransforms StringTransform { get; set; } = StringTransforms.None;
 
         /// <summary>
-        /// Gets or sets a value indicating whether <see cref="StringTransforms"/> must override the global string settings
+        /// Gets or sets a value indicating whether <see cref="StringTransform"/> must override the global string settings
         /// even when the selected transform is <see cref="StringTransforms.None"/>.
         /// </summary>
         public bool OverrideStringTransform { get; set; }
