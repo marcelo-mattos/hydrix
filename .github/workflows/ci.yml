@@ -151,13 +151,10 @@ jobs:
             6.0.x
             3.1.x
 
-      - name: Restore
-        run: dotnet restore
-
       - name: Pack projects (src only)
         run: |
-          dotnet pack src/Hydrix/Hydrix.csproj --no-restore --configuration Release
-          dotnet pack src/Hydrix.Mapper/Hydrix.Mapper.csproj --no-restore --configuration Release
+          dotnet pack src/Hydrix/Hydrix.csproj --configuration Release
+          dotnet pack src/Hydrix.Mapper/Hydrix.Mapper.csproj --configuration Release
 
 #  sonar:
 #    name: sonarcloud-analysis
