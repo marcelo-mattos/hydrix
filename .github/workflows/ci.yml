@@ -30,9 +30,11 @@ jobs:
             6.0.x
             3.1.x
 
-      - run: dotnet restore
+      - name: Restore
+        run: dotnet restore
 
-      - run: dotnet build --no-restore --configuration Release
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
 
   test:
     name: dotnet-test-netcore31
@@ -149,7 +151,7 @@ jobs:
             6.0.x
 
       - name: Pack
-        run: dotnet pack --configuration Release --no-build
+        run: dotnet pack --configuration Release
 
 #  sonar:
 #    name: sonarcloud-analysis
