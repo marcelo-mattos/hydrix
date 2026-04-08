@@ -29,9 +29,12 @@ namespace Hydrix.Mapper.Attributes
         /// is reserved as an internal sentinel value and cannot be used as a source type.</exception>
         public MapFromAttribute(Type sourceType)
         {
+#if NET8_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(sourceType);
+#else
             if (sourceType == null)
                 throw new ArgumentNullException(nameof(sourceType));
-
+#endif
             if (sourceType == typeof(void))
                 throw new ArgumentException(
                     "typeof(void) is reserved as an internal sentinel and cannot be used as a source type.",

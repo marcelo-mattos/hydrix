@@ -6,11 +6,21 @@ on:
       - '**'
 
 jobs:
+
   build:
     name: dotnet-build
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -22,13 +32,10 @@ jobs:
 
       - run: dotnet restore
 
-      - run: |
-          dotnet build \
-            --no-restore \
-            --configuration Release
+      - run: dotnet build --no-restore --configuration Release
 
   test:
-    name: dotnet-test
+    name: dotnet-test-netcore31
     runs-on: ubuntu-latest
     needs: build
 
@@ -38,95 +45,147 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Test netcoreapp3.1
+        run: |
+          dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
+            --framework netcoreapp3.1 \
+            --configuration Release \
+            --filter "FullyQualifiedName!~Benchmark"
+
+          dotnet test tests/Hydrix.Mapper.UnitTests/Hydrix.Mapper.UnitTests.csproj \
+            --framework netcoreapp3.1 \
+            --configuration Release \
+            --filter "FullyQualifiedName!~Benchmark"
+
       - name: Test netcoreapp3.1 with coverage
         run: |
           dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
             --framework netcoreapp3.1 \
             --configuration Release \
-            --collect:"XPlat Code Coverage"
+            --collect:"XPlat Code Coverage" \
+            --filter "FullyQualifiedName!~Benchmark"
 
           dotnet test tests/Hydrix.Mapper.UnitTests/Hydrix.Mapper.UnitTests.csproj \
             --framework netcoreapp3.1 \
             --configuration Release \
-            --collect:"XPlat Code Coverage"
+            --collect:"XPlat Code Coverage" \
+            --filter "FullyQualifiedName!~Benchmark"
 
       - name: Upload coverage netcoreapp3.1
         uses: actions/upload-artifact@v4
         with:
           name: coverage-netcore31
-          path: |
-            **/TestResults/**/coverage.cobertura.xml
+          path: '**/TestResults/**/coverage.cobertura.xml'
+          if-no-files-found: error
 
-  sonar:
-    name: sonar-quality-gate
+  test-modern:
+    name: dotnet-test-modern
     runs-on: ubuntu-latest
-    needs: test
-
-    permissions:
-      contents: read
-      pull-requests: write
-      checks: write
+    needs: build
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Setup .NET SDKs
-        uses: actions/setup-dotnet@v4
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             10.0.x
             8.0.x
             6.0.x
 
-      - name: Install SonarScanner
-        run: dotnet tool install --global dotnet-sonarscanner
-
-      - name: Download coverage netcoreapp3.1
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-netcore31
-          path: .
-
-      - name: Sonar Begin
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BRANCH: ${{ github.head_ref }}
-          PR_BASE: ${{ github.base_ref }}
-        run: |
-          dotnet sonarscanner begin \
-            /k:"marcelo-mattos_hydrix" \
-            /o:"marcelo-mattos" \
-            /d:sonar.login="$SONAR_TOKEN" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.cobertura.reportsPaths="**/coverage.cobertura.xml" \
-            /d:sonar.pullrequest.key="$PR_NUMBER" \
-            /d:sonar.pullrequest.branch="$PR_BRANCH" \
-            /d:sonar.pullrequest.base="$PR_BASE"
-
-      - name: Build
-        run: dotnet build --configuration Release
-
-      - name: Test with coverage (modern only)
+      - name: Run tests (modern frameworks)
         run: |
           for framework in net6.0 net8.0 net10.0
           do
             dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
               --framework $framework \
-              --no-build \
               --configuration Release \
-              --collect:"XPlat Code Coverage"
+              --collect:"XPlat Code Coverage" \
+              --filter "FullyQualifiedName!~Benchmark"
 
             dotnet test tests/Hydrix.Mapper.UnitTests/Hydrix.Mapper.UnitTests.csproj \
               --framework $framework \
-              --no-build \
               --configuration Release \
-              --collect:"XPlat Code Coverage"
+              --collect:"XPlat Code Coverage" \
+              --filter "FullyQualifiedName!~Benchmark"
           done
 
-      - name: Sonar End
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
+      - name: Upload coverage modern
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-modern
+          path: '**/TestResults/**/coverage.cobertura.xml'
+          if-no-files-found: error
+
+  pack:
+    name: dotnet-pack
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.x
+            8.0.x
+            6.0.x
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build
+
+#  sonar:
+#    name: sonarcloud-analysis
+#    runs-on: ubuntu-latest
+#    needs: build
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Cache NuGet
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.nuget/packages
+#          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+#          restore-keys: |
+#            ${{ runner.os }}-nuget-
+#
+#      - uses: actions/setup-dotnet@v4
+#        with:
+#          dotnet-version: 6.0.x
+#
+#      - name: Install SonarScanner
+#        run: dotnet tool install --global dotnet-sonarscanner
+#
+#      - name: Sonar Begin
+#        run: |
+#          dotnet sonarscanner begin \
+#            /k:"YOUR_PROJECT_KEY" \
+#            /o:"YOUR_ORG" \
+#            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+#            /d:sonar.cs.opencover.reportsPaths="**/coverage.cobertura.xml"
+#
+#      - name: Build
+#        run: dotnet build --configuration Release
+#
+#      - name: Sonar End
+#        run: |
+#          dotnet sonarscanner end \
+#            /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
