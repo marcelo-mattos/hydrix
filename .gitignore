@@ -17,3 +17,6 @@
 *.DotSettings.user
 *.sln.DotSettings.user
 /coverage*/
+/.claude/
+/.codex/
+/.idea/
