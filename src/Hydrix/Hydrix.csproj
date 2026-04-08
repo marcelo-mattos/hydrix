@@ -170,6 +170,21 @@
     </None>
   </ItemGroup>
 
+  <!--
+    Microsoft.Extensions.Logging.Abstractions 3.1.32 (and related packages) declare
+    analyzer entries for Roslyn 3.11 / 4.0 / 4.4 in their package manifests, but the
+    corresponding DLL files do not physically exist in the package. The SDK 3.1 container
+    used in CI passes these paths to CSC, which fails with CS0006. The target below runs
+    before compilation and removes any Analyzer item whose file does not exist on disk,
+    making the build robust against this packaging defect regardless of NuGet version or
+    SDK import order.
+  -->
+  <Target Name="RemoveMissingAnalyzers" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="!Exists('%(Analyzer.Identity)')" />
+    </ItemGroup>
+  </Target>
+
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   
