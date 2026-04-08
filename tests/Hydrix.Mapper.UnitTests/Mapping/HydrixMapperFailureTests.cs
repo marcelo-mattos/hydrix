@@ -273,7 +273,8 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
         /// <summary>
-        /// Verifies that the global overflow-throw mode propagates an exception when the rounded value exceeds the target range.
+        /// Verifies that the global overflow-throw mode propagates an <see cref="OverflowException"/> when the rounded
+        /// value exceeds the target range.
         /// </summary>
         [Fact]
         public void Map_GlobalOverflowThrow_ThrowsOnOverflow()
@@ -289,7 +290,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
                 Value = (decimal)int.MaxValue + 1,
             };
 
-            Assert.ThrowsAny<Exception>(
+            Assert.Throws<OverflowException>(
                 () => mapper.Map<OverflowThrowDestination>(
                     source));
         }

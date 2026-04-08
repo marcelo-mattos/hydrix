@@ -101,6 +101,16 @@ Focus: **API simplification, migration closure, and higher throughput**
 ### Breaking Change
 - Materializer-based usage was completely removed. Hydrix 3.x must be consumed through `HydrixDataCore`.
 
+### Patch: 3.0.1
+- Entity Framework Core 8.x compatibility fix: `EntityFrameworkModelTranslator` now uses
+  interface-fallback reflection to resolve metadata members that are exposed only through
+  explicit interface implementations on EF Core 8+ objects.
+- Build health: NU1504, NU1603, and NU1605 warnings resolved across test projects.
+- CI stability: `dotnet pack` step fixed to use `--no-restore` instead of `--no-build`,
+  preventing NETSDK1004 failures when a custom `MSBuildProjectExtensionsPath` is set.
+- Test quality: xUnit1031 async anti-patterns removed; 100/100/100 line/branch/method
+  coverage achieved on `EntityFrameworkModelTranslator`.
+
 ### Benchmark Snapshot
 
 Against Dapper, the current benchmark suite shows:

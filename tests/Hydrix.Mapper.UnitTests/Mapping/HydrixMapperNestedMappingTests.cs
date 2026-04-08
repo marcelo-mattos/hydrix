@@ -350,7 +350,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             var dto = mapper.Map<CustomerDtoWithIReadOnlyList>(entity);
 
             Assert.NotNull(dto.Orders);
-            Assert.Equal(1, dto.Orders.Count);
+            Assert.Single(dto.Orders);
             Assert.Equal(20, dto.Orders[0].OrderId);
             Assert.Equal(10.00m, dto.Orders[0].Total);
         }

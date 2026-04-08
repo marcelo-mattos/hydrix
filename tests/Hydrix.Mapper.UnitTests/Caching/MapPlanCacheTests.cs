@@ -294,7 +294,7 @@ namespace Hydrix.Mapper.UnitTests.Caching
         /// Verifies that multiple concurrent cache requests observe a valid plan without corrupting the cache state.
         /// </summary>
         [Fact]
-        public void MapPlanCache_IsThreadSafe_UnderConcurrentAccess()
+        public async Task MapPlanCache_IsThreadSafe_UnderConcurrentAccess()
         {
             MapPlanCache.Clear();
             var options = new HydrixMapperOptions();
@@ -310,17 +310,17 @@ namespace Hydrix.Mapper.UnitTests.Caching
                             options)));
             }
 
-            Task.WaitAll(
+            await Task.WhenAll(
                 tasks.ToArray());
 
-            var firstPlan = tasks[0].Result;
+            var firstPlan = await tasks[0];
             foreach (var task in tasks)
             {
                 Assert.NotNull(
-                    task.Result);
+                    await task);
                 Assert.Same(
                     firstPlan,
-                    task.Result);
+                    await task);
             }
 
             Assert.True(
@@ -333,7 +333,7 @@ namespace Hydrix.Mapper.UnitTests.Caching
         /// Verifies that high-contention first access compiles the shared mapping plan exactly once.
         /// </summary>
         [Fact]
-        public void MapPlanCache_CompilesPlanExactlyOnce_UnderHighContention()
+        public async Task MapPlanCache_CompilesPlanExactlyOnce_UnderHighContention()
         {
             MapPlanCache.Clear();
             var options = new HydrixMapperOptions();
@@ -354,15 +354,15 @@ namespace Hydrix.Mapper.UnitTests.Caching
             }
 
             start.Set();
-            Task.WaitAll(
+            await Task.WhenAll(
                 tasks);
 
-            var firstPlan = tasks[0].Result;
+            var firstPlan = await tasks[0];
             foreach (var task in tasks)
             {
                 Assert.Same(
                     firstPlan,
-                    task.Result);
+                    await task);
             }
 
             Assert.Equal(
@@ -375,7 +375,7 @@ namespace Hydrix.Mapper.UnitTests.Caching
         /// delegate exactly once while preserving correct results.
         /// </summary>
         [Fact]
-        public void Mapper_CompilesPlanAndElementDelegateExactlyOnce_UnderConcurrentFirstUse()
+        public async Task Mapper_CompilesPlanAndElementDelegateExactlyOnce_UnderConcurrentFirstUse()
         {
             MapPlanBuilder.ClearCompilationCachesForTesting();
             MapPlanCache.Clear();
@@ -418,7 +418,7 @@ namespace Hydrix.Mapper.UnitTests.Caching
             }
 
             start.Set();
-            Task.WaitAll(
+            await Task.WhenAll(
                 tasks);
 
             Assert.Equal(

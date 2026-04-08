@@ -240,8 +240,12 @@ namespace Hydrix.UnitTests.EntityFramework
             Assert.Empty(InvokeTranslator<IEnumerable<object>>("GetSequence", new object()));
             Assert.Null(InvokeTranslator<string>("GetAnnotationValue", null, "Relational:ColumnName"));
             Assert.Null(InvokeTranslator<string>("GetAnnotationValue", new AnnotationlessMetadata(), "Relational:ColumnName"));
+            Assert.Null(InvokeTranslator<string>("GetAnnotationValue", new ExplicitAnnotationHost(), "Relational:ColumnName"));
+            Assert.Null(InvokeTranslator<string>("GetAnnotationValue", new MultiInterfaceAnnotationHost(), "Relational:ColumnName"));
             Assert.Null(InvokeTranslator<object>("GetPropertyValue", null, "Model"));
             Assert.True(InvokeTranslator<bool>("IsNavigationOnDependent", new NavigationWithDependentFlag { IsOnDependent = true }, new object(), typeof(CoverageOrder)));
+            Assert.True(InvokeTranslator<bool>("IsNavigationOnDependent", new AnnotationlessMetadata(), new FakeForeignKeyWithDeclaringEntityType { DeclaringEntityType = new FakeEntityTypeWithClrType { ClrType = typeof(CoverageOrder) } }, typeof(CoverageOrder)));
+            Assert.False(InvokeTranslator<bool>("IsNavigationOnDependent", new AnnotationlessMetadata(), new FakeForeignKeyWithDeclaringEntityType { DeclaringEntityType = new FakeEntityTypeWithClrType { ClrType = typeof(string) } }, typeof(CoverageOrder)));
             Assert.True(InvokeTranslator<bool>("IsCollectionNavigation", new NavigationWithCollectionFlag { IsCollection = true }, typeof(CoverageOrder).GetProperty(nameof(CoverageOrder.RelatedCollection))));
             Assert.False(InvokeTranslator<bool>("IsCollectionNavigation", new AnnotationlessMetadata(), typeof(CoverageOrder).GetProperty(nameof(CoverageOrder.Name))));
             Assert.False(InvokeTranslator<bool>("IsRequired", new AnnotationlessMetadata()));
@@ -834,6 +838,59 @@ namespace Hydrix.UnitTests.EntityFramework
         /// </summary>
         private sealed class AnnotationlessMetadata
         { }
+
+        /// <summary>
+        /// Contract that exposes FindAnnotation only as an explicit interface implementation.
+        /// </summary>
+        private interface IExplicitAnnotatable
+        {
+            object FindAnnotation(string name);
+        }
+
+        /// <summary>
+        /// An unrelated marker interface that does not expose FindAnnotation.
+        /// </summary>
+        private interface IUnrelatedMarker
+        { }
+
+        /// <summary>
+        /// Implements FindAnnotation only via explicit interface — not visible as a public instance method.
+        /// </summary>
+        private sealed class ExplicitAnnotationHost : IExplicitAnnotatable
+        {
+            object IExplicitAnnotatable.FindAnnotation(string name) => null;
+        }
+
+        /// <summary>
+        /// Implements an unrelated interface first, then FindAnnotation via explicit interface,
+        /// so the interface-fallback loop must iterate past a non-matching interface before finding it.
+        /// </summary>
+        private sealed class MultiInterfaceAnnotationHost : IUnrelatedMarker, IExplicitAnnotatable
+        {
+            object IExplicitAnnotatable.FindAnnotation(string name) => null;
+        }
+
+        /// <summary>
+        /// Simulates an EF entity-type metadata object that exposes a CLR type.
+        /// </summary>
+        private sealed class FakeEntityTypeWithClrType
+        {
+            /// <summary>
+            /// Gets or sets the CLR type represented by this entity type.
+            /// </summary>
+            public Type ClrType { get; set; }
+        }
+
+        /// <summary>
+        /// Simulates an EF foreign-key metadata object that exposes its declaring entity type.
+        /// </summary>
+        private sealed class FakeForeignKeyWithDeclaringEntityType
+        {
+            /// <summary>
+            /// Gets or sets the entity type that declares this foreign key.
+            /// </summary>
+            public FakeEntityTypeWithClrType DeclaringEntityType { get; set; }
+        }
 
         /// <summary>
         /// Represents a navigation metadata object with an explicit dependent-side flag.

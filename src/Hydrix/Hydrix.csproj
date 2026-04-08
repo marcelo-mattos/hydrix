@@ -12,7 +12,7 @@
     <Product>Hydrix</Product>
     <ApplicationIcon>Hydrix.ico</ApplicationIcon>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <Version>3.0.0</Version>
+    <Version>3.0.1</Version>
     <RepositoryUrl>https://github.com/marcelo-mattos/hydrix</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**</DefaultItemExcludes>
@@ -20,6 +20,22 @@
 
   <PropertyGroup>
     <PackageReleaseNotes>
+      - (3.0.1) Fixed Entity Framework Core 8.x compatibility in
+      EntityFrameworkModelTranslator: FindAnnotation(string), GetEntityTypes(),
+      GetProperties(), GetNavigations(), and related metadata members are now
+      resolved correctly when they are exposed only through explicit interface
+      implementations on EF Core 8+ objects, not as public instance methods on
+      the concrete type. Resolves RegisterModel_AllowsValidation_ForEntitiesWithoutHydrixAttributes,
+      RegisterModel_MapsReaderRows_UsingEntityFrameworkColumnNames, and
+      RegisterModel_RefreshesBuildQuery_WhenHotCacheWasAlreadyWarm across all
+      supported frameworks.
+
+      - (3.0.1) Build health: removed duplicate Test.Sdk reference (NU1504),
+      suppressed NU1603 for unpublished Logging patch versions, downgraded
+      BenchmarkDotNet on net6.0 to 0.14.0 to eliminate NU1605 System.*
+      downgrade conflicts, and fixed CI dotnet pack to use --no-restore
+      instead of --no-build to prevent NETSDK1004 failures.
+
       - (3.0.0) Removed Materializer, IMaterializer, and all related APIs,
       including query execution, command handling, and entity materialization
       abstractions, simplifying the library to its core high-performance
@@ -123,9 +139,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp3.1|AnyCPU'">
     <NoWarn>NETSDK1138</NoWarn>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.32" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.32" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.4" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
   </ItemGroup>
 
   <ItemGroup>
