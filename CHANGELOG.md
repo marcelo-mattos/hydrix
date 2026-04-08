@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.0.1] - 2026-04-08
+
+Patch release targeting Entity Framework Core 8.x compatibility, build health, and CI
+stability. No public API changes were introduced.
+
+### 🛠 Fixed
+
+- **EF Core 8.x compatibility** — `EntityFrameworkModelTranslator` now correctly resolves
+  `FindAnnotation(string)`, `GetEntityTypes()`, `GetProperties()`, `GetNavigations()`, and
+  related metadata members on EF Core 8.x objects where those members are exposed only
+  through explicit interface implementations and are not visible as public instance methods.
+  Three previously failing integration tests now pass across all supported frameworks:
+  `RegisterModel_AllowsValidation_ForEntitiesWithoutHydrixAttributes`,
+  `RegisterModel_MapsReaderRows_UsingEntityFrameworkColumnNames`, and
+  `RegisterModel_RefreshesBuildQuery_WhenHotCacheWasAlreadyWarm`.
+
+### 🧪 Tests
+
+- Fixed xUnit1031 async anti-patterns (`.Result`, `Task.WaitAll`, `.GetAwaiter().GetResult()`)
+  in `MapPlanCacheTests` and `TableMaterializeMetadataTests`.
+- Fixed xUnit2013 diagnostic (`Assert.Equal(1, count)` → `Assert.Single`) in
+  `HydrixMapperNestedMappingTests`.
+- Achieved 100/100/100 line/branch/method coverage on `EntityFrameworkModelTranslator`,
+  adding assertions for the interface-fallback annotation loop and the CLR-type fallback
+  path in `IsNavigationOnDependent`.
+
+### 🏗 Build
+
+- Removed duplicate `Microsoft.NET.Test.Sdk` reference causing NU1504 in
+  `Hydrix.Mapper.UnitTests`.
+- Suppressed NU1603 in `Hydrix.UnitTests` for `Microsoft.Extensions.Logging` patch
+  versions that are not published on NuGet and are resolved to the next available version.
+- Downgraded `BenchmarkDotNet` on `net6.0` from `0.15.8` to `0.14.0` to eliminate
+  NU1605 `System.*` package downgrade conflicts introduced by 0.15.8 transitive
+  dependencies.
+- Fixed CI `dotnet pack` step: changed `--no-build` to `--no-restore` to prevent
+  NETSDK1004 (`project.assets.json` not found) when a custom `MSBuildProjectExtensionsPath`
+  is configured in the project.
+
+---
+
 ## [3.0.0] - 2026-04-04
 
 Hydrix 3.0.0 finalizes the transition to a **HydrixDataCore-only** runtime,

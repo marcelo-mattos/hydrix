@@ -5,49 +5,53 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Hydrix.Benchmarks.Models
 {
     /// <summary>
-    /// Represents a user entity that includes personal information and an associated order.
+    /// Represents the nested user projection returned by the join benchmarks that materialize a related order.
     /// </summary>
-    /// <remarks>This class maps to the 'Users' table and includes a foreign key relationship to the user's
-    /// order details via the 'Order' property. When retrieving user data, ensure that the 'Order' property is properly
-    /// populated to access related order information.</remarks>
+    /// <remarks>
+    /// The benchmark queries hydrate this type from the <c>Users</c> table and then assign the nested
+    /// <see cref="Order"/> instance from joined order columns so each data access strategy produces the same object
+    /// graph for comparison.
+    /// </remarks>
     [Table("Users")]
     public sealed class UserWithOrder :
         ITable
     {
         /// <summary>
-        /// Gets or sets the unique identifier for the entity.
+        /// Gets or sets the primary key value read from the <c>Users.Id</c> column.
         /// </summary>
         [Column("Id")]
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the name associated with the entity.
+        /// Gets or sets the user name read from the <c>Users.Name</c> column.
         /// </summary>
-        /// <remarks>The name is initialized to an empty string. It is recommended to provide a meaningful
-        /// name that accurately represents the entity.</remarks>
+        /// <remarks>
+        /// The property starts with <see cref="string.Empty"/> so ad-hoc object creation inside the benchmark project
+        /// remains null-safe even before database materialization occurs.
+        /// </remarks>
         [Column("Name")]
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the age of the individual.
+        /// Gets or sets the age read from the <c>Users.Age</c> column.
         /// </summary>
         [Column("Age")]
         public int Age { get; set; }
 
         /// <summary>
-        /// Gets or sets the current status of the user.
+        /// Gets or sets the logical status read from the <c>Users.Status</c> column.
         /// </summary>
-        /// <remarks>The status indicates the user's current state within the application, such as active,
-        /// inactive, or suspended.</remarks>
         [Column("Status")]
         public UserStatus Status { get; set; }
 
         /// <summary>
-        /// Gets or sets the order associated with this entity.
+        /// Gets or sets the related order materialized from the joined order columns.
         /// </summary>
-        /// <remarks>This property is mapped to the Orders table. When querying, columns must be aliased
-        /// as "Order.&lt;ColumnName&gt;" (for example, "Order.Id").</remarks>
+        /// <remarks>
+        /// Hydrix expects the SQL projection for this member to alias nested columns using the <c>Order.&lt;Column&gt;</c>
+        /// pattern so the framework can bind the child object correctly during nested mapping benchmarks.
+        /// </remarks>
         [ForeignTable("Orders", PrimaryKeys = new[] { "Id" })]
-        public Order Order { get; set; }
+        public Order Order { get; set; } = null!;
     }
 }

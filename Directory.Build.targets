@@ -1,0 +1,20 @@
+<Project>
+
+  <!--
+    Several NuGet packages (Microsoft.Extensions.Logging.Abstractions 3.1.32,
+    Microsoft.Extensions.Options 3.1.32, System.Text.Json 4.7.2, System.ClientModel 1.0.0,
+    and others) declare analyzer entries in their manifests for Roslyn versions that do not
+    exist as physical DLL files inside the package. When built under the .NET Core 3.1 SDK
+    container these missing paths are passed to CSC, which fails with CS0006.
+
+    This target runs before CoreCompile in every project and silently removes any Analyzer
+    item whose file does not exist on disk, making the build robust against this packaging
+    defect regardless of NuGet version, SDK import order, or which project is being built.
+  -->
+  <Target Name="RemoveMissingAnalyzers" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="!Exists('%(Analyzer.Identity)')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

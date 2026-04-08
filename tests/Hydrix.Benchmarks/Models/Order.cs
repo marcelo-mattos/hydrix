@@ -4,22 +4,24 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Hydrix.Benchmarks.Models
 {
     /// <summary>
-    /// Represents an order in the system, including its unique identifier and total amount.
+    /// Represents the order projection used by the nested benchmark scenarios.
     /// </summary>
-    /// <remarks>This class is mapped to the 'Orders' table in the database. Each instance corresponds to a
-    /// single order record, with properties for the order's ID and total cost.</remarks>
+    /// <remarks>
+    /// The benchmark suite keeps this type intentionally small so nested materialization focuses on join mapping costs
+    /// instead of unrelated domain behavior.
+    /// </remarks>
     [Table("Orders")]
     public sealed class Order :
         ITable
     {
         /// <summary>
-        /// Gets or sets the unique identifier for the entity.
+        /// Gets or sets the primary key value read from the <c>Orders.Id</c> column.
         /// </summary>
         [Column("Id")]
         public int Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the total monetary amount for the transaction.
+        /// Gets or sets the order total read from the <c>Orders.Total</c> column.
         /// </summary>
         [Column("Total")]
         public double Total { get; set; }

@@ -92,7 +92,12 @@ namespace Hydrix.EntityFramework
                 StringComparer.Ordinal);
             var fields = new List<ReflectedScalarProperty>();
 
-            foreach (var property in InvokeEnumerable(entityType, "GetProperties"))
+            var propertyMethodName = ResolveMethodName(
+                entityType,
+                "GetProperties",
+                "GetDeclaredProperties");
+
+            foreach (var property in InvokeEnumerable(entityType, propertyMethodName))
             {
                 var propertyInfo = ResolvePropertyInfo(
                     property,
@@ -137,7 +142,12 @@ namespace Hydrix.EntityFramework
         {
             var navigations = new List<ReflectedNavigation>();
 
-            foreach (var navigation in InvokeEnumerable(entity.EntityType, "GetNavigations"))
+            var navMethodName = ResolveMethodName(
+                entity.EntityType,
+                "GetNavigations",
+                "GetDeclaredNavigations");
+
+            foreach (var navigation in InvokeEnumerable(entity.EntityType, navMethodName))
             {
                 var reflectedNavigation = TryCreateNavigation(
                     entity,
@@ -589,6 +599,70 @@ namespace Hydrix.EntityFramework
         }
 
         /// <summary>
+        /// Resolves an instance method by first checking public instance methods on the concrete type and then falling
+        /// back to explicit interface implementations.
+        /// </summary>
+        /// <remarks>EF Core 8+ moved several model-traversal methods to explicit interface implementations.
+        /// Checking public methods on the concrete type first preserves the fast path for EF Core 3 – 7, while the
+        /// interface fallback ensures compatibility with EF Core 8+.</remarks>
+        /// <param name="instance">The object to inspect.</param>
+        /// <param name="methodName">The name of the method to locate.</param>
+        /// <param name="parameterTypes">The parameter signature required by the method.</param>
+        /// <returns>The resolved <see cref="MethodInfo"/>, or <see langword="null"/> when the method cannot be
+        /// found.</returns>
+        private static MethodInfo FindMethod(
+            object instance,
+            string methodName,
+            Type[] parameterTypes)
+        {
+            if (instance == null)
+                return null;
+
+            var methodParameters = parameterTypes ?? Type.EmptyTypes;
+            var type = instance.GetType();
+            var method = type.GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.Public,
+                binder: null,
+                methodParameters,
+                modifiers: null);
+
+            if (method != null)
+                return method;
+
+            foreach (var iface in type.GetInterfaces())
+            {
+                method = iface.GetMethod(
+                    methodName,
+                    BindingFlags.Instance | BindingFlags.Public,
+                    binder: null,
+                    methodParameters,
+                    modifiers: null);
+
+                if (method != null)
+                    return method;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves a parameterless instance method by first checking public instance methods on the concrete type and
+        /// then falling back to explicit interface implementations.
+        /// </summary>
+        /// <param name="instance">The object to inspect.</param>
+        /// <param name="methodName">The name of the parameterless method to locate.</param>
+        /// <returns>The resolved <see cref="MethodInfo"/>, or <see langword="null"/> when the method cannot be
+        /// found.</returns>
+        private static MethodInfo FindMethod(
+            object instance,
+            string methodName)
+            => FindMethod(
+                instance,
+                methodName,
+                Type.EmptyTypes);
+
+        /// <summary>
         /// Invokes a parameterless instance method on the supplied object.
         /// </summary>
         /// <param name="instance">The object that exposes the target method.</param>
@@ -599,15 +673,9 @@ namespace Hydrix.EntityFramework
             object instance,
             string methodName)
         {
-            if (instance == null)
-                return null;
-
-            var method = instance.GetType().GetMethod(
-                methodName,
-                BindingFlags.Instance | BindingFlags.Public,
-                binder: null,
-                Type.EmptyTypes,
-                modifiers: null);
+            var method = FindMethod(
+                instance,
+                methodName);
 
             return method?.Invoke(
                 instance,
@@ -644,13 +712,29 @@ namespace Hydrix.EntityFramework
         private static bool HasMethod(
             object instance,
             string methodName)
-            => instance != null &&
-               instance.GetType().GetMethod(
-                   methodName,
-                   BindingFlags.Instance | BindingFlags.Public,
-                   binder: null,
-                   Type.EmptyTypes,
-                   modifiers: null) != null;
+            => FindMethod(
+                instance,
+                methodName) != null;
+
+        /// <summary>
+        /// Resolves the method name that should be used to enumerate Entity Framework metadata collections.
+        /// </summary>
+        /// <remarks>The translator prefers the full-surface methods such as <c>GetProperties</c> and
+        /// <c>GetNavigations</c> because they include inherited members. The declared-only variants are used only as a
+        /// compatibility fallback when the full-surface method cannot be resolved on the runtime metadata object.</remarks>
+        /// <param name="instance">The metadata object to inspect.</param>
+        /// <param name="preferredMethodName">The method that preserves inherited members when available.</param>
+        /// <param name="fallbackMethodName">The declared-only fallback method name.</param>
+        /// <returns>The preferred method name when it exists; otherwise the fallback name.</returns>
+        private static string ResolveMethodName(
+            object instance,
+            string preferredMethodName,
+            string fallbackMethodName)
+            => HasMethod(
+                    instance,
+                    preferredMethodName)
+                ? preferredMethodName
+                : fallbackMethodName;
 
         /// <summary>
         /// Converts the supplied value into an enumerable sequence of boxed objects.
@@ -679,12 +763,10 @@ namespace Hydrix.EntityFramework
             if (annotatable == null)
                 return null;
 
-            var findAnnotation = annotatable.GetType().GetMethod(
+            var findAnnotation = FindMethod(
+                annotatable,
                 "FindAnnotation",
-                BindingFlags.Instance | BindingFlags.Public,
-                binder: null,
-                new[] { typeof(string) },
-                modifiers: null);
+                new[] { typeof(string) });
             if (findAnnotation == null)
                 return null;
 
@@ -698,6 +780,45 @@ namespace Hydrix.EntityFramework
         }
 
         /// <summary>
+        /// Resolves a readable instance property by first checking public instance properties on the concrete type and
+        /// then falling back to explicit interface implementations.
+        /// </summary>
+        /// <remarks>EF Core 8+ moved many model-metadata properties to explicit interface implementations.
+        /// Checking the concrete type first preserves the fast path for EF Core 3 – 7, while the interface fallback
+        /// ensures compatibility with EF Core 8+.</remarks>
+        /// <param name="instance">The object to inspect.</param>
+        /// <param name="propertyName">The name of the property to locate.</param>
+        /// <returns>The resolved <see cref="PropertyInfo"/>, or <see langword="null"/> when the property cannot be
+        /// found.</returns>
+        private static PropertyInfo FindProperty(
+            object instance,
+            string propertyName)
+        {
+            if (instance == null)
+                return null;
+
+            var type = instance.GetType();
+            var property = type.GetProperty(
+                propertyName,
+                BindingFlags.Instance | BindingFlags.Public);
+
+            if (property != null)
+                return property;
+
+            foreach (var iface in type.GetInterfaces())
+            {
+                property = iface.GetProperty(
+                    propertyName,
+                    BindingFlags.Instance | BindingFlags.Public);
+
+                if (property != null)
+                    return property;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Retrieves the value of the specified property from the supplied object.
         /// </summary>
         /// <param name="instance">The object that owns the property.</param>
@@ -707,12 +828,9 @@ namespace Hydrix.EntityFramework
             object instance,
             string propertyName)
         {
-            if (instance == null)
-                return null;
-
-            var property = instance.GetType().GetProperty(
-                propertyName,
-                BindingFlags.Instance | BindingFlags.Public);
+            var property = FindProperty(
+                instance,
+                propertyName);
 
             return property?.GetValue(instance);
         }

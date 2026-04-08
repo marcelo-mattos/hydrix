@@ -9,8 +9,14 @@ namespace Hydrix.Tests.Database.Entity
     /// <summary>
     /// Customer Entity
     /// </summary>
+#if SQLSERVER_ENV_ENABLED
     [Table(nameof(Customer), Schema = "[dbo]")]
     public class Customer :
+#else
+
+    [Table(nameof(Customer), Schema = "public")]
+    public class Customer :
+#endif
         DatabaseEntity, ITable
     {
         /// <summary>
@@ -47,7 +53,14 @@ namespace Hydrix.Tests.Database.Entity
         /// <summary>
         /// IsActive field
         /// </summary>
+#if SQLSERVER_ENV_ENABLED
         [Column]
         public Boolean? IsActive { get; set; }
+#else
+
+        [Column("is_active")]
+        public Boolean? IsActive { get; set; }
+
+#endif
     }
 }

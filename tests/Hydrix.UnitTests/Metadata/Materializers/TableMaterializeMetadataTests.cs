@@ -301,7 +301,7 @@ namespace Hydrix.UnitTests.Metadata.Materializers
         /// insertion loses a race for the same schema hash.
         /// </summary>
         [Fact]
-        public void GetOrAddBindings_InvokesFactoryExactlyOnce_WhenCalledConcurrently()
+        public async System.Threading.Tasks.Task GetOrAddBindings_InvokesFactoryExactlyOnce_WhenCalledConcurrently()
         {
             var metadata = new TableMaterializeMetadata(
                 new List<ColumnMap>(),
@@ -324,7 +324,7 @@ namespace Hydrix.UnitTests.Metadata.Materializers
                 tasks[i] = System.Threading.Tasks.Task.Run(() => metadata.GetOrAddBindings(schemaHash, factory));
 
             gate.Set();
-            var results = System.Threading.Tasks.Task.WhenAll(tasks).GetAwaiter().GetResult();
+            var results = await System.Threading.Tasks.Task.WhenAll(tasks);
 
             Assert.Equal(1, factoryCallCount);
             Assert.All(results, r => Assert.Same(expectedBindings, r));
@@ -340,7 +340,7 @@ namespace Hydrix.UnitTests.Metadata.Materializers
         /// race window between the initial cache probe and the dictionary insertion path, exercising the
         /// GetOrAdd-race rollback flow.</remarks>
         [Fact]
-        public void GetOrAddBindings_MaintainsCacheSizeConsistency_WhenManyThreadsRaceForSameSchemaHash()
+        public async System.Threading.Tasks.Task GetOrAddBindings_MaintainsCacheSizeConsistency_WhenManyThreadsRaceForSameSchemaHash()
         {
             var metadataType = typeof(TableMaterializeMetadata);
             var flags = BindingFlags.NonPublic | BindingFlags.Instance;
@@ -381,7 +381,7 @@ namespace Hydrix.UnitTests.Metadata.Materializers
 
                 start.Set();
 
-                var results = System.Threading.Tasks.Task.WhenAll(tasks).GetAwaiter().GetResult();
+                var results = await System.Threading.Tasks.Task.WhenAll(tasks);
 
                 Assert.Equal(1, factoryCalls);
                 Assert.All(results, r => Assert.Same(expectedBindings, r));

@@ -11,8 +11,14 @@ namespace Hydrix.Tests.Database.Entity
     /// <summary>
     /// Order Entity
     /// </summary>
+#if SQLSERVER_ENV_ENABLED
     [Table(nameof(Product), Schema = "[dbo]")]
     public class Product :
+#else
+
+    [Table(nameof(Product), Schema = "public")]
+    public class Product :
+#endif
         DatabaseEntity, ITable
     {
         /// <summary>
@@ -26,15 +32,30 @@ namespace Hydrix.Tests.Database.Entity
         /// <summary>
         /// CustomerId field
         /// </summary>
+#if SQLSERVER_ENV_ENABLED
         [ForeignKey("CustomerId")]
         [Column]
         public Guid? CustomerId { get; set; }
+#else
+
+        [ForeignKey("customer_id")]
+        [Column("customer_id")]
+        public Guid? CustomerId { get; set; }
+
+#endif
 
         /// <summary>
         /// Customer data
         /// </summary>
+#if SQLSERVER_ENV_ENABLED
         [ForeignTable("Customer", Schema = "[dbo]", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "CustomerId" })]
         public Customer Customer { get; set; }
+#else
+
+        [ForeignTable("customer", Schema = "public", PrimaryKeys = new[] { "Id" }, ForeignKeys = new[] { "customer_id" })]
+        public Customer Customer { get; set; }
+
+#endif
 
         /// <summary>
         /// Name field

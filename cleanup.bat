@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 rem raiz do repositório = pasta onde este .bat está
 set "ROOT=%~dp0"
@@ -8,15 +8,33 @@ if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
 echo Root: "%ROOT%"
 pushd "%ROOT%" || exit /b 1
 
-rem limpa pastas de topo
-call :DeleteIfExists "%ROOT%\obj"
-call :DeleteIfExists "%ROOT%\dbg"
-call :DeleteIfExists "%ROOT%\bin"
+rem =========================
+rem limpa pastas de topo fixas
+rem =========================
+for %%F in (obj dbg bin TestResults BenchmarkDotNet.Artifacts) do (
+    call :DeleteIfExists "%ROOT%\%%F"
+)
 
-rem procura recursivamente em src\** e tests\**
+rem =========================
+rem limpa coverage* na raiz
+rem =========================
+for /d %%D in ("%ROOT%\coverage*") do (
+    call :DeleteIfExists "%%~fD"
+)
+
+rem =========================
+rem limpa recursivamente em src e tests
+rem =========================
 for %%B in (bin dbg obj TestResults BenchmarkDotNet.Artifacts) do (
     for /f "delims=" %%D in ('dir /ad /b /s "%ROOT%\src\%%B" 2^>nul') do call :DeleteIfExists "%%~fD"
     for /f "delims=" %%D in ('dir /ad /b /s "%ROOT%\tests\%%B" 2^>nul') do call :DeleteIfExists "%%~fD"
+)
+
+rem =========================
+rem limpa coverage* recursivamente (QUALQUER LUGAR)
+rem =========================
+for /f "delims=" %%D in ('dir /ad /b /s "%ROOT%\coverage*" 2^>nul') do (
+    call :DeleteIfExists "%%~fD"
 )
 
 popd

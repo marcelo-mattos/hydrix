@@ -12,198 +12,211 @@ using System.Linq;
 namespace Hydrix.Benchmarks.Benchmarks
 {
     /// <summary>
-    /// Provides benchmarking methods for comparing the performance of different data access strategies using a SQLite
-    /// database.
+    /// Compares flat user projections across Dapper, Hydrix, Entity Framework Core, and manual ADO.NET materialization.
     /// </summary>
-    /// <remarks>This class sets up a SQLite database with a specified number of rows and executes benchmarks
-    /// for Dapper, Hydrix, and ADO.NET manual data retrieval methods. It is designed to measure the performance of
-    /// these methods under varying conditions defined by the parameters.</remarks>
+    /// <remarks>
+    /// Every benchmark in this suite reads the same seeded SQLite data set and projects it into <see cref="UserFlat"/>
+    /// so the measurements emphasize data-access and materialization costs rather than differences in result shape.
+    /// </remarks>
     [MemoryDiagnoser]
     [RankColumn]
     [Orderer(SummaryOrderPolicy.FastestToSlowest)]
     public class FlatBenchmarks
     {
         /// <summary>
-        /// Represents a compiled Entity Framework query that retrieves a specified number of users as flat data
-        /// transfer objects, ordered by user ID and without tracking changes.
+        /// Caches the Entity Framework Core query plan used to materialize flat user rows without change tracking.
         /// </summary>
-        /// <remarks>This compiled query improves performance by reusing the query plan for repeated
-        /// executions. The query projects each user entity to a UserFlat object and does not track the returned
-        /// entities in the context.</remarks>
+        /// <remarks>
+        /// Reusing a compiled query keeps the Entity Framework benchmark focused on execution and projection costs instead
+        /// of repeatedly recompiling the LINQ expression.
+        /// </remarks>
         private static readonly Func<BenchmarkDbContext, int, IEnumerable<UserFlat>> EntityFrameworkFlatQuery =
             EF.CompileQuery(
                 (BenchmarkDbContext context, int take) => context.Users
                     .AsNoTracking()
-                    .OrderBy(user => user.Id)
-                    .Select(user => new UserFlat
-                    {
-                        Id = user.Id,
-                        Name = user.Name,
-                        Age = user.Age,
-                        Status = user.Status
-                    })
-                    .Take(take));
+                    .OrderBy(
+                        user => user.Id)
+                    .Select(
+                        user => new UserFlat
+                        {
+                            Id = user.Id,
+                            Name = user.Name,
+                            Age = user.Age,
+                            Status = user.Status,
+                        })
+                    .Take(
+                        take));
 
         /// <summary>
-        /// Gets the database fixture used for testing database interactions.
+        /// Stores the in-memory SQLite fixture that owns the benchmark database and its open connection.
         /// </summary>
-        /// <remarks>This field is initialized to a non-null value before any tests are run, ensuring that
-        /// the database context is always available during test execution.</remarks>
-        private SqliteDatabaseFixture _db = null!;
+        private SqliteDatabaseFixture _database = null!;
 
         /// <summary>
-        /// Represents the database connection used for data operations.
+        /// Stores the raw database connection shared by the Dapper, Hydrix, and manual ADO.NET benchmarks.
         /// </summary>
-        private IDbConnection _conn = null!;
+        private IDbConnection _connection = null!;
 
         /// <summary>
-        /// Stores the Entity Framework options used to create benchmark DbContext instances.
+        /// Stores the Entity Framework Core options used to create short-lived benchmark DbContext instances.
         /// </summary>
-        private DbContextOptions<BenchmarkDbContext> _efOptions = null!;
+        private DbContextOptions<BenchmarkDbContext> _entityFrameworkOptions = null!;
 
         /// <summary>
-        /// Gets or sets the total number of rows to use as the seed size for database operations in benchmarks.
-        /// </summary>
-        /// <remarks>Set this field to define the initial dataset size for performance testing or seeding
-        /// scenarios. Adjust the value as needed to match the scale of the benchmark or test case.</remarks>
-        [Params(100_000)]
-        public int RowCount { get; set; }
-
-        /// <summary>
-        /// Gets or sets the number of rows to return per query. This value is used to control the size of each result
-        /// set, enabling pagination or batch processing of data.
-        /// </summary>
-        /// <remarks>Adjusting this value can help optimize performance based on the expected size of the
-        /// result set. A higher value may improve throughput for large datasets, while a lower value can reduce memory
-        /// usage and improve responsiveness for smaller queries.</remarks>
-        [Params(1_000, 10_000)]
-        public int Take { get; set; }
-
-        /// <summary>
-        /// Stores the SQL query string used for benchmarking data retrieval methods. The query selects specific columns from
-        /// the Users table and applies a limit based on the Take parameter.
+        /// Stores the SQL command used by the flat Dapper, Hydrix, and manual ADO.NET benchmarks.
         /// </summary>
         private string _sql = null!;
 
         /// <summary>
-        /// Initializes the database connection and prepares the environment for benchmarking by seeding the database
-        /// with a predefined number of rows.
+        /// Gets or sets the number of rows that must exist in the benchmark database before each run starts.
         /// </summary>
-        /// <remarks>This method is executed before any benchmarks are run to ensure that the database is
-        /// in a consistent and known state. It sets up the database connection and
-        /// prepares the SQL query used for retrieving user data during benchmarks.</remarks>
+        /// <remarks>
+        /// The fixture reseeds the in-memory database whenever the current row count differs from this value so all
+        /// benchmark methods execute against the same data volume.
+        /// </remarks>
+        [Params(100_000)]
+        public int RowCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of rows each benchmark query should return.
+        /// </summary>
+        /// <remarks>
+        /// Varying this parameter lets the suite compare how each data-access strategy behaves across smaller and larger
+        /// result sets while keeping the SQL shape constant.
+        /// </remarks>
+        [Params(1_000, 10_000)]
+        public int Take { get; set; }
+
+        /// <summary>
+        /// Creates the database fixture, seeds the requested number of rows, and prepares every query dependency.
+        /// </summary>
         [GlobalSetup]
         public void GlobalSetup()
         {
-            _db = new SqliteDatabaseFixture();
-            _db.EnsureSeeded(RowCount);
+            _database = new SqliteDatabaseFixture();
+            _database.EnsureSeeded(
+                RowCount);
 
-            _conn = _db.Connection;
-
+            _connection = _database.Connection;
             _sql = "SELECT Id, Name, Age, Status FROM Users ORDER BY Id LIMIT @take";
-
-            _efOptions = new DbContextOptionsBuilder<BenchmarkDbContext>()
-                .UseSqlite(_db.Connection)
-                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+            _entityFrameworkOptions = new DbContextOptionsBuilder<BenchmarkDbContext>()
+                .UseSqlite(
+                    _database.Connection)
+                .UseQueryTrackingBehavior(
+                    QueryTrackingBehavior.NoTracking)
                 .Options;
         }
 
         /// <summary>
-        /// Releases resources used by the test class after all benchmarks have completed.
+        /// Disposes the database fixture after BenchmarkDotNet finishes executing this suite.
         /// </summary>
-        /// <remarks>Call this method to ensure that any unmanaged resources held by the database context
-        /// are properly disposed, preventing resource leaks after benchmark execution.</remarks>
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            _db.Dispose();
+            _database.Dispose();
         }
 
         /// <summary>
-        /// Retrieves a list of user data in a flat structure from the database using Dapper.
+        /// Materializes flat user rows through Dapper.
         /// </summary>
-        /// <remarks>This method executes a SQL query defined in the <see langword="_sql"/> variable,
-        /// using a parameter to limit the number of results returned. Ensure that the <see langword="Take"/> parameter
-        /// is set appropriately to control the number of records fetched.</remarks>
-        /// <returns>A list of <see cref="UserFlat"/> objects representing the user data retrieved from the database.</returns>
+        /// <returns>
+        /// A list of <see cref="UserFlat"/> instances returned by Dapper for the configured <see cref="Take"/> value.
+        /// </returns>
         [Benchmark(Baseline = true)]
         public List<UserFlat> Dapper_Flat()
         {
             return SqlMapper
-                .Query<UserFlat>(_conn, _sql, new { take = Take })
+                .Query<UserFlat>(
+                    _connection,
+                    _sql,
+                    new { take = Take })
                 .AsList();
         }
 
         /// <summary>
-        /// Executes a query to retrieve a list of user data in a flat structure.
+        /// Materializes flat user rows through Hydrix.
         /// </summary>
-        /// <remarks>This method utilizes a parameters object to support named parameters in the SQL
-        /// query, even when using SQLite. Ensure that the <see cref="Take"/> property is set to define the number of
-        /// records to retrieve.</remarks>
-        /// <returns>A list of <see cref="UserFlat"/> objects representing the user data retrieved from the database.</returns>
+        /// <returns>
+        /// A list of <see cref="UserFlat"/> instances returned by Hydrix for the configured <see cref="Take"/> value.
+        /// </returns>
         [Benchmark]
         public List<UserFlat> Hydrix_Flat()
         {
-            // Hydrix expects a parameters object even when using SQLite named params.
             return HydrixDataCore
-                .Query<UserFlat>(_conn, _sql, new { take = Take })
+                .Query<UserFlat>(
+                    _connection,
+                    _sql,
+                    new { take = Take })
                 .AsList();
         }
 
         /// <summary>
-        /// Retrieves a flat user projection through Entity Framework Core without tracking.
+        /// Materializes flat user rows through Entity Framework Core using the compiled no-tracking query.
         /// </summary>
+        /// <returns>
+        /// A list of <see cref="UserFlat"/> instances projected by Entity Framework Core for the configured
+        /// <see cref="Take"/> value.
+        /// </returns>
         [Benchmark]
         public List<UserFlat> EntityFramework_Flat()
         {
-            using var context = new BenchmarkDbContext(_efOptions);
+            using var context = new BenchmarkDbContext(
+                _entityFrameworkOptions);
             return EntityFrameworkFlatQuery(
-                context,
-                Take)
+                    context,
+                    Take)
                 .ToList();
         }
 
         /// <summary>
-        /// Retrieves a list of user records from the database using ADO.NET with manual parameter handling.
+        /// Materializes flat user rows through manual ADO.NET code.
         /// </summary>
-        /// <remarks>This method executes a SQL command to fetch user data, applying a limit on the number
-        /// of records returned. Ensure that the <see cref="Take"/> property is set to a valid positive integer to avoid
-        /// unexpected results.</remarks>
-        /// <returns>A list of <see cref="UserFlat"/> objects representing the users retrieved from the database. The number of
-        /// users returned is limited by the value of the <see cref="Take"/> property.</returns>
+        /// <returns>
+        /// A list of <see cref="UserFlat"/> instances created by manually reading the SQLite data reader.
+        /// </returns>
         [Benchmark]
         public List<UserFlat> AdoNet_Manual()
         {
-            using var cmd = _conn.CreateCommand();
-            cmd.CommandText = _sql;
+            using var command = _connection.CreateCommand();
+            command.CommandText = _sql;
 
-            var p = cmd.CreateParameter();
-            p.ParameterName = "@take";
-            p.Value = Take;
-            cmd.Parameters.Add(p);
+            var takeParameter = command.CreateParameter();
+            takeParameter.ParameterName = "@take";
+            takeParameter.Value = Take;
+            command.Parameters.Add(
+                takeParameter);
 
-            using var reader = cmd.ExecuteReader();
+            using var reader = command.ExecuteReader();
 
-            // Cache ordinals once.
-            var ordId = reader.GetOrdinal("Id");
-            var ordName = reader.GetOrdinal("Name");
-            var ordAge = reader.GetOrdinal("Age");
-            var ordStatus = reader.GetOrdinal("Status");
+            var idOrdinal = reader.GetOrdinal(
+                "Id");
+            var nameOrdinal = reader.GetOrdinal(
+                "Name");
+            var ageOrdinal = reader.GetOrdinal(
+                "Age");
+            var statusOrdinal = reader.GetOrdinal(
+                "Status");
 
-            var list = new List<UserFlat>(Take);
+            var results = new List<UserFlat>(
+                Take);
 
             while (reader.Read())
             {
-                list.Add(new UserFlat
-                {
-                    Id = reader.GetInt32(ordId),
-                    Name = reader.GetString(ordName),
-                    Age = reader.GetInt32(ordAge),
-                    Status = (UserStatus)reader.GetInt32(ordStatus)
-                });
+                results.Add(
+                    new UserFlat
+                    {
+                        Id = reader.GetInt32(
+                            idOrdinal),
+                        Name = reader.GetString(
+                            nameOrdinal),
+                        Age = reader.GetInt32(
+                            ageOrdinal),
+                        Status = (UserStatus)reader.GetInt32(
+                            statusOrdinal),
+                    });
             }
 
-            return list;
+            return results;
         }
     }
 }

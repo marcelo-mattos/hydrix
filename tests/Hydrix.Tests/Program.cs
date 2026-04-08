@@ -1,4 +1,6 @@
 using Hydrix.DependencyInjection;
+using Hydrix.Mapper.DependencyInjection;
+using Hydrix.Mapper.Primitives;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,6 +39,15 @@ namespace Hydrix.Tests
                     {
                         options.EnableCommandLogging = true;
                         options.Logger = hydrixLoggerFactory.CreateLogger("Hydrix");
+                    });
+                    services.AddHydrixMapper(options =>
+                    {
+                        options.String.Transform =
+                            StringTransforms.Uppercase |
+                            StringTransforms.Trim;
+
+                        options.Guid.Case = GuidCase.Upper;
+                        options.Guid.Format = GuidFormat.Braces;
                     });
                     services.AddTransient<App>();
                 })

@@ -5,6 +5,10 @@ VisualStudioVersion = 18.1.11304.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix", "src\Hydrix\Hydrix.csproj", "{8A944495-06FC-40E4-A790-759F0E4BE58C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.Mapper", "src\Hydrix.Mapper\Hydrix.Mapper.csproj", "{2C3F4A1B-7E8D-4F5A-B9C2-1A2B3C4D5E6F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.Mapper.UnitTests", "tests\Hydrix.Mapper.UnitTests\Hydrix.Mapper.UnitTests.csproj", "{3D4E5F6A-8B9C-4D5E-C3D4-2B3C4D5E6F7A}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.Tests", "tests\Hydrix.Tests\Hydrix.Tests.csproj", "{879E8EB5-FA9D-4B52-BB79-09AF8E670807}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{33CFA06F-E3E5-4B3E-8E08-D125E67E4F8D}"
@@ -18,7 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ROADMAP.md = ROADMAP.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hydrix.UnitTests", "tests\Hydrix.UnitTests\Hydrix.UnitTests.csproj", "{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.UnitTests", "tests\Hydrix.UnitTests\Hydrix.UnitTests.csproj", "{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5FAA0D47-F8B6-474F-8D7E-C77E2303B3AD}"
 	ProjectSection(SolutionItems) = preProject
@@ -33,7 +37,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7BBBE559-27C9-4B34-BA50-989EF3964026}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hydrix.Benchmarks", "tests\Hydrix.Benchmarks\Hydrix.Benchmarks.csproj", "{7694A1ED-1790-EBD2-45AC-3854F4C74B01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hydrix.Benchmarks", "tests\Hydrix.Benchmarks\Hydrix.Benchmarks.csproj", "{7694A1ED-1790-EBD2-45AC-3854F4C74B01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +49,14 @@ Global
 		{8A944495-06FC-40E4-A790-759F0E4BE58C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A944495-06FC-40E4-A790-759F0E4BE58C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A944495-06FC-40E4-A790-759F0E4BE58C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C3F4A1B-7E8D-4F5A-B9C2-1A2B3C4D5E6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C3F4A1B-7E8D-4F5A-B9C2-1A2B3C4D5E6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C3F4A1B-7E8D-4F5A-B9C2-1A2B3C4D5E6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C3F4A1B-7E8D-4F5A-B9C2-1A2B3C4D5E6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D4E5F6A-8B9C-4D5E-C3D4-2B3C4D5E6F7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D4E5F6A-8B9C-4D5E-C3D4-2B3C4D5E6F7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D4E5F6A-8B9C-4D5E-C3D4-2B3C4D5E6F7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D4E5F6A-8B9C-4D5E-C3D4-2B3C4D5E6F7A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{879E8EB5-FA9D-4B52-BB79-09AF8E670807}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{879E8EB5-FA9D-4B52-BB79-09AF8E670807}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{879E8EB5-FA9D-4B52-BB79-09AF8E670807}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -62,6 +74,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{3D4E5F6A-8B9C-4D5E-C3D4-2B3C4D5E6F7A} = {7BBBE559-27C9-4B34-BA50-989EF3964026}
 		{879E8EB5-FA9D-4B52-BB79-09AF8E670807} = {7BBBE559-27C9-4B34-BA50-989EF3964026}
 		{F5FF9EA9-3D2E-4E2B-8602-5C36965D8C48} = {7BBBE559-27C9-4B34-BA50-989EF3964026}
 		{5FAA0D47-F8B6-474F-8D7E-C77E2303B3AD} = {33CFA06F-E3E5-4B3E-8E08-D125E67E4F8D}
