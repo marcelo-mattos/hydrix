@@ -97,7 +97,7 @@ efficiency.
 
 ### 📊 Performance
 
-Benchmark snapshot against AutoMapper 12 — LongRun (100 iterations, 3 launches, 15 warmups), .NET 10.0.5, X64 RyuJIT AVX2:
+Benchmark snapshot against AutoMapper (`12.0.1` on `netcoreapp3.1`; `13.0.1` on `net6.0`, `net8.0`, and `net10.0`) using BenchmarkDotNet (`0.14.0` on `netcoreapp3.1` and `net6.0`; `0.15.8` on `net8.0` and `net10.0`) — LongRun (100 iterations, 3 launches, 15 warmups), host runtime `.NET 10.0.5`, `X64 RyuJIT AVX2`:
 
 | Scenario | Hydrix.Mapper | AutoMapper | Gain |
 | --- | ---: | ---: | ---: |
@@ -112,7 +112,7 @@ Benchmark snapshot against AutoMapper 12 — LongRun (100 iterations, 3 launches
 | list medium ×1000 | **16,860 ns** | 18,607 ns | ~9% faster |
 | list large ×1000 | **18,220 ns** | 20,610 ns | ~12% faster |
 
-Allocation snapshot against AutoMapper 12:
+Allocation snapshot against the same AutoMapper baselines:
 
 | Scenario | Hydrix.Mapper | AutoMapper | Reduction |
 | --- | ---: | ---: | ---: |

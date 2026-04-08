@@ -37,8 +37,8 @@ namespace Hydrix.Mapper.Configuration
                 ref _options);
 
         /// <summary>
-        /// Replaces the active mapper options, clears the compiled-plan cache, and clears the cached default mapper so a
-        /// new instance is created on the next request.
+        /// Replaces the active mapper options and clears the cached default mapper so a new instance is created on the
+        /// next request.
         /// </summary>
         /// <param name="options">
         /// The new options snapshot that should become active for all future default mapper resolutions.
@@ -57,8 +57,6 @@ namespace Hydrix.Mapper.Configuration
             Volatile.Write(
                 ref _options,
                 options);
-
-            MapPlanCache.Clear();
 
             Volatile.Write(
                 ref _defaultMapper,

@@ -63,6 +63,75 @@ namespace Hydrix.Mapper.UnitTests.Internals
             Assert.Equal(
                 "B1",
                 result[1]);
+            Assert.Equal(
+                2,
+                result.Capacity);
+        }
+
+        /// <summary>
+        /// Verifies that the helper pre-sizes from an <see cref="IReadOnlyCollection{T}"/> source that does not also
+        /// implement <see cref="ICollection{T}"/>.
+        /// </summary>
+        [Fact]
+        public void MapList_PreSizesFromReadOnlyCollectionSource()
+        {
+            var source = new StringReadOnlySequence(
+                "A",
+                "B",
+                "C");
+
+            var result = InvokeMapList<string, string>(
+                source,
+                value => value + "R");
+
+            Assert.Equal(
+                3,
+                result.Count);
+            Assert.Equal(
+                3,
+                result.Capacity);
+            Assert.Equal(
+                "AR",
+                result[0]);
+            Assert.Equal(
+                "BR",
+                result[1]);
+            Assert.Equal(
+                "CR",
+                result[2]);
+        }
+
+        /// <summary>
+        /// Verifies that the helper pre-sizes from a non-generic <see cref="System.Collections.ICollection"/> source
+        /// when no generic collection interface is available.
+        /// </summary>
+        [Fact]
+        public void MapList_PreSizesFromNonGenericCollectionSource()
+        {
+            var source = new StringNonGenericCollection(
+                "A",
+                "B",
+                "C");
+
+            var result = InvokeMapList<string, string>(
+                source,
+                value => value + "N");
+
+            Assert.Equal(
+                3,
+                result.Count);
+            Assert.Equal(
+                3,
+                result.Capacity);
+            Assert.Equal(
+                "AN",
+                result[0]);
+            Assert.Equal(
+                "BN",
+                result[1]);
+            Assert.Equal(
+                "CN",
+                result[2]);
         }
 
         /// <summary>

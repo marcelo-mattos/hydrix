@@ -1,3 +1,4 @@
+using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
 using Hydrix.Mapper.Extensions;
 using Hydrix.Mapper.Primitives;
@@ -40,6 +41,8 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         /// </summary>
         public MapperExtensionsRegressionTests()
         {
+            MapPlanCache.Clear();
+
             HydrixMapperConfiguration.Configure(
                 new HydrixMapperOptions());
         }
@@ -51,10 +54,12 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         {
             HydrixMapperConfiguration.Configure(
                 new HydrixMapperOptions());
+
+            MapPlanCache.Clear();
         }
 
         /// <summary>
-        /// Verifies that reconfiguring the global mapper invalidates the previously compiled plan for the same type pair.
+        /// Verifies that reconfiguring the global mapper updates subsequent default mappings for the same type pair.
         /// </summary>
         [Fact]
         public void ToDto_UsesUpdatedGlobalConfiguration_AfterReconfigure()
@@ -85,6 +90,69 @@ namespace Hydrix.Mapper.UnitTests.Extensions
             Assert.Equal(
                 "hello",
                 second.Name);
+        }
+
+        /// <summary>
+        /// Verifies that replacing the process-wide default mapper does not clear compiled plans that belong to other
+        /// mapper instances with different option snapshots.
+        /// </summary>
+        [Fact]
+        public void Configure_DoesNotClearGlobalPlanCache_ForNonDefaultMapperPlans()
+        {
+            var uppercase = new HydrixMapperOptions();
+            uppercase.String.Transform = StringTransforms.Uppercase;
+
+            var mapper = new HydrixMapper(
+                uppercase);
+
+            var first = mapper.Map<EntityModel, DestinationModel>(
+                new EntityModel
+                {
+                    Name = "Hello",
+                });
+
+            Assert.Equal(
+                "HELLO",
+                first.Name);
+            Assert.True(
+                MapPlanCache.IsCached(
+                    typeof(EntityModel),
+                    typeof(DestinationModel),
+                    uppercase));
+            Assert.Equal(
+                1,
+                MapPlanCache.PlanCompilationCount);
+
+            var lowercase = new HydrixMapperOptions();
+            lowercase.String.Transform = StringTransforms.Lowercase;
+            HydrixMapperConfiguration.Configure(
+                lowercase);
+
+            Assert.True(
+                MapPlanCache.IsCached(
+                    typeof(EntityModel),
+                    typeof(DestinationModel),
+                    uppercase));
+            Assert.Equal(
+                1,
+                MapPlanCache.PlanCompilationCount);
+
+            var second = new EntityModel
+            {
+                Name = "Hello",
+            }.ToDto<DestinationModel>();
+
+            Assert.Equal(
+                "hello",
+                second.Name);
+            Assert.True(
+                MapPlanCache.IsCached(
+                    typeof(EntityModel),
+                    typeof(DestinationModel),
+                    lowercase));
+            Assert.Equal(
+                2,
+                MapPlanCache.PlanCompilationCount);
         }
 
         /// <summary>

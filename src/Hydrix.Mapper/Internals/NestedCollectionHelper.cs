@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -39,9 +40,7 @@ namespace Hydrix.Mapper.Internals
             if (source == null)
                 return null;
 
-            var result = source is ICollection<TSrc> collection
-                ? new List<TDest>(collection.Count)
-                : new List<TDest>();
+            var result = CreateResultList<TSrc, TDest>(source);
 
             foreach (var item in source)
             {
@@ -50,6 +49,28 @@ namespace Hydrix.Mapper.Internals
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Creates the destination list using the best available source count hint to avoid intermediate resizes.
+        /// </summary>
+        /// <typeparam name="TSrc">The source element type.</typeparam>
+        /// <typeparam name="TDest">The destination element type.</typeparam>
+        /// <param name="source">The source sequence.</param>
+        /// <returns>A destination list pre-sized when the source exposes a stable count.</returns>
+        private static List<TDest> CreateResultList<TSrc, TDest>(
+            IEnumerable<TSrc> source)
+        {
+            if (source is ICollection<TSrc> collection)
+                return new List<TDest>(collection.Count);
+
+            if (source is IReadOnlyCollection<TSrc> readOnlyCollection)
+                return new List<TDest>(readOnlyCollection.Count);
+
+            if (source is ICollection nonGenericCollection)
+                return new List<TDest>(nonGenericCollection.Count);
+
+            return new List<TDest>();
         }
     }
 }

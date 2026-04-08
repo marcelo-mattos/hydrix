@@ -238,6 +238,12 @@ namespace Hydrix.UnitTests.EntityFramework
             Assert.Equal(42, InvokeTranslator<int>("InvokeMethod", new MethodHost(), nameof(MethodHost.GetScalar)));
             Assert.Empty(InvokeTranslator<IEnumerable<object>>("InvokeEnumerable", new MethodHost(), nameof(MethodHost.GetScalar)));
             Assert.Empty(InvokeTranslator<IEnumerable<object>>("GetSequence", new object()));
+            Assert.Null(InvokeTranslator<MethodInfo>("FindMethod", null, "Anything", Type.EmptyTypes));
+            Assert.Null(InvokeTranslator<MethodInfo>("FindMethod", new MethodHost(), "MissingMethod", Type.EmptyTypes));
+            Assert.NotNull(InvokeTranslator<MethodInfo>("FindMethod", new MethodHost(), nameof(MethodHost.GetScalar), Type.EmptyTypes));
+            Assert.NotNull(InvokeTranslator<MethodInfo>("FindMethod", new MethodHost(), nameof(MethodHost.GetScalar), null));
+            Assert.NotNull(InvokeTranslator<MethodInfo>("FindMethod", new ExplicitAnnotationHost(), "FindAnnotation", new[] { typeof(string) }));
+            Assert.NotNull(InvokeTranslator<MethodInfo>("FindMethod", new MultiInterfaceAnnotationHost(), "FindAnnotation", new[] { typeof(string) }));
             Assert.Null(InvokeTranslator<string>("GetAnnotationValue", null, "Relational:ColumnName"));
             Assert.Null(InvokeTranslator<string>("GetAnnotationValue", new AnnotationlessMetadata(), "Relational:ColumnName"));
             Assert.Null(InvokeTranslator<string>("GetAnnotationValue", new ExplicitAnnotationHost(), "Relational:ColumnName"));
@@ -252,6 +258,20 @@ namespace Hydrix.UnitTests.EntityFramework
             Assert.True(InvokeTranslator<bool>("HasMethod", new MethodHost(), nameof(MethodHost.GetScalar)));
             Assert.False(InvokeTranslator<bool>("HasMethod", new MethodHost(), "MissingMethod"));
             Assert.False(InvokeTranslator<bool>("HasMethod", null, "MissingMethod"));
+            Assert.Equal(
+                nameof(MethodHost.GetScalar),
+                InvokeTranslator<string>(
+                    "ResolveMethodName",
+                    new MethodHost(),
+                    nameof(MethodHost.GetScalar),
+                    "FallbackMethod"));
+            Assert.Equal(
+                "FallbackMethod",
+                InvokeTranslator<string>(
+                    "ResolveMethodName",
+                    new AnnotationlessMetadata(),
+                    "MissingMethod",
+                    "FallbackMethod"));
             Assert.Empty(InvokeTranslator<IEnumerable<string>>("GetPrimaryKeyPropertyNames", new EntityTypeWithoutPrimaryKey()));
             Assert.Empty(InvokeTranslator<string[]>("GetPrimaryKeyColumns", new EntityTypeWithoutPrimaryKey()));
             Assert.Empty(InvokeTranslator<IEnumerable<string>>("GetPrimaryKeyPropertyNames", new EntityTypeWithUnnamedPrimaryKey()));
@@ -289,6 +309,111 @@ namespace Hydrix.UnitTests.EntityFramework
                 .GetValue(reflected) as string;
 
             Assert.Equal(nameof(CoverageOrder), table);
+        }
+
+        /// <summary>
+        /// Ensures scalar translation prefers the full property surface so inherited properties are not dropped when
+        /// declared-only metadata is also available.
+        /// </summary>
+        [Fact]
+        public void BuildEntityModel_PrefersGetProperties_OverGetDeclaredProperties()
+        {
+            var inherited = new MetadataNameOnly
+            {
+                Name = nameof(TranslatorInheritanceCoverageEntityBase.InheritedScalar)
+            };
+            var declared = new MetadataNameOnly
+            {
+                Name = nameof(TranslatorInheritanceCoverageEntity.DeclaredScalar)
+            };
+            var entityType = new FakeEntityTypeWithDeclaredMembersMetadata(
+                typeof(TranslatorInheritanceCoverageEntity),
+                new object[] { inherited, declared },
+                new object[] { declared },
+                Array.Empty<object>(),
+                Array.Empty<object>(),
+                primaryKey: null,
+                annotations: null);
+
+            var reflected = InvokeTranslator<ReflectedEntityModel>(
+                "BuildEntityModel",
+                entityType,
+                typeof(TranslatorInheritanceCoverageEntity));
+            var propertyNames = reflected.Fields
+                .Select(field => field.Property.Name)
+                .ToArray();
+
+            Assert.Equal(2, propertyNames.Length);
+            Assert.Contains(
+                nameof(TranslatorInheritanceCoverageEntityBase.InheritedScalar),
+                propertyNames);
+            Assert.Contains(
+                nameof(TranslatorInheritanceCoverageEntity.DeclaredScalar),
+                propertyNames);
+        }
+
+        /// <summary>
+        /// Ensures navigation translation prefers the full navigation surface so inherited navigations are not dropped
+        /// when declared-only metadata is also available.
+        /// </summary>
+        [Fact]
+        public void PopulateNavigations_PrefersGetNavigations_OverGetDeclaredNavigations()
+        {
+            var targetIdProperty = new FakePropertyMetadata(
+                typeof(TranslatorInheritanceNavigationTarget).GetProperty(nameof(TranslatorInheritanceNavigationTarget.Id)),
+                "target_id",
+                isNullable: false);
+            var targetKey = new FakeKey(targetIdProperty);
+            var targetEntityType = new FakeEntityTypeMetadata(
+                typeof(TranslatorInheritanceNavigationTarget),
+                new object[] { targetIdProperty },
+                Array.Empty<object>(),
+                targetKey,
+                annotations: null);
+            var sourceForeignKeyProperty = new FakePropertyMetadata(
+                typeof(TranslatorInheritanceCoverageEntityBase).GetProperty(nameof(TranslatorInheritanceCoverageEntityBase.InheritedTargetId)),
+                "target_id",
+                isNullable: false);
+            var inheritedNavigation = new FakeNavigationMetadata(
+                typeof(TranslatorInheritanceCoverageEntityBase).GetProperty(nameof(TranslatorInheritanceCoverageEntityBase.InheritedTarget)),
+                new FakeForeignKeyMetadata(
+                    new object[] { sourceForeignKeyProperty },
+                    targetKey,
+                    declaringEntityType: new object(),
+                    isRequired: false),
+                isOnDependent: true);
+            var sourceEntityType = new FakeEntityTypeWithDeclaredMembersMetadata(
+                typeof(TranslatorInheritanceCoverageEntity),
+                Array.Empty<object>(),
+                Array.Empty<object>(),
+                new object[] { inheritedNavigation },
+                Array.Empty<object>(),
+                primaryKey: null,
+                annotations: null);
+
+            var sourceReflected = InvokeTranslator<ReflectedEntityModel>(
+                "BuildEntityModel",
+                sourceEntityType,
+                typeof(TranslatorInheritanceCoverageEntity));
+            var targetReflected = InvokeTranslator<ReflectedEntityModel>(
+                "BuildEntityModel",
+                targetEntityType,
+                typeof(TranslatorInheritanceNavigationTarget));
+            var entities = new Dictionary<Type, ReflectedEntityModel>
+            {
+                [typeof(TranslatorInheritanceCoverageEntity)] = sourceReflected,
+                [typeof(TranslatorInheritanceNavigationTarget)] = targetReflected,
+            };
+
+            InvokeTranslator<object>(
+                "PopulateNavigations",
+                sourceReflected,
+                entities);
+
+            var navigation = Assert.Single(sourceReflected.Navigations);
+            Assert.Equal(
+                nameof(TranslatorInheritanceCoverageEntityBase.InheritedTarget),
+                navigation.Property.Name);
         }
 
         /// <summary>
@@ -797,6 +922,49 @@ namespace Hydrix.UnitTests.EntityFramework
         }
 
         /// <summary>
+        /// Represents a base entity used to verify inherited scalar and navigation metadata handling.
+        /// </summary>
+        private abstract class TranslatorInheritanceCoverageEntityBase : DatabaseEntity, ITable
+        {
+            /// <summary>
+            /// Gets or sets an inherited scalar property.
+            /// </summary>
+            public int InheritedScalar { get; set; }
+
+            /// <summary>
+            /// Gets or sets an inherited foreign-key value.
+            /// </summary>
+            public int InheritedTargetId { get; set; }
+
+            /// <summary>
+            /// Gets or sets an inherited reference navigation.
+            /// </summary>
+            public TranslatorInheritanceNavigationTarget InheritedTarget { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a derived entity used to verify inherited metadata inclusion.
+        /// </summary>
+        private sealed class TranslatorInheritanceCoverageEntity : TranslatorInheritanceCoverageEntityBase
+        {
+            /// <summary>
+            /// Gets or sets a declared scalar property.
+            /// </summary>
+            public string DeclaredScalar { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the target entity for the inherited-navigation coverage scenario.
+        /// </summary>
+        private sealed class TranslatorInheritanceNavigationTarget : DatabaseEntity, ITable
+        {
+            /// <summary>
+            /// Gets or sets the target identifier.
+            /// </summary>
+            public int Id { get; set; }
+        }
+
+        /// <summary>
         /// Represents a helper object that exposes a scalar-returning method.
         /// </summary>
         private sealed class MethodHost
@@ -1063,6 +1231,127 @@ namespace Hydrix.UnitTests.EntityFramework
             /// <returns>The synthetic navigations.</returns>
             public IEnumerable<object> GetNavigations()
                 => Navigations;
+
+            /// <summary>
+            /// Returns the synthetic primary key.
+            /// </summary>
+            /// <returns>The synthetic primary key.</returns>
+            public object FindPrimaryKey()
+                => PrimaryKey;
+
+            /// <summary>
+            /// Finds the synthetic relational annotation with the specified name.
+            /// </summary>
+            /// <param name="annotationName">The annotation name to search for.</param>
+            /// <returns>A <see cref="FakeAnnotation"/> instance when the annotation exists; otherwise, <see langword="null"/>.</returns>
+            public object FindAnnotation(
+                string annotationName)
+            {
+                if (Annotations == null ||
+                    !Annotations.TryGetValue(annotationName, out var value))
+                {
+                    return null;
+                }
+
+                return new FakeAnnotation(value);
+            }
+        }
+
+        /// <summary>
+        /// Represents synthetic entity-type metadata that exposes both full and declared-only member enumeration methods.
+        /// </summary>
+        private sealed class FakeEntityTypeWithDeclaredMembersMetadata
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="FakeEntityTypeWithDeclaredMembersMetadata"/> class.
+            /// </summary>
+            /// <param name="clrType">The CLR type represented by the synthetic metadata.</param>
+            /// <param name="properties">The complete scalar property set, including inherited members.</param>
+            /// <param name="declaredProperties">The declared-only scalar property set.</param>
+            /// <param name="navigations">The complete navigation set, including inherited members.</param>
+            /// <param name="declaredNavigations">The declared-only navigation set.</param>
+            /// <param name="primaryKey">The synthetic primary key.</param>
+            /// <param name="annotations">The synthetic relational annotations.</param>
+            public FakeEntityTypeWithDeclaredMembersMetadata(
+                Type clrType,
+                IEnumerable<object> properties,
+                IEnumerable<object> declaredProperties,
+                IEnumerable<object> navigations,
+                IEnumerable<object> declaredNavigations,
+                object primaryKey,
+                IReadOnlyDictionary<string, string> annotations)
+            {
+                ClrType = clrType;
+                Properties = properties?.ToArray() ?? Array.Empty<object>();
+                DeclaredProperties = declaredProperties?.ToArray() ?? Array.Empty<object>();
+                Navigations = navigations?.ToArray() ?? Array.Empty<object>();
+                DeclaredNavigations = declaredNavigations?.ToArray() ?? Array.Empty<object>();
+                PrimaryKey = primaryKey;
+                Annotations = annotations;
+            }
+
+            /// <summary>
+            /// Gets the CLR type represented by the synthetic metadata.
+            /// </summary>
+            public Type ClrType { get; }
+
+            /// <summary>
+            /// Gets the complete scalar property set.
+            /// </summary>
+            public object[] Properties { get; }
+
+            /// <summary>
+            /// Gets the declared-only scalar property set.
+            /// </summary>
+            public object[] DeclaredProperties { get; }
+
+            /// <summary>
+            /// Gets the complete navigation set.
+            /// </summary>
+            public object[] Navigations { get; }
+
+            /// <summary>
+            /// Gets the declared-only navigation set.
+            /// </summary>
+            public object[] DeclaredNavigations { get; }
+
+            /// <summary>
+            /// Gets the synthetic primary key.
+            /// </summary>
+            public object PrimaryKey { get; }
+
+            /// <summary>
+            /// Gets the synthetic relational annotations.
+            /// </summary>
+            public IReadOnlyDictionary<string, string> Annotations { get; }
+
+            /// <summary>
+            /// Returns the complete scalar property set.
+            /// </summary>
+            /// <returns>The complete scalar property set.</returns>
+            public IEnumerable<object> GetProperties()
+                => Properties;
+
+            /// <summary>
+            /// Returns the declared-only scalar property set.
+            /// </summary>
+            /// <returns>The declared-only scalar property set.</returns>
+            public IEnumerable<object> GetDeclaredProperties()
+                => DeclaredProperties;
+
+            /// <summary>
+            /// Returns the complete navigation set.
+            /// </summary>
+            /// <returns>The complete navigation set.</returns>
+            public IEnumerable<object> GetNavigations()
+                => Navigations;
+
+            /// <summary>
+            /// Returns the declared-only navigation set.
+            /// </summary>
+            /// <returns>The declared-only navigation set.</returns>
+            public IEnumerable<object> GetDeclaredNavigations()
+                => DeclaredNavigations;
 
             /// <summary>
             /// Returns the synthetic primary key.

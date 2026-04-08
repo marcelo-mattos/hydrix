@@ -22,8 +22,10 @@
     <PackageReleaseNotes>
       Hydrix.Mapper 1.0.0 — initial public release.
 
-      Hydrix.Mapper outperforms AutoMapper 12 across every measured scenario
-      (LongRun, 100 iterations, 3 launches, .NET 10.0.5, X64 RyuJIT AVX2):
+      Hydrix.Mapper outperforms the benchmarked AutoMapper baseline across
+      every measured scenario (AutoMapper 12.0.1 on netcoreapp3.1;
+      AutoMapper 13.0.1 on net6.0, net8.0, and net10.0; LongRun, 100
+      iterations, 3 launches, .NET 10.0.5, X64 RyuJIT AVX2):
       flat small ~51% faster, flat medium ~44% faster, flat large ~42% faster,
       conversions ~27% faster, and lists 9–33% faster with 5–19% fewer
       allocations. Cold path: ~453 ns per type pair.

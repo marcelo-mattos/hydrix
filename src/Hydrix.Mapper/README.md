@@ -76,9 +76,19 @@ Hydrix.Mapper does not attempt to infer your mapping intent from conventions alo
 
 ## 📊 Benchmark Snapshot vs AutoMapper
 
-The benchmark suite compares Hydrix.Mapper against AutoMapper 12 across flat-object widths, collection sizes, type conversion scenarios, and cold-path plan compilation.
+The benchmark suite compares Hydrix.Mapper against AutoMapper across flat-object widths, collection sizes, type conversion scenarios, and cold-path plan compilation.
 
-Environment: BenchmarkDotNet v0.14.0 · .NET 10.0.5 · X64 RyuJIT AVX2 · LongRun (100 iterations, 3 launches, 15 warmups)
+Baseline versions by target framework:
+
+- `netcoreapp3.1` — AutoMapper `12.0.1`
+- `net6.0`, `net8.0`, `net10.0` — AutoMapper `13.0.1`
+
+Environment:
+
+- BenchmarkDotNet `0.14.0` on `netcoreapp3.1` and `net6.0`
+- BenchmarkDotNet `0.15.8` on `net8.0` and `net10.0`
+- Host runtime for the published snapshot: `.NET 10.0.5` · `X64 RyuJIT AVX2`
+- Job: `LongRun` (100 iterations, 3 launches, 15 warmups)
 
 ### Single object — flat
 
