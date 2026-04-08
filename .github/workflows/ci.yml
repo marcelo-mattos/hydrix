@@ -153,8 +153,8 @@ jobs:
 
       - name: Restore src projects
         run: |
-          dotnet restore src/Hydrix/Hydrix.csproj --configuration Release
-          dotnet restore src/Hydrix.Mapper/Hydrix.Mapper.csproj --configuration Release
+          dotnet restore src/Hydrix/Hydrix.csproj -p:Configuration=Release
+          dotnet restore src/Hydrix.Mapper/Hydrix.Mapper.csproj -p:Configuration=Release
 
       - name: Build src projects
         run: |
