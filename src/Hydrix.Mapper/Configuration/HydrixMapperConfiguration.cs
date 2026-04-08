@@ -69,7 +69,7 @@ namespace Hydrix.Mapper.Configuration
         /// Returns the shared default mapper instance, creating it lazily when accessed for the first time.
         /// </summary>
         /// <returns>
-        /// A process-wide <see cref="Mapper.HydrixMapper"/> configured with the current <see cref="Options"/>.
+        /// A process-wide <see cref="HydrixMapper"/> configured with the current <see cref="Options"/>.
         /// </returns>
         internal static HydrixMapper GetOrCreateDefaultMapper()
         {
