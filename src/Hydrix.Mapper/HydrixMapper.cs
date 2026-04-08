@@ -32,6 +32,11 @@ namespace Hydrix.Mapper
         private readonly HydrixMapperOptions _options;
 
         /// <summary>
+        /// Stores the pre-computed structural cache key for <see cref="_options"/>.
+        /// </summary>
+        private readonly MapPlanOptionsKey _optionsKey;
+
+        /// <summary>
         /// Stores the per-instance plan cache keyed only by the source and destination type pair.
         /// </summary>
         /// <remarks>
@@ -59,6 +64,8 @@ namespace Hydrix.Mapper
                 throw new ArgumentNullException(nameof(options));
             _options = options.Clone();
 #endif
+            _optionsKey = MapPlanOptionsKey.Create(
+                _options);
         }
 
         /// <summary>
@@ -263,7 +270,8 @@ namespace Hydrix.Mapper
                     _ => MapPlanCache.GetOrAdd(
                         sourceType,
                         destType,
-                        _options));
+                        _options,
+                        _optionsKey));
         }
 
         /// <summary>

@@ -96,20 +96,20 @@ efficiency.
 
 ### 📊 Performance
 
-Benchmark snapshot against AutoMapper 12 — MediumRun, .NET 10.0.5, X64 RyuJIT AVX2:
+Benchmark snapshot against AutoMapper 12 — LongRun (100 iterations, 3 launches, 15 warmups), .NET 10.0.5, X64 RyuJIT AVX2:
 
 | Scenario | Hydrix.Mapper | AutoMapper | Gain |
 | --- | ---: | ---: | ---: |
-| flat small (5 props) | **16 ns** | 33 ns | ~52% faster |
-| flat medium (12 props) | **21 ns** | 38 ns | ~45% faster |
-| flat large (20 props) | **23 ns** | 41 ns | ~45% faster |
-| with conversions | **56 ns** | 72 ns | ~22% faster |
-| list small ×100 | **751 ns** | 1,071 ns | ~30% faster |
-| list medium ×100 | **1,449 ns** | 1,687 ns | ~14% faster |
-| list large ×100 | **1,519 ns** | 2,083 ns | ~27% faster |
-| list small ×1000 | **7,939 ns** | 9,834 ns | ~19% faster |
-| list medium ×1000 | **13,932 ns** | 15,606 ns | ~11% faster |
-| list large ×1000 | **14,846 ns** | 16,788 ns | ~12% faster |
+| flat small (5 props) | **18 ns** | 37 ns | ~51% faster |
+| flat medium (12 props) | **26 ns** | 47 ns | ~44% faster |
+| flat large (20 props) | **28 ns** | 48 ns | ~42% faster |
+| with conversions | **66 ns** | 89 ns | ~27% faster |
+| list small ×100 | **893 ns** | 1,324 ns | ~33% faster |
+| list medium ×100 | **1,665 ns** | 2,143 ns | ~22% faster |
+| list large ×100 | **1,795 ns** | 2,304 ns | ~22% faster |
+| list small ×1000 | **9,417 ns** | 11,293 ns | ~17% faster |
+| list medium ×1000 | **16,860 ns** | 18,607 ns | ~9% faster |
+| list large ×1000 | **18,220 ns** | 20,610 ns | ~12% faster |
 
 Allocation snapshot against AutoMapper 12:
 
@@ -124,8 +124,8 @@ Allocation snapshot against AutoMapper 12:
 
 ### 🧪 Tests
 
-- 208 unit tests on .NET 10, .NET 8, and .NET 6.
-- 204 unit tests on .NET Core 3.1.
+- 247 unit tests on .NET 10, .NET 8, and .NET 6.
+- 243 unit tests on .NET Core 3.1.
 - Coverage: 100% line · 100% branch · 100% method across all supported targets.
 - Test surface covers all mapping paths, conversion scenarios, cache behavior,
   DI registration, collection fast paths, edge cases, and regression scenarios.

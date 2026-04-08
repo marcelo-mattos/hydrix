@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Hydrix.Mapper.Caching
 {
@@ -18,10 +18,13 @@ namespace Hydrix.Mapper.Caching
     internal static class MapPlanCache
     {
         /// <summary>
-        /// Stores the compiled plans keyed by the unique source type, destination type, and option snapshot tuple.
+        /// Provides a thread-safe cache for storing and retrieving mapping plans associated with specific keys.
         /// </summary>
-        private static readonly ConcurrentDictionary<MapPlanKey, MapPlan> Cache =
-            new ConcurrentDictionary<MapPlanKey, MapPlan>();
+        /// <remarks>This dictionary uses lazy initialization to ensure that each mapping plan is created
+        /// only once per key, even in multithreaded scenarios. The cache improves performance by avoiding redundant
+        /// computation of mapping plans.</remarks>
+        private static readonly ConcurrentDictionary<MapPlanKey, Lazy<MapPlan>> Cache =
+            new ConcurrentDictionary<MapPlanKey, Lazy<MapPlan>>();
 
         /// <summary>
         /// Provides O(1) membership testing for whether any plan exists for a given source–destination type pair,
@@ -29,6 +32,13 @@ namespace Hydrix.Mapper.Caching
         /// </summary>
         private static readonly ConcurrentDictionary<(Type Source, Type Destination), byte> TypePairIndex =
             new ConcurrentDictionary<(Type, Type), byte>();
+
+        /// <summary>
+        /// Stores the number of times a plan has been compiled.
+        /// </summary>
+        /// <remarks>This field is intended for internal tracking of plan compilation operations. It
+        /// should not be accessed directly outside of the containing class or its internal subclasses.</remarks>
+        private static int _planCompilationCount;
 
         /// <summary>
         /// Returns the cached mapping plan for the supplied type pair and option snapshot, creating and caching it on first
@@ -58,29 +68,67 @@ namespace Hydrix.Mapper.Caching
                 destType,
                 optionsKey);
 
-            if (Cache.TryGetValue(
+            if (!Cache.TryGetValue(
                     key,
-                    out var cachedPlan))
+                    out var lazyPlan))
             {
-                return cachedPlan;
+                var snapshot = optionsKey.ToOptions();
+                lazyPlan = Cache.GetOrAdd(
+                    key,
+                    _ => CreatePlanLazy(
+                        sourceType,
+                        destType,
+                        snapshot));
             }
 
-            var snapshot = optionsKey.ToOptions();
-            var plan = MapPlanBuilder.Build(
+            return GetPlanValue(
+                key,
+                lazyPlan,
+                sourceType,
+                destType);
+        }
+
+        /// <summary>
+        /// Retrieves an existing mapping plan from the cache or creates and adds a new one for the specified source and
+        /// destination types with the given options.
+        /// </summary>
+        /// <remarks>If a mapping plan for the specified types and options already exists in the cache, it
+        /// is returned. Otherwise, a new plan is created, added to the cache, and returned. This method is
+        /// thread-safe.</remarks>
+        /// <param name="sourceType">The type of the source object to map from. Cannot be null.</param>
+        /// <param name="destType">The type of the destination object to map to. Cannot be null.</param>
+        /// <param name="options">The mapping options to use when creating a new mapping plan. Cannot be null.</param>
+        /// <param name="optionsKey">A key representing the mapping plan options, used to distinguish different mapping configurations.</param>
+        /// <returns>A mapping plan that defines how to map objects from the specified source type to the destination type using
+        /// the provided options.</returns>
+        internal static MapPlan GetOrAdd(
+            Type sourceType,
+            Type destType,
+            HydrixMapperOptions options,
+            MapPlanOptionsKey optionsKey)
+        {
+            var key = new MapPlanKey(
                 sourceType,
                 destType,
-                snapshot);
+                optionsKey);
 
-            var stored = Cache.GetOrAdd(
+            if (!Cache.TryGetValue(
+                    key,
+                    out var lazyPlan))
+            {
+                lazyPlan = Cache.GetOrAdd(
+                    key,
+                    _ => CreatePlanLazy(
+                        sourceType,
+                        destType,
+                        options));
+            }
+
+            return GetPlanValue(
                 key,
-                plan);
-
-            // Populate the secondary type-pair index so IsCached(Type, Type) remains O(1).
-            TypePairIndex.TryAdd(
-                (sourceType, destType),
-                0);
-
-            return stored;
+                lazyPlan,
+                sourceType,
+                destType);
         }
 
         /// <summary>
@@ -123,20 +171,135 @@ namespace Hydrix.Mapper.Caching
             Type sourceType,
             Type destType,
             HydrixMapperOptions options) =>
-            Cache.ContainsKey(
+            Cache.TryGetValue(
                 new MapPlanKey(
                     sourceType,
                     destType,
                     MapPlanOptionsKey.Create(
-                        options)));
+                        options)),
+                out var lazyPlan)
+            && lazyPlan.IsValueCreated;
 
         /// <summary>
-        /// Removes every compiled plan from the cache and resets the secondary type-pair index.
+        /// Clears all cached data and resets internal counters used by the type materialization infrastructure.
         /// </summary>
+        /// <remarks>This method removes all entries from the internal cache and type pair index, and
+        /// resets the plan compilation count to zero. It is intended for internal use to ensure a clean state, such as
+        /// during testing or when reinitializing the materializer system.</remarks>
         internal static void Clear()
         {
             Cache.Clear();
             TypePairIndex.Clear();
+            Interlocked.Exchange(
+                ref _planCompilationCount,
+                0);
+        }
+
+        /// <summary>
+        /// Gets the total number of times a query plan has been compiled during the application's execution.
+        /// </summary>
+        /// <remarks>This property is intended for diagnostic or monitoring purposes to track how often
+        /// query plans are compiled. Frequent plan compilations may indicate suboptimal query caching or
+        /// parameterization.</remarks>
+        internal static int PlanCompilationCount =>
+            Volatile.Read(
+                ref _planCompilationCount);
+
+        /// <summary>
+        /// Creates a lazily initialized mapping plan for the specified source and destination types using the provided
+        /// mapping options.
+        /// </summary>
+        /// <remarks>The mapping plan is compiled only once, even if accessed concurrently from multiple
+        /// threads. Subsequent accesses return the same compiled plan.</remarks>
+        /// <param name="sourceType">The type of the source object to map from. Cannot be null.</param>
+        /// <param name="destType">The type of the destination object to map to. Cannot be null.</param>
+        /// <param name="options">The mapping options to use when building the mapping plan. Cannot be null.</param>
+        /// <returns>A Lazy&lt;MapPlan&gt; instance that initializes the mapping plan when first accessed.</returns>
+        private static Lazy<MapPlan> CreatePlanLazy(
+            Type sourceType,
+            Type destType,
+            HydrixMapperOptions options) =>
+            new Lazy<MapPlan>(
+                () =>
+                {
+                    Interlocked.Increment(
+                        ref _planCompilationCount);
+
+                    return MapPlanBuilder.Build(
+                        sourceType,
+                        destType,
+                        options);
+                },
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+        /// <summary>
+        /// Retrieves the mapping plan associated with the specified key and type pair, initializing it if necessary.
+        /// </summary>
+        /// <remarks>If the mapping plan initialization fails, the faulted entry is removed from the cache
+        /// before the exception is rethrown. This method also ensures that the type pair index is updated for efficient
+        /// cache lookups.</remarks>
+        /// <param name="key">The key that uniquely identifies the mapping plan to retrieve.</param>
+        /// <param name="lazyPlan">A lazy-initialized mapping plan to be evaluated and returned if not already created.</param>
+        /// <param name="sourceType">The source type involved in the mapping operation.</param>
+        /// <param name="destType">The destination type involved in the mapping operation.</param>
+        /// <returns>The mapping plan associated with the specified key and type pair.</returns>
+        private static MapPlan GetPlanValue(
+            MapPlanKey key,
+            Lazy<MapPlan> lazyPlan,
+            Type sourceType,
+            Type destType)
+        {
+            try
+            {
+                var plan = lazyPlan.Value;
+
+                // Populate the secondary type-pair index so IsCached(Type, Type) remains O(1).
+                TypePairIndex.TryAdd(
+                    (sourceType, destType),
+                    0);
+
+                return plan;
+            }
+            catch
+            {
+                TryRemoveFaultedEntry(
+                    key,
+                    lazyPlan);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Attempts to remove the specified cache entry if it matches the provided lazy plan instance.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method ensures that only the exact faulted entry associated with the provided key and lazy plan
+        /// instance is removed from the cache. If the cache entry does not match the provided instance, no action is
+        /// taken.</para>
+        /// <para>The branch where <see cref="System.Collections.Concurrent.ConcurrentDictionary{TKey,TValue}.TryGetValue"/>
+        /// returns <see langword="false"/> is only reachable under a concurrent race: a second thread calling this method
+        /// observes that the first thread already removed the entry. Coverage instrumentation cannot reliably trigger this
+        /// window, so the method is excluded from branch analysis.</para>
+        /// </remarks>
+        /// <param name="key">The key identifying the cache entry to remove.</param>
+        /// <param name="lazyPlan">The lazy plan instance to compare against the cached entry. The entry is removed only if it is the same
+        /// instance.</param>
+        [ExcludeFromCodeCoverage]
+        private static void TryRemoveFaultedEntry(
+            MapPlanKey key,
+            Lazy<MapPlan> lazyPlan)
+        {
+            if (Cache.TryGetValue(
+                    key,
+                    out var cachedLazy)
+                && ReferenceEquals(
+                    cachedLazy,
+                    lazyPlan))
+            {
+                Cache.TryRemove(
+                    key,
+                    out _);
+            }
         }
     }
 

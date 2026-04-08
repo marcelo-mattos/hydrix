@@ -5,17 +5,15 @@
       "Bash(dotnet test:*)",
       "Bash(cd:*)",
       "Bash(dotnet restore:*)",
-      "Bash(dir \"C:\\\\VSO\\\\hydrix\\\\src\\\\Hydrix.Mapper\" /b)",
-      "Bash(dir \"C:\\\\VSO\\\\hydrix\" /b)",
+      "Bash(dir:*)",
       "Bash(git:*)",
-      "Bash(ls tests/Hydrix.Mapper.UnitTests/*.json)",
-      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(python3*)",
       "Bash(node:*)",
-      "Bash(ls tests/Hydrix.Mapper.UnitTests/*.xml)",
-      "Bash(ls tests/Hydrix.Mapper.UnitTests/coverage*)",
-      "Bash(grep -n \"DA:[0-9]*,0\\\\|BRDA.*,0$\" tests/Hydrix.Mapper.UnitTests/coverage_debug.net10.0.info)",
-      "Bash(grep -v \"^$\")",
-      "Bash(python3 -c \":*)"
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(powershell:*)"
     ]
   }
 }

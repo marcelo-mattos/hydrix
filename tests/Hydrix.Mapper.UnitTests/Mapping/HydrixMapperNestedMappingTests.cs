@@ -524,6 +524,72 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
         // -----------------------------------------------------------------------------------------
+        // Circular collection element detection
+        // -----------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Represents a self-referential entity whose <c>Children</c> collection is typed as
+        /// <see cref="IEnumerable{T}"/> rather than <see cref="List{T}"/>, which forces the enumerable-fallback code
+        /// path in the builder and ensures <c>GetOrAddElementDelegate</c> is reached during plan compilation.
+        /// </summary>
+        private sealed class CircularCollectionElementEntity
+        {
+            /// <summary>Gets or sets the element value.</summary>
+            public int Value { get; set; }
+
+            /// <summary>
+            /// Gets or sets the recursive child collection. Typed as <see cref="IEnumerable{T}"/> so that the source
+            /// property bypasses the indexed-loop fast path and routes through <c>BuildEnumerableFallback</c>.
+            /// </summary>
+            public IEnumerable<CircularCollectionElementEntity> Children { get; set; }
+        }
+
+        /// <summary>
+        /// Destination DTO for <see cref="CircularCollectionElementEntity"/>. The <c>Children</c> property mirrors the
+        /// source structure, closing the circular element-mapping path during plan compilation.
+        /// </summary>
+        private sealed class CircularCollectionElementDto
+        {
+            /// <summary>Gets or sets the mapped element value.</summary>
+            public int Value { get; set; }
+
+            /// <summary>Gets or sets the recursive child DTO collection.</summary>
+            public List<CircularCollectionElementDto> Children { get; set; }
+        }
+
+        /// <summary>
+        /// Represents an outer container source entity whose collection property is typed as
+        /// <see cref="IEnumerable{T}"/>, forcing the enumerable-fallback path so that the element-delegate lazy is
+        /// added to <c>ElementDelegateCache</c> before the self-referential cycle inside the element type is reached.
+        /// </summary>
+        private sealed class CircularCollectionContainerEntity
+        {
+            /// <summary>Gets or sets the container identifier.</summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the nested element collection. Typed as <see cref="IEnumerable{T}"/> to bypass the
+            /// indexed-loop fast path and ensure <c>GetOrAddElementDelegate</c> populates the lazy cache entry before
+            /// the recursive compilation of the element type encounters the cycle.
+            /// </summary>
+            public IEnumerable<CircularCollectionElementEntity> Items { get; set; }
+        }
+
+        /// <summary>
+        /// Destination DTO for <see cref="CircularCollectionContainerEntity"/>. Its <c>Items</c> element type maps to
+        /// <see cref="CircularCollectionElementDto"/>, which is self-referential, triggering the fault-removal paths in
+        /// <c>GetElementDelegateValue</c> and <c>TryRemoveFaultedElementDelegate</c> during compilation.
+        /// </summary>
+        private sealed class CircularCollectionContainerDto
+        {
+            /// <summary>Gets or sets the mapped container identifier.</summary>
+            public int Id { get; set; }
+
+            /// <summary>Gets or sets the mapped element collection.</summary>
+            public List<CircularCollectionElementDto> Items { get; set; }
+        }
+
+        // -----------------------------------------------------------------------------------------
         // Circular mapping detection
         // -----------------------------------------------------------------------------------------
 
@@ -679,6 +745,57 @@ namespace Hydrix.Mapper.UnitTests.Mapping
 
             var ex = Assert.Throws<InvalidOperationException>(
                 () => mapper.Map<IndirectCycleDtoA>(entity));
+
+            Assert.Contains(
+                "circular",
+                ex.Message,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Verifies that directly mapping a type whose collection element type is itself throws
+        /// <see cref="InvalidOperationException"/> with a descriptive message. This exercises the
+        /// <c>IsCompilingPair</c> guard inside <c>GetOrAddElementDelegate</c> at the branch where the element
+        /// delegate has not yet been added to the cache (i.e., the pair is in <c>_compilingPairs</c> via the
+        /// outer <c>Build</c> call but the lazy is absent from <c>ElementDelegateCache</c>).
+        /// </summary>
+        [Fact]
+        public void MapNested_DirectCircularCollectionElement_ThrowsInvalidOperationException()
+        {
+            var options = new HydrixMapperOptions();
+            options.MapNested<CircularCollectionElementEntity, CircularCollectionElementDto>();
+            var mapper = new HydrixMapper(
+                options);
+
+            var ex = Assert.Throws<InvalidOperationException>(
+                () => mapper.Map<CircularCollectionElementDto>(
+                    new CircularCollectionElementEntity()));
+
+            Assert.Contains(
+                "circular",
+                ex.Message,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Verifies that mapping a container type whose collection element type is self-referential throws
+        /// <see cref="InvalidOperationException"/> with a descriptive message. This exercises the
+        /// <c>IsCompilingPair</c> guard inside <c>GetOrAddElementDelegate</c> at the branch where the element
+        /// delegate lazy is already present in the cache but its value has not yet been created (because the
+        /// factory is still executing on the current thread), and exercises the fault-removal paths inside
+        /// <c>GetElementDelegateValue</c> and <c>TryRemoveFaultedElementDelegate</c>.
+        /// </summary>
+        [Fact]
+        public void MapNested_NestedCircularCollectionElement_ThrowsInvalidOperationException()
+        {
+            var options = new HydrixMapperOptions();
+            options.MapNested<CircularCollectionElementEntity, CircularCollectionElementDto>();
+            var mapper = new HydrixMapper(
+                options);
+
+            var ex = Assert.Throws<InvalidOperationException>(
+                () => mapper.Map<CircularCollectionContainerDto>(
+                    new CircularCollectionContainerEntity()));
 
             Assert.Contains(
                 "circular",

@@ -43,18 +43,18 @@ Focus: **expression-tree compilation, conversion pipeline, and benchmark parity 
 - `AddHydrixMapper` DI extension
 - `ToDto<TDest>()` and `ToDtoList<TDest>()` convenience extension methods
 - Multi-targeted: `net10.0`, `net8.0`, `net6.0`, `netcoreapp3.1`
-- 208/204 unit tests with 100% line/branch/method coverage across all targets
+- 247/243 unit tests with 100% line/branch/method coverage across all targets
 - Benchmark suite comparing Hydrix.Mapper against AutoMapper 12
 
 ### Benchmark Results
 
-Hydrix.Mapper 1.0.0 outperforms AutoMapper 12 across every measured scenario:
+Hydrix.Mapper 1.0.0 outperforms AutoMapper 12 across every measured scenario (LongRun, 100 iterations, 3 launches):
 
-- Flat small (5 props): **~52% faster**
-- Flat medium (12 props): **~45% faster**
-- Flat large (20 props): **~45% faster**
-- With conversions: **~22% faster**
-- List small ×100: **~30% faster**, ~19% fewer allocations
+- Flat small (5 props): **~51% faster**
+- Flat medium (12 props): **~44% faster**
+- Flat large (20 props): **~42% faster**
+- With conversions: **~27% faster**
+- List small ×100: **~33% faster**, ~19% fewer allocations
 - List large ×1000: **~12% faster**, ~5% fewer allocations
 
 ---

@@ -1,6 +1,10 @@
-﻿using Hydrix.Mapper.Caching;
+﻿using Hydrix.Mapper.Builders;
+using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -64,6 +68,60 @@ namespace Hydrix.Mapper.UnitTests.Caching
             /// Gets or sets the mapped identifier.
             /// </summary>
             public int Id { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the nested collection element source used by enumerable-fallback concurrency coverage.
+        /// </summary>
+        private sealed class TagEntity
+        {
+            /// <summary>
+            /// Gets or sets the tag value.
+            /// </summary>
+            public int Value { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the nested collection element destination used by enumerable-fallback concurrency coverage.
+        /// </summary>
+        private sealed class TagDto
+        {
+            /// <summary>
+            /// Gets or sets the mapped tag value.
+            /// </summary>
+            public int Value { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the root source type whose collection property forces the enumerable fallback path.
+        /// </summary>
+        private sealed class EnumerableSource
+        {
+            /// <summary>
+            /// Gets or sets the source identifier.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the nested collection stored behind a non-indexed enumerable implementation.
+            /// </summary>
+            public HashSet<TagEntity> Tags { get; set; }
+        }
+
+        /// <summary>
+        /// Represents the root destination type whose nested collection is mapped via a read-only abstraction.
+        /// </summary>
+        private sealed class EnumerableDestination
+        {
+            /// <summary>
+            /// Gets or sets the mapped identifier.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the mapped tags.
+            /// </summary>
+            public IReadOnlyList<TagDto> Tags { get; set; }
         }
 
         /// <summary>
@@ -272,8 +330,138 @@ namespace Hydrix.Mapper.UnitTests.Caching
         }
 
         /// <summary>
-        /// Verifies that concurrent mapper executions produce correct destination values while sharing the cache safely.
+        /// Verifies that high-contention first access compiles the shared mapping plan exactly once.
         /// </summary>
+        [Fact]
+        public void MapPlanCache_CompilesPlanExactlyOnce_UnderHighContention()
+        {
+            MapPlanCache.Clear();
+            var options = new HydrixMapperOptions();
+            using var start = new ManualResetEventSlim(false);
+            var tasks = new Task<Plans.MapPlan>[128];
+
+            for (var index = 0; index < tasks.Length; index++)
+            {
+                tasks[index] = Task.Run(
+                    () =>
+                    {
+                        start.Wait();
+                        return MapPlanCache.GetOrAdd(
+                            typeof(Source),
+                            typeof(Dest),
+                            options);
+                    });
+            }
+
+            start.Set();
+            Task.WaitAll(
+                tasks);
+
+            var firstPlan = tasks[0].Result;
+            foreach (var task in tasks)
+            {
+                Assert.Same(
+                    firstPlan,
+                    task.Result);
+            }
+
+            Assert.Equal(
+                1,
+                MapPlanCache.PlanCompilationCount);
+        }
+
+        /// <summary>
+        /// Verifies that concurrent first-use mapping compiles both the outer plan and enumerable-fallback element
+        /// delegate exactly once while preserving correct results.
+        /// </summary>
+        [Fact]
+        public void Mapper_CompilesPlanAndElementDelegateExactlyOnce_UnderConcurrentFirstUse()
+        {
+            MapPlanBuilder.ClearCompilationCachesForTesting();
+            MapPlanCache.Clear();
+
+            var options = new HydrixMapperOptions();
+            options.MapNested<TagEntity, TagDto>();
+
+            var mapper = new HydrixMapper(options);
+            var results = new ConcurrentBag<EnumerableDestination>();
+            using var start = new ManualResetEventSlim(false);
+            var tasks = new Task[128];
+
+            for (var index = 0; index < tasks.Length; index++)
+            {
+                var capture = index;
+                tasks[index] = Task.Run(
+                    () =>
+                    {
+                        start.Wait();
+
+                        results.Add(
+                            mapper.Map<EnumerableDestination>(
+                                new EnumerableSource
+                                {
+                                    Id = capture,
+                                    Tags =
+                                    new HashSet<TagEntity>
+                                    {
+                                        new TagEntity
+                                        {
+                                            Value = capture,
+                                        },
+                                        new TagEntity
+                                        {
+                                            Value = capture + 1,
+                                        },
+                                    },
+                                }));
+                    });
+            }
+
+            start.Set();
+            Task.WaitAll(
+                tasks);
+
+            Assert.Equal(
+                128,
+                results.Count);
+
+            foreach (var result in results)
+            {
+                Assert.NotNull(
+                    result.Tags);
+                Assert.Equal(
+                    2,
+                    result.Tags.Count);
+
+                var values = result.Tags
+                    .Select(
+                        tag => tag.Value)
+                    .OrderBy(
+                        value => value)
+                    .ToArray();
+
+                Assert.Equal(
+                    result.Id,
+                    values[0]);
+                Assert.Equal(
+                    result.Id + 1,
+                    values[1]);
+            }
+
+            Assert.Equal(
+                1,
+                MapPlanCache.PlanCompilationCount);
+            Assert.Equal(
+                1,
+                MapPlanBuilder.ElementDelegateCompilationCount);
+        }
+
+        /// <summary>
+        /// Verifies that the mapper produces correct results when accessed concurrently from multiple threads.
+        /// </summary>
+        /// <remarks>This test ensures that the mapping operation is thread-safe and that each concurrent
+        /// mapping produces the expected result. It is intended to detect issues related to shared state or race
+        /// conditions in the mapping logic.</remarks>
         [Fact]
         public void Mapper_ProducesCorrectResult_UnderConcurrentAccess()
         {
@@ -307,8 +495,11 @@ namespace Hydrix.Mapper.UnitTests.Caching
         }
 
         /// <summary>
-        /// Verifies that the object-based equality overload rejects values that are not cache keys.
+        /// Verifies that the MapPlanKey.Equals(Object) method returns false when compared to an object of a different
+        /// type.
         /// </summary>
+        /// <remarks>This test ensures that the Equals method correctly handles comparisons with objects
+        /// that are not of type MapPlanKey, returning false as expected.</remarks>
         [Fact]
         public void MapPlanKey_EqualsObject_ReturnsFalse_ForDifferentObjectType()
         {
@@ -319,6 +510,60 @@ namespace Hydrix.Mapper.UnitTests.Caching
             Assert.False(
                 key.Equals(
                     "not-a-key"));
+        }
+
+        /// <summary>
+        /// Verifies that the three-parameter overload of the IsCached method returns true after a mapping plan has been
+        /// compiled and added to the cache.
+        /// </summary>
+        /// <remarks>This test ensures that the cache correctly reflects the presence of a compiled
+        /// mapping plan for the specified source type, destination type, and options. It first asserts that the cache
+        /// does not contain the plan, adds the plan, and then asserts that the cache reports it as present.</remarks>
+        [Fact]
+        public void IsCached_ThreeParamOverload_ReturnsTrueAfterCompilation()
+        {
+            MapPlanCache.Clear();
+            var options = new HydrixMapperOptions();
+
+            Assert.False(
+                MapPlanCache.IsCached(
+                    typeof(Source),
+                    typeof(Dest),
+                    options));
+
+            MapPlanCache.GetOrAdd(
+                typeof(Source),
+                typeof(Dest),
+                options);
+
+            Assert.True(
+                MapPlanCache.IsCached(
+                    typeof(Source),
+                    typeof(Dest),
+                    options));
+        }
+
+        /// <summary>
+        /// Verifies that the three-parameter overload of the GetOrAdd method correctly populates nested mappings using
+        /// the provided HydrixMapperOptions instance.
+        /// </summary>
+        /// <remarks>This test ensures that when MapNested is configured on the options, the mapping plan
+        /// cache produces a non-null mapping plan for the specified source and destination types.</remarks>
+        [Fact]
+        public void GetOrAdd_ThreeParamOverload_PopulatesNestedMappingsViaToOptions()
+        {
+            MapPlanCache.Clear();
+
+            var options = new HydrixMapperOptions();
+            options.MapNested<Source, Dest>();
+
+            var plan = MapPlanCache.GetOrAdd(
+                typeof(Source),
+                typeof(Dest),
+                options);
+
+            Assert.NotNull(
+                plan);
         }
     }
 }
