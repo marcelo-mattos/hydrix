@@ -2,6 +2,7 @@ using Hydrix.Mapper.Caching;
 using Hydrix.Mapper.Configuration;
 using Hydrix.Mapper.Primitives;
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Hydrix.Mapper.UnitTests.Caching
@@ -62,9 +63,16 @@ namespace Hydrix.Mapper.UnitTests.Caching
             Assert.False(
                 upperKey.Equals(
                     lowerKey));
-            Assert.NotEqual(
-                upperKey.GetHashCode(),
-                lowerKey.GetHashCode());
+
+            var keys = new HashSet<MapPlanKey>
+            {
+                upperKey,
+                lowerKey,
+            };
+
+            Assert.Equal(
+                2,
+                keys.Count);
         }
 
         /// <summary>
@@ -118,7 +126,16 @@ namespace Hydrix.Mapper.UnitTests.Caching
             var lowerKey = MapPlanOptionsKey.Create(lowerOptions);
 
             Assert.False(upperKey.Equals(lowerKey));
-            Assert.NotEqual(upperKey.GetHashCode(), lowerKey.GetHashCode());
+
+            var keys = new HashSet<MapPlanOptionsKey>
+            {
+                upperKey,
+                lowerKey,
+            };
+
+            Assert.Equal(
+                2,
+                keys.Count);
         }
 
         /// <summary>

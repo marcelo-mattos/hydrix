@@ -1,8 +1,6 @@
 using Hydrix.Mapper.Configuration;
-using Hydrix.Mapper.DependencyInjection;
 using Hydrix.Mapper.Extensions;
 using Hydrix.Mapper.Primitives;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using Xunit;
@@ -84,7 +82,7 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         }
 
         /// <summary>
-        /// Represents an entity used to validate AddHydrixMapper-driven uppercase behavior without reusing an older plan.
+        /// Represents an entity used to validate explicit global uppercase behavior without reusing an older plan.
         /// </summary>
         private sealed class EntityUpper
         {
@@ -95,7 +93,7 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         }
 
         /// <summary>
-        /// Represents the DTO used to validate AddHydrixMapper-driven uppercase behavior without reusing an older plan.
+        /// Represents the DTO used to validate explicit global uppercase behavior without reusing an older plan.
         /// </summary>
         private sealed class DtoUpper
         {
@@ -208,15 +206,13 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         }
 
         /// <summary>
-        /// Verifies that the global mapper configured through AddHydrixMapper is used by the ToDto extension.
+        /// Verifies that the global mapper configured explicitly is used by the ToDto extension.
         /// </summary>
         [Fact]
-        public void ToDto_UsesDefaultMapper_ConfiguredByAddHydrixMapper()
+        public void ToDto_UsesDefaultMapper_ConfiguredExplicitly()
         {
-            var services = new ServiceCollection();
-            services.AddHydrixMapper(
+            HydrixMapperGlobalConfiguration.Configure(
                 options => options.String.Transform = StringTransforms.Uppercase);
-            services.BuildServiceProvider();
 
             var entity = new EntityUpper
             {
@@ -231,15 +227,38 @@ namespace Hydrix.Mapper.UnitTests.Extensions
         }
 
         /// <summary>
-        /// Verifies that repeated ToDto calls reuse the cached default mapper after it has been configured.
+        /// Verifies that the explicit global configuration API also honors the direct options overload and captures a
+        /// snapshot rather than observing later mutations.
+        /// </summary>
+        [Fact]
+        public void ToDto_UsesDefaultMapper_ConfiguredViaOptionsSnapshot()
+        {
+            var options = new HydrixMapperOptions();
+            options.String.Transform = StringTransforms.Lowercase;
+
+            HydrixMapperGlobalConfiguration.Configure(
+                options);
+
+            options.String.Transform = StringTransforms.Uppercase;
+
+            var dto = new EntityUpper
+            {
+                Name = "Hello",
+            }.ToDto<DtoUpper>();
+
+            Assert.Equal(
+                "hello",
+                dto.Name);
+        }
+
+        /// <summary>
+        /// Verifies that repeated ToDto calls reuse the cached default mapper after it has been configured explicitly.
         /// </summary>
         [Fact]
         public void ToDto_ReusesCachedDefaultMapper_OnSubsequentCalls()
         {
-            var services = new ServiceCollection();
-            services.AddHydrixMapper(
+            HydrixMapperGlobalConfiguration.Configure(
                 options => options.String.Transform = StringTransforms.Uppercase);
-            services.BuildServiceProvider();
 
             var first = new EntityUpper
             {

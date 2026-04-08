@@ -125,10 +125,8 @@ namespace Hydrix.Mapper
                     nameof(source));
 #endif
 
-            return ((Func<TSource, TTarget>)GetPlan(
-                    typeof(TSource),
-                    typeof(TTarget))
-                .TypedExecute)(
+            return TypedDelegateCache<TSource, TTarget>.GetOrAdd(
+                    this)(
                     source);
         }
 
@@ -200,10 +198,8 @@ namespace Hydrix.Mapper
             if (sources == null)
                 return Array.Empty<TTarget>();
 
-            var typedExecute = (Func<TSource, TTarget>)GetPlan(
-                    typeof(TSource),
-                    typeof(TTarget))
-                .TypedExecute;
+            var typedExecute = TypedDelegateCache<TSource, TTarget>.GetOrAdd(
+                this);
 
 #if NET6_0_OR_GREATER
             if (sources is List<TSource> list)
@@ -273,6 +269,18 @@ namespace Hydrix.Mapper
                         _options,
                         _optionsKey));
         }
+
+        /// <summary>
+        /// Returns the strongly typed execute delegate for the supplied compile-time source and destination pair.
+        /// </summary>
+        /// <typeparam name="TSource">The compile-time source type.</typeparam>
+        /// <typeparam name="TTarget">The compile-time destination type.</typeparam>
+        /// <returns>The cached strongly typed execute delegate for the requested type pair.</returns>
+        internal Func<TSource, TTarget> CreateTypedExecute<TSource, TTarget>() =>
+            (Func<TSource, TTarget>)GetPlan(
+                    typeof(TSource),
+                    typeof(TTarget))
+                .TypedExecute;
 
         /// <summary>
         /// Creates the result buffer used by <see cref="MapList{TTarget}(IEnumerable{object})"/>, pre-sizing it when the

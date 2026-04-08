@@ -56,10 +56,16 @@ namespace Hydrix.Mapper.UnitTests.Converters
             "ResolveStringTransform");
 
         /// <summary>
-        /// Stores the private BuildToStringConversion method used by string destination conversions.
+        /// Stores the internal BuildConversionExpression method used by the mapper cold path.
         /// </summary>
-        private static readonly MethodInfo BuildToStringConversionMethod = GetRequiredPrivateStaticMethod(
-            "BuildToStringConversion");
+        private static readonly MethodInfo BuildConversionExpressionMethod = GetRequiredPrivateStaticMethod(
+            "BuildConversionExpression");
+
+        /// <summary>
+        /// Stores the private TryBuildToStringConversion method used by string destination conversions.
+        /// </summary>
+        private static readonly MethodInfo TryBuildToStringConversionMethod = GetRequiredPrivateStaticMethod(
+            "TryBuildToStringConversion");
 
         /// <summary>
         /// Verifies that BuildNumericCast delegates clamp conversions for long inputs and respects the destination range.
@@ -240,18 +246,42 @@ namespace Hydrix.Mapper.UnitTests.Converters
         }
 
         /// <summary>
-        /// Verifies that BuildToStringConversion throws for unsupported source types and reaches the fallback branch.
+        /// Verifies that BuildConversionExpression returns the compiled conversion expression for a supported type pair.
         /// </summary>
         [Fact]
-        public void BuildToStringConversion_ThrowsNotSupportedException_WhenSourceTypeIsUnsupported()
+        public void BuildConversionExpression_ReturnsExpression_WhenConversionIsSupported()
+        {
+            var expression = (Expression)BuildConversionExpressionMethod.Invoke(
+                null,
+                new object[]
+                {
+                    Expression.Constant(true),
+                    typeof(bool),
+                    typeof(string),
+                    new HydrixMapperOptions(),
+                    null,
+                });
+
+            Assert.Equal(
+                "True",
+                Execute<string>(
+                    expression));
+        }
+
+        /// <summary>
+        /// Verifies that BuildConversionExpression throws <see cref="NotSupportedException"/> for unsupported type pairs.
+        /// </summary>
+        [Fact]
+        public void BuildConversionExpression_ThrowsNotSupportedException_WhenConversionIsUnsupported()
         {
             var exception = Assert.Throws<TargetInvocationException>(
-                () => BuildToStringConversionMethod.Invoke(
+                () => BuildConversionExpressionMethod.Invoke(
                     null,
                     new object[]
                     {
                         Expression.Constant(123),
                         typeof(int),
+                        typeof(DateTime),
                         new HydrixMapperOptions(),
                         null,
                     }));
@@ -262,8 +292,75 @@ namespace Hydrix.Mapper.UnitTests.Converters
                 "System.Int32",
                 inner.Message);
             Assert.Contains(
-                "System.String",
+                "System.DateTime",
                 inner.Message);
+        }
+
+        /// <summary>
+        /// Verifies that TryBuildToStringConversion succeeds for supported source types and produces a compiled string
+        /// expression.
+        /// </summary>
+        [Fact]
+        public void TryBuildToStringConversion_ReturnsTrue_WhenSourceTypeIsSupported()
+        {
+            var args = new object[]
+            {
+                Expression.Constant(true),
+                typeof(bool),
+                new HydrixMapperOptions(),
+                null,
+                null,
+                null,
+            };
+
+            var success = (bool)TryBuildToStringConversionMethod.Invoke(
+                null,
+                args);
+
+            Assert.True(
+                success);
+            Assert.Equal(
+                "True",
+                Execute<string>(
+                    Assert.IsAssignableFrom<Expression>(
+                        args[4])));
+            Assert.Null(
+                args[5]);
+        }
+
+        /// <summary>
+        /// Verifies that TryBuildToStringConversion reports unsupported source types without throwing and provides a
+        /// descriptive error message.
+        /// </summary>
+        [Fact]
+        public void TryBuildToStringConversion_ReturnsFalse_WhenSourceTypeIsUnsupported()
+        {
+            var args = new object[]
+            {
+                Expression.Constant(123),
+                typeof(int),
+                new HydrixMapperOptions(),
+                null,
+                null,
+                null,
+            };
+
+            var success = (bool)TryBuildToStringConversionMethod.Invoke(
+                null,
+                args);
+
+            Assert.False(
+                success);
+            Assert.Null(
+                args[4]);
+            var errorMessage = Assert.IsType<string>(
+                args[5]);
+            Assert.Contains(
+                "System.Int32",
+                errorMessage);
+            Assert.Contains(
+                "System.String",
+                errorMessage);
         }
 
         /// <summary>

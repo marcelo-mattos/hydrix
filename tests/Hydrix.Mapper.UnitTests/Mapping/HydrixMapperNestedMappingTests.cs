@@ -932,6 +932,32 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         }
 
         /// <summary>
+        /// Represents a destination DTO whose tags collection is typed as <see cref="ICollection{T}"/>, which is not
+        /// supported as a nested collection destination contract.
+        /// </summary>
+        private sealed class TaggedCollectionDto
+        {
+            /// <summary>Gets or sets the entity identifier.</summary>
+            public int Id { get; set; }
+
+            /// <summary>Gets or sets the mapped tag DTOs as a mutable collection interface.</summary>
+            public ICollection<TagItemDto> Tags { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a destination DTO whose tags collection is typed as an array, which is not supported as a nested
+        /// collection destination contract.
+        /// </summary>
+        private sealed class TaggedArrayDto
+        {
+            /// <summary>Gets or sets the entity identifier.</summary>
+            public int Id { get; set; }
+
+            /// <summary>Gets or sets the mapped tag DTOs as an array.</summary>
+            public TagItemDto[] Tags { get; set; }
+        }
+
+        /// <summary>
         /// Represents a source entity whose collection property is typed as an array, which implements
         /// <see cref="IList{T}"/> but is neither <see cref="List{T}"/> nor <see cref="IList{T}"/> itself.
         /// This exercises the indexed-loop convert path (source type ≠ <c>indexedType</c>).
@@ -1086,6 +1112,70 @@ namespace Hydrix.Mapper.UnitTests.Mapping
             Assert.Equal(102, dto.Id);
             Assert.NotNull(dto.Tags);
             Assert.Equal(2, dto.Tags.Count);
+        }
+
+        /// <summary>
+        /// Verifies that selecting an unsupported destination collection contract produces a descriptive exception that
+        /// lists the supported nested destination collection types.
+        /// </summary>
+        [Fact]
+        public void MapNested_Collection_ICollectionDestination_ThrowsDescriptiveException()
+        {
+            var mapper = new HydrixMapper(new HydrixMapperOptions());
+
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => mapper.Map<TaggedCollectionDto>(
+                    new TaggedEntity
+                    {
+                        Id = 103,
+                        Tags = new HashSet<TagItemEntity>
+                        {
+                            new TagItemEntity { Label = "unsupported" },
+                        },
+                    }));
+
+            Assert.Contains(
+                typeof(ICollection<TagItemDto>).FullName,
+                exception.Message,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "List<T>",
+                exception.Message,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "IReadOnlyList<T>",
+                exception.Message,
+                StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Verifies that array destinations are rejected explicitly instead of failing later with a less actionable
+        /// collection-construction error.
+        /// </summary>
+        [Fact]
+        public void MapNested_Collection_ArrayDestination_ThrowsDescriptiveException()
+        {
+            var mapper = new HydrixMapper(new HydrixMapperOptions());
+
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => mapper.Map<TaggedArrayDto>(
+                    new TaggedEntity
+                    {
+                        Id = 104,
+                        Tags = new HashSet<TagItemEntity>
+                        {
+                            new TagItemEntity { Label = "unsupported" },
+                        },
+                    }));
+
+            Assert.Contains(
+                typeof(TagItemDto[]).FullName,
+                exception.Message,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "destination collection type",
+                exception.Message,
+                StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

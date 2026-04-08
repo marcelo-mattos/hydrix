@@ -225,6 +225,141 @@ public class UserService(IHydrixMapper mapper)
 }
 ```
 
+`AddHydrixMapper` only registers an isolated `IHydrixMapper` singleton inside the target `IServiceCollection`. It does **not**
+mutate the process-wide mapper used by `ToDto()` and `ToDtoList()`.
+
+If you want to configure the global extension-method mapper explicitly, use `HydrixMapperGlobalConfiguration`:
+
+```csharp
+using Hydrix.Mapper.Configuration;
+
+HydrixMapperGlobalConfiguration.Configure(options =>
+{
+    options.String.Transform = StringTransforms.Uppercase;
+});
+```
+
+### Configuration lifecycle and thread safety
+
+`HydrixMapperOptions` is a mutable configuration builder. Configure it before mapper creation and do not mutate the same
+instance concurrently while it is being used to create mappers.
+
+Lifecycle rules:
+
+- `HydrixMapper` clones the supplied options in its constructor. Later mutations to the original options instance do not affect that mapper.
+- `AddHydrixMapper(...)` captures an isolated options snapshot for the service collection where it is registered.
+- `HydrixMapperGlobalConfiguration.Configure(...)` captures a new global snapshot used only by the convenience extension methods.
+- Reconfigure once at startup whenever possible. Avoid mutating shared options objects at runtime.
+
+---
+
+## Nested Mapping Rules
+
+Nested mapping is explicit and exact by design.
+
+Hydrix.Mapper only performs nested mapping when the source property type is an **exact** match for the registered nested
+source type:
+
+```csharp
+sourcePropType == registeredSourceType
+```
+
+Nested mapping is resolved from:
+
+- `options.MapNested<TSource, TDest>()`
+- `[MapFrom(typeof(TSource))]` on the destination type
+
+### Supported exact-match example
+
+```csharp
+var options = new HydrixMapperOptions();
+options.MapNested<AddressEntity, AddressDto>();
+
+public sealed class CustomerEntity
+{
+    public AddressEntity Address { get; set; }
+}
+
+public sealed class CustomerDto
+{
+    public AddressDto Address { get; set; }
+}
+```
+
+This works because the nested source property type is exactly `AddressEntity`, which is the registered source type for
+`AddressDto`.
+
+### Not supported: inheritance
+
+```csharp
+var options = new HydrixMapperOptions();
+options.MapNested<AddressEntity, AddressDto>();
+
+public sealed class PremiumAddressEntity : AddressEntity
+{
+}
+
+public sealed class CustomerEntity
+{
+    public PremiumAddressEntity Address { get; set; }
+}
+
+public sealed class CustomerDto
+{
+    public AddressDto Address { get; set; }
+}
+```
+
+This does **not** trigger nested mapping because `PremiumAddressEntity != AddressEntity`.
+
+### Not supported: interfaces
+
+```csharp
+public interface IAddress
+{
+    string Street { get; }
+}
+
+var options = new HydrixMapperOptions();
+options.MapNested<IAddress, AddressDto>();
+
+public sealed class CustomerEntity
+{
+    public AddressEntity Address { get; set; }
+}
+```
+
+This does **not** trigger nested mapping because the actual nested source property type is `AddressEntity`, not
+`IAddress`.
+
+### Nested collection element rule
+
+The same exact-match rule applies to nested collections. A destination collection of `OrderDto` only maps automatically
+when the source element type is exactly the registered source type for `OrderDto`.
+
+---
+
+## Nested Collection Support
+
+The table below describes **destination property** support for nested collection mapping.
+
+| Destination property type | Supported | Notes |
+| --- | --- | --- |
+| `List<T>` | Yes | Concrete fast path |
+| `IList<T>` | Yes | Result is built as `List<T>` and assigned through the interface |
+| `IReadOnlyList<T>` | Yes | Result is built as `List<T>` and assigned through the interface |
+| `IEnumerable<T>` | Yes | Result is built as `List<T>` and assigned through the interface |
+| `ICollection<T>` | No | Rejected with an explicit exception |
+| `IReadOnlyCollection<T>` | No | Rejected with an explicit exception |
+| Arrays (`T[]`) | No | Rejected with an explicit exception |
+| Custom collection types | No | Rejected with an explicit exception |
+
+Notes:
+
+- This contract applies to **nested destination properties**.
+- Source collections may be `List<T>`, `IList<T>`, arrays, or other `IEnumerable<T>` implementations.
+- Unsupported nested destination collection types fail fast with a descriptive error instead of falling back to undefined behavior.
+
 ---
 
 ## 🔄 Conversion Options
@@ -309,6 +444,16 @@ options.StrictMode = true;
 ```
 
 Useful during development to catch renaming mismatches early. Disable in production for forward-compatible DTOs.
+
+---
+
+## Best Practices for Maximum Performance
+
+- Prefer `Map<TSource, TTarget>(source)` over `Map<TTarget>(object)` in hot paths.
+- Prefer `MapList<TSource, TTarget>(sources)` over untyped list mapping in tight loops.
+- Reuse mapper instances instead of constructing them per request.
+- Configure once at startup, then treat mapper configuration as immutable.
+- Use DI for application-scoped mapper instances and `HydrixMapperGlobalConfiguration` only when you intentionally want a process-wide default for the extension methods.
 
 ---
 

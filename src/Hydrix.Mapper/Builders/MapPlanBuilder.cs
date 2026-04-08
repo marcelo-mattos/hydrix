@@ -551,39 +551,39 @@ namespace Hydrix.Mapper.Builders
                 typedSource,
                 sourceProperty);
 
-            Expression converted;
-            try
-            {
-                converted = ConverterFactory.BuildConversionExpression(
+            if (ConverterFactory.TryBuildConversionExpression(
                     sourceAccess,
                     sourceProperty.PropertyType,
                     targetProperty.PropertyType,
                     options,
-                    attribute);
-            }
-            catch (NotSupportedException ex)
+                    attribute,
+                    out var converted,
+                    out var errorMessage))
             {
-                var nestedExpr = TryBuildNestedExpression(
-                    sourceAccess,
-                    sourceProperty.PropertyType,
-                    targetProperty.PropertyType,
-                    options);
+                var destinationAccess = Expression.Property(
+                    typedTarget,
+                    targetProperty);
 
-                converted = nestedExpr ??
-                    throw new InvalidOperationException(
-                        $"Hydrix.Mapper: cannot map '{sourceType.Name}.{sourceProperty.Name}' " +
-                        $"({sourceProperty.PropertyType.Name}) to '{targetType.Name}.{targetProperty.Name}' " +
-                        $"({targetProperty.PropertyType.Name}). {ex.Message}",
-                        ex);
+                return Expression.Assign(
+                    destinationAccess,
+                    converted);
             }
 
-            var destinationAccess = Expression.Property(
-                typedTarget,
-                targetProperty);
+            var nestedExpr = TryBuildNestedExpression(
+                sourceAccess,
+                sourceProperty.PropertyType,
+                targetProperty.PropertyType,
+                options);
 
             return Expression.Assign(
-                destinationAccess,
-                converted);
+                Expression.Property(
+                    typedTarget,
+                    targetProperty),
+                nestedExpr ??
+                throw new InvalidOperationException(
+                    $"Hydrix.Mapper: cannot map '{sourceType.Name}.{sourceProperty.Name}' " +
+                    $"({sourceProperty.PropertyType.Name}) to '{targetType.Name}.{targetProperty.Name}' " +
+                    $"({targetProperty.PropertyType.Name}). {errorMessage}"));
         }
 
         /// <summary>
@@ -604,40 +604,103 @@ namespace Hydrix.Mapper.Builders
             Type destPropType,
             HydrixMapperOptions options)
         {
-            // Case 1 — direct nested object: Customer → CustomerDto
-            if (options.TryGetNestedSourceType(
+            var nestedObject = TryBuildNestedObjectExpression(
+                srcPropAccess,
+                srcPropType,
+                destPropType,
+                options);
+
+            if (nestedObject != null)
+                return nestedObject;
+
+            return TryBuildNestedCollectionExpression(
+                srcPropAccess,
+                srcPropType,
+                destPropType,
+                options);
+        }
+
+        /// <summary>
+        /// Attempts to build a direct nested object mapping expression when the registered source type exactly matches
+        /// the source property type.
+        /// </summary>
+        /// <param name="srcPropAccess">The expression that reads the source property value.</param>
+        /// <param name="srcPropType">The source property type.</param>
+        /// <param name="destPropType">The destination property type.</param>
+        /// <param name="options">The option snapshot used to resolve nested mappings.</param>
+        /// <returns>The nested object mapping expression, or <see langword="null"/> when no exact registration exists.</returns>
+        private static BlockExpression TryBuildNestedObjectExpression(
+            Expression srcPropAccess,
+            Type srcPropType,
+            Type destPropType,
+            HydrixMapperOptions options)
+        {
+            if (!options.TryGetNestedSourceType(
                     destPropType,
                     out var nestedSrcType)
-                && nestedSrcType == srcPropType)
+                || nestedSrcType != srcPropType)
             {
-                return BuildNestedObjectExpression(
-                    srcPropAccess,
-                    srcPropType,
-                    destPropType,
-                    options);
+                return null;
             }
 
-            // Case 2 — nested collection: List<Customer> → List<CustomerDto> (or IReadOnlyList<T> etc.)
-            if (TryGetEnumerableElementType(
+            return BuildNestedObjectExpression(
+                srcPropAccess,
+                srcPropType,
+                destPropType,
+                options);
+        }
+
+        /// <summary>
+        /// Attempts to build a nested collection mapping expression when the destination collection type is explicitly
+        /// supported and the registered source element type exactly matches the source collection element type.
+        /// </summary>
+        /// <param name="srcPropAccess">The expression that reads the source property value.</param>
+        /// <param name="srcPropType">The source property type.</param>
+        /// <param name="destPropType">The destination property type.</param>
+        /// <param name="options">The option snapshot used to resolve nested mappings.</param>
+        /// <returns>The nested collection mapping expression, or <see langword="null"/> when no compatible registration exists.</returns>
+        private static Expression TryBuildNestedCollectionExpression(
+            Expression srcPropAccess,
+            Type srcPropType,
+            Type destPropType,
+            HydrixMapperOptions options)
+        {
+            if (!TryGetEnumerableElementType(
                     srcPropType,
-                    out var srcElementType)
-                && TryGetCollectionDestElementType(
+                    out var srcElementType))
+            {
+                return null;
+            }
+
+            if (!TryGetAnyCollectionDestElementType(
                     destPropType,
-                    out var destElementType)
-                && options.TryGetNestedSourceType(
-                    destElementType,
+                    out var candidateDestElementType))
+            {
+                return null;
+            }
+
+            if (!options.TryGetNestedSourceType(
+                    candidateDestElementType,
                     out var nestedCollSrcType)
-                && nestedCollSrcType == srcElementType)
+                || nestedCollSrcType != srcElementType)
             {
-                return BuildNestedCollectionExpression(
-                    srcPropAccess,
-                    srcElementType,
-                    destElementType,
-                    destPropType,
-                    options);
+                return null;
             }
 
-            return null;
+            if (!TryGetCollectionDestElementType(
+                    destPropType,
+                    out var destElementType))
+            {
+                throw CreateUnsupportedCollectionDestinationException(
+                    destPropType);
+            }
+
+            return BuildNestedCollectionExpression(
+                srcPropAccess,
+                srcElementType,
+                destElementType,
+                destPropType,
+                options);
         }
 
         /// <summary>
@@ -1406,6 +1469,19 @@ namespace Hydrix.Mapper.Builders
                 "Use [NotMapped] or remove the circular registration.");
 
         /// <summary>
+        /// Creates an exception indicating that the destination collection type is not supported for nested collection
+        /// mapping.
+        /// </summary>
+        /// <param name="destinationType">The unsupported destination collection type.</param>
+        /// <returns>An <see cref="InvalidOperationException"/> describing the supported destination collection contract.</returns>
+        private static InvalidOperationException CreateUnsupportedCollectionDestinationException(
+            Type destinationType) =>
+            new InvalidOperationException(
+                $"Hydrix.Mapper: destination collection type '{destinationType.FullName}' is not supported for nested " +
+                "collection mapping. Supported destination collection types are List<T>, IList<T>, IReadOnlyList<T>, " +
+                "and IEnumerable<T>.");
+
+        /// <summary>
         /// Gets the number of enumerable-fallback element delegates compiled since the last cache reset.
         /// </summary>
         internal static int ElementDelegateCompilationCount =>
@@ -1607,6 +1683,34 @@ namespace Hydrix.Mapper.Builders
 
             elementType = null;
             return false;
+        }
+
+        /// <summary>
+        /// Returns the element type when the supplied type is any collection-like destination shape, including
+        /// unsupported ones that should produce an explicit error message when selected for nested mapping.
+        /// </summary>
+        /// <param name="type">The type to inspect.</param>
+        /// <param name="elementType">
+        /// When this method returns <see langword="true"/>, contains the collection element type; otherwise,
+        /// <see langword="null"/>.
+        /// </param>
+        /// <returns>
+        /// <see langword="true"/> when <paramref name="type"/> is an array or implements
+        /// <see cref="IEnumerable{T}"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        private static bool TryGetAnyCollectionDestElementType(
+            Type type,
+            out Type elementType)
+        {
+            if (type.IsArray)
+            {
+                elementType = type.GetElementType();
+                return elementType != null;
+            }
+
+            return TryGetEnumerableElementType(
+                type,
+                out elementType);
         }
     }
 }

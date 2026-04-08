@@ -222,6 +222,47 @@ namespace Hydrix.Mapper.Converters
             HydrixMapperOptions options,
             MapConversionAttribute attr)
         {
+            if (TryBuildConversionExpression(
+                    srcPropAccess,
+                    srcType,
+                    dstType,
+                    options,
+                    attr,
+                    out var expression,
+                    out var errorMessage))
+            {
+                return expression;
+            }
+
+            throw new NotSupportedException(
+                errorMessage);
+        }
+
+        /// <summary>
+        /// Attempts to build the conversion expression for the supplied source property access.
+        /// </summary>
+        /// <param name="srcPropAccess">The expression that reads the source property value.</param>
+        /// <param name="srcType">The source property type.</param>
+        /// <param name="dstType">The destination property type.</param>
+        /// <param name="options">The global option snapshot.</param>
+        /// <param name="attr">The optional per-property override attribute.</param>
+        /// <param name="expression">
+        /// When this method returns <see langword="true"/>, contains the expression that reads, converts, and
+        /// null-propagates the source value.
+        /// </param>
+        /// <param name="errorMessage">
+        /// When this method returns <see langword="false"/>, contains the reason the conversion could not be built.
+        /// </param>
+        /// <returns><see langword="true"/> when the conversion could be built; otherwise, <see langword="false"/>.</returns>
+        internal static bool TryBuildConversionExpression(
+            Expression srcPropAccess,
+            Type srcType,
+            Type dstType,
+            HydrixMapperOptions options,
+            MapConversionAttribute attr,
+            out Expression expression,
+            out string errorMessage)
+        {
             var srcUnderlying = Nullable.GetUnderlyingType(
                 srcType) ?? srcType;
             var dstUnderlying = Nullable.GetUnderlyingType(
@@ -236,12 +277,19 @@ namespace Hydrix.Mapper.Converters
                     "Value")
                 : srcPropAccess;
 
-            var coreExpression = BuildCoreConversion(
-                sourceValue,
-                srcUnderlying,
-                dstUnderlying,
-                options,
-                attr);
+            if (!TryBuildCoreConversion(
+                    sourceValue,
+                    srcUnderlying,
+                    dstUnderlying,
+                    options,
+                    attr,
+                    out var coreExpression,
+                    out errorMessage))
+            {
+                expression = null;
+                return false;
+            }
+
             var destinationExpression = dstIsNullable
                 ? Expression.Convert(
                     coreExpression,
@@ -255,10 +303,11 @@ namespace Hydrix.Mapper.Converters
                     "HasValue");
                 var nullDestination = Expression.Default(
                     dstType);
-                return Expression.Condition(
+                expression = Expression.Condition(
                     hasValue,
                     destinationExpression,
                     nullDestination);
+                return true;
             }
 
             if (srcIsReferenceType)
@@ -268,7 +317,10 @@ namespace Hydrix.Mapper.Converters
                 if (ReferenceEquals(
                         coreExpression,
                         sourceValue))
-                    return srcPropAccess;
+                {
+                    expression = srcPropAccess;
+                    return true;
+                }
 
                 var isNull = Expression.Equal(
                     srcPropAccess,
@@ -277,13 +329,16 @@ namespace Hydrix.Mapper.Converters
                         srcType));
                 var nullDestination = Expression.Default(
                     dstType);
-                return Expression.Condition(
+                expression = Expression.Condition(
                     isNull,
                     nullDestination,
                     destinationExpression);
+                return true;
             }
 
-            return destinationExpression;
+            expression = destinationExpression;
+            errorMessage = null;
+            return true;
         }
 
         /// <summary>
@@ -294,77 +349,112 @@ namespace Hydrix.Mapper.Converters
         /// <param name="dstType">The non-nullable destination type.</param>
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
+        /// <param name="expression">The resulting conversion expression.</param>
+        /// <param name="errorMessage">When the conversion cannot be built, contains the reason why.</param>
         /// <returns>The expression that performs the requested conversion.</returns>
-        private static Expression BuildCoreConversion(
+        private static bool TryBuildCoreConversion(
             Expression srcValue,
             Type srcType,
             Type dstType,
             HydrixMapperOptions options,
-            MapConversionAttribute attr)
+            MapConversionAttribute attr,
+            out Expression expression,
+            out string errorMessage)
         {
             if (srcType == dstType)
-                return srcType == typeof(string)
+            {
+                expression = srcType == typeof(string)
                     ? BuildStringTransform(
                         srcValue,
                         ResolveStringTransform(
                             options,
                             attr))
                     : srcValue;
+                errorMessage = null;
+                return true;
+            }
 
             if (dstType == typeof(string))
-                return BuildToStringConversion(
+            {
+                return TryBuildToStringConversion(
                     srcValue,
                     srcType,
                     options,
-                    attr);
+                    attr,
+                    out expression,
+                    out errorMessage);
+            }
 
             if (srcType.IsEnum && IsIntegerType(dstType))
-                return Expression.Convert(
+            {
+                expression = Expression.Convert(
                     srcValue,
                     dstType);
+                errorMessage = null;
+                return true;
+            }
 
             if (dstType.IsEnum && IsIntegerType(srcType))
-                return Expression.Convert(
+            {
+                expression = Expression.Convert(
                     srcValue,
                     dstType);
+                errorMessage = null;
+                return true;
+            }
 
             if (IsDecimalFloatType(srcType) && IsIntegerType(dstType))
-                return BuildDecimalToInteger(
+            {
+                expression = BuildDecimalToInteger(
                     srcValue,
                     srcType,
                     dstType,
                     options,
                     attr);
+                errorMessage = null;
+                return true;
+            }
 
             if (IsNumericType(srcType) && IsNumericType(dstType))
-                return BuildNumericCast(
+            {
+                expression = BuildNumericCast(
                     srcValue,
                     dstType,
                     ResolveOverflow(
                         options,
                         attr));
+                errorMessage = null;
+                return true;
+            }
 
-            throw new NotSupportedException(
+            expression = null;
+            errorMessage =
                 $"Hydrix.Mapper: no built-in conversion from '{srcType.FullName}' to '{dstType.FullName}'. " +
-                "Ensure the property types are compatible or use a supported conversion pair.");
+                "Ensure the property types are compatible or use a supported conversion pair.";
+            return false;
         }
 
         /// <summary>
-        /// Builds the conversion expression for any source type whose destination is <see cref="string"/>.
+        /// Attempts to build the conversion expression for any source type whose destination is <see cref="string"/>.
         /// </summary>
         /// <param name="srcValue">The expression that yields the non-nullable source value.</param>
         /// <param name="srcType">The non-nullable source type.</param>
         /// <param name="options">The global option snapshot.</param>
         /// <param name="attr">The optional per-property override attribute.</param>
+        /// <param name="expression">When this method returns <see langword="true"/>, contains the expression that yields the formatted string value.</param>
+        /// <param name="errorMessage">When this method returns <see langword="false"/>, contains the reason the conversion could not be built.</param>
         /// <returns>The expression that yields the formatted string value.</returns>
-        private static Expression BuildToStringConversion(
+        private static bool TryBuildToStringConversion(
             Expression srcValue,
             Type srcType,
             HydrixMapperOptions options,
-            MapConversionAttribute attr)
+            MapConversionAttribute attr,
+            out Expression expression,
+            out string errorMessage)
         {
             if (srcType == typeof(Guid))
-                return BuildGuidToString(
+            {
+                expression = BuildGuidToString(
                     srcValue,
                     ResolveGuidFormat(
                         options,
@@ -372,43 +462,68 @@ namespace Hydrix.Mapper.Converters
                     ResolveGuidCase(
                         options,
                         attr));
+                errorMessage = null;
+                return true;
+            }
 
             if (srcType == typeof(DateTime))
-                return BuildDateTimeToString(
+            {
+                expression = BuildDateTimeToString(
                     srcValue,
                     options,
                     attr);
+                errorMessage = null;
+                return true;
+            }
 
             if (srcType == typeof(DateTimeOffset))
-                return BuildDateTimeOffsetToString(
+            {
+                expression = BuildDateTimeOffsetToString(
                     srcValue,
                     options,
                     attr);
+                errorMessage = null;
+                return true;
+            }
 
 #if NET6_0_OR_GREATER
             if (srcType == typeof(DateOnly))
-                return BuildDateOnlyToString(
+            {
+                expression = BuildDateOnlyToString(
                     srcValue,
                     options,
                     attr);
+                errorMessage = null;
+                return true;
+            }
 #endif
 
             if (srcType == typeof(bool))
-                return BuildBoolToString(
+            {
+                expression = BuildBoolToString(
                     srcValue,
                     options,
                     attr);
+                errorMessage = null;
+                return true;
+            }
 
             if (srcType.IsEnum)
-                return Expression.Call(
+            {
+                expression = Expression.Call(
                     Expression.Convert(
                         srcValue,
                         typeof(object)),
                     ObjectToString);
+                errorMessage = null;
+                return true;
+            }
 
-            throw new NotSupportedException(
+            expression = null;
+            errorMessage =
                 $"Hydrix.Mapper: no built-in conversion from '{srcType.FullName}' to 'System.String'. " +
-                "Ensure the property types are compatible or use a supported conversion pair.");
+                "Ensure the property types are compatible or use a supported conversion pair.";
+            return false;
         }
 
         /// <summary>

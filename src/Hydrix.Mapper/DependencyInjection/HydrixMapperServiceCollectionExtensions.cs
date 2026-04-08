@@ -11,18 +11,23 @@ namespace Hydrix.Mapper.DependencyInjection
     public static class HydrixMapperServiceCollectionExtensions
     {
         /// <summary>
-        /// Registers the default mapper implementation and applies the supplied global configuration callback.
+        /// Registers an isolated default mapper implementation for the target service collection.
         /// </summary>
         /// <param name="services">
         /// The service collection that should receive the <see cref="IHydrixMapper"/> singleton registration.
         /// </param>
         /// <param name="configure">
         /// An optional callback used to customize the <see cref="HydrixMapperOptions"/> snapshot before the mapper is
-        /// registered and the global default configuration is updated.
+        /// registered.
         /// </param>
         /// <returns>
         /// The same <see cref="IServiceCollection"/> instance so additional registrations can be chained fluently.
         /// </returns>
+        /// <remarks>
+        /// This method does not mutate the process-wide mapper used by the convenience extension methods. Use
+        /// <see cref="HydrixMapperGlobalConfiguration"/> explicitly when the global extension-method mapper should be
+        /// reconfigured.
+        /// </remarks>
         public static IServiceCollection AddHydrixMapper(
             this IServiceCollection services,
             Action<HydrixMapperOptions> configure = null)
@@ -39,12 +44,9 @@ namespace Hydrix.Mapper.DependencyInjection
             configure?.Invoke(
                 options);
 
-            HydrixMapperConfiguration.Configure(
-                options);
-
             services.Replace(
                 ServiceDescriptor.Singleton<IHydrixMapper>(
-                    new HydrixMapper(
+                    _ => new HydrixMapper(
                         options)));
 
             return services;

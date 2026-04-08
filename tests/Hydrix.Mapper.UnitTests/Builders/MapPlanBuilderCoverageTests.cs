@@ -32,6 +32,12 @@ namespace Hydrix.Mapper.UnitTests.Builders
             "BuildNestedCollectionExpression");
 
         /// <summary>
+        /// Stores the private TryBuildNestedCollectionExpression helper.
+        /// </summary>
+        private static readonly MethodInfo TryBuildNestedCollectionExpressionMethod = GetRequiredPrivateStaticMethod(
+            "TryBuildNestedCollectionExpression");
+
+        /// <summary>
         /// Stores the private TryGetEnumerableElementType helper.
         /// </summary>
         private static readonly MethodInfo TryGetEnumerableElementTypeMethod = GetRequiredPrivateStaticMethod(
@@ -44,9 +50,37 @@ namespace Hydrix.Mapper.UnitTests.Builders
             "TryGetCollectionDestElementType");
 
         /// <summary>
+        /// Stores the private TryGetAnyCollectionDestElementType helper.
+        /// </summary>
+        private static readonly MethodInfo TryGetAnyCollectionDestElementTypeMethod = GetRequiredPrivateStaticMethod(
+            "TryGetAnyCollectionDestElementType");
+
+        /// <summary>
         /// Represents a nested destination element type used by nested helper coverage.
         /// </summary>
         private sealed class NestedDestination
+        {
+            /// <summary>
+            /// Gets or sets a mapped value.
+            /// </summary>
+            public int Value { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a source element type used by the nested-collection mismatch scenario.
+        /// </summary>
+        private sealed class ActualNestedSource
+        {
+            /// <summary>
+            /// Gets or sets a mapped value.
+            /// </summary>
+            public int Value { get; set; }
+        }
+
+        /// <summary>
+        /// Represents a different registered source element type used to exercise the exact-type mismatch branch.
+        /// </summary>
+        private sealed class RegisteredNestedSource
         {
             /// <summary>
             /// Gets or sets a mapped value.
@@ -136,6 +170,59 @@ namespace Hydrix.Mapper.UnitTests.Builders
         }
 
         /// <summary>
+        /// Verifies that the nested-collection probe returns <see langword="null"/> when no nested registration exists
+        /// for the destination element type.
+        /// </summary>
+        [Fact]
+        public void TryBuildNestedCollectionExpression_ReturnsNull_WhenNoNestedRegistrationExists()
+        {
+            var options = new HydrixMapperOptions();
+            var source = Expression.Parameter(
+                typeof(List<int>),
+                "source");
+
+            var expression = (Expression)TryBuildNestedCollectionExpressionMethod.Invoke(
+                null,
+                new object[]
+                {
+                    source,
+                    typeof(List<int>),
+                    typeof(List<NestedDestination>),
+                    options,
+                });
+
+            Assert.Null(
+                expression);
+        }
+
+        /// <summary>
+        /// Verifies that the nested-collection probe returns <see langword="null"/> when the registered nested source
+        /// element type does not exactly match the actual source element type.
+        /// </summary>
+        [Fact]
+        public void TryBuildNestedCollectionExpression_ReturnsNull_WhenRegisteredSourceElementTypeDiffers()
+        {
+            var options = new HydrixMapperOptions();
+            options.MapNested<RegisteredNestedSource, NestedDestination>();
+            var source = Expression.Parameter(
+                typeof(List<ActualNestedSource>),
+                "source");
+
+            var expression = (Expression)TryBuildNestedCollectionExpressionMethod.Invoke(
+                null,
+                new object[]
+                {
+                    source,
+                    typeof(List<ActualNestedSource>),
+                    typeof(List<NestedDestination>),
+                    options,
+                });
+
+            Assert.Null(
+                expression);
+        }
+
+        /// <summary>
         /// Verifies that TryGetEnumerableElementType handles direct IEnumerable of T definitions through the fast path.
         /// </summary>
         [Fact]
@@ -197,6 +284,52 @@ namespace Hydrix.Mapper.UnitTests.Builders
 
             Assert.False(success);
             Assert.Null(args[1]);
+        }
+
+        /// <summary>
+        /// Verifies that unsupported-but-collection-like destination definitions are still recognized so the caller can
+        /// raise a descriptive contract exception.
+        /// </summary>
+        [Fact]
+        public void TryGetAnyCollectionDestElementType_ReturnsTrue_ForUnsupportedGenericCollection()
+        {
+            var args = new object[]
+            {
+                typeof(ICollection<int>),
+                null,
+            };
+
+            var success = (bool)TryGetAnyCollectionDestElementTypeMethod.Invoke(
+                null,
+                args);
+
+            Assert.True(success);
+            Assert.Equal(
+                typeof(int),
+                args[1]);
+        }
+
+        /// <summary>
+        /// Verifies that array destination types are recognized as collection-like contracts even though they are not
+        /// supported nested destination collection targets.
+        /// </summary>
+        [Fact]
+        public void TryGetAnyCollectionDestElementType_ReturnsTrue_ForArray()
+        {
+            var args = new object[]
+            {
+                typeof(int[]),
+                null,
+            };
+
+            var success = (bool)TryGetAnyCollectionDestElementTypeMethod.Invoke(
+                null,
+                args);
+
+            Assert.True(success);
+            Assert.Equal(
+                typeof(int),
+                args[1]);
         }
 
         /// <summary>
