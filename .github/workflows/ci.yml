@@ -14,7 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             10.0.x
@@ -25,10 +26,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: |
-          dotnet build \
-            --no-restore \
-            --configuration Release
+        run: dotnet build --no-restore --configuration Release
 
   test-netcore31:
     name: test-netcoreapp3.1
@@ -47,14 +45,16 @@ jobs:
         run: dotnet restore
 
       - name: Build (3.1)
-        run: |
-          dotnet build \
-            --configuration Release \
-            --framework netcoreapp3.1
+        run: dotnet build --configuration Release --framework netcoreapp3.1
 
-      - name: Test (3.1 - sem coverage)
+      - name: Test (3.1)
         run: |
-          dotnet test \
+          dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
+            --framework netcoreapp3.1 \
+            --configuration Release \
+            --no-build
+
+          dotnet test tests/Hydrix.Mapper.UnitTests/Hydrix.Mapper.UnitTests.csproj \
             --framework netcoreapp3.1 \
             --configuration Release \
             --no-build
@@ -67,7 +67,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             10.0.x
@@ -76,15 +77,20 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          dotnet test \
-            --configuration Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults
+          for framework in net6.0 net8.0 net10.0
+          do
+            dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
+              --framework $framework \
+              --configuration Release \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
 
-      - name: Debug coverage files
-        run: |
-          echo "=== Coverage files ==="
-          find . -name "coverage.cobertura.xml"
+            dotnet test tests/Hydrix.Mapper.UnitTests/Hydrix.Mapper.UnitTests.csproj \
+              --framework $framework \
+              --configuration Release \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
+          done
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -108,7 +114,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             10.0.x
@@ -123,11 +130,6 @@ jobs:
         with:
           name: coverage
           path: coverage
-
-      - name: Debug coverage files
-        run: |
-          echo "=== Coverage files for Sonar ==="
-          find coverage -name "*.xml"
 
       - name: Sonar Begin
         env:
@@ -149,17 +151,26 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release
 
-      - name: Test (Sonar context)
+      - name: Test
         run: |
-          dotnet test \
-            --configuration Release \
-            --no-build \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults
+          for framework in net6.0 net8.0 net10.0
+          do
+            dotnet test tests/Hydrix.UnitTests/Hydrix.UnitTests.csproj \
+              --framework $framework \
+              --configuration Release \
+              --no-build \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
+
+            dotnet test tests/Hydrix.Mapper.UnitTests/Hydrix.Mapper.UnitTests.csproj \
+              --framework $framework \
+              --configuration Release \
+              --no-build \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
+          done
 
       - name: Sonar End
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          dotnet sonarscanner end \
-            /d:sonar.login="$SONAR_TOKEN"
+        run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"

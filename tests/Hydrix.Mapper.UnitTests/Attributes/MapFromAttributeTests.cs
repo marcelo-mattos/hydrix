@@ -27,5 +27,15 @@ namespace Hydrix.Mapper.UnitTests.Attributes
         {
             Assert.Throws<ArgumentNullException>(() => new MapFromAttribute(null));
         }
+
+        /// <summary>
+        /// Verifies that the constructor throws ArgumentException when typeof(void) is passed,
+        /// preventing collision with the internal sentinel used by the plan-cache lookup.
+        /// </summary>
+        [Fact]
+        public void Ctor_ThrowsArgumentException_WhenSourceTypeIsVoid()
+        {
+            Assert.Throws<ArgumentException>(() => new MapFromAttribute(typeof(void)));
+        }
     }
 }

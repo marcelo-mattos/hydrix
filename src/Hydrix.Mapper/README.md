@@ -180,8 +180,8 @@ IReadOnlyList<UserDto> dtos = users.ToDtoList<User, UserDto>();
 
 ```csharp
 var options = new HydrixMapperOptions();
-options.String.Transform = StringTransform.Trim;
-options.Guid.Format     = GuidFormat.D;
+options.String.Transform = StringTransforms.Trim;
+options.Guid.Format     = GuidFormat.Hyphenated;
 options.Guid.Case       = GuidCase.Lower;
 
 var mapper = new HydrixMapper(options);
@@ -195,8 +195,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 services.AddHydrixMapper(options =>
 {
-    options.String.Transform              = StringTransform.Trim;
-    options.Guid.Format                   = GuidFormat.D;
+    options.String.Transform              = StringTransforms.Trim;
+    options.Guid.Format                   = GuidFormat.Hyphenated;
     options.Guid.Case                     = GuidCase.Lower;
     options.DateTime.StringFormat         = "O";
     options.DateTime.TimeZone             = DateTimeZone.None;
@@ -222,16 +222,16 @@ public class UserService(IHydrixMapper mapper)
 ### String transforms
 
 ```csharp
-options.String.Transform = StringTransform.Trim;        // "  Alice  " → "Alice"
+options.String.Transform = StringTransforms.Trim;        // "  Alice  " → "Alice"
 options.String.Transform = StringTransform.Uppercase;   // "alice" → "ALICE"
-options.String.Transform = StringTransform.TrimLowercase; // "  Alice  " → "alice"
+options.String.Transform = StringTransforms.Trim | StringTransforms.Lowercase; // "  Alice  " → "alice"
 ```
 
 ### Guid format
 
 ```csharp
 options.Guid.Format = GuidFormat.Hyphenated;    // 00000000-0000-0000-0000-000000000000
-options.Guid.Format = GuidFormat.DigitsOnly;    // 00000000000000000000000000000000
+options.Guid.Format = GuidFormat.HyphenatedigitsOnly;    // 00000000000000000000000000000000
 options.Guid.Format = GuidFormat.Braces;        // {00000000-0000-0000-0000-000000000000}
 options.Guid.Format = GuidFormat.Parentheses;   // (00000000-0000-0000-0000-000000000000)
 options.Guid.Case   = GuidCase.Upper;           // uppercase letters
@@ -274,16 +274,16 @@ public class UserDto
 {
     public string Name { get; set; }
 
-    [MapConversion(GuidFormat = GuidFormat.DigitsOnly, GuidCase = GuidCase.Upper)]
+    [MapConversion(GuidFormat = GuidFormat.HyphenatedigitsOnly, GuidCase = GuidCase.Upper)]
     public string ExternalId { get; set; }
 
-    [MapConversion(DateTimeFormat = "dd/MM/yyyy", DateTimeTimeZone = DateTimeZone.ToLocal)]
+    [MapConversion(DateFormat = "dd/MM/yyyy", DateTimeZone = DateTimeZone.ToLocal)]
     public string CreatedAt { get; set; }
 
-    [MapConversion(DecimalToIntRounding = NumericRounding.Nearest)]
+    [MapConversion(NumericRounding = NumericRounding.Nearest)]
     public int Score { get; set; }
 
-    [MapConversion(BoolStringFormat = BoolStringFormat.YesOrNo)]
+    [MapConversion(BoolFormat = BoolStringFormat.YesOrNo)]
     public string IsActive { get; set; }
 }
 ```

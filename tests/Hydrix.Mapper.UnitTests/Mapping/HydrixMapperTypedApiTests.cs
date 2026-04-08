@@ -95,7 +95,7 @@ namespace Hydrix.Mapper.UnitTests.Mapping
         /// <see langword="null"/>.
         /// </summary>
         [Fact]
-        public void MapList_TypedOverload_ReturnsEmptyList_WhenSourcesIsNull()
+        public void MapList_TypedOverload_ReturnsEmptyList_WhenSourcesAreNull()
         {
             IEnumerable<PersonEntity> sources = null;
 

@@ -24,11 +24,20 @@ namespace Hydrix.Mapper.Attributes
         /// Initializes a new <see cref="MapFromAttribute"/> with the specified source entity type.
         /// </summary>
         /// <param name="sourceType">The source entity type that maps to this DTO class.</param>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="sourceType"/> is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="sourceType"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="sourceType"/> is <c>typeof(void)</c>, which
+        /// is reserved as an internal sentinel value and cannot be used as a source type.</exception>
         public MapFromAttribute(Type sourceType)
         {
-            SourceType = sourceType ??
+            if (sourceType == null)
                 throw new ArgumentNullException(nameof(sourceType));
+
+            if (sourceType == typeof(void))
+                throw new ArgumentException(
+                    "typeof(void) is reserved as an internal sentinel and cannot be used as a source type.",
+                    nameof(sourceType));
+
+            SourceType = sourceType;
         }
     }
 }

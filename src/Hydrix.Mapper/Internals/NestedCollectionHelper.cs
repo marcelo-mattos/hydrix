@@ -22,6 +22,7 @@ namespace Hydrix.Mapper.Internals
         /// A <see cref="List{TDest}"/> containing the mapped destination elements, or <see langword="null"/> when
         /// <paramref name="source"/> is <see langword="null"/>.
         /// </returns>
+        [return: MaybeNull]
         [SuppressMessage(
             "Major Code Smell",
             "S1168:Return an empty collection rather than null",
