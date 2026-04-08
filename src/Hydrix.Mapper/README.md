@@ -56,13 +56,13 @@ Hydrix.Mapper does not attempt to infer your mapping intent from conventions alo
 - Typed local variables in compiled expressions — each cast is emitted once regardless of property count
 - Identity reference-type assignments skip the null-check wrapper — direct assignment handles null naturally
 - String transforms: `Trim`, `TrimStart`, `TrimEnd`, `Uppercase`, `Lowercase`, and combinations
-- Guid formatting: format specifiers `N`, `D`, `B`, `P` with `Lower`/`Upper` casing control
+- Guid formatting: `Hyphenated`, `DigitsOnly`, `Braces`, `Parentheses` with `Lower`/`Upper` casing control
 - DateTime and DateTimeOffset to string: custom format, timezone normalization (`None`, `ToUtc`, `ToLocal`), and culture
 - DateOnly to string (.NET 6+)
 - Decimal and float to integral: `Truncate`, `Ceiling`, `Floor`, `Nearest`, `Banker` rounding
 - Integer overflow control: `Throw`, `Clamp`, `Truncate`
-- Bool to string: eight built-in presets (`TrueFalse`, `LowerCase`, `YesNo`, `YN`, `OneZero`, `SN`, `SimNao`, `TF`) plus custom values
-- Enum to string via `ToString()`
+- Bool to string: six built-in presets (`TrueOrFalse`, `LowercaseTrueOrFalse`, `YesOrNo`, `YOrN`, `OneOrZero`, `TOrF`) plus `Custom` with explicit `TrueValue`/`FalseValue` strings
+- Enum mapping: `AsString` (textual name) or `AsInt` (underlying integer) via `EnumMapping`
 - Per-property override via `[MapConversion]` attribute — read only at cold path, zero runtime cost
 - `[NotMapped]` support — respects `System.ComponentModel.DataAnnotations.Schema`
 - Strict mode — throws on unmatched destination properties
@@ -230,9 +230,11 @@ options.String.Transform = StringTransform.TrimLowercase; // "  Alice  " → "al
 ### Guid format
 
 ```csharp
-options.Guid.Format = GuidFormat.D;     // 00000000-0000-0000-0000-000000000000
-options.Guid.Format = GuidFormat.N;     // 00000000000000000000000000000000
-options.Guid.Case   = GuidCase.Upper;   // uppercase letters
+options.Guid.Format = GuidFormat.Hyphenated;    // 00000000-0000-0000-0000-000000000000
+options.Guid.Format = GuidFormat.DigitsOnly;    // 00000000000000000000000000000000
+options.Guid.Format = GuidFormat.Braces;        // {00000000-0000-0000-0000-000000000000}
+options.Guid.Format = GuidFormat.Parentheses;   // (00000000-0000-0000-0000-000000000000)
+options.Guid.Case   = GuidCase.Upper;           // uppercase letters
 ```
 
 ### DateTime to string
@@ -253,8 +255,9 @@ options.Numeric.Overflow             = NumericOverflow.Clamp;     // clamp to ta
 ### Bool to string
 
 ```csharp
-options.Bool.StringFormat = BoolStringFormat.YesNo;     // "Yes" / "No"
-options.Bool.StringFormat = BoolStringFormat.SimNao;    // "Sim" / "Não"
+options.Bool.StringFormat = BoolStringFormat.YesOrNo;              // "Yes" / "No"
+options.Bool.StringFormat = BoolStringFormat.LowercaseTrueOrFalse; // "true" / "false"
+options.Bool.StringFormat = BoolStringFormat.OneOrZero;            // "1" / "0"
 options.Bool.StringFormat = BoolStringFormat.Custom;
 options.Bool.TrueValue    = "Ativo";
 options.Bool.FalseValue   = "Inativo";
@@ -271,7 +274,7 @@ public class UserDto
 {
     public string Name { get; set; }
 
-    [MapConversion(GuidFormat = GuidFormat.N, GuidCase = GuidCase.Upper)]
+    [MapConversion(GuidFormat = GuidFormat.DigitsOnly, GuidCase = GuidCase.Upper)]
     public string ExternalId { get; set; }
 
     [MapConversion(DateTimeFormat = "dd/MM/yyyy", DateTimeTimeZone = DateTimeZone.ToLocal)]
@@ -280,7 +283,7 @@ public class UserDto
     [MapConversion(DecimalToIntRounding = NumericRounding.Nearest)]
     public int Score { get; set; }
 
-    [MapConversion(BoolStringFormat = BoolStringFormat.SimNao)]
+    [MapConversion(BoolStringFormat = BoolStringFormat.YesOrNo)]
     public string IsActive { get; set; }
 }
 ```

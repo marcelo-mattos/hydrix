@@ -46,18 +46,19 @@ efficiency.
 
 - String transforms: `Trim`, `TrimStart`, `TrimEnd`, `Uppercase`, `Lowercase`,
   and bitwise combinations.
-- Guid formatting: format specifiers `N`, `D`, `B`, `P` with `Lower`/`Upper`
-  casing control.
+- Guid formatting: `Hyphenated`, `DigitsOnly`, `Braces`, `Parentheses` with
+  `Lower`/`Upper` casing control.
 - DateTime and DateTimeOffset to string: custom format string, timezone
   normalization (`None`, `ToUtc`, `ToLocal`), and culture-aware output.
 - DateOnly to string (.NET 6+).
-- Bool to string: eight built-in presets (`TrueFalse`, `LowerCase`, `YesNo`,
-  `YN`, `OneZero`, `SN`, `SimNao`, `TF`) plus fully custom `TrueValue`/
-  `FalseValue` strings.
+- Bool to string: six built-in presets (`TrueOrFalse`, `LowercaseTrueOrFalse`,
+  `YesOrNo`, `YOrN`, `OneOrZero`, `TOrF`) plus `Custom` with explicit
+  `TrueValue`/`FalseValue` strings.
 - Decimal and float to integral: `Truncate`, `Ceiling`, `Floor`, `Nearest`,
   and `Banker` rounding strategies.
 - Integer overflow control: `Throw`, `Clamp`, and `Truncate` strategies.
-- Enum to string via `ToString()`.
+- Enum mapping: `AsString` (textual name) or `AsInt` (underlying integer) via
+  the `EnumMapping` enum.
 
 #### API Surface
 
