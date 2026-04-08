@@ -162,12 +162,12 @@ namespace Hydrix.Mapper
                     continue;
 
                 var sourceType = source.GetType();
-                if (sourceType != lastSourceType)
+                if (lastPlan == null || sourceType != lastSourceType)
                 {
-                    lastSourceType = sourceType;
                     lastPlan = GetPlan(
                         sourceType,
                         destinationType);
+                    lastSourceType = sourceType;
                 }
 
                 result.Add(
