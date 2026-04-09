@@ -76,7 +76,8 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
         }
 
         /// <summary>
-        /// Verifies that the configuration callback applies only to the mapper registered in the service collection.
+        /// Verifies that the configuration callback applies to both the DI mapper and the global extension-method
+        /// mapper.
         /// </summary>
         [Fact]
         public void AddHydrixMapper_WithConfigure_AppliesOptions()
@@ -101,13 +102,13 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
                 "HELLO",
                 destination.Name);
             Assert.Equal(
-                StringTransforms.None,
+                StringTransforms.Uppercase,
                 HydrixMapperConfiguration.Options.String.Transform);
         }
 
         /// <summary>
         /// Verifies that later registrations overwrite the previously registered mapper inside the same service
-        /// collection without mutating the global extension-method configuration.
+        /// collection and publish the last configuration to the global extension-method mapper.
         /// </summary>
         [Fact]
         public void AddHydrixMapper_CalledMultipleTimes_LastRegistrationWins()
@@ -129,7 +130,7 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
                 "HELLO",
                 destination.Name);
             Assert.Equal(
-                StringTransforms.None,
+                StringTransforms.Uppercase,
                 HydrixMapperConfiguration.Options.String.Transform);
         }
 
@@ -156,6 +157,7 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
 
         /// <summary>
         /// Verifies that independent service providers configured differently do not interfere with each other.
+        /// The global extension-method mapper reflects the most recent <c>AddHydrixMapper</c> call.
         /// </summary>
         [Fact]
         public void AddHydrixMapper_MultipleProvidersWithDifferentOptions_DoNotInterfere()
@@ -190,15 +192,16 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
                 "hello",
                 lowerDestination.Name);
             Assert.Equal(
-                StringTransforms.None,
+                StringTransforms.Lowercase,
                 HydrixMapperConfiguration.Options.String.Transform);
         }
 
         /// <summary>
-        /// Verifies that DI registration does not alter the process-wide mapper used by the extension methods.
+        /// Verifies that DI registration also publishes the configured options to the process-wide mapper used by the
+        /// convenience extension methods.
         /// </summary>
         [Fact]
-        public void AddHydrixMapper_DoesNotAffectGlobalExtensionMapper()
+        public void AddHydrixMapper_AlsoConfiguresGlobalExtensionMapper()
         {
             var services = new ServiceCollection();
             services.AddHydrixMapper(
@@ -211,7 +214,7 @@ namespace Hydrix.Mapper.UnitTests.DependencyInjection
             }.ToDto<DestinationModel>();
 
             Assert.Equal(
-                "Hello",
+                "HELLO",
                 destination.Name);
         }
 
