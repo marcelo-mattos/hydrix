@@ -24,9 +24,9 @@ namespace Hydrix.Mapper.DependencyInjection
         /// The same <see cref="IServiceCollection"/> instance so additional registrations can be chained fluently.
         /// </returns>
         /// <remarks>
-        /// This method does not mutate the process-wide mapper used by the convenience extension methods. Use
-        /// <see cref="HydrixMapperGlobalConfiguration"/> explicitly when the global extension-method mapper should be
-        /// reconfigured.
+        /// This method also publishes the configured options to the process-wide default mapper consumed by the
+        /// convenience extension methods (<c>ToDto</c>, <c>ToDtoList</c>), so both the DI-resolved
+        /// <see cref="IHydrixMapper"/> and the static extension methods share the same configuration snapshot.
         /// </remarks>
         public static IServiceCollection AddHydrixMapper(
             this IServiceCollection services,
@@ -42,6 +42,9 @@ namespace Hydrix.Mapper.DependencyInjection
 #endif
             var options = new HydrixMapperOptions();
             configure?.Invoke(
+                options);
+
+            HydrixMapperConfiguration.Configure(
                 options);
 
             services.Replace(
