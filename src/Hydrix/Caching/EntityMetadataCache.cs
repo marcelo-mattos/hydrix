@@ -45,9 +45,14 @@ namespace Hydrix.Caching
         public static TableMaterializeMetadata GetOrAdd(
             Type type)
         {
-            if (EntityFrameworkMetadataCache.TryGet(
-                type,
-                out var registered))
+            // When no Entity Framework model has ever been registered (the common case) the version is zero, so a
+            // single volatile read lets the hot path skip the Type-keyed Entity Framework dictionary probe entirely.
+            // Once any model is registered the version becomes non-zero and the authoritative Entity-Framework-first
+            // probe runs again, preserving late-registration semantics.
+            if (EntityFrameworkMetadataCache.Version != 0 &&
+                EntityFrameworkMetadataCache.TryGet(
+                    type,
+                    out var registered))
             {
                 return registered.MaterializeMetadata;
             }

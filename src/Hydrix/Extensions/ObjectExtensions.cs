@@ -178,7 +178,7 @@ namespace Hydrix.Extensions
             new Dictionary<Type, Func<object, object>>()
             {
                 [typeof(double)] = value => (double)(float)value,
-                [typeof(decimal)] = value => (decimal)(double)(float)value,
+                [typeof(decimal)] = value => (decimal)(float)value,
                 [typeof(int)] = value => (int)(float)value,
                 [typeof(long)] = value => (long)(float)value,
                 [typeof(short)] = value => (short)(float)value,
@@ -682,9 +682,10 @@ namespace Hydrix.Extensions
         /// <see cref="Guid"/>.
         /// </summary>
         /// <remarks>Handles <see cref="Guid"/>, <see cref="string"/>, and <c>byte[]</c> representations with
-        /// direct, allocation-free paths. For any other source type the delegate falls back to
-        /// <c>Guid.Parse(value.ToString())</c>, which may throw <see cref="FormatException"/> for values that do
-        /// not represent a valid GUID string.</remarks>
+        /// direct, allocation-free paths. A <c>byte[]</c> source must contain exactly 16 elements; any other
+        /// length throws <see cref="ArgumentException"/> from <see cref="Guid(byte[])"/>. For any other source
+        /// type the delegate falls back to <c>Guid.Parse(value.ToString())</c>, which may throw
+        /// <see cref="FormatException"/> for values that do not represent a valid GUID string.</remarks>
         /// <param name="conversionType">The candidate target type. A converter is produced only when this is <see cref="Guid"/>.</param>
         /// <returns>
         /// A tuple where <c>flowControl</c> is <see langword="false"/> and <c>value</c> is the converter delegate
@@ -772,8 +773,8 @@ namespace Hydrix.Extensions
                             case ushort us: return us != 0;
                             case uint ui: return ui != 0;
                             case ulong ul: return ul != 0;
-                            case float f: return Math.Abs(f) > 1e-6f;
-                            case double d: return Math.Abs(d) > 1e-12;
+                            case float f: return f != 0f;
+                            case double d: return d != 0d;
                             case decimal m: return m != 0m;
                             case string str: return ParseBooleanFromString(str);
                             default:
@@ -888,8 +889,11 @@ namespace Hydrix.Extensions
         /// Attempts to create a conversion delegate for values to <see cref="DateTimeOffset"/>.
         /// </summary>
         /// <remarks>Handles <see cref="DateTimeOffset"/>, <see cref="DateTime"/>, <see cref="string"/>, and
-        /// <see cref="long"/> (interpreted as UTC ticks) representations with explicit paths that avoid
-        /// <see cref="Convert.ChangeType(object, Type, IFormatProvider)"/>. Any other source type falls back to
+        /// <see cref="long"/> representations with explicit paths that avoid
+        /// <see cref="Convert.ChangeType(object, Type, IFormatProvider)"/>. A <see cref="long"/> source is
+        /// interpreted as ticks at a zero (UTC) offset — a deliberate, machine-independent default; callers that
+        /// persist local-time ticks must instead store a <see cref="DateTimeOffset"/> or ISO-8601 string so the
+        /// original offset survives the round-trip. Any other source type falls back to
         /// <see cref="DateTimeOffset.Parse(string, IFormatProvider)"/> on the string representation of the
         /// value.</remarks>
         /// <param name="conversionType">The candidate target type. A converter is produced only when this is <see cref="DateTimeOffset"/>.</param>
@@ -910,7 +914,7 @@ namespace Hydrix.Extensions
                         DateTimeOffset dto => dto,
                         DateTime dt => new DateTimeOffset(dt),
                         string str => DateTimeOffset.Parse(str, CultureInfo.InvariantCulture),
-                        long ticks => new DateTimeOffset(new DateTime(ticks, DateTimeKind.Utc)),
+                        long ticks => new DateTimeOffset(ticks, TimeSpan.Zero),
                         _ => DateTimeOffset.Parse(value.ToString(), CultureInfo.InvariantCulture)
                     });
             }

@@ -44,6 +44,15 @@ namespace Hydrix.Wrappers
         }
 
         /// <summary>
+        /// Gets the underlying provider <see cref="IDataReader"/> that this wrapper forwards to.
+        /// </summary>
+        /// <remarks>Exposed so the materialization loop can read columns directly off the provider reader,
+        /// avoiding one virtual forwarding call per column access, per <c>IsDBNull</c>, and per <c>Read</c>. The
+        /// returned reader must only be read from — its lifetime is still owned by this wrapper, which disposes it
+        /// (together with the originating command) when the wrapper is disposed. Callers must not dispose it directly.</remarks>
+        internal IDataReader InnerReader => _reader;
+
+        /// <summary>
         /// Gets the value of the specified column in its native format.
         /// </summary>
         /// <remarks>If the specified index is out of range, an exception may be thrown. Use this indexer

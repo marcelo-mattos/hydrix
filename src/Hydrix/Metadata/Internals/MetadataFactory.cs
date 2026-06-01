@@ -503,7 +503,11 @@ namespace Hydrix.Metadata.Internals
         /// </summary>
         /// <remarks>If the target type is an enumeration, the method handles conversion from the
         /// underlying type. The returned expression may include type conversions as necessary to match the requested
-        /// target type.</remarks>
+        /// target type. Numeric narrowing conversions (for example a 64-bit provider value assigned to a 32-bit
+        /// property) are emitted as <see cref="Expression.Convert(Expression, Type)"/>, which performs an
+        /// <em>unchecked</em> conversion that silently truncates or wraps out-of-range values rather than throwing.
+        /// This matches Dapper's behavior and keeps the per-row hot path free of overflow checks; callers requiring
+        /// strict overflow detection must validate the source range before materialization.</remarks>
         /// <param name="record">The parameter expression representing the data record from which to retrieve the value.</param>
         /// <param name="ordinal">A constant expression specifying the zero-based column ordinal of the value to retrieve.</param>
         /// <param name="targetType">The type to which the retrieved value should be converted.</param>

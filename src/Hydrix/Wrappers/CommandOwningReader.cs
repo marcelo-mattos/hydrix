@@ -34,5 +34,30 @@ namespace Hydrix.Wrappers
 
             return new CommandOwningDataReader(command, reader);
         }
+
+        /// <summary>
+        /// Returns the underlying provider reader for a command-owning wrapper so the materialization loop can read
+        /// columns without paying the wrapper's per-call virtual forwarding overhead.
+        /// </summary>
+        /// <remarks>The returned reader is owned by the wrapper and must not be disposed by the caller; disposing
+        /// the wrapper (for example via a <c>using</c> statement) still disposes both the provider reader and the
+        /// originating command. When <paramref name="reader"/> is not a Hydrix wrapper it is returned unchanged.</remarks>
+        /// <param name="reader">The reader to unwrap. May be a <see cref="CommandOwningDbDataReader"/>, a
+        /// <see cref="CommandOwningDataReader"/>, or any other <see cref="IDataReader"/>.</param>
+        /// <returns>The inner provider reader when <paramref name="reader"/> is a command-owning wrapper; otherwise
+        /// <paramref name="reader"/> itself.</returns>
+        public static IDataReader Unwrap(
+            IDataReader reader)
+        {
+            switch (reader)
+            {
+                case CommandOwningDbDataReader owningDbReader:
+                    return owningDbReader.InnerReader;
+                case CommandOwningDataReader owningReader:
+                    return owningReader.InnerReader;
+                default:
+                    return reader;
+            }
+        }
     }
 }

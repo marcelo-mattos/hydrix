@@ -51,6 +51,21 @@ namespace Hydrix.Resolvers
         public Action<object, IDataRecord> RowMaterializer { get; }
 
         /// <summary>
+        /// Caches the compiled typed row factory for this binding plan. Stored as <see cref="object"/> because
+        /// <see cref="ResolvedTableBindings"/> is non-generic; the boxed delegate is a
+        /// <see cref="Func{T, TResult}"/> from <see cref="IDataRecord"/> to the single entity type this plan
+        /// materializes.
+        /// </summary>
+        private object _typedFactory;
+
+        /// <summary>
+        /// Indicates whether <see cref="_typedFactory"/> has been resolved (either built or determined to be
+        /// inapplicable). Declared <see langword="volatile"/> so its release/acquire semantics publish the prior
+        /// non-volatile write to <see cref="_typedFactory"/> to other threads.
+        /// </summary>
+        private volatile bool _typedFactoryResolved;
+
+        /// <summary>
         /// Initializes a new instance of the ResolvedTableBindings class with the specified field and entity bindings.
         /// </summary>
         /// <param name="fields">An array of ResolvedFieldBinding objects representing the field bindings to include. If null, an empty array
@@ -101,6 +116,101 @@ namespace Hydrix.Resolvers
             return BuildDelegateRowMaterializer(
                 fields,
                 entities);
+        }
+
+        /// <summary>
+        /// Gets a compiled factory that constructs and fully populates a <typeparamref name="TEntity"/> from a data
+        /// record in a single delegate call, or <see langword="null"/> when the fully-inlined fast path does not apply
+        /// to this binding plan.
+        /// </summary>
+        /// <remarks>
+        /// The typed factory matches Dapper's per-row shape: one delegate that runs <c>newobj</c> plus inlined column
+        /// reads and returns the strongly-typed entity. Compared with the <see cref="RowMaterializer"/> path it removes
+        /// the per-row <see cref="System.Activator"/> construction (<c>new TEntity()</c> under a <c>new()</c> constraint
+        /// lowers to <see cref="System.Activator.CreateInstance{T}()"/>), the separate construction step, and the
+        /// <c>object</c>-to-<typeparamref name="TEntity"/> re-cast the delegate performs on every row. The entity is
+        /// constructed as the concrete <typeparamref name="TEntity"/> (never a base declaring type), so inherited
+        /// mapped properties materialize against the correct runtime type. The result is built at most once and cached;
+        /// concurrent first calls may build more than once but always produce an equivalent delegate. Returns
+        /// <see langword="null"/> when the plan needs the converter/setter fallback (a field without a resolvable
+        /// <see cref="PropertyInfo"/>, or a non-leaf nested entity), in which case the caller must use
+        /// <c>new TEntity()</c> followed by <see cref="TableMap.SetEntity(Hydrix.Schemas.Contract.ITable, IDataRecord, ResolvedTableBindings)"/>.
+        /// </remarks>
+        /// <typeparam name="TEntity">The concrete entity type this plan materializes.</typeparam>
+        /// <returns>The compiled typed factory, or <see langword="null"/> when the inlined fast path is unavailable.</returns>
+        internal Func<IDataRecord, TEntity> GetOrBuildTypedFactory<TEntity>()
+            where TEntity : new()
+        {
+            if (_typedFactoryResolved)
+                return _typedFactory as Func<IDataRecord, TEntity>;
+
+            var factory = BuildTypedFactory<TEntity>();
+            _typedFactory = factory;
+            _typedFactoryResolved = true;
+            return factory;
+        }
+
+        /// <summary>
+        /// Builds the compiled typed factory for this binding plan when the fully-inlined fast path applies.
+        /// </summary>
+        /// <remarks>Reuses the same expression builders as <see cref="BuildInlinedRowMaterializer"/> so the
+        /// Nullable/enum/DBNull/typed-getter and nested-leaf semantics are identical; only the entity construction and
+        /// return differ. Returns <see langword="null"/> under the same conditions that disable inlining.</remarks>
+        /// <typeparam name="TEntity">The concrete entity type this plan materializes.</typeparam>
+        /// <returns>The compiled factory, or <see langword="null"/> when inlining cannot be applied.</returns>
+        private Func<IDataRecord, TEntity> BuildTypedFactory<TEntity>()
+            where TEntity : new()
+        {
+            if (Fields.Length + Entities.Length == 0)
+                return null;
+
+            if (!AreFieldsValid(Fields) ||
+                !AreEntitiesValid(Entities))
+            {
+                return null;
+            }
+
+            var record = Expression.Parameter(
+                typeof(IDataRecord),
+                "record");
+
+            var entity = Expression.Variable(
+                typeof(TEntity),
+                "entity");
+
+            var variables = new List<ParameterExpression> { entity };
+            var bodyExpressions = new List<Expression>
+            {
+                Expression.Assign(
+                    entity,
+                    Expression.New(
+                        typeof(TEntity)))
+            };
+
+            AddFieldAssignments(
+                bodyExpressions,
+                entity,
+                record,
+                Fields);
+
+            AddEntityAssignments(
+                bodyExpressions,
+                variables,
+                entity,
+                record,
+                Entities);
+
+            // The block's final expression is the constructed entity, which becomes the delegate's return value.
+            bodyExpressions.Add(entity);
+
+            return Expression
+                .Lambda<Func<IDataRecord, TEntity>>(
+                    Expression.Block(
+                        typeof(TEntity),
+                        variables,
+                        bodyExpressions),
+                    record)
+                .Compile();
         }
 
         /// <summary>

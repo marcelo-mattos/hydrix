@@ -37,9 +37,13 @@ namespace Hydrix.Caching
         public static bool Validate(
             Type type)
         {
-            if (EntityFrameworkMetadataCache.TryGet(
-                type,
-                out var registered))
+            // Skip the Type-keyed Entity Framework dictionary probe via a single volatile read while no model has
+            // been registered; once any model is registered the version becomes non-zero and the authoritative
+            // Entity-Framework-first probe runs again, preserving late-registration semantics.
+            if (EntityFrameworkMetadataCache.Version != 0 &&
+                EntityFrameworkMetadataCache.TryGet(
+                    type,
+                    out var registered))
             {
                 return registered.IsValid;
             }
@@ -85,6 +89,43 @@ namespace Hydrix.Caching
                     property.GetIndexParameters().Length == 0 &&
                     property.GetCustomAttributes(typeof(ForeignTableAttribute), false).Length == 0 &&
                     property.GetCustomAttributes(typeof(NotMappedAttribute), false).Length == 0);
+        }
+    }
+
+    /// <summary>
+    /// Provides a per-entity-type validity memo that collapses the repeated request validation on the hot path to a
+    /// single static volatile read once the type has been confirmed valid.
+    /// </summary>
+    /// <remarks>Only the confirmed-valid (positive) result is memoized. A type's eligibility can only ever
+    /// transition from not-yet-valid to valid (for example via late Entity Framework registration), never the reverse,
+    /// so caching the positive is safe; while a type is not yet confirmed valid each call re-runs the full
+    /// <see cref="EntityRequestValidationCache.Validate(Type)"/> so a not-yet-registered type stays recoverable.</remarks>
+    /// <typeparam name="TEntity">The entity type whose validity is memoized.</typeparam>
+    internal static class EntityRequestValidationCache<TEntity>
+    {
+        /// <summary>
+        /// Indicates whether <typeparamref name="TEntity"/> has been confirmed eligible for materialization. Declared
+        /// <see langword="volatile"/> so the confirmation publishes immediately across threads.
+        /// </summary>
+        private static volatile bool _confirmedValid;
+
+        /// <summary>
+        /// Determines whether <typeparamref name="TEntity"/> is eligible for Hydrix materialization, reusing a cached
+        /// confirmation when available.
+        /// </summary>
+        /// <returns><see langword="true"/> when the type is eligible; otherwise <see langword="false"/>.</returns>
+        /// <exception cref="MissingMemberException">Propagated from <see cref="EntityRequestValidationCache.Validate(Type)"/>
+        /// when the attribute-based path is used and the type lacks the required metadata.</exception>
+        public static bool IsValid()
+        {
+            if (_confirmedValid)
+                return true;
+
+            var valid = EntityRequestValidationCache.Validate(typeof(TEntity));
+            if (valid)
+                _confirmedValid = true;
+
+            return valid;
         }
     }
 }

@@ -52,6 +52,50 @@ namespace Hydrix.Mapper.Internals
         }
 
         /// <summary>
+        /// Maps every element of a value-type source sequence to a destination instance using the supplied delegate.
+        /// Returns <see langword="null"/> when the source sequence is <see langword="null"/>.
+        /// </summary>
+        /// <remarks>
+        /// Unlike <see cref="MapList{TSrc, TDest}"/>, this overload is intentionally unconstrained so it can map
+        /// value-type source elements — including <see cref="Nullable{T}"/>, which is itself a value type — that the
+        /// <c>where TSrc : class</c> constraint on the reference-type overload cannot accept and which would otherwise
+        /// throw <see cref="ArgumentException"/> at plan-compile time via <see cref="System.Reflection.MethodInfo.MakeGenericMethod(System.Type[])"/>.
+        /// No per-element null filter is applied: value-type elements mirror the indexed fast-path semantics, which map
+        /// every element by position.
+        /// </remarks>
+        /// <typeparam name="TSrc">The value-type source element type.</typeparam>
+        /// <typeparam name="TDest">The destination element type.</typeparam>
+        /// <param name="source">The source sequence to iterate. A null value yields a null result.</param>
+        /// <param name="map">The compiled delegate used to convert each source element.</param>
+        /// <returns>
+        /// A <see cref="List{TDest}"/> containing the mapped destination elements, or <see langword="null"/> when
+        /// <paramref name="source"/> is <see langword="null"/>.
+        /// </returns>
+        [return: MaybeNull]
+        [SuppressMessage(
+            "Major Code Smell",
+            "S1168:Return an empty collection rather than null",
+            Justification = "Null propagation is intentional. When the source collection property is null, the destination collection property must also be null so that callers can distinguish between an absent collection and an empty one.")]
+        [SuppressMessage(
+            "Major Code Smell",
+            "S3267:Loops should be simplified with \"LINQ\" expressions",
+            Justification = "Explicit loop used to avoid LINQ overhead (allocations, delegates, and enumerator costs) in performance-critical path.")]
+        public static List<TDest> MapListStruct<TSrc, TDest>(
+            IEnumerable<TSrc> source,
+            Func<TSrc, TDest> map)
+        {
+            if (source == null)
+                return null;
+
+            var result = CreateResultList<TSrc, TDest>(source);
+
+            foreach (var item in source)
+                result.Add(map(item));
+
+            return result;
+        }
+
+        /// <summary>
         /// Creates the destination list using the best available source count hint to avoid intermediate resizes.
         /// </summary>
         /// <typeparam name="TSrc">The source element type.</typeparam>

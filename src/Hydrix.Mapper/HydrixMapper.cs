@@ -361,12 +361,13 @@ namespace Hydrix.Mapper
 
             for (var index = 0; index < span.Length; index++)
             {
-                if (span[index] is null)
+                var item = span[index];
+                if (item is null)
                     continue;
 
                 result.Add(
                     execute(
-                        span[index]));
+                        item));
             }
 
             return result;

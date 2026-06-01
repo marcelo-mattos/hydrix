@@ -45,6 +45,17 @@ namespace Hydrix.Mapper.Builders
                 nameof(NestedCollectionHelper.MapList),
                 BindingFlags.Public | BindingFlags.Static);
 
+        /// <summary>
+        /// Caches the open-generic <c>NestedCollectionHelper.MapListStruct</c> method resolved once at class load.
+        /// This unconstrained overload maps value-type source element sequences (including <see cref="Nullable{T}"/>)
+        /// that the class-constrained <see cref="MapListOpenMethod"/> cannot bind, preventing an
+        /// <see cref="ArgumentException"/> at plan-compile time when a non-indexable source has value-type elements.
+        /// </summary>
+        private static readonly MethodInfo MapListStructOpenMethod =
+            typeof(NestedCollectionHelper).GetMethod(
+                nameof(NestedCollectionHelper.MapListStruct),
+                BindingFlags.Public | BindingFlags.Static);
+
         // -----------------------------------------------------------------------------------------
         // Cold-path build caches
         // -----------------------------------------------------------------------------------------
@@ -1240,7 +1251,13 @@ namespace Hydrix.Mapper.Builders
                 destElementType,
                 options);
 
-            var genericMethod = MapListOpenMethod.MakeGenericMethod(
+            // Value-type source elements (including Nullable<T>) cannot satisfy the 'where TSrc : class'
+            // constraint on MapList, so route them through the unconstrained MapListStruct overload.
+            var openMethod = srcElementType.IsValueType
+                ? MapListStructOpenMethod
+                : MapListOpenMethod;
+
+            var genericMethod = openMethod.MakeGenericMethod(
                 srcElementType,
                 destElementType);
 

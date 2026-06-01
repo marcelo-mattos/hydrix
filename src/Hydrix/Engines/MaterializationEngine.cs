@@ -2,6 +2,7 @@ using Hydrix.Caching;
 using Hydrix.Engines.Options;
 using Hydrix.Extensions;
 using Hydrix.Schemas.Contract;
+using Hydrix.Wrappers;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -40,6 +41,17 @@ namespace Hydrix.Engines
             new MaterializationOptions();
 
         /// <summary>
+        /// The command behavior applied to every read/materialization path.
+        /// </summary>
+        /// <remarks><see cref="CommandBehavior.SingleResult"/> declares that the query yields exactly one
+        /// forward-only result set — the materializer never calls <c>NextResult</c> — which lets providers skip
+        /// multi-result bookkeeping. <see cref="CommandBehavior.SequentialAccess"/> is intentionally NOT used: the
+        /// materializer reads each ordinal more than once (an <c>IsDBNull</c> probe followed by a typed getter) and
+        /// assigns columns in binding order rather than strict ascending ordinal order, both of which throw under
+        /// sequential access.</remarks>
+        private const CommandBehavior MaterializeBehavior = CommandBehavior.SingleResult;
+
+        /// <summary>
         /// Executes the specified SQL query and maps the result set to a list of entities of type TEntity.
         /// </summary>
         /// <remarks>The method automatically maps each row in the result set to an instance of TEntity.
@@ -64,11 +76,13 @@ namespace Hydrix.Engines
             using var dataReader = ExecutionEngine.ExecuteReader(
                 sql,
                 parameters,
-                CommandBehavior.Default,
+                MaterializeBehavior,
                 options);
 
-            return dataReader.MapTo<TEntity>(
-                options.Limit);
+            return CommandOwningReader
+                .Unwrap(dataReader)
+                .MapTo<TEntity>(
+                    options.Limit);
         }
 
         /// <summary>
@@ -91,11 +105,13 @@ namespace Hydrix.Engines
 
             using var dataReader = ExecutionEngine.ExecuteReader(
                 procedure,
-                CommandBehavior.Default,
+                MaterializeBehavior,
                 options);
 
-            return dataReader.MapTo<TEntity>(
-                options.Limit);
+            return CommandOwningReader
+                .Unwrap(dataReader)
+                .MapTo<TEntity>(
+                    options.Limit);
         }
 
         /// <summary>
@@ -130,21 +146,23 @@ namespace Hydrix.Engines
                 .ExecuteReaderAsync(
                     sql,
                     parameters,
-                    CommandBehavior.Default,
+                    MaterializeBehavior,
                     options,
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            if (dataReader is DbDataReader)
+            var reader = CommandOwningReader.Unwrap(dataReader);
+
+            if (reader is DbDataReader)
             {
-                return await dataReader
+                return await reader
                     .MapToAsync<TEntity>(
                         options.Limit,
                         cancellationToken)
                     .ConfigureAwait(false);
             }
 
-            return dataReader.MapTo<TEntity>(
+            return reader.MapTo<TEntity>(
                 options.Limit);
         }
 
@@ -175,21 +193,23 @@ namespace Hydrix.Engines
             using var dataReader = await ExecutionEngine
                 .ExecuteReaderAsync(
                     procedure,
-                    CommandBehavior.Default,
+                    MaterializeBehavior,
                     options,
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            if (dataReader is DbDataReader)
+            var reader = CommandOwningReader.Unwrap(dataReader);
+
+            if (reader is DbDataReader)
             {
-                return await dataReader
+                return await reader
                     .MapToAsync<TEntity>(
                         options.Limit,
                         cancellationToken)
                     .ConfigureAwait(false);
             }
 
-            return dataReader.MapTo<TEntity>(
+            return reader.MapTo<TEntity>(
                 options.Limit);
         }
 
@@ -205,12 +225,11 @@ namespace Hydrix.Engines
         private static void EnsureValidEntityRequest<TEntity>()
             where TEntity : ITable, new()
         {
-            var entityType = typeof(TEntity);
-            if (EntityRequestValidationCache.Validate(entityType))
+            if (EntityRequestValidationCache<TEntity>.IsValid())
                 return;
 
             throw new InvalidOperationException(
-                $"Entity '{entityType.FullName}' is not valid for Hydrix materialization. Ensure it has at least one mapped property.");
+                $"Entity '{typeof(TEntity).FullName}' is not valid for Hydrix materialization. Ensure it has at least one mapped property.");
         }
 
         /// <summary>

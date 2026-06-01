@@ -769,8 +769,10 @@ namespace Hydrix.UnitTests.Schemas
             Assert.Contains("SELECT", sql);
             Assert.Contains("FROM sales.orders o", sql);
             Assert.Contains("LEFT JOIN sales.customers c ON o.CustomerId = c.Id", sql);
-            Assert.Contains("c.id AS \"customers.id\"", sql);
-            Assert.Contains("c.name AS \"customers.name\"", sql);
+            // The projected alias is prefixed with the navigation PROPERTY name ("Customer"), not the foreign
+            // TABLE name ("customers"), so the nested materializer (which matches by property name) can bind it.
+            Assert.Contains("c.id AS \"Customer.id\"", sql);
+            Assert.Contains("c.name AS \"Customer.name\"", sql);
         }
 
         /// <summary>
@@ -788,8 +790,8 @@ namespace Hydrix.UnitTests.Schemas
             Assert.Contains("FROM order_with_agents owa", sql);
             Assert.Contains("INNER JOIN sales.customers c ON owa.CustomerId = c.Id", sql);
             Assert.Contains("LEFT JOIN agents a ON owa.AgentId = a.Id", sql);
-            Assert.Contains("c.id AS \"customers.id\"", sql);
-            Assert.Contains("a.id AS \"agents.id\"", sql);
+            Assert.Contains("c.id AS \"Customer.id\"", sql);
+            Assert.Contains("a.id AS \"Agent.id\"", sql);
         }
 
         /// <summary>

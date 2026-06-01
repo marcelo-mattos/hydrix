@@ -1,6 +1,7 @@
 using Hydrix.Caching;
 using Hydrix.Internals;
 using Hydrix.Mapping;
+using Hydrix.Metadata.Materializers;
 using Hydrix.Resolvers;
 using Hydrix.Schemas.Contract;
 using System;
@@ -43,15 +44,22 @@ namespace Hydrix.Extensions
 #endif
             var entities = limit > 0 ? new List<TEntity>(limit) : new List<TEntity>();
             ResolvedTableBindings bindings = null;
+            Func<IDataRecord, TEntity> factory = null;
 
             if (limit <= 0)
             {
                 while (dataReader.Read())
                 {
-                    bindings ??= CreateBindings<TEntity>(dataReader);
-                    MapCurrentEntity(
+                    if (bindings == null)
+                    {
+                        bindings = CreateBindings<TEntity>(dataReader);
+                        factory = bindings.GetOrBuildTypedFactory<TEntity>();
+                    }
+
+                    AppendEntity(
                         dataReader,
                         bindings,
+                        factory,
                         entities);
                 }
             }
@@ -61,10 +69,16 @@ namespace Hydrix.Extensions
                 while (count < limit &&
                     dataReader.Read())
                 {
-                    bindings ??= CreateBindings<TEntity>(dataReader);
-                    MapCurrentEntity(
+                    if (bindings == null)
+                    {
+                        bindings = CreateBindings<TEntity>(dataReader);
+                        factory = bindings.GetOrBuildTypedFactory<TEntity>();
+                    }
+
+                    AppendEntity(
                         dataReader,
                         bindings,
+                        factory,
                         entities);
 
                     count++;
@@ -101,6 +115,7 @@ namespace Hydrix.Extensions
 
             var entities = limit > 0 ? new List<TEntity>(limit) : new List<TEntity>();
             ResolvedTableBindings bindings = null;
+            Func<IDataRecord, TEntity> factory = null;
 
             if (limit <= 0)
             {
@@ -108,10 +123,16 @@ namespace Hydrix.Extensions
                     .ReadAsync(cancellationToken)
                     .ConfigureAwait(false))
                 {
-                    bindings ??= CreateBindings<TEntity>(dbDataReader);
-                    MapCurrentEntity(
+                    if (bindings == null)
+                    {
+                        bindings = CreateBindings<TEntity>(dbDataReader);
+                        factory = bindings.GetOrBuildTypedFactory<TEntity>();
+                    }
+
+                    AppendEntity(
                         dbDataReader,
                         bindings,
+                        factory,
                         entities);
                 }
             }
@@ -123,10 +144,16 @@ namespace Hydrix.Extensions
                         .ReadAsync(cancellationToken)
                         .ConfigureAwait(false))
                 {
-                    bindings ??= CreateBindings<TEntity>(dbDataReader);
-                    MapCurrentEntity(
+                    if (bindings == null)
+                    {
+                        bindings = CreateBindings<TEntity>(dbDataReader);
+                        factory = bindings.GetOrBuildTypedFactory<TEntity>();
+                    }
+
+                    AppendEntity(
                         dbDataReader,
                         bindings,
+                        factory,
                         entities);
 
                     count++;
@@ -169,25 +196,14 @@ namespace Hydrix.Extensions
 
             if (hasCachedBinding)
             {
-                var rebuilt = TableMap.Bind(
+                return RebuildAndReplaceBindings(
                     dataReader,
                     metadata,
-                    string.Empty,
-                    ordinalMap.Ordinals,
-                    ordinalMap.SchemaHash,
+                    ordinalMap,
                     columnNames);
-
-                metadata.ReplaceBindings(
-                    ordinalMap.SchemaHash,
-                    rebuilt);
-
-                metadata.RememberBindings(
-                    rebuilt);
-
-                return rebuilt;
             }
 
-            return metadata.GetOrAddBindings(
+            var built = metadata.GetOrAddBindings(
                 ordinalMap.SchemaHash,
                 _ => TableMap.Bind(
                     dataReader,
@@ -196,21 +212,81 @@ namespace Hydrix.Extensions
                     ordinalMap.Ordinals,
                     ordinalMap.SchemaHash,
                     columnNames));
+
+            // The schemaHash is only a non-authoritative bucket key (32 bits); Matches is the authoritative gate.
+            // Under a concurrent insert with a genuine hash collision, GetOrAddBindings can return a plan built for a
+            // different schema, so validate the result and rebuild when it does not match the current reader.
+            if (built.Matches(dataReader))
+                return built;
+
+            return RebuildAndReplaceBindings(
+                dataReader,
+                metadata,
+                ordinalMap,
+                columnNames);
         }
 
         /// <summary>
-        /// Materializes the current row and appends the resulting entity to the provided list.
+        /// Rebuilds the binding plan for the current reader schema and replaces any cached entry stored under the same
+        /// schema hash, then records the rebuilt plan as the hot bindings.
         /// </summary>
+        /// <remarks>Used both when a cached plan fails schema validation (hash collision or schema drift) and when
+        /// a concurrently inserted plan does not match, so the corrected plan is cached for subsequent requests.</remarks>
+        /// <param name="dataReader">The data reader positioned on a valid current row.</param>
+        /// <param name="metadata">The entity materialization metadata that owns the binding cache.</param>
+        /// <param name="ordinalMap">The ordinal map and schema hash computed for the current reader.</param>
+        /// <param name="columnNames">The ordered column names captured for hot-path schema matching.</param>
+        /// <returns>The rebuilt binding plan for the current schema.</returns>
+        private static ResolvedTableBindings RebuildAndReplaceBindings(
+            IDataReader dataReader,
+            TableMaterializeMetadata metadata,
+            OrdinalMap ordinalMap,
+            string[] columnNames)
+        {
+            var rebuilt = TableMap.Bind(
+                dataReader,
+                metadata,
+                string.Empty,
+                ordinalMap.Ordinals,
+                ordinalMap.SchemaHash,
+                columnNames);
+
+            metadata.ReplaceBindings(
+                ordinalMap.SchemaHash,
+                rebuilt);
+
+            metadata.RememberBindings(
+                rebuilt);
+
+            return rebuilt;
+        }
+
+        /// <summary>
+        /// Materializes the current row and appends the resulting entity to the provided list, using the compiled
+        /// typed factory when available and falling back to construct-then-populate otherwise.
+        /// </summary>
+        /// <remarks>The destination is typed as the concrete <see cref="List{T}"/> rather than
+        /// <see cref="ICollection{T}"/> so the per-row <c>Add</c> binds to the inlinable list method instead of an
+        /// interface dispatch. When <paramref name="factory"/> is non-null it constructs and populates the entity in a
+        /// single call (matching Dapper's per-row shape); otherwise the converter/setter fallback path is used.</remarks>
         /// <typeparam name="TEntity">The target entity type.</typeparam>
         /// <param name="record">The current data record.</param>
         /// <param name="bindings">The pre-resolved binding plan for the current schema.</param>
+        /// <param name="factory">The compiled typed factory for the current schema, or <see langword="null"/> when the fast path is unavailable.</param>
         /// <param name="entities">The destination list to receive the mapped entity.</param>
-        private static void MapCurrentEntity<TEntity>(
+        private static void AppendEntity<TEntity>(
             IDataRecord record,
             ResolvedTableBindings bindings,
-            ICollection<TEntity> entities)
+            Func<IDataRecord, TEntity> factory,
+            List<TEntity> entities)
             where TEntity : ITable, new()
         {
+            if (factory != null)
+            {
+                entities.Add(factory(record));
+                return;
+            }
+
             var entity = new TEntity();
 
             TableMap.SetEntity(

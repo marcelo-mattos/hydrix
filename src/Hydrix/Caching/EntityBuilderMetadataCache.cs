@@ -184,9 +184,13 @@ namespace Hydrix.Caching
                             var columnAttribute = propertyInfo.GetCustomAttribute<ColumnAttribute>();
                             var columnName = columnAttribute?.Name ?? propertyInfo.Name;
 
+                            // The projected result-set alias must be prefixed with the navigation PROPERTY name
+                            // (matching TableMap.PrefixSuffix used by the nested materializer), not the foreign
+                            // TABLE name. When they differ, a table-name prefix yields zero matched nested columns
+                            // and a silently null nested entity.
                             return new ForeignColumnMetadata(
                                 columnName,
-                                $"{foreignAttr.Name}.{columnName}");
+                                $"{property.Name}.{columnName}");
                         })
                         .ToList();
 
